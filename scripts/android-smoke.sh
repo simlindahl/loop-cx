@@ -3,15 +3,55 @@ set -euo pipefail
 mapfile -t packages < <(find src/LoopCx/bin/Debug -name '*-Signed.apk')
 [[ ${#packages[@]} == 1 ]]
 adb install -r "${packages[0]}"
+adb shell pm grant se.loopcx.running android.permission.ACCESS_COARSE_LOCATION
+adb shell pm grant se.loopcx.running android.permission.ACCESS_FINE_LOCATION
+adb shell pm grant se.loopcx.running android.permission.POST_NOTIFICATIONS
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
-adb shell monkey -p se.loopcx.running -c android.intent.category.LAUNCHER 1
-for attempt in {1..20}; do
-    if adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null &&
-       adb shell cat /sdcard/loop-window.xml | grep -F 'Start a run' >/dev/null; then
-        exit 0
-    fi
+adb logcat -c
+command() {
+    adb shell am start -n se.loopcx.running/.MainActivity --es loop-command "$1"
+}
+snapshot() {
+    adb logcat -d -s LoopRun:I '*:S' -v raw | sed -n '/^{/p' | tail -n 1
+}
+command start
+sleep 5
+snapshot > /tmp/run-start.json
+command start
+sleep 2
+snapshot > /tmp/run-duplicate.json
+adb shell input keyevent KEYCODE_HOME
+adb shell input keyevent KEYCODE_SLEEP
+for point in 1 2 3 4 5; do
+    adb emu geo fix 18.06 59.33
     sleep 2
 done
-adb logcat -d -t 300
-exit 1
+snapshot > /tmp/run-locked.json
+adb shell input keyevent KEYCODE_WAKEUP
+adb shell wm dismiss-keyguard
+command pause
+sleep 2
+snapshot > /tmp/run-pause.json
+sleep 4
+snapshot > /tmp/run-still-paused.json
+command resume
+sleep 4
+snapshot > /tmp/run-resume.json
+adb shell uiautomator dump /sdcard/loop-window.xml
+adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'
+python3 - <<'PY'
+import json
+from pathlib import Path
+def read(name):
+    return json.loads(Path('/tmp/run-' + name + '.json').read_text())
+start, duplicate, locked, pause, still, resume = map(read, [
+    'start', 'duplicate', 'locked', 'pause', 'still-paused', 'resume'])
+assert len({s['Id'] for s in [start, duplicate, locked, pause, still, resume]}) == 1
+assert locked['ActiveSeconds'] >= duplicate['ActiveSeconds'] + 8
+assert locked['Locations'] > duplicate['Locations'], 'GPS must arrive with screen off'
+assert pause['Paused'] and still['Paused']
+assert still['ActiveSeconds'] == pause['ActiveSeconds']
+assert not resume['Paused'] and resume['ActiveSeconds'] > still['ActiveSeconds']
+print('PASS: one session, locked-screen time and GPS, pause, resume, reopened Razor UI')
+PY
