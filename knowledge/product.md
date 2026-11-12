@@ -95,10 +95,25 @@ Minimalist Material Design är projektets eget urval av Material Design. Använd
 Minimalism mäts i antalet beslut för löparen. Efter första konfigurationen: en startåtgärd från favoritlistan, noll obligatoriska tryck för ordinarie fasbyten, automatisk sparning efter avslut. Skilj primära åtgärder från redigering. Startsidan visar 2–3 favoriter utan att öppna meny. En tom lista erbjuder Skapa första passet. Avbruten favoritredigering ska bevara föregående version.
 - Navigation: Pass, Historik och Inställningar. Under pågående pass får fas och kontroller utrymmet. Återöppning från avisering visar samma runda. Kartan ligger i passdetaljen efter avslut.
 - Visuell hierarki: fas, återstående tid/distans och mål överst; huvudpass och split med samma ordning och enheter i mitten; aktuellt tempo/puls störst längst ned. Visa begripligt tomvärde vid bortfall. Tillåt radbrytning till två kolumner vid textförstoring.
-- Typografisk skala: Space Grotesk med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Mörkt standardtema: grafit #14171E, text #EDF1FA, sekundärtext #ABB5C6 och accent #91ABFF. Inget dekorativt diagram i träningsvyn.
+- Typografisk skala: Space Grotesk med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Mörkt standardtema: Basalt enligt färgtabellen nedan. Inget dekorativt diagram i träningsvyn.
 - Handling: minst 48 × 48 dp tryckyta. Fasberoende knappnamn förklarar effekten. Skilj manuell paus från autopaus med text. Appen ska gå att använda med TalkBack och stor systemtext utan förlorade värden eller åtgärder.
 - Acceptans: testa första start, återkommande favorit, ståvila, uppvärmning +1 min, avslut, frånkopplat pulsband och väntande export. Kontrollera kontrast (4,5:1 för normal text), läsordning och text vid 200 %. Låsskärmens exempel anger prioritering av innehåll och åtgärder; Android styr exakt rendering.
-- Granskningsunderlag: start- och träningsvy i design/LOOP-Cx-direction-5.pdf. Godkännande gäller den namngivna revisionen och journalförs i design/decision.md före implementation.
+- Granskningsunderlag: layouten i design/LOOP-Cx-direction-5.pdf och samma två vyer med beslutad Basalt-palett i [revision 6](../design/LOOP-Cx-Basalt-r6.pdf). Simon godkände layouten den 12 november och valde Basalt den 13 november 2026. Beslut journalförs i design/decision.md.
+
+### Basalt – beslutade färger
+
+| Roll | Färg | Användning |
+|---|---|---|
+| Bakgrund | #10120F | Appens grund |
+| Yta | #1B1E18 | Grupper och navigationsfält |
+| Primär text | #EEEFE6 | Rubriker, timer och mätvärden |
+| Sekundär text | #A6AE9A | Etiketter och enheter |
+| Accent | #C4DA73 | Primära handlingar, aktiv fas och vald destination |
+| På accent | #10120F | Text och ikoner på fyllda accentknappar |
+
+Paletten ersätter revision 5:s blå färger; layout, engelska, Space Grotesk och Material Icons består. Använd samma färgroller i alla appägda vyer. Systemägda Android-aviseringar följer systemets färg- och layoutregler. Färg får inte ensam bära betydelse; visa även text och form. Inaktiva åtgärder ska skiljas från aktiva med tillstånd och tillgänglighetsinformation.
+
+Acceptans: start- och träningsvyn använder tabellens färger utan kvarvarande blå accent. Primär och sekundär text samt accenttext når minst 4,5:1 mot både bakgrund och yta. Beräknad lägsta kontrast är 7,34:1 (sekundär text mot yta); mörk text på accent når 12,21:1. Verifiera textskalning, fokus och avläsning utomhus i appen; statiska mockuper bevisar inte dessa beteenden.
 
 ## Projektstyrning
 GitHub Projects är den gemensamma arbetslistan. Varje byggbar ändring har en issue med länkat krav och acceptansprov. Flytta till In Progress när arbete börjar, länka PR och verifieringsresultat, och flytta till Done när kriterierna uppfyllts. Git är källan för krav och design; Projects visar status. Skapad lokal startstruktur är inte bevis på att fjärrprojektet skapats.
