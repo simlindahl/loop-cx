@@ -16,7 +16,15 @@ LOOP Cx är den officiella löparappen för C1 och C2. Startsidan visar C1 · In
 ## Teknikbeslut
 Använd C#, .NET MAUI Blazor Hybrid och en lokal SQLite-databas. PWA ger enklare distribution och webbutveckling, lokal lagring och cachat gränssnitt, men webbens geolokalisering förutsätter ett synligt dokument. Tillförlitlig positionsregistrering i fickan, Bluetooth-puls och Health Connect avgör valet. MAUI kräver Android SDK, emulator, plattformsbehörigheter och underhåll av Android-bindningar. Batterianvändningen ska mätas på telefon. Ingen separat webbvärd behövs.
 
-En Android foreground service som startas när användaren startar passet äger klockan, GPS, puls och fasbyten. Blazor-vyn och aviseringen läser samma tillstånd och skickar kommandon till samma pass. Återöppning, omritning eller dubbla knapptryck får inte skapa två registreringar. Håll passregler och statistik i vanlig C# och Android-anrop vid systemgränsen. Organisera UI efter funktion. Använd en monoton klocka för varaktighet och tidsstämpla även i UTC för export.
+En Android foreground service som startas när användaren startar passet äger klockan, GPS, puls och fasbyten. Blazor-vyn och aviseringen läser samma tillstånd och skickar kommandon till samma pass. Återöppning, omritning eller dubbla knapptryck får inte skapa två registreringar. Håll passregler och statistik i vanlig C# och Android-anrop vid systemgränsen. Använd en monoton klocka för varaktighet och tidsstämpla även i UTC för export.
+
+### Kodorganisation
+
+Bygg en modulär monolit bakom Blazor: en installerbar app med tydliga funktionsgränser i C#. Organisera koden i vertikala snitt (Vertical Slices) efter vad löparen gör. Håll Razor-komponenter, indata, validering och den lagringskod som hör till ett användningsfall nära varandra. Mappar och namnrymder räcker som utgångspunkt.
+
+Exempel: ändrad validering av mål-RPE för en favorit hör hemma i snittet för att redigera favoritpass. Regler som även gäller vid passstart ägs av passmodellen och återanvänds därifrån. Den pågående sessionen äger fasbyten och pausregler; både Blazor och låsskärmskontrollerna anropar samma beteende. Android-beroenden för GPS och Bluetooth stannar vid plattformsgränsen så att passmotorn kan verifieras med simulerade mätningar.
+
+Välj den kortaste tydliga vägen från UI till beteende och data. Lägg till ett gränssnitt, lager eller separat projekt först när det löser ett konkret behov, exempelvis att byta verklig sensordata mot en deterministisk testkälla. Clean Architectures lagerindelning är inget krav. Vid granskning ska det gå att peka ut var en regel ägs och varför varje mellanled behövs.
 
 ## Vyer och utformning
 - **Starta pass.** Visa ordnade favoriter direkt med namn, protokoll och egen Starta-knapp. Skapa, redigera, ordna och ta bort via en sekundär ingång. Stöd även ett enstaka pass. Tillåt start utan nät. Visa GPS- och pulsstatus utan att kräva en extra bekräftelse när allt är klart.
