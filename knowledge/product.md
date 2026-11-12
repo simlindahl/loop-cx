@@ -95,5 +95,8 @@ Minimalism mäts i antalet beslut för löparen. Efter första konfigurationen: 
 ## Projektstyrning
 GitHub Projects är den gemensamma arbetslistan. Varje byggbar ändring har en issue med länkat krav och acceptansprov. Flytta till In Progress när arbete börjar, länka PR och verifieringsresultat, och flytta till Done när kriterierna uppfyllts. Git är källan för krav och design; Projects visar status. Skapad lokal startstruktur är inte bevis på att fjärrprojektet skapats.
 
-## Designrevision 3 · för granskning
+## Designrevision 3 · tidigare riktning
 Två vyer i design/LOOP-Cx-direction-3.pdf prövar varmvit #F6F5F1, grafit #171A22 och kobolt #284CE8. C1 och C2 identifieras via typografi och passets rytm. Huvudpass och split jämförs radvis. Noto Sans och Material Icons kvarstår. Färg och layout inväntar beslut.
+
+## Designrevision 4 · mörkt standardtema
+Standardtemat är mörkt från första start. Behåll C1/C2-hierarkin, Material Icons, engelska och jämförelsen Main set / This split. Föreslagen typografi för granskning: Barlow Semi Condensed SemiBold för rubriker, passkoder, timer och stora mätvärden; Noto Sans för etiketter, enheter och löpande UI-text. Provpalett: grafit #14171E, upphöjd yta #202632, primärtext #EDF1FA, sekundärtext #ABB5C6, accent #91ABFF med mörk text på fylld knapp. Kontrollera dagsljus och stabil sifferbredd i emulator och på telefon. Revision 4 ersätter tidigare färgförslag; visuell utformning och displaytypsnitt väntar på godkännande.
