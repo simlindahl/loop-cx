@@ -23,7 +23,7 @@ En Android foreground service som startas när användaren startar passet äger 
 - **Träningsvy.** Överst fas, mål-RPE, eventuellt tempo- eller zonmål, repetitionsnummer och återstående tid/distans där slutet är bestämt. Två tydligt märkta grupper visar huvudpass respektive aktuell split, vardera med tid, distans, snittempo och snittpuls. Längst ner visas aktuellt tempo och aktuell puls störst. Under uppvärmning visas fasens egna data. Vid huvudstart börjar huvudräknarna på noll. Under nedvarvning är huvudpassets resultat färdigt.
 - **Historik.** Nyaste rundan först. Detalj visar huvudpass, total inklusive in- och utjogg, splits, tid i pulszoner, karta över hela GPS-spåret, exportstatus och Dela passdata. Ändring av en favorit eller zongräns får aldrig förändra ett tidigare resultat.
 - **Inställningar.** WHOOP-anslutning, manuella zongränser, Health Connect-status och standardtider för uppvärmning/nedvarvning. Ljudinställningarna för en favorit ska följa med när passet upprepas.
-- **Beslutad visuell inriktning.** Minimalist Material Design med Noto Sans och tabellsiffror, neutral bakgrund, hög kontrast och en accent för aktiv fas eller primär handling. Använd Androids textskalning, tydliga enheter och minst 48 dp för tryckytor. Kontrollera läsordning med TalkBack, stor text och avläsning utomhus. Status behöver en textetikett även när färg används.
+- **Beslutad visuell inriktning.** Minimalist Material Design med Space Grotesk och tabellsiffror, neutral bakgrund, hög kontrast och en accent för aktiv fas eller primär handling. Använd Androids textskalning, tydliga enheter och minst 48 dp för tryckytor. Kontrollera läsordning med TalkBack, stor text och avläsning utomhus. Status behöver en textetikett även när färg används.
 
 ## Pass och statistik
 1. Kontinuerligt pass slutar vid vald aktiv tid, vald distans eller manuellt. Automatisk split per hel kilometer i huvudpasset. Spara även den sista ofullständiga spliten med faktisk distans.
@@ -80,23 +80,18 @@ Test på fysisk telefon återstår. Särskilt viktiga mätpunkter är falsk auto
 
 ## UI/UX – designkontrakt för v1
 Minimalist Material Design är projektets eget urval av Material Design. Använd flat listvy, primär fylld knapp, sekundär textknapp, diskreta avdelare och navigationsfält med tre namngivna destinationer. En accentfärg; använd elevation bara när överlappande ytor behöver särskiljas. Visa fokus, tryckt, valt och inaktivt tillstånd.
-- **Typografi:** paketera Noto Sans lokalt för appens egna vyer, regular och bold; testa å/ä/ö, systemtextskalning och stabil sifferbredd.
+- **Typografi:** paketera Space Grotesk lokalt för appens egna vyer, regular och bold; testa å/ä/ö, systemtextskalning och stabil sifferbredd.
 - **Ikoner:** använd Googles Material Icons, Filled, 24 dp som standard. Välj play_arrow för start, pause för paus och history/settings för navigation. Märk åtgärder med synlig text eller tillgängligt namn. Dekorativa ikoner döljs för skärmläsare. Standardaviseringar följer Androids systemtypografi och layout.
-- **Designprov:** kontrollera Noto Sans och ikoner i flygplansläge, vald flik med text och form samt en direkt start från vardera Core-mallen.
+- **Designprov:** kontrollera Space Grotesk och ikoner i flygplansläge, vald flik med text och form samt en direkt start från vardera Core-mallen.
 
 Minimalism mäts i antalet beslut för löparen. Efter första konfigurationen: en startåtgärd från favoritlistan, noll obligatoriska tryck för ordinarie fasbyten, automatisk sparning efter avslut. Skilj primära åtgärder från redigering. Startsidan visar 2–3 favoriter utan att öppna meny. En tom lista erbjuder Skapa första passet. Avbruten favoritredigering ska bevara föregående version.
 - Navigation: Pass, Historik och Inställningar. Under pågående pass får fas och kontroller utrymmet. Återöppning från avisering visar samma runda. Kartan ligger i passdetaljen efter avslut.
 - Visuell hierarki: fas, återstående tid/distans och mål överst; huvudpass och split med samma ordning och enheter i mitten; aktuellt tempo/puls störst längst ned. Visa begripligt tomvärde vid bortfall. Tillåt radbrytning till två kolumner vid textförstoring.
-- Tidigare designförslag (revision 2, återremitterad): Noto Sans med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Bakgrund #FCFCF8, text #142922, sekundärtext #50655A, accent #115840. Inget dekorativt diagram i träningsvyn.
+- Typografisk skala: Space Grotesk med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Mörkt standardtema: grafit #14171E, text #EDF1FA, sekundärtext #ABB5C6 och accent #91ABFF. Inget dekorativt diagram i träningsvyn.
 - Handling: minst 48 × 48 dp tryckyta. Fasberoende knappnamn förklarar effekten. Skilj manuell paus från autopaus med text. Appen ska gå att använda med TalkBack och stor systemtext utan förlorade värden eller åtgärder.
 - Acceptans: testa första start, återkommande favorit, ståvila, uppvärmning +1 min, avslut, frånkopplat pulsband och väntande export. Kontrollera kontrast (4,5:1 för normal text), läsordning och text vid 200 %. Låsskärmens exempel anger prioritering av innehåll och åtgärder; Android styr exakt rendering.
-- Granskningsunderlag: sex sidor i design/Lopp-mockups.pdf. Godkännande gäller den namngivna revisionen och journalförs i design/decision.md före implementation.
+- Granskningsunderlag: start- och träningsvy i design/LOOP-Cx-direction-5.pdf. Godkännande gäller den namngivna revisionen och journalförs i design/decision.md före implementation.
 
 ## Projektstyrning
 GitHub Projects är den gemensamma arbetslistan. Varje byggbar ändring har en issue med länkat krav och acceptansprov. Flytta till In Progress när arbete börjar, länka PR och verifieringsresultat, och flytta till Done när kriterierna uppfyllts. Git är källan för krav och design; Projects visar status. Skapad lokal startstruktur är inte bevis på att fjärrprojektet skapats.
 
-## Designrevision 3 · tidigare riktning
-Två vyer i design/LOOP-Cx-direction-3.pdf prövar varmvit #F6F5F1, grafit #171A22 och kobolt #284CE8. C1 och C2 identifieras via typografi och passets rytm. Huvudpass och split jämförs radvis. Noto Sans och Material Icons kvarstår. Färg och layout inväntar beslut.
-
-## Designrevision 4 · mörkt standardtema
-Standardtemat är mörkt från första start. Behåll C1/C2-hierarkin, Material Icons, engelska och jämförelsen Main set / This split. Föreslagen typografi för granskning: Barlow Semi Condensed SemiBold för rubriker, passkoder, timer och stora mätvärden; Noto Sans för etiketter, enheter och löpande UI-text. Provpalett: grafit #14171E, upphöjd yta #202632, primärtext #EDF1FA, sekundärtext #ABB5C6, accent #91ABFF med mörk text på fylld knapp. Kontrollera dagsljus och stabil sifferbredd i emulator och på telefon. Revision 4 ersätter tidigare färgförslag; visuell utformning och displaytypsnitt väntar på godkännande.
