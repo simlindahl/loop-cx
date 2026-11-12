@@ -36,6 +36,8 @@ jobs:
         run: sudo chmod a+rw /dev/kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
+          disk-size: 2048M
+          emulator-boot-timeout: 300
           api-level: 35
           arch: x86_64
           target: google_apis
