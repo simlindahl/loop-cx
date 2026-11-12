@@ -1,0 +1,47 @@
+name: Android
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'global.json'
+      - '.github/workflows/android.yml'
+      - 'scripts/android-smoke.sh'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: dotnet workload install maui-android
+      - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
+      - run: dotnet build src/LoopCx -c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: loop-cx-emulator-x64
+          path: src/LoopCx/bin/Debug/**/*-Signed.apk
+          if-no-files-found: error
+      - name: Free space for the Android system image and its userdata
+        run: |
+          sudo rm -rf /usr/share/swift /opt/ghc /usr/local/.ghcup /usr/local/share/boost
+          df -h "$HOME"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          emulator-boot-timeout: 300
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          script: bash scripts/android-smoke.sh
