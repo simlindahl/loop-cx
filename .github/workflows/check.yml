@@ -1,0 +1,17 @@
+name: Repository checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  specification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check specification, skill metadata and documentation links
+        run: ruby scripts/check_docs.rb
