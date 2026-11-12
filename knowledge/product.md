@@ -6,7 +6,9 @@ title: LOOP Cx för Android
 12 november 2026 · Underlag för implementation och verifiering
 
 ## Produkt och leverans
-En svenskspråkig löparapp för en löpare som roterar mellan några favoritpass. Från startsidan ska ett sparat upplägg kunna startas med ett tryck efter första konfigurationen. Samma registrering ska fungera med synlig skärm, med Spotify i förgrunden och med telefonen låst. Leverera Android-app, installerbar APK för privat bruk, reproducerbara Windows-instruktioner och verifieringsrapport. Första måltelefon är Pixel med WHOOP-band. Ingen server behövs. Privat APK-distribution är ett föreslaget standardval.
+En engelskspråkig löparapp för en löpare som roterar mellan några favoritpass. Från startsidan ska ett sparat upplägg kunna startas med ett tryck efter första konfigurationen. Samma registrering ska fungera med synlig skärm, med Spotify i förgrunden och med telefonen låst. Leverera Android-app, installerbar APK för privat bruk, reproducerbara Windows-instruktioner och verifieringsrapport. Första måltelefon är Pixel med WHOOP-band. Ingen server behövs. Privat APK-distribution är ett föreslaget standardval.
+
+Appens egna vyer, kontroller, tillgänglighetsnamn, fel, aviseringar och röstcoachning använder engelska i v1. Svenska benämningar i denna specifikation beskriver funktioner. Användarens egna passnamn bevaras. Android styr språket i systemägda dialoger.
 
 ## LOOP Core
 LOOP Cx är den officiella löparappen för C1 och C2. Startsidan visar C1 · Intervaller och C2 · Zon 2 med en startåtgärd vardera, följt av egna favoriter. C1: 10 min progressiv uppvärmning, 5 × 3 min kontrollerat arbete, 2 min lätt rörelse mellan insatserna och 5 min lätt avslut (38 min totalt). C2: lätt löpning i WHOOP-zon 2, normalt 45–60 min; startvärde 45 min. Visa syfte och märk källa, kategori och mallrevision i registreringen. Personliga varianter kan sparas separat. Globala 3/2 min används för egna pass. Stöd för hela 10K-pluginen är ett separat beslut.
@@ -33,7 +35,7 @@ En Android foreground service som startas när användaren startar passet äger 
 7. Filtrera orimliga GPS-hopp. Markera avbrott i kartspåret och extrapolera inte tappad distans. Vid distansstyrd fas med GPS-bortfall fortsätter aktiv tid och fasen väntar på mätbar distans. Dokumentera och fältprova gränserna för rörelse, återstart, GPS-kvalitet och utjämning av aktuellt tempo.
 
 ## Återkoppling under passet
-Löparen väljer uppläsning efter eget positivt tidsintervall (minuter och sekunder) eller distansintervall i meter. Läs huvudpassets fyra värden, aktuell splits fyra värden samt aktuellt tempo och puls på svenska. Uppläsningsfrekvens och splitlängd är oberoende. Tala om fasbyten och mål-RPE. Låt kort fasbesked få företräde framför längre sammanfattningar, och undvik överlappande eller föråldrade besked när musik spelas. Föreslagen standard är att periodiska sammanfattningar räknas från huvudstart med aktiv tid eller huvuddistans.
+Löparen väljer uppläsning efter eget positivt tidsintervall (minuter och sekunder) eller distansintervall i meter. Läs huvudpassets fyra värden, aktuell splits fyra värden samt aktuellt tempo och puls på engelska. Uppläsningsfrekvens och splitlängd är oberoende. Tala om fasbyten och mål-RPE. Låt kort fasbesked få företräde framför längre sammanfattningar, och undvik överlappande eller föråldrade besked när musik spelas. Föreslagen standard är att periodiska sammanfattningar räknas från huvudstart med aktiv tid eller huvuddistans.
 
 Ge kort coaching vid mer än 10 procents tempoavvikelse eller puls utanför vald zon i 30 sammanhängande aktiva sekunder inom samma split. Föreslagen tolkning är utjämnat aktuellt tempo i sekunder/km och giltig aktuell puls. Vid 5:00 min/km är gränserna 4:30 och 5:30. Återställ avvikelsetid vid ny split, paus, datalucka eller återgång inom mål. Ge ett besked per sammanhängande avvikelse. RPE utan mätmål ger fasbesked och ordinarie uppläsning.
 
@@ -85,10 +87,13 @@ Minimalist Material Design är projektets eget urval av Material Design. Använd
 Minimalism mäts i antalet beslut för löparen. Efter första konfigurationen: en startåtgärd från favoritlistan, noll obligatoriska tryck för ordinarie fasbyten, automatisk sparning efter avslut. Skilj primära åtgärder från redigering. Startsidan visar 2–3 favoriter utan att öppna meny. En tom lista erbjuder Skapa första passet. Avbruten favoritredigering ska bevara föregående version.
 - Navigation: Pass, Historik och Inställningar. Under pågående pass får fas och kontroller utrymmet. Återöppning från avisering visar samma runda. Kartan ligger i passdetaljen efter avslut.
 - Visuell hierarki: fas, återstående tid/distans och mål överst; huvudpass och split med samma ordning och enheter i mitten; aktuellt tempo/puls störst längst ned. Visa begripligt tomvärde vid bortfall. Tillåt radbrytning till två kolumner vid textförstoring.
-- Designvärden för mockuprevision 2: Noto Sans med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Bakgrund #FCFCF8, text #142922, sekundärtext #50655A, accent #115840. Inget dekorativt diagram i träningsvyn.
+- Tidigare designförslag (revision 2, återremitterad): Noto Sans med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Bakgrund #FCFCF8, text #142922, sekundärtext #50655A, accent #115840. Inget dekorativt diagram i träningsvyn.
 - Handling: minst 48 × 48 dp tryckyta. Fasberoende knappnamn förklarar effekten. Skilj manuell paus från autopaus med text. Appen ska gå att använda med TalkBack och stor systemtext utan förlorade värden eller åtgärder.
 - Acceptans: testa första start, återkommande favorit, ståvila, uppvärmning +1 min, avslut, frånkopplat pulsband och väntande export. Kontrollera kontrast (4,5:1 för normal text), läsordning och text vid 200 %. Låsskärmens exempel anger prioritering av innehåll och åtgärder; Android styr exakt rendering.
 - Granskningsunderlag: sex sidor i design/Lopp-mockups.pdf. Godkännande gäller den namngivna revisionen och journalförs i design/decision.md före implementation.
 
 ## Projektstyrning
 GitHub Projects är den gemensamma arbetslistan. Varje byggbar ändring har en issue med länkat krav och acceptansprov. Flytta till In Progress när arbete börjar, länka PR och verifieringsresultat, och flytta till Done när kriterierna uppfyllts. Git är källan för krav och design; Projects visar status. Skapad lokal startstruktur är inte bevis på att fjärrprojektet skapats.
+
+## Designrevision 3 · för granskning
+Två vyer i design/LOOP-Cx-direction-3.pdf prövar varmvit #F6F5F1, grafit #171A22 och kobolt #284CE8. C1 och C2 identifieras via typografi och passets rytm. Huvudpass och split jämförs radvis. Noto Sans och Material Icons kvarstår. Färg och layout inväntar beslut.
