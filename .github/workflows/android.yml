@@ -32,11 +32,14 @@ jobs:
           name: loop-cx-emulator-x64
           path: src/LoopCx/bin/Debug/**/*-Signed.apk
           if-no-files-found: error
+      - name: Free space for the Android system image and its userdata
+        run: |
+          sudo rm -rf /usr/share/swift /opt/ghc /usr/local/.ghcup /usr/local/share/boost
+          df -h "$HOME"
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          disk-size: 2048M
           emulator-boot-timeout: 300
           api-level: 35
           arch: x86_64
