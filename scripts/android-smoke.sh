@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'adb logcat -d -t 600' ERR
 mapfile -t packages < <(find src/LoopCx/bin/Debug -name '*-Signed.apk')
 [[ ${#packages[@]} == 1 ]]
 adb install -r "${packages[0]}"
@@ -13,10 +14,16 @@ command() {
     adb shell am start -n se.loopcx.running/.MainActivity --es loop-command "$1"
 }
 snapshot() {
-    adb logcat -d -s LoopRun:I '*:S' -v raw | sed -n '/^{/p' | tail -n 1
+    adb logcat -d -s LoopRun:I '*:S' -v raw | sed 's/^[[:space:]]*//' | sed -n '/^{/p' | tail -n 1
 }
 command start
-sleep 5
+for attempt in {1..60}; do
+    snapshot > /tmp/run-start.json
+    if [[ -s /tmp/run-start.json ]]; then break; fi
+    sleep 1
+done
+[[ -s /tmp/run-start.json ]]
+sleep 3
 snapshot > /tmp/run-start.json
 command start
 sleep 2
