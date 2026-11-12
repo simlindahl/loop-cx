@@ -1,4 +1,2 @@
-# Designbeslut
-Revision 1 · Inväntar Simon. Underlaget är mockups.html. Vid beslut: ange versionens commit, beslut, källa och eventuella ändringar. Alla värden i skisserna är exempeldata.
-
-Mobilgranskning: Lopp-mockups.pdf ersätter HTML som granskningsunderlag. Sex konceptskärmar, exempeldata. Visuell hierarki, tillgänglighet och acceptans finns i knowledge/product.md under UI/UX. Inväntar godkännande.
+# LOOP Cx · designrevision 2
+Produktnamn, C1/C2-inriktning, Minimalist Material Design, Material Icons och Noto Sans är beslutade av Simon. Visuell utformning i Lopp-mockups.pdf väntar på godkännande före implementation. Revision 1 finns i Git-historiken.

@@ -1,12 +1,15 @@
 ---
 type: Product Specification
-title: Löparapp för Android
+title: LOOP Cx för Android
 ---
-# Löparapp för Android · specifikation v1
+# LOOP Cx för Android · specifikation v1
 12 november 2026 · Underlag för implementation och verifiering
 
 ## Produkt och leverans
 En svenskspråkig löparapp för en löpare som roterar mellan några favoritpass. Från startsidan ska ett sparat upplägg kunna startas med ett tryck efter första konfigurationen. Samma registrering ska fungera med synlig skärm, med Spotify i förgrunden och med telefonen låst. Leverera Android-app, installerbar APK för privat bruk, reproducerbara Windows-instruktioner och verifieringsrapport. Första måltelefon är Pixel med WHOOP-band. Ingen server behövs. Privat APK-distribution är ett föreslaget standardval.
+
+## LOOP Core
+LOOP Cx är den officiella löparappen för C1 och C2. Startsidan visar C1 · Intervaller och C2 · Zon 2 med en startåtgärd vardera, följt av egna favoriter. C1: 10 min progressiv uppvärmning, 5 × 3 min kontrollerat arbete, 2 min lätt rörelse mellan insatserna och 5 min lätt avslut (38 min totalt). C2: lätt löpning i WHOOP-zon 2, normalt 45–60 min; startvärde 45 min. Visa syfte och märk källa, kategori och mallrevision i registreringen. Personliga varianter kan sparas separat. Globala 3/2 min används för egna pass. Stöd för hela 10K-pluginen är ett separat beslut.
 
 ## Teknikbeslut
 Använd C#, .NET MAUI Blazor Hybrid och en lokal SQLite-databas. PWA ger enklare distribution och webbutveckling, lokal lagring och cachat gränssnitt, men webbens geolokalisering förutsätter ett synligt dokument. Tillförlitlig positionsregistrering i fickan, Bluetooth-puls och Health Connect avgör valet. MAUI kräver Android SDK, emulator, plattformsbehörigheter och underhåll av Android-bindningar. Batterianvändningen ska mätas på telefon. Ingen separat webbvärd behövs.
@@ -18,7 +21,7 @@ En Android foreground service som startas när användaren startar passet äger 
 - **Träningsvy.** Överst fas, mål-RPE, eventuellt tempo- eller zonmål, repetitionsnummer och återstående tid/distans där slutet är bestämt. Två tydligt märkta grupper visar huvudpass respektive aktuell split, vardera med tid, distans, snittempo och snittpuls. Längst ner visas aktuellt tempo och aktuell puls störst. Under uppvärmning visas fasens egna data. Vid huvudstart börjar huvudräknarna på noll. Under nedvarvning är huvudpassets resultat färdigt.
 - **Historik.** Nyaste rundan först. Detalj visar huvudpass, total inklusive in- och utjogg, splits, tid i pulszoner, karta över hela GPS-spåret, exportstatus och Dela passdata. Ändring av en favorit eller zongräns får aldrig förändra ett tidigare resultat.
 - **Inställningar.** WHOOP-anslutning, manuella zongränser, Health Connect-status och standardtider för uppvärmning/nedvarvning. Ljudinställningarna för en favorit ska följa med när passet upprepas.
-- **Visuell standard som agenten får justera efter test.** En sans serif, exempelvis Roboto med tabellsiffror, neutral bakgrund, hög kontrast och en accent för aktiv fas eller primär handling. Använd Androids textskalning, tydliga enheter och minst 48 dp för tryckytor. Kontrollera läsordning med TalkBack, stor text och avläsning utomhus. Status behöver en textetikett även när färg används.
+- **Beslutad visuell inriktning.** Minimalist Material Design med Noto Sans och tabellsiffror, neutral bakgrund, hög kontrast och en accent för aktiv fas eller primär handling. Använd Androids textskalning, tydliga enheter och minst 48 dp för tryckytor. Kontrollera läsordning med TalkBack, stor text och avläsning utomhus. Status behöver en textetikett även när färg används.
 
 ## Pass och statistik
 1. Kontinuerligt pass slutar vid vald aktiv tid, vald distans eller manuellt. Automatisk split per hel kilometer i huvudpasset. Spara även den sista ofullständiga spliten med faktisk distans.
@@ -74,10 +77,15 @@ Löpande Android-avisering på låsskärmen och i aviseringspanelen visar fas, k
 Test på fysisk telefon återstår. Särskilt viktiga mätpunkter är falsk autopaus vid långsam jogg, GPS-brus vid ståvila, aviseringskontroller på låsskärmen och WHOOP:s faktiska måltillgodoräkning. Specifikationen ger agenten mandat att justera mätfiltren efter dokumenterade prov. Ändringar av passregler eller målstatistik kräver ett produktbeslut.
 
 ## UI/UX – designkontrakt för v1
+Minimalist Material Design är projektets eget urval av Material Design. Använd flat listvy, primär fylld knapp, sekundär textknapp, diskreta avdelare och navigationsfält med tre namngivna destinationer. En accentfärg; använd elevation bara när överlappande ytor behöver särskiljas. Visa fokus, tryckt, valt och inaktivt tillstånd.
+- **Typografi:** paketera Noto Sans lokalt för appens egna vyer, regular och bold; testa å/ä/ö, systemtextskalning och stabil sifferbredd.
+- **Ikoner:** använd Googles Material Icons, Filled, 24 dp som standard. Välj play_arrow för start, pause för paus och history/settings för navigation. Märk åtgärder med synlig text eller tillgängligt namn. Dekorativa ikoner döljs för skärmläsare. Standardaviseringar följer Androids systemtypografi och layout.
+- **Designprov:** kontrollera Noto Sans och ikoner i flygplansläge, vald flik med text och form samt en direkt start från vardera Core-mallen.
+
 Minimalism mäts i antalet beslut för löparen. Efter första konfigurationen: en startåtgärd från favoritlistan, noll obligatoriska tryck för ordinarie fasbyten, automatisk sparning efter avslut. Skilj primära åtgärder från redigering. Startsidan visar 2–3 favoriter utan att öppna meny. En tom lista erbjuder Skapa första passet. Avbruten favoritredigering ska bevara föregående version.
 - Navigation: Pass, Historik och Inställningar. Under pågående pass får fas och kontroller utrymmet. Återöppning från avisering visar samma runda. Kartan ligger i passdetaljen efter avslut.
 - Visuell hierarki: fas, återstående tid/distans och mål överst; huvudpass och split med samma ordning och enheter i mitten; aktuellt tempo/puls störst längst ned. Visa begripligt tomvärde vid bortfall. Tillåt radbrytning till två kolumner vid textförstoring.
-- Föreslagna designtokens: Roboto/system-sans med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Bakgrund #FCFCF8, text #142922, sekundärtext #50655A, accent #115840. Inget dekorativt diagram i träningsvyn.
+- Designvärden för mockuprevision 2: Noto Sans med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Bakgrund #FCFCF8, text #142922, sekundärtext #50655A, accent #115840. Inget dekorativt diagram i träningsvyn.
 - Handling: minst 48 × 48 dp tryckyta. Fasberoende knappnamn förklarar effekten. Skilj manuell paus från autopaus med text. Appen ska gå att använda med TalkBack och stor systemtext utan förlorade värden eller åtgärder.
 - Acceptans: testa första start, återkommande favorit, ståvila, uppvärmning +1 min, avslut, frånkopplat pulsband och väntande export. Kontrollera kontrast (4,5:1 för normal text), läsordning och text vid 200 %. Låsskärmens exempel anger prioritering av innehåll och åtgärder; Android styr exakt rendering.
 - Granskningsunderlag: sex sidor i design/Lopp-mockups.pdf. Godkännande gäller den namngivna revisionen och journalförs i design/decision.md före implementation.
