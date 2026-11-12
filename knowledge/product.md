@@ -72,3 +72,15 @@ Löpande Android-avisering på låsskärmen och i aviseringspanelen visar fas, k
 - [Android – ljud och volym](https://developer.android.com/media/platform/output) · [Google Maps – debitering](https://developers.google.com/maps/documentation/android-sdk/usage-and-billing) · [prislista](https://developers.google.com/maps/billing-and-pricing/pricing)
 
 Test på fysisk telefon återstår. Särskilt viktiga mätpunkter är falsk autopaus vid långsam jogg, GPS-brus vid ståvila, aviseringskontroller på låsskärmen och WHOOP:s faktiska måltillgodoräkning. Specifikationen ger agenten mandat att justera mätfiltren efter dokumenterade prov. Ändringar av passregler eller målstatistik kräver ett produktbeslut.
+
+## UI/UX – designkontrakt för v1
+Minimalism mäts i antalet beslut för löparen. Efter första konfigurationen: en startåtgärd från favoritlistan, noll obligatoriska tryck för ordinarie fasbyten, automatisk sparning efter avslut. Skilj primära åtgärder från redigering. Startsidan visar 2–3 favoriter utan att öppna meny. En tom lista erbjuder Skapa första passet. Avbruten favoritredigering ska bevara föregående version.
+- Navigation: Pass, Historik och Inställningar. Under pågående pass får fas och kontroller utrymmet. Återöppning från avisering visar samma runda. Kartan ligger i passdetaljen efter avslut.
+- Visuell hierarki: fas, återstående tid/distans och mål överst; huvudpass och split med samma ordning och enheter i mitten; aktuellt tempo/puls störst längst ned. Visa begripligt tomvärde vid bortfall. Tillåt radbrytning till två kolumner vid textförstoring.
+- Föreslagna designtokens: Roboto/system-sans med tabellsiffror. Rubrik 28–32 sp, aktuell mätning 40–48 sp, grupprubrik 18 sp, brödtext 16 sp, etikett 12–14 sp. Mellanrum i 4/8/16/24 dp, 20–24 dp yttermarginal. Bakgrund #FCFCF8, text #142922, sekundärtext #50655A, accent #115840. Inget dekorativt diagram i träningsvyn.
+- Handling: minst 48 × 48 dp tryckyta. Fasberoende knappnamn förklarar effekten. Skilj manuell paus från autopaus med text. Appen ska gå att använda med TalkBack och stor systemtext utan förlorade värden eller åtgärder.
+- Acceptans: testa första start, återkommande favorit, ståvila, uppvärmning +1 min, avslut, frånkopplat pulsband och väntande export. Kontrollera kontrast (4,5:1 för normal text), läsordning och text vid 200 %. Låsskärmens exempel anger prioritering av innehåll och åtgärder; Android styr exakt rendering.
+- Granskningsunderlag: sex sidor i design/Lopp-mockups.pdf. Godkännande gäller den namngivna revisionen och journalförs i design/decision.md före implementation.
+
+## Projektstyrning
+GitHub Projects är den gemensamma arbetslistan. Varje byggbar ändring har en issue med länkat krav och acceptansprov. Flytta till In Progress när arbete börjar, länka PR och verifieringsresultat, och flytta till Done när kriterierna uppfyllts. Git är källan för krav och design; Projects visar status. Skapad lokal startstruktur är inte bevis på att fjärrprojektet skapats.
