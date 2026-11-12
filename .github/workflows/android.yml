@@ -25,7 +25,7 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: dotnet workload install maui-android
-      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
       - run: dotnet build src/LoopCx -c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64
       - uses: actions/upload-artifact@v4
         with:
