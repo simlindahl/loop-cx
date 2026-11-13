@@ -107,12 +107,27 @@ Minimalist Material Design is this project's selection of Material Design conven
 Minimalism is measured by the number of decisions the runner makes. After initial setup: one start action from favourites, zero mandatory taps for ordinary phase transitions, automatic saving on completion. Separate primary actions from editing. The home screen shows 2–3 favourites without opening a menu. An empty list offers Create first workout. Cancelling favourite editing must preserve the previous version.
 - Navigation: Training, History and Settings. During a workout, prioritize phase and controls. Reopening from a notification shows the same run. The map appears in session details after completion.
 - Visual hierarchy: phase, remaining time/distance and target at the top; main set and split with the same order and units in the middle; live pace/heart rate largest at the bottom. Use understandable empty values for missing data. Allow wrapping into two columns at larger text sizes.
-- Typography scale: Space Grotesk with tabular numerals. Heading 28–32 sp, live measurement 40–48 sp, group heading 18 sp, body 16 sp, label 12–14 sp. Spacing in 4/8/16/24 dp, outer margins 20–24 dp. Dark default theme: graphite #14171E, text #EDF1FA, secondary text #ABB5C6 and accent #91ABFF. No decorative chart in the training view.
+- Typography scale: Space Grotesk with tabular numerals. Heading 28–32 sp, live measurement 40–48 sp, group heading 18 sp, body 16 sp, label 12–14 sp. Spacing in 4/8/16/24 dp, outer margins 20–24 dp. Dark default theme: Basalt, as specified in the color table below. No decorative chart in the training view.
 - Actions: at least 48 × 48 dp touch targets. Phase-specific button names explain their effect. Distinguish manual pause from autopause with text. The app must work with TalkBack and large system text without losing values or actions.
 - Acceptance: test first start, recurring favourite, standing recovery, warm-up +1 min, finish, disconnected heart-rate band and pending export. Check contrast (4.5:1 for normal text), reading order and text at 200%. Lock-screen examples prioritize content and actions; Android determines exact rendering.
-- Review material: home and training views in design/LOOP-Cx-direction-5.pdf. Approval applies to the named revision and is recorded in design/decision.md before implementation.
+- Review material: [static HTML mockups](../design/mockups/index.html) with [requirements mapping and reading guide](../design/mockups/README.md) are the ongoing visual reference for the whole app. Simon approved the layout direction on 12 November and chose Basalt on 13 November 2026. New screens and detailed layouts are preliminary. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history. HTML does not replace workout rules, acceptance tests or Android verification. Record decisions in design/decision.md before implementation.
+
+<a id="basalt--beslutade-färger"></a>
+### Basalt – approved colors
+
+| Role | Color | Usage |
+|---|---|---|
+| Background | #10120F | App background |
+| Surface | #1B1E18 | Groups and navigation bars |
+| Primary text | #EEEFE6 | Headings, timer and measurements |
+| Secondary text | #A6AE9A | Labels and units |
+| Accent | #C4DA73 | Primary actions, active phase and selected destination |
+| On accent | #10120F | Text and icons on filled accent buttons |
+
+The palette replaces revision 5's blue colors; layout, English, Space Grotesk and Material Icons remain. Use the same color roles in every app-owned screen. System-owned Android notifications follow system colors and layout. Color must not carry meaning alone; also use text and shape. Distinguish disabled actions from active ones with state and accessibility information.
+
+Acceptance: home and training views use the table's colors without a remaining blue accent. Primary/secondary text and accent text achieve at least 4.5:1 against both background and surface. The calculated minimum contrast is 7.34:1 (secondary text on surface); dark text on accent achieves 12.21:1. Verify text scaling, focus and outdoor readability in the app; static mockups do not prove these behaviors.
 
 <a id="projektstyrning"></a>
 ## Project governance
 [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.
-
