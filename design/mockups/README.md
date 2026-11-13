@@ -3,14 +3,20 @@
 
 Open `index.html` directly in a browser. No build, server or network is required. From the repository root on Windows: `Start-Process .\design\mockups\index.html` in PowerShell. GitHub's file view shows the HTML source; it does not run the gallery.
 
-One HTML file with shared inline CSS, embedded Space Grotesk and Google Material Icons. This supports offline viewing and transferring dimensions, color roles, component structure and states to Blazor. The large first CSS rule contains font data; jump to `:root` for design tokens and to the desired screen ID for markup.
+The large index.html gallery is one HTML file with shared inline CSS, embedded Space Grotesk and Google Material Icons. This supports offline viewing and transferring dimensions, color roles, component structure and states to Blazor. The large first CSS rule contains font data; jump to `:root` for design tokens and to the desired screen ID for markup.
 
 <a id="vad-som-gäller"></a>
 ## What applies
 
 Basalt, English, Space Grotesk, Material Icons and revision 5's direction are approved. Simon approved the exact neutral Basalt palette and launcher background on 13 November 2026; see the [canonical colors and contrast](../../knowledge/ux-design.md#basalt--approved-colors). New screens and detailed layouts are **preliminary** and await Simon's review. Read the [design decisions](../decision.md) and [product specification](../../knowledge/product.md). Requesting mockups does not approve their design. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
 
-The gallery index and captions are review tools, not app UI. Clicking an action follows an anchor to a static example. No data changes; forms are read-only and switches illustrate states. No JavaScript, sensor access, Android permissions, GPS, storage, speech or export runs. Times and measurements are synthetic. The lock screen, notification shade and share sheet belong to Android and may look different on a phone. The map is deliberately a labelled placeholder.
+## Approved Core-first reference
+
+The standalone [Core-first interactive reference](core-variants/index.html) and its [decision notes](core-variants/decision-notes.md) are the approved implementation reference for two Core cards, official C1 variant selection, RPE help, pace OR zone targets, shortcuts, initial C1.2/last selection and global 4/3-minute C1 preparation Settings for new starts. The latest explicit doses are SIT 7 × 30 seconds with 3-minute recovery (28:30 total), HIIT 5 × 3 minutes (30 min) and Threshold 3 × 6 minutes (31 min). C1 Personalise adjusts only repetitions within a 10–60-minute main set including recovery (SIT 4–18, HIIT 3–12, Threshold 2–7); preparation is outside that guard. Official defaults remain 7/5/3, and saved shortcuts retain their chosen count. C2 uses fixed target RPE 4 and a 20–120-minute slider in 5-minute steps (45 default), main equals total and no preparation. These are product guardrails, not evidence that every permitted maximal SIT dose suits every runner. See [the design decision](../decision.md) and [owning workout specification](../../knowledge/running-workouts.md) for conditions, frozen-history policy and remaining bounds.
+
+This reference runs synthetic interactions only in browser memory, offline, using repository-relative local resources. It is not production code or native Android acceptance evidence. The older generic workout-builder/editor/favourite-numbering examples in the large gallery are historical, superseded by Core-first; their presence does not authorize arbitrary workout creation. Other preliminary gallery states and reader/Ghost holds retain their own conditions.
+
+In the large index.html gallery, the index and captions are review tools, not app UI. Clicking an action follows an anchor to a static example. No data changes; forms are read-only and switches illustrate states. No JavaScript, sensor access, Android permissions, GPS, storage, speech or export runs. Times and measurements are synthetic. The lock screen, notification shade and share sheet belong to Android and may look different on a phone. The map is deliberately a labelled placeholder.
 
 <a id="använd-vid-implementation"></a>
 ## Use during implementation

@@ -6,7 +6,7 @@ title: LOOP Cx product specifications
 <a id="loop-cx-for-android--specification-v1"></a>
 # LOOP Cx product specifications
 
-The current Android running app remains **LOOP Cx** through milestone 1. At the start of milestone 2, the app and GitHub repository are to become **LOOP**, subject to the identity/update/data transition gate below. Cx then denotes the conditioning domain within LOOP, not the product identity. This documentation change does not rename the current app, repository, package or namespace.
+The current Android running app remains **LOOP Cx** through milestone 1. At the start of milestone 2, the app and GitHub repository are to become **LOOP**, through the owner-approved technical-identity/fresh-install transition below. Cx then denotes the conditioning domain within LOOP, not the product identity. This documentation change does not rename the current app, repository, package or namespace.
 
 ## Specification ownership
 
@@ -28,7 +28,7 @@ Read this entry point and the affected owning specification before a change. Rul
 ## Milestones
 
 - [M1 · LOOP Cx](https://github.com/simlindahl/loop-cx/milestone/1): complete the current running app and existing acceptance, including Ghost and required physical evidence. Current naming/identity remains.
-- [M2 · LOOP](https://github.com/simlindahl/loop-cx/milestone/2): first rename app and repository to LOOP through the [transition gate](loop-core-roadmap.md#rename-at-the-start-of-m2), then integrate complete Core including S1/S2 and separately managed M selected from Sx. M2 starts after M1 acceptance and its rename/update/data/link gate.
+- [M2 · LOOP](https://github.com/simlindahl/loop-cx/milestone/2): first rename app and repository to LOOP through the [transition gate](loop-core-roadmap.md#rename-at-the-start-of-m2), then integrate complete Core including S1/S2 and separately managed M selected from Sx. M2 starts after M1 acceptance; its first delivery verifies the technical rename, fresh installation and maintained links. Simon explicitly waived local-data migration for this single-user transition.
 
 A merged slice is not full milestone acceptance. Publication and licensing were separately approved; the repository is public. The Projects board and private source repository remain private. See [publication review](../docs/publication-review.md) for the decision and evidence boundaries.
 
