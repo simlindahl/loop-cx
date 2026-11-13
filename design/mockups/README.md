@@ -58,6 +58,7 @@ Galleriets index och bildtexter är granskningsverktyg, inte app-UI. Klick på e
 | [Timed recovery](index.html#recovery) | `recovery` | Pass och statistik 2, 6 |
 | [Distance recovery](index.html#distance-recovery) | `distance-recovery` | Pass och statistik 2, 6 |
 | [Zone 2 run](index.html#easy-run) | `easy-run` | LOOP Core; Pass och statistik 1, 3 |
+| [Distance-based run](index.html#tempo-run) | `tempo-run` | Pass och statistik 1, 3 |
 | [Open finish](index.html#open-run) | `open-run` | Pass och statistik 1; Återkoppling – öppet slut |
 | [Open finish, no cool-down](index.html#open-no-cooldown) | `open-no-cooldown` | Återkoppling – öppet slut |
 | [Manual pause](index.html#paused) | `paused` | Pass och statistik 6 |
