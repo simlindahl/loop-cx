@@ -22,6 +22,8 @@ jobs:
       - run: dotnet workload install maui-android
       - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
       - run: dotnet build src/LoopCx -c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64
+      - name: Verify packaged scoped stylesheet and font license
+        run: python3 scripts/android-ui-smoke.py --check-package
       - uses: actions/upload-artifact@v4
         with:
           name: loop-cx-emulator-x64

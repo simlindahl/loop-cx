@@ -1,12 +1,35 @@
 """Focused C1 UI evidence; run only after android-smoke.sh in a dedicated emulator."""
 import json
+import math
+import os
 import re
 import subprocess
+import sys
+import zipfile
 import sqlite3
 import tempfile
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+def check_package():
+    packages = list(Path("src/LoopCx/bin/Debug").rglob("*-Signed.apk"))
+    assert len(packages) == 1, "Expected one built APK for package verification"
+    with zipfile.ZipFile(packages[0]) as package:
+        names = package.namelist()
+        assert "assets/wwwroot/LoopCx.styles.css" in names, "Missing served Razor scoped stylesheet"
+        bundle = package.read("assets/wwwroot/LoopCx.styles.css")
+        assert bundle.strip() and b".countdown[b-" in bundle, "Missing component-scoped countdown styling"
+        assert "assets/wwwroot/fonts/space-grotesk.ttf" in names
+        assert "LoopCx.styles.css" in package.read("assets/wwwroot/index.html").decode("utf-8")
+        assert "assets/wwwroot/fonts/FONT-LICENSE.txt" in names
+    print("PASS: APK contains linked Razor scoped stylesheet and bundled font license")
+
+
+check_package()
+if "--check-package" in sys.argv:
+    raise SystemExit(0)
+
 
 PACKAGE = "se.loopcx.running"
 OUT = Path("verification/c1-ui")
@@ -14,7 +37,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 
 def adb(*args, binary=False):
-    return subprocess.check_output(["adb", *args], text=not binary, timeout=30).strip() if not binary else subprocess.check_output(["adb", *args], timeout=30)
+    return subprocess.check_output(["adb", *args], text=not binary, timeout=30, stderr=subprocess.STDOUT).strip() if not binary else subprocess.check_output(["adb", *args], timeout=30)
 
 
 assert adb("shell", "getprop", "ro.kernel.qemu") == "1", "Dedicated emulator required"
@@ -25,6 +48,12 @@ report = {"source": subprocess.check_output(["git", "rev-parse", "HEAD"], text=T
           "density": adb("shell", "wm", "density"), "size": adb("shell", "wm", "size"),
           "fontScaleBefore": original_scale, "states": [],
           "limits": "UIAutomator is not TalkBack. Screenshots require visual review; font asset presence does not prove font loading."}
+event_path = os.environ.get("GITHUB_EVENT_PATH")
+event = json.loads(Path(event_path).read_text(encoding="utf-8")) if event_path else {}
+report["pullRequestHead"] = event.get("pull_request", {}).get("head", {}).get("sha")
+report["pullRequestBase"] = event.get("pull_request", {}).get("base", {}).get("sha")
+report["sourceTree"] = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip()
+report["captureFailures"] = []
 density = int(re.findall(r"(\d+)", report["density"])[-1]) / 160
 
 
@@ -32,11 +61,39 @@ def open_app():
     adb("shell", "am", "start", "-W", "-n", PACKAGE + "/.MainActivity")
 
 
+def capture_diagnostics(name, reason):
+    report["captureFailures"].append({"state": name, "reason": str(reason)})
+    (OUT / (name + "-capture-error.txt")).write_text(str(reason) + "\n", encoding="utf-8")
+    for suffix, args, binary in [
+        ("-capture-error.png", ("exec-out", "screencap", "-p"), True),
+        ("-crash-log.txt", ("logcat", "-d", "-b", "crash", "-t", "100"), False),
+    ]:
+        try:
+            output = adb(*args, binary=binary)
+            if binary:
+                (OUT / (name + suffix)).write_bytes(output)
+            else:
+                (OUT / (name + suffix)).write_text(output + "\n", encoding="utf-8")
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as diagnostic_error:
+            report["captureFailures"].append({"state": name, "diagnosticError": str(diagnostic_error)})
+
+
 def capture(name, expected, heading_min_height=0):
+    xml = ""
+    capture_errors = 0
     for _ in range(40):
-        adb("shell", "uiautomator", "dump", "/data/local/tmp/loop-ui.xml")
-        xml = adb("shell", "cat", "/data/local/tmp/loop-ui.xml")
-        root = ET.fromstring(xml)
+        try:
+            adb("shell", "uiautomator", "dump", "/data/local/tmp/loop-ui.xml")
+            xml = adb("shell", "cat", "/data/local/tmp/loop-ui.xml")
+            root = ET.fromstring(xml)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ET.ParseError) as error:
+            capture_errors += 1
+            detail = str(error) + "\n" + str(getattr(error, "output", ""))
+            capture_diagnostics(name + "-attempt-" + str(capture_errors), detail)
+            if capture_errors >= 3:
+                raise AssertionError("UI capture failed three times: " + name) from error
+            time.sleep(1)
+            continue
         if any(expected in (n.get("text", "") + n.get("content-desc", "")) for n in root.iter("node")) and heading_height(root, "Paused") >= heading_min_height:
             (OUT / (name + ".xml")).write_text(xml + "\n", encoding="utf-8")
             (OUT / (name + ".png")).write_bytes(adb("exec-out", "screencap", "-p", binary=True))
@@ -44,7 +101,7 @@ def capture(name, expected, heading_min_height=0):
             return root
         time.sleep(1)
     (OUT / (name + "-failed.xml")).write_text(xml + "\n", encoding="utf-8")
-    (OUT / (name + "-failed.png")).write_bytes(adb("exec-out", "screencap", "-p", binary=True))
+    capture_diagnostics(name + "-failed", "Missing rendered UI: " + expected)
     raise AssertionError("Missing rendered UI: " + expected)
 
 
@@ -58,6 +115,32 @@ def button(root, label, tap=False):
     if tap:
         adb("shell", "input", "tap", str((x1+x2)//2), str((y1+y2)//2))
     return y2-y1
+
+
+def scroll_to_top():
+    screen_width, screen_height = map(int, re.findall(r"(\d+)x(\d+)", report["size"])[-1])
+    for _ in range(3):
+        adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.3)),
+            str(screen_width//2), str(int(screen_height*0.8)), "400")
+
+
+def reachable_button(name, label):
+    screen_width, screen_height = map(int, re.findall(r"(\d+)x(\d+)", report["size"])[-1])
+    last_error = None
+    for attempt in range(7):
+        root = capture(name + "-scroll-" + str(attempt), "")
+        try:
+            button(root, label)
+            report.setdefault("buttonReachability", []).append({"label": label, "state": name, "scanAttempt": attempt, "resetToTop": attempt > 0})
+            return root
+        except AssertionError as error:
+            last_error = error
+        if attempt == 0:
+            scroll_to_top()
+        elif attempt < 6:
+            adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.8)),
+                str(screen_width//2), str(int(screen_height*0.3)), "400")
+    raise AssertionError("Button not reachable at 48dp after bounded scrolling: " + label) from last_error
 
 
 def heading_height(root, text):
@@ -95,23 +178,26 @@ try:
     adb("shell", "settings", "put", "system", "font_scale", "1.0")
     open_app()
     idle = capture("idle-offline", "Start C1 · Intervals")
-    button(idle, "Start C1 · Intervals", tap=True)
+    button(reachable_button("idle-start-c1", "Start C1 · Intervals"), "Start C1 · Intervals", tap=True)
     running = capture("running", "Pause")
     run_id = wait_snapshot(lambda s: s.get("TemplateId") == "C1" and not s["Paused"])["Id"]
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "start-c2")
     assert wait_snapshot(lambda s: s["Id"] == run_id)["TemplateId"] == "C1", "C2 duplicate must not replace C1"
     for label in ["Pause", "+1 min", "Start main run"]:
-        button(running, label)
-    button(running, "Pause", tap=True)
+        reachable_button("running-" + label.replace(" ", "-"), label)
+    button(reachable_button("running-pause", "Pause"), "Pause", tap=True)
+    scroll_to_top()
     paused = capture("paused", "Resume")
-    normal_height = button(paused, "Resume")
     normal_heading_height = heading_height(paused, "Paused")
     assert normal_heading_height > 0, "Paused heading must have accessible bounds"
+    normal_height = button(reachable_button("paused-resume", "Resume"), "Resume")
     wait_snapshot(lambda s: s["Id"] == run_id and s["Paused"])
     adb("shell", "settings", "put", "system", "font_scale", "2.0")
     open_app()
+    scroll_to_top()
     large = capture("paused-large-text", "Resume", normal_heading_height * 1.4)
-    large_height = button(large, "Resume")
+    large_resume = reachable_button("paused-large-resume", "Resume")
+    large_height = button(large_resume, "Resume")
     report["fontScaleRequested"] = "2.0"
     report["fontScaleReadback"] = adb("shell", "settings", "get", "system", "font_scale")
     report["resumeButtonHeightNormalPx"] = normal_height
@@ -120,55 +206,37 @@ try:
     report["pausedHeadingHeightLargePx"] = heading_height(large, "Paused")
     report["actualTextScaling"] = "PASS: one-line Paused heading bounds grew at least 40% at system font scale 2.0; screenshots retain exact rendered evidence"
     assert snapshot()["Id"] == run_id and snapshot()["Paused"], "Reopen must retain the same paused session"
-    button(large, "Resume", tap=True)
+    button(reachable_button("large-resume-tap", "Resume"), "Resume", tap=True)
     resumed = capture("resumed-large-text", "Pause")
     for label in ["Pause", "+1 min", "Start main run"]:
-        button(resumed, label)
+        reachable_button("resumed-large-" + label.replace(" ", "-"), label)
     wait_snapshot(lambda s: s["Id"] == run_id and not s["Paused"])
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
     large_idle = capture("idle-large-text", "Start C1 · Intervals")
-    button(large_idle, "Start C1 · Intervals")
-    # A vertically scrollable large-text card is reachable, not clipped away.
-    screen = re.findall(r"(\d+)x(\d+)", report["size"])[-1]
-    screen_width, screen_height = map(int, screen)
-    for attempt in range(5):
-        c2_nodes = [n for n in large_idle.iter("node")
-                    if n.get("clickable") == "true" and n.get("enabled") == "true"
-                    and n.get("package", PACKAGE) == PACKAGE
-                    and any(c.get("text") == "Start C2 · Zone 2" or c.get("content-desc") == "Start C2 · Zone 2"
-                            for c in n.iter("node"))]
-        visible = []
-        for node in c2_nodes:
-            x1, y1, x2, y2 = map(int, re.findall(r"\d+", node.get("bounds")))
-            if x2 > x1 and y2 > y1 and y2 < screen_height - 24 * density:
-                visible.append(node)
-        if visible:
-            button(large_idle, "Start C2 · Zone 2")
-            capture("c2-idle-large-text-reachable", "Start C2 · Zone 2")
-            report["largeC2Reachability"] = {"enabled48dp": True, "swipes": attempt}
-            break
-        adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.8)),
-            str(screen_width//2), str(int(screen_height*0.3)), "400")
-        large_idle = capture("idle-large-text-scrolled", "")
-    else:
-        raise AssertionError("Large-text C2 start not reachable after bounded vertical scrolling")
+    reachable_button("idle-large-c1", "Start C1 · Intervals")
+    reachable_button("idle-large-c2", "Start C2 · Zone 2")
     # Return to normal scale before selecting the second Core card.
     adb("shell", "settings", "put", "system", "font_scale", "1.0")
     open_app()
     c2_idle = capture("c2-idle", "Start C2 · Zone 2")
-    button(c2_idle, "Start C2 · Zone 2", tap=True)
+    c2_start = reachable_button("idle-start-c2", "Start C2 · Zone 2")
+    c2_tapped_at = time.monotonic()
+    button(c2_start, "Start C2 · Zone 2", tap=True)
     c2_running = capture("c2-running", "Pause")
     c2 = wait_snapshot(lambda s: s.get("TemplateId") == "C2" and not s["Paused"])
-    assert c2["Phase"] == "Work" and 2680 <= c2["RemainingSeconds"] <= 2700
+    capture_elapsed = math.ceil(time.monotonic() - c2_tapped_at)
+    assert c2["Phase"] == "Work" and max(0, 2700 - capture_elapsed - 2) <= c2["RemainingSeconds"] <= 2700
+    assert c2["ActiveSeconds"] + c2["RemainingSeconds"] == 2700, "C2 has exactly 45 active minutes"
+    report["c2CaptureElapsedSeconds"] = capture_elapsed
     assert not any(n.get("text") in ["+1 min", "Start main run"] for n in c2_running.iter("node"))
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "start")
     assert wait_snapshot(lambda s: s["Id"] == c2["Id"])["TemplateId"] == "C2", "Cross-template duplicate must not replace C2"
-    button(c2_running, "Pause", tap=True)
+    button(reachable_button("c2-running-pause", "Pause"), "Pause", tap=True)
     capture("c2-paused", "Resume")
     open_app()
     c2_reopened = capture("c2-reopened", "Resume")
     wait_snapshot(lambda s: s["Id"] == c2["Id"] and s["Paused"] and s["TemplateId"] == "C2")
-    button(c2_reopened, "Resume", tap=True)
+    button(reachable_button("c2-reopened-resume", "Resume"), "Resume", tap=True)
     capture("c2-resumed", "Pause")
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
     capture("c2-finished", "Start C2 · Zone 2")
