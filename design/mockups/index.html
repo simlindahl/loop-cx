@@ -41,6 +41,30 @@
   margin-top: 16px;
 }
 .ghost-map{width:100%;height:auto;display:block;background:#22291f;border:1px solid var(--cx-line);border-radius:12px;margin:16px 0}.ghost-gap{font-size:40px;line-height:1.15;color:var(--cx-text);margin:16px 0}.ghost-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--cx-muted)}.ghost-key{display:inline-block;width:14px;height:14px;border-radius:50%;background:white;opacity:.8;border:2px solid #10120f;margin-right:6px}.ghost-key.you{background:var(--cx-accent);border-radius:2px;opacity:1}
+
+/* Ghost comparison rows wrap at word boundaries when text is enlarged. */
+.review-screen[id^="ghost-"] .row {
+  flex-wrap: wrap;
+}
+
+.review-screen[id^="ghost-"] .row > span:first-child {
+  overflow-wrap: normal;
+}
+
+.review-screen[id^="ghost-"] .row-value {
+  max-width: 100%;
+  margin-left: auto;
+}
+
+/* Gallery-only alternate-state navigation is not part of the app UI. */
+.review-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--cx-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 </style>
  </head>
  <body>
@@ -103,7 +127,7 @@
     A complete run. One quiet interface.
    </h1>
    <p>
-    70 static screens · English v1 · Space Grotesk · Material Icons · 13 November 2026
+    90 static screens · English v1 · Space Grotesk · Material Icons · 13 November 2026
    </p>
    <p>
     Browse with the screen index or follow the app links. Links jump to example states; fields are read-only, and no run, permission, sensor, save or export operation takes place.
@@ -114,9 +138,9 @@
   </header>
   <div class="review-layout">
    <nav aria-label="Mockup index" class="review-index">
-    <details open="">
+    <details>
      <summary>
-      All screens · 70
+      All screens · 90
      </summary>
      <div class="index-groups">
       <section>
@@ -364,11 +388,34 @@
 <a href="#loop-learn">Learn more</a>
 <a href="#loop-sources">Sources and limits</a>
 </section>
+      <section>
+       <h2>Ghost Run · preliminary</h2>
+       <a href="#ghost-routes">Ghost Run</a>
+       <a href="#ghost-empty">Your routes</a>
+       <a href="#ghost-save">Save route to Ghost Run</a>
+       <a href="#ghost-choose">Park loop</a>
+       <a href="#ghost-same">One run. Both records.</a>
+       <a href="#ghost-no-year">Set your year best</a>
+       <a href="#ghost-ready">Race year best</a>
+       <a href="#ghost-ready-pb">Race personal best</a>
+       <a href="#ghost-ready-first">Set first time</a>
+       <a href="#ghost-live">Ghost Run</a>
+       <a href="#ghost-live-pb">Ghost Run</a>
+       <a href="#ghost-first-live">First time this year</a>
+       <a href="#ghost-paused">Training paused</a>
+       <a href="#ghost-uncertain">GPS uncertain</a>
+       <a href="#ghost-off-route">Return to the route</a>
+       <a href="#ghost-result">New year best</a>
+       <a href="#ghost-unverified">Attempt saved</a>
+       <a href="#ghost-abandon">End this attempt?</a>
+       <a href="#ghost-lock">Lock screen · Ghost Run</a>
+       <a href="#ghost-not-ready">Move to the start</a>
+      </section>
      </div>
     </details>
-   <h2>Ghost Run</h2><a href="#ghost-routes">Ghost Run</a><a href="#ghost-empty">Your routes</a><a href="#ghost-save">Save route to Ghost Run</a><a href="#ghost-choose">Park loop</a><a href="#ghost-same">One run. Both records.</a><a href="#ghost-no-year">Set your year best</a><a href="#ghost-ready">Race year best</a><a href="#ghost-ready-pb">Race personal best</a><a href="#ghost-ready-first">Set first time</a><a href="#ghost-live">Ghost Run</a><a href="#ghost-live-pb">Ghost Run</a><a href="#ghost-first-live">First time this year</a><a href="#ghost-paused">Training paused</a><a href="#ghost-uncertain">GPS uncertain</a><a href="#ghost-off-route">Return to the route</a><a href="#ghost-result">New year best</a><a href="#ghost-unverified">Attempt saved</a><a href="#ghost-abandon">End this attempt?</a><a href="#ghost-lock">Lock screen · Ghost Run</a><a href="#ghost-not-ready">Move to the start</a>
+
 </nav>
-   <main class="gallery" id="gallery"><p><a href="#loop-about">Review Settings → What is LOOP? (six new screens)</a></p>
+   <main class="gallery" id="gallery">
     <section aria-labelledby="group-setup" class="review-group">
      <h2 id="group-setup">
       Setup
@@ -7369,8 +7416,8 @@
     </div>
     <div class="phone-content">
      <header class="page-header">
-      <a class="back" href="#ghost-routes">
-       ← Ghost Run
+      <a class="back" href="#training">
+       ← Training
       </a>
       <h2>
        Ghost Run
@@ -7391,12 +7438,12 @@
       <a class="action primary" href="#ghost-choose">
        Park loop
       </a>
-      <a class="action secondary" href="#ghost-empty">
-       Empty library example
-      </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-empty">Empty library example</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>
@@ -7477,8 +7524,8 @@
     </div>
     <div class="phone-content">
      <header class="page-header">
-      <a class="back" href="#ghost-routes">
-       ← Ghost Run
+      <a class="back" href="#c2-detail">
+       ← Run details
       </a>
       <h2>
        Save route to Ghost Run
@@ -7517,7 +7564,7 @@
         This verified run becomes your first result. Stops and pauses count towards race time.
        </p>
       </aside>
-      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
        <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#394232" stroke-width="18">
        </path>
        <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
@@ -7529,10 +7576,6 @@
        <text fill="#EEEFE6" font-size="13" x="70" y="239">
         Start / Finish
        </text>
-       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#10120F" stroke-width="3">
-       </circle>
-       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
-       </path>
        <text fill="#EEEFE6" font-size="12" x="12" y="22">
         Illustrative route
        </text>
@@ -7613,15 +7656,12 @@
       <a class="action secondary" href="#ghost-ready-pb">
        Race personal best
       </a>
-      <a class="action text" href="#ghost-no-year">
-       No year best example
-      </a>
-      <a class="action text" href="#ghost-same">
-       Same benchmark example
-      </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-no-year">No year best example</a> · <a href="#ghost-same">Same benchmark example</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>
@@ -7772,7 +7812,7 @@
         27:30 · 10 Nov 2026
        </span>
       </div>
-      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
        <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#394232" stroke-width="18">
        </path>
        <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
@@ -7784,10 +7824,6 @@
        <text fill="#EEEFE6" font-size="13" x="70" y="239">
         Start / Finish
        </text>
-       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#10120F" stroke-width="3">
-       </circle>
-       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
-       </path>
        <text fill="#EEEFE6" font-size="12" x="12" y="22">
         Illustrative route
        </text>
@@ -7851,7 +7887,7 @@
         26:40 · 12 Sep 2025
        </span>
       </div>
-      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
        <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#394232" stroke-width="18">
        </path>
        <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
@@ -7863,10 +7899,6 @@
        <text fill="#EEEFE6" font-size="13" x="70" y="239">
         Start / Finish
        </text>
-       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#10120F" stroke-width="3">
-       </circle>
-       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
-       </path>
        <text fill="#EEEFE6" font-size="12" x="12" y="22">
         Illustrative route
        </text>
@@ -7922,7 +7954,7 @@
       </h2>
      </header>
      <div class="body">
-      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
        <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#394232" stroke-width="18">
        </path>
        <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
@@ -7934,10 +7966,6 @@
        <text fill="#EEEFE6" font-size="13" x="70" y="239">
         Start / Finish
        </text>
-       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#10120F" stroke-width="3">
-       </circle>
-       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
-       </path>
        <text fill="#EEEFE6" font-size="12" x="12" y="22">
         Illustrative route
        </text>
@@ -8058,15 +8086,12 @@
       <a class="action primary" href="#ghost-paused">
        Pause training
       </a>
-      <a class="action secondary" href="#ghost-result">
-       Finish example
-      </a>
-      <a class="action text" href="#ghost-uncertain">
-       GPS uncertainty example
-      </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-result">Finish example</a> · <a href="#ghost-uncertain">GPS uncertainty example</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>
@@ -8134,12 +8159,15 @@
         10:00
        </span>
       </div>
-      <a class="action secondary" href="#ghost-ready-pb">
-       Return to preview
+      <a class="action primary" href="#ghost-paused">
+       Pause training
       </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-ready-pb">Return to preview</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>
@@ -8177,7 +8205,7 @@
       </h2>
      </header>
      <div class="body">
-      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+      <svg aria-label="Illustrative route with your position and no ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
        <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#394232" stroke-width="18">
        </path>
        <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
@@ -8189,8 +8217,6 @@
        <text fill="#EEEFE6" font-size="13" x="70" y="239">
         Start / Finish
        </text>
-       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#10120F" stroke-width="3">
-       </circle>
        <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
        </path>
        <text fill="#EEEFE6" font-size="12" x="12" y="22">
@@ -8213,12 +8239,15 @@
         Follow the complete route to set your first time for 2026.
        </p>
       </aside>
-      <a class="action primary" href="#ghost-result">
-       Finish example
+      <a class="action primary" href="#ghost-paused">
+       Pause training
       </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-result">Finish example</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>
@@ -8337,15 +8366,12 @@
         10:30
        </span>
       </div>
-      <a class="action secondary" href="#ghost-live">
-       Reliable GPS example
-      </a>
-      <a class="action text" href="#ghost-off-route">
-       Off-route example
-      </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-live">Reliable GPS example</a> · <a href="#ghost-off-route">Off-route example</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>
@@ -8391,7 +8417,7 @@
         Race time and your ghost continue. Rejoin where you left the route; skipping a section cannot earn a record.
        </p>
       </aside>
-      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+      <svg aria-label="Illustrative route. Your position is off the route; comparison is unavailable. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
        <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#394232" stroke-width="18">
        </path>
        <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
@@ -8403,23 +8429,18 @@
        <text fill="#EEEFE6" font-size="13" x="70" y="239">
         Start / Finish
        </text>
-       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#10120F" stroke-width="3">
-       </circle>
-       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
+       <path d="M18 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
        </path>
        <text fill="#EEEFE6" font-size="12" x="12" y="22">
         Illustrative route
        </text>
       </svg>
-      <a class="action secondary" href="#ghost-live">
-       Rejoined route example
-      </a>
-      <a class="action text" href="#ghost-unverified">
-       Unverified result example
-      </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-live">Rejoined route example</a> · <a href="#ghost-unverified">Unverified result example</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>
@@ -8715,7 +8736,7 @@
       </h2>
      </header>
      <div class="body">
-      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
        <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#394232" stroke-width="18">
        </path>
        <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
@@ -8727,10 +8748,6 @@
        <text fill="#EEEFE6" font-size="13" x="70" y="239">
         Start / Finish
        </text>
-       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#10120F" stroke-width="3">
-       </circle>
-       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#10120F" stroke-width="2">
-       </path>
        <text fill="#EEEFE6" font-size="12" x="12" y="22">
         Illustrative route
        </text>
@@ -8743,15 +8760,15 @@
         You are away from the start or GPS is not reliable enough. Recording an ordinary run remains available.
        </p>
       </aside>
-      <a class="action secondary" href="#ghost-ready">
-       At start example
-      </a>
       <a class="action text" href="#training">
        Back to training
       </a>
      </div>
     </div>
    </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-ready">At start example</a>.
+   </p>
    <p class="requirement">
     Spec: Ghost Run · synthetic example
    </p>

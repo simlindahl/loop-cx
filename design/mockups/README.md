@@ -137,7 +137,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 [Static mockup review](../../.github/workflows/mockups.yml) uses Chromium on GitHub Actions. The check opens the file offline and checks broken anchors, duplicate IDs, the embedded font, scripts and external requests. It measures horizontal overflow at 360, 390, 700, 1024 and 1440 px, follows Start C1 to warm-up and saves representative screenshots and `report.json` as the `mockup-review` Actions artifact. An approximation of 200% text scaling is reported separately; it does not replace Android system text scaling or TalkBack.
 
-Local equivalent with Node and Playwright installed: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` can select a separate installation. Screenshots and the report are written to `design/mockups/qa/` and must not be committed. This working environment could not start local Chromium, so browser checks run in Actions. Record actual results in the PR after the run.
+Local equivalent with Node and Playwright installed: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` can select a separate installation. Screenshots and the report are written to `design/mockups/qa/` and must not be committed. Record actual local and Actions results in the PR; browser availability depends on the environment. The verifier also follows Ghost route entry, return to session details, and the pause action in each live reference mode.
 
 <a id="licenser"></a>
 ## Licenses
@@ -186,3 +186,11 @@ A separate feature from Training; save a continuous main set from session detail
 | [End this attempt?](index.html#ghost-abandon) | `ghost-abandon` | Ghost Run |
 | [Lock screen · Ghost Run](index.html#ghost-lock) | `ghost-lock` | Ghost Run |
 | [Move to the start](index.html#ghost-not-ready) | `ghost-not-ready` | Ghost Run |
+
+## UX review proposal · issue #38
+
+The gallery still contains 90 static screens. The review index is collapsed initially and groups Ghost Run with the other screen groups. Alternate-state links are outside the phone frames so review navigation cannot be mistaken for app controls. The count and navigation describe the actual gallery; they add no product destinations.
+
+Ghost Run changes are preliminary design corrections: return from its route list to Training and from Save route to the source run details; show the existing Pause training action in every live reference mode; remove ghost/runner positions from pre-start route overviews, remove the ghost from first-time recording, and show the runner off-route when comparison is unavailable; let comparison rows wrap at word boundaries with enlarged text. Alternate-state links still let reviewers inspect automatic finish, GPS recovery and missing-reference examples. The shared paused screen is a representative state; runtime navigation must retain the selected reference rather than copying a static anchor's example opponent.
+
+These are proposed corrections to the Ghost addition, not a new approval of its detailed layout. They do not change workout rules, create new main tabs or alter the approved revision 5 core layout. The six approved LOOP reader articles and guide content remain unchanged. Record Simon's decision before runtime implementation. Review evidence and limitations belong in the PR for #38; static Chromium layout, keyboard and text-scaling checks do not establish Android/TalkBack or outdoor acceptance.
