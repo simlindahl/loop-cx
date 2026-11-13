@@ -29,7 +29,7 @@ Use one card per bounded work item. A feature issue with remaining work may be T
 5. Retrieve current item and field IDs before writing. Update only the intended item and field, preserve others' changes and avoid duplicates. Read back both status and `Next step` after each update. On failure, report the concrete error and last verified status; do not claim the board was updated.
 6. Reconcile the project at the end of each run. Link the delivery PR and verification results from the correct card. Leave the feature issue open if mandatory acceptance remains. Keep current and recently completed cards; archive older Done cards when needed without deleting issues or PRs.
 
-The enabled GitHub Projects workflow sets a PR card to Waiting when a review requests changes. Read back that status instead of repeating the same write through CLI. This automation does not update `Next step` or replace ownership assessment: when the agent takes up actionable review changes, set Doing while implementing and verifying them; use Waiting when Simon must act.
+The enabled GitHub Projects workflows set a PR card to Waiting when a review requests changes and Doing when a review approves the PR. Read back the automated status instead of repeating the same write through CLI. Review approval and Doing do not by themselves authorize merge or mean acceptance is complete. These automations do not update `Next step` or replace ownership assessment: when the agent takes up actionable review changes, set Doing while implementing and verifying them; use Waiting when Simon must act.
 
 ### Project status updates
 
