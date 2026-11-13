@@ -1,66 +1,29 @@
-# Ghost Run: ordnad ruttmatchning
-Krav: [Ghost Run](../knowledge/product.md#ghost-run), Uppspelning och jämförelse
-samt Giltighet och osäkerhet. Del av #18, ovanpå #22.
+<a id="ghost-run-ordnad-ruttmatchning"></a>
+# Ghost Run: ordered route matching
+Requirements: [Ghost Run](../knowledge/product.md#ghost-run), Playback and comparison, and Validity and uncertainty. Part of #18, on top of #22.
 
-`OrderedRouteMatcher` är en fristående C#-regel för syntetisk verifiering och
-kommande fältprov. Den läser samma frysta ruttversion som referensen och
-kräver en explicit versionsmärkt policy. Ingen Android-sensor, karta, vy eller
-SQLite-koppling ingår.
+`OrderedRouteMatcher` is a standalone C# rule for synthetic verification and future field tests. It reads the same frozen route version as the reference and requires an explicit versioned policy. No Android sensor, map, view or SQLite integration is included.
 
-## Beviskedja
-Start är ett explicit anrop med säker position nära rätt start; vanliga
-observationer startar inte en tävling. Startens observerade monotona tidsstämpel
-fryses. Anropande tjänst måste senare samordna denna med användarens
-tävlingsstart och GPS-färskhet; ingen tjänstekoppling finns här.
+<a id="beviskedja"></a>
+## Evidence chain
+Starting is an explicit call with a reliable position near the correct start; ordinary observations do not start a race. Freeze the observed monotonic start timestamp. A future calling service must coordinate this with the user's race start and GPS freshness; no service integration exists here.
 
-Matcharen håller en sammanhängande täckt ruttprefix. Endast det förväntade
-segmentet kan ge aktuell ruttposition. En mätförflyttning får passera flera
-ruttpunkter bara när de ligger i rätt ordning längs den korta observerade
-förflyttningen, inom grindtoleransen och i inspelad riktning. Slutpunkten ska
-fortfarande ligga i rätt ruttkorridor. Närmaste punkt på hela rutten används
-aldrig för att flytta fram segmentindex.
+The matcher maintains a continuous covered route prefix. Only the expected segment can provide the current route position. An observed movement may pass several route points only if they lie in order along that short movement, within gate tolerance and in the recorded direction. Its endpoint must still be in the correct route corridor. Never use the nearest point on the whole route to advance the segment index.
 
-Lucka, osäker GPS, orimlig hastighet/steglängd och ruttavvikelse döljer aktuell
-jämförelse utan att flytta det täckta prefixet. Återinträde längre fram bevisar
-inte en överhoppad del. Efter en stor lucka kan återkomst nära senaste täckta
-ankare återställa jämförelsen; resten måste faktiskt traverseras i ordning.
-En mindre lucka kan accepteras mellan giltiga ändpunkter inom den explicit
-valda policyn. En uttryckligt markerad lucka bryggas inte till ny täckning.
+Gaps, uncertain GPS, implausible speed/step length and route deviation hide the current comparison without advancing the covered prefix. Re-entry farther ahead does not prove a skipped section. After a large gap, returning near the last covered anchor may restore comparison; the remainder must actually be traversed in order. A small gap may be accepted between valid endpoints under the explicitly selected policy. An explicitly marked gap is not bridged into new coverage.
 
-Mål kräver alla grindar i rätt ordning. En tidig passage vid samma fysiska
-koordinat i slinga/ut-och-tillbaka är därför inget mål. En tät, giltig passage
-mellan fixar kan härleda målstämpeln genom projektion längs mätförflyttningen.
-Måltid och sluttillstånd fryses. Ett syntetiskt prov använder denna stämpel
-med `GhostRaceClock.CompleteAt` under träningspaus.
+Finishing requires all gates in order. An early pass at the same physical coordinate on a loop/out-and-back route is therefore not a finish. A closely sampled valid crossing between fixes may derive the finish timestamp by projection along the observed movement. Freeze finish time and final state. A synthetic test uses this timestamp with `GhostRaceClock.CompleteAt` during training pause.
 
-## Beräkningsgränser
-Koordinater projiceras till ett lokalt ekvirektangulärt plan med första
-ruttpunkten som origo och jordradie 6 371 008,8 m. Longituddifferens normaliseras
-över datumgränsen. Rutter utanför explicit projektionsutsträckning eller med
-origo vid minst 85 graders latitud avvisas; nollånga geometrisegment avvisas.
-Framsteg interpoleras från ruttversionens lagrade meterpositioner. Uppmätt
-löpdistans och denna ruttposition är olika värden.
+<a id="beräkningsgränser"></a>
+## Calculation limits
+Project coordinates onto a local equirectangular plane with the first route point as origin and Earth radius 6,371,008.8 m. Normalize longitude difference across the date line. Reject routes outside the explicit projection extent or with origin at latitude 85 degrees or higher; reject zero-length geometry segments. Interpolate progress from the route version's stored metre positions. Measured running distance and this route position are different values.
 
-Policyn anger korridor, grindradie, maximal noggrannhetsradie, lucka, hastighet,
-mätsteg och projektionsutsträckning. Toleranser använder även fixens
-noggrannhetsradie. Alla värden i proven är syntetiska, inte förvalda
-produktionsfilter eller fysiskt godkända gränser.
+The policy specifies corridor, gate radius, maximum accuracy radius, gap, speed, sample step and projection extent. Tolerances also use each fix's accuracy radius. All test values are synthetic, not default production filters or physically approved thresholds.
 
-Denna första regel är konservativ. Längre återgång över redan passerade
-segment och återinträde långt från sista täckta ankare kan förbli okända.
-Nära parallella stråk inom samma GPS-osäkerhet kräver fortsatt kvalitets- och
-fältanalys. Lokalt linjära antaganden och interpolerad målpassage måste
-fältprovas innan verkliga rekord tilldelas. Finished betyder hela kedjan
-under den angivna policyn, inte en fristående fysisk certifiering. Ingen
-`GhostAttempt` med Verified-status skapas automatiskt.
+This initial rule is conservative. Longer backtracking over passed segments and re-entry far from the last covered anchor may remain unknown. Closely parallel sections within the same GPS uncertainty need further quality and field analysis. Local linear assumptions and interpolated finish crossings need field testing before real records are awarded. Finished means the full chain under the given policy, not independent physical certification. No `GhostAttempt` with Verified status is created automatically.
 
-## Verifiering
-`dotnet run --project tests/GhostChecks` kör även `RouteMatchChecks`.
-Proven täcker fast start, dubblettstart/fix, ordnade segment, diagonal genväg,
-fel riktning, tidig målpassage i slinga, vändpunkt, parallella stråk, figuråtta,
-GPS-lucka med återinträde vid mål, återgång till täckt ankare, osäker GPS,
-orimligt hopp, fel tidsordning, projektionsgräns och fryst mål. Ett tätt
-syntetiskt mål mellan fixar avslutar tävlingen under träningspaus med rätt tid.
+<a id="verifiering"></a>
+## Verification
+`dotnet run --project tests/GhostChecks` also runs `RouteMatchChecks`. Tests cover fixed start, duplicate start/fix, ordered segments, a diagonal shortcut, wrong direction, early finish on a loop, turnaround, parallel sections, figure eight, a GPS gap with re-entry at the finish, return to a covered anchor, uncertain GPS, implausible jump, incorrect time order, projection boundary and frozen finish. A closely sampled synthetic finish between fixes completes the race during training pause at the correct time.
 
-SQLite-ruttarkiv, faktisk GPS under paus, systemägda aviseringar, godkänd UI och
-fysiska Pixel/WHOOP/Spotify-prov återstår. Hälsoexport är fortsatt avstängd.
+SQLite route archive, actual GPS during pause, system-owned notifications, approved UI and physical Pixel/WHOOP/Spotify tests remain outstanding. Health export remains disabled.
