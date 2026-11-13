@@ -6,7 +6,7 @@ En enda HTML-fil med gemensam inline-CSS, inbäddad Space Grotesk och Googles Ma
 
 ## Vad som gäller
 
-Basalt, engelska, Space Grotesk, Material Icons och revision 5:s inriktning är beslutade. Nya vyer och detaljlayouter är **preliminära** och inväntar Simons granskning. Läs [designbeslut](../decision.md) och [produktspecifikation](../../knowledge/product.md). Mockupbeställningen är inte ett designgodkännande. PDF:erna bevaras som historik.
+Basalt, engelska, Space Grotesk, Material Icons och revision 5:s inriktning är beslutade. Nya vyer och detaljlayouter är **preliminära** och inväntar Simons granskning. Läs [designbeslut](../decision.md) och [produktspecifikation](../../knowledge/product.md). Mockupbeställningen är inte ett designgodkännande. PDF-mockuperna är borttagna på Simons begäran den 13 november 2026. Tidigare revisioner finns i Git-historiken.
 
 Galleriets index och bildtexter är granskningsverktyg, inte app-UI. Klick på en åtgärd går till ett statiskt exempel med ankarlänk. Inga data ändras; formulär är skrivskyddade och brytare är bilder av tillstånd. Ingen JavaScript, sensoråtkomst, Android-behörighet, GPS, lagring, uppläsning eller export körs. Tider och mätningar är syntetiska. Låsskärm, aviseringspanel och delningsmeny ägs av Android och kan se annorlunda ut på telefonen. Kartan är avsiktligt en markerad platshållare.
 
