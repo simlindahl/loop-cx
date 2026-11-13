@@ -16,7 +16,7 @@ public sealed class GhostRaceClock
 
     public GhostRaceClock(TimeSpan startedAt)
     {
-        if (startedAt < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(startedAt));
+        ArgumentOutOfRangeException.ThrowIfLessThan(startedAt, TimeSpan.Zero);
         this.startedAt = observedAt = startedAt;
     }
 
@@ -68,7 +68,7 @@ public sealed class GhostRaceClock
     public GhostClockSnapshot CompleteAt(TimeSpan monotonicFinish)
     {
         if (state != GhostClockState.Running) return Current;
-        if (monotonicFinish < startedAt) throw new ArgumentOutOfRangeException(nameof(monotonicFinish));
+        ArgumentOutOfRangeException.ThrowIfLessThan(monotonicFinish, startedAt);
         if (monotonicFinish > observedAt) Observe(monotonicFinish);
         endedAt = monotonicFinish;
         state = GhostClockState.Finished;
