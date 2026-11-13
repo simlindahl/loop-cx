@@ -47,3 +47,22 @@ The debug command `complete` accelerates the session to completion and is absent
 Outstanding: history/recovery view, frozen heart-rate zones, heart-rate data, favourites, sensor quality,
 storage errors in the UI and Health Connect retries. Physical Pixel/WHOOP tests
 and Windows tests have not run.
+
+<a id="tidsstämplade-manuella-ändringar-schema-2"></a>
+## Timestamped manual changes (schema 2)
+Database version 2 adds `run_events` without rewriting earlier measurements.
+Save pause, resume, +1 min and manual phase transitions in the same transaction
+as the post-command checkpoint. Each event includes UTC, monotonic elapsed
+time, active time, phase and plan. Repeated pause/resume commands and phase actions
+that do not apply to the current phase create no false events. Two taps on +1 min
+are, however, two valid changes. Start and finish are also logged.
+
+Events are also preserved exactly after process death. Older schema 1 sessions have
+no complete pause log; history must not fabricate one afterwards.
+Pause status and event timestamps distinguish elapsed
+pause time from active time even if the wall clock changes during the run.
+
+`scripts/android-smoke.sh` replaces only the emulator's **debug database** with a
+synthetic schema 1 fixture before testing. Run it only in a dedicated test emulator.
+The test verifies migration without data loss, effective command order, duplicates,
+phase changes and an unchanged log after process death. The release database is unaffected.

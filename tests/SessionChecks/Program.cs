@@ -59,3 +59,17 @@ try
 catch (ArgumentException) { }
 
 Console.WriteLine("PASS: phase order, timing, extensions, skip, pause, RPE and tick independence.");
+
+var commands = Example();
+Require(!commands.Resume(), "Resume without a pause changes nothing.");
+Require(commands.Pause() && !commands.Pause(), "Duplicate pause is idempotent.");
+commands.Advance(Minutes(10));
+Require(commands.TotalActiveTime == TimeSpan.Zero, "Duplicate pause keeps time frozen.");
+Require(commands.Resume() && !commands.Resume(), "Duplicate resume is idempotent.");
+Require(commands.Extend() && commands.Extend(), "Distinct extensions both apply.");
+Require(commands.SkipPreparation(), "Warmup can be skipped once.");
+Require(!commands.SkipPreparation() && !commands.Extend(), "Preparation actions during work change nothing.");
+commands.Advance(Minutes(100));
+Require(!commands.Pause() && !commands.Resume() && !commands.SkipPreparation() && !commands.Extend(),
+    "Completed runs reject every interactive command.");
+Console.WriteLine("PASS: effective command results distinguish state changes from duplicate or inapplicable actions.");

@@ -4,6 +4,28 @@ trap 'adb logcat -d -t 600' ERR
 mapfile -t packages < <(find src/LoopCx/bin/Debug -name '*-Signed.apk')
 [[ ${#packages[@]} == 1 ]]
 adb install -r "${packages[0]}"
+# Upgrade a synthetic v1 database without deleting previously recorded rows.
+python3 - <<'PY'
+import sqlite3
+from pathlib import Path
+path = Path('/tmp/loop-legacy.db')
+path.unlink(missing_ok=True)
+db = sqlite3.connect(path)
+db.executescript("""
+CREATE TABLE runs (id TEXT PRIMARY KEY, started_utc TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, status TEXT NOT NULL, initial_plan TEXT NOT NULL, checkpoint TEXT NOT NULL);
+CREATE TABLE locations (run_id TEXT NOT NULL, utc_ms INTEGER NOT NULL, monotonic_ns INTEGER NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, accuracy REAL);
+CREATE TABLE export_queue (run_id TEXT PRIMARY KEY, status TEXT NOT NULL);
+PRAGMA user_version=1;
+INSERT INTO runs VALUES ('legacy-run', '2026-01-01T00:00:00Z', '2026-01-01T00:00:02Z', 2000, 'recording', '[]', '{"legacy":true}');
+INSERT INTO locations VALUES ('legacy-run', 2000, 2000000000, 59.33, 18.06, 5);
+""")
+db.commit()
+db.close()
+PY
+adb shell am force-stop se.loopcx.running
+adb push /tmp/loop-legacy.db /data/local/tmp/loop-legacy.db
+adb shell run-as se.loopcx.running mkdir -p databases
+adb shell run-as se.loopcx.running cp /data/local/tmp/loop-legacy.db databases/runs-debug.db
 adb shell pm grant se.loopcx.running android.permission.ACCESS_COARSE_LOCATION
 adb shell pm grant se.loopcx.running android.permission.ACCESS_FINE_LOCATION
 adb shell pm grant se.loopcx.running android.permission.POST_NOTIFICATIONS
@@ -40,8 +62,10 @@ adb shell wm dismiss-keyguard
 command pause
 sleep 2
 snapshot > /tmp/run-pause.json
+command pause
 sleep 4
 snapshot > /tmp/run-still-paused.json
+command resume
 command resume
 sleep 4
 snapshot > /tmp/run-resume.json
@@ -98,6 +122,18 @@ import json
 from pathlib import Path
 assert json.loads(Path('/tmp/run-next-gps.json').read_text())['Locations'] > 0
 PY
+# Exercise effective/duplicate commands on the session used for recovery assertions.
+command pause
+command pause
+sleep 4
+command resume
+command resume
+# Record manual phase changes, and reject preparation commands during work.
+command extend
+command extend
+command skip
+command skip
+command extend
 # Force-stop commits no shutdown callback: only durable checkpoints may survive.
 command pause
 sleep 2
@@ -141,5 +177,21 @@ assert after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,))
 assert before.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone() == after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone()
 assert after.execute('SELECT status FROM runs WHERE id=?', (new_id,)).fetchone()[0] == 'finished'
 assert after.execute('SELECT status FROM export_queue WHERE run_id=?', (new_id,)).fetchall() == [('disabled_synthetic',)]
+assert after.execute('PRAGMA user_version').fetchone()[0] == 2
+legacy = after.execute("SELECT elapsed_ms, status, initial_plan, checkpoint FROM runs WHERE id='legacy-run'").fetchone()
+assert legacy == (2000, 'interrupted', '[]', '{"legacy":true}')
+assert after.execute("SELECT COUNT(*) FROM locations WHERE run_id='legacy-run'").fetchone()[0] == 1
+assert after.execute("SELECT COUNT(*) FROM run_events WHERE run_id='legacy-run'").fetchone()[0] == 0, 'Never invent old events'
+rows = after.execute('SELECT command, elapsed_ms, checkpoint FROM run_events WHERE run_id=? ORDER BY sequence', (old_id,)).fetchall()
+assert [r[0] for r in rows] == ['start', 'pause', 'resume', 'extend', 'extend', 'skip', 'pause'], rows
+assert [r[1] for r in rows] == sorted(r[1] for r in rows)
+states = [json.loads(r[2]) for r in rows]
+assert states[1]['Snapshot']['Paused'] and not states[2]['Snapshot']['Paused']
+assert states[1]['TotalActiveTime'] == states[2]['TotalActiveTime'], 'Pause adds elapsed time but no active time'
+assert rows[2][1] - rows[1][1] >= 4000
+assert states[5]['Snapshot']['Phase'] == 'Work'
+assert states[5]['Completed'][0]['Plan']['Duration'] == '00:12:00'
+assert before.execute('SELECT * FROM run_events WHERE run_id=? ORDER BY sequence', (old_id,)).fetchall() == after.execute('SELECT * FROM run_events WHERE run_id=? ORDER BY sequence', (old_id,)).fetchall()
 print('PASS: SQLite survives process death, interrupted checkpoint unchanged, raw GPS retained, atomic finish and synthetic export disabled')
+print('PASS: v1 migration preserves existing data; effective commands retain ordered timestamps and pause duration without duplicate events')
 PY
