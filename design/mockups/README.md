@@ -158,3 +158,31 @@ Review [the complete English guide](../../knowledge/what-is-loop.md) and [review
 | `loop-sources` | Offline explanations with optional external sources |
 
 All map to **LOOP knowledge — review proposal** in product.md. The reader is not a setup wizard and records no progress. Long frames represent scrolling content; Android scroll, back navigation and TalkBack remain future implementation checks.
+
+<a id="ghost-run--preliminärt-tillägg"></a>
+## Ghost Run · preliminary addition
+
+A separate feature from Training; save a continuous main set from session details. All examples are synthetic. The map sketch uses original example geometry, not real map data or working navigation. The race clock and route measurements continue during training pause. Only year best and personal best are supported. Detailed layout awaits review.
+
+| Screen | Screen ID | Requirement |
+|---|---|---|
+| [Ghost Run](index.html#ghost-routes) | `ghost-routes` | Ghost Run |
+| [Your routes](index.html#ghost-empty) | `ghost-empty` | Ghost Run |
+| [Save route to Ghost Run](index.html#ghost-save) | `ghost-save` | Ghost Run |
+| [Park loop](index.html#ghost-choose) | `ghost-choose` | Ghost Run |
+| [One run. Both records.](index.html#ghost-same) | `ghost-same` | Ghost Run |
+| [Set your year best](index.html#ghost-no-year) | `ghost-no-year` | Ghost Run |
+| [Race year best](index.html#ghost-ready) | `ghost-ready` | Ghost Run |
+| [Race personal best](index.html#ghost-ready-pb) | `ghost-ready-pb` | Ghost Run |
+| [Set first time](index.html#ghost-ready-first) | `ghost-ready-first` | Ghost Run |
+| [Ghost Run](index.html#ghost-live) | `ghost-live` | Ghost Run |
+| [Ghost Run](index.html#ghost-live-pb) | `ghost-live-pb` | Ghost Run |
+| [First time this year](index.html#ghost-first-live) | `ghost-first-live` | Ghost Run |
+| [Training paused](index.html#ghost-paused) | `ghost-paused` | Ghost Run |
+| [GPS uncertain](index.html#ghost-uncertain) | `ghost-uncertain` | Ghost Run |
+| [Return to the route](index.html#ghost-off-route) | `ghost-off-route` | Ghost Run |
+| [New year best](index.html#ghost-result) | `ghost-result` | Ghost Run |
+| [Attempt saved](index.html#ghost-unverified) | `ghost-unverified` | Ghost Run |
+| [End this attempt?](index.html#ghost-abandon) | `ghost-abandon` | Ghost Run |
+| [Lock screen · Ghost Run](index.html#ghost-lock) | `ghost-lock` | Ghost Run |
+| [Move to the start](index.html#ghost-not-ready) | `ghost-not-ready` | Ghost Run |
