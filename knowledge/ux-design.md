@@ -49,3 +49,19 @@ Use a single lime accent for primary actions, the active phase, selected destina
 Acceptance: home and training views use this table. Primary/secondary text and accent text achieve at least 4.5:1 against background and surface. Calculated text contrast against surface: primary 15.22:1, secondary 7.59:1 and accent 11.06:1; on-accent text 12.25:1. Background contrast is higher. The #505050 divider has only 2.11:1 contrast against surface and 2.34:1 against background; reserve it for decoration. If an editable field boundary or another non-text cue is needed to identify a control or state, use an existing sufficiently contrasting role such as secondary text and verify at least 3:1 against adjacent colors ([WCAG non-text contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html)). Static read-only field illustrations do not establish editable runtime accessibility. Verify actual Android text scaling, TalkBack, focus and outdoor readability during implementation.
 
 The launcher uses #111111 behind the unchanged approved #C4DA73 continuous tilted loop and 108 × 108 geometry. Preserve package identity, signing compatibility and existing data during the authorized native integration and phone update. The approved LOOP reader content and its runtime hold, revision 5 layout, three tabs and preliminary Ghost layout gate remain in force.
+
+## Approved motion and interaction system
+
+Simon approved **all studies 01–07 and their proposed values** on 13 November 2026 in [#62](https://github.com/simlindahl/loop-cx/issues/62). This supersedes the earlier recommendation to start with only 01–02; the other patterns are approved implementation scope, not merely optional reference. [Design decision](../design/decision.md#motion-studies-0107--13-november-2026) records that approval. Apply each pattern to its real owning operation/view; a missing surface remains a delivery dependency, not permission to fabricate a screen or success state.
+
+| Shared value | Approved value |
+|---|---|
+| Press / quick / standard / exit | 80 / 160 / 220 / 120 ms, where applicable |
+| Easing | `cubic-bezier(.2,0,0,1)` |
+| Group stagger | 24 ms across at most three groups |
+| Movement | At most 4 px for state changes and 8 px for composed entrance |
+| Press scale | Visual scale .98; the actual hit area never shrinks |
+
+The approved family covers 01 press feedback, 02 phase/state changes, 03 navigation, 04 disclosure, 05 truthful determinate progress, 06 actual result feedback and 07 coordinated entrance. [The mapping](../design/mockups/README.md#motion-implementation-dependencies) identifies real-view dependencies. No extra general implementation-plan approval gate is required for this approved family; genuinely new material layout/product choices still follow the existing decision rules. Approval does not release the reader runtime hold or Ghost detailed-layout gate.
+
+Respect system reduced motion with immediate equivalent content and function: no movement/animation, no loss of state, actions, focus or reading order. Commands and accessible values update immediately and never wait for an effect. Do not animate timer/sensor numbers, invent progress or saved results, run continuous decorative loops, or queue obsolete transitions. Preserve at least 48 dp targets, 200% text/scrolling, neutral Basalt, local Space Grotesk and icon geometry. Use small CSS transform/opacity effects first, without a new animation framework; actual Android WebView, TalkBack, touch, frame pacing and battery evidence remain implementation acceptance, not established by the browser studies.

@@ -4,7 +4,7 @@ title: LOOP Cx for running
 ---
 <a id="loop-cx--officiell-löparapp-för-loops-konditionspass"></a>
 # LOOP Cx · official running app for LOOP conditioning workouts
-Product direction approved on 12 November 2026. Design revision 2 awaits visual review.
+Product direction approved on 12 November 2026. The current visual baseline is [approved revision 5 with neutral Basalt](../design/decision.md#current-decision); earlier revision reviews remain historical in that decision record.
 Training reference: [self-contained Core guide](what-is-loop.md), approved as an implementation reference on 13 November 2026. [Product specification](product.md) governs app behavior; optional racing plugins remain outside the first knowledge feature.
 
 Core governs training content. The app executes C1/C2 when running is selected. A running-only log cannot determine the next step in the complete C1 → S1 + M → C2 → S2 + M rotation. Keep free start and personal favourites. Rowing and cycling are valid within Core but outside the running app's current support.
