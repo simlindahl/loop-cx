@@ -128,6 +128,26 @@ The palette replaces revision 5's blue colors; layout, English, Space Grotesk an
 
 Acceptance: home and training views use the table's colors without a remaining blue accent. Primary/secondary text and accent text achieve at least 4.5:1 against both background and surface. The calculated minimum contrast is 7.34:1 (secondary text on surface); dark text on accent achieves 12.21:1. Verify text scaling, focus and outdoor readability in the app; static mockups do not prove these behaviors.
 
+### Neutral Basalt proposal · awaiting Simon's decision
+
+On 13 November 2026 Simon requested a monochrome theme with one or two accent colors because the overall palette looked too green. The gallery now previews the proposed neutral values below. These exact values are not yet approved and do not replace the approved table for runtime implementation.
+
+| Token / role | Approved baseline | Proposed value |
+|---|---|---|
+| `--cx-bg` / background | #10120F | #111111 |
+| `--cx-surface` / surface | #1B1E18 | #1C1C1C |
+| `--cx-text` / primary text | #EEEFE6 | #F2F2F2 |
+| `--cx-muted` / secondary text | #A6AE9A | #ADADAD |
+| `--cx-accent` / accent | #C4DA73 | #C4DA73 (unchanged) |
+| `--cx-on-accent` / on accent | #10120F | #111111 |
+| `--cx-line` / divider | #4C5343 (gallery) | #505050 |
+
+Use a single lime accent for primary actions, the active phase, selected destination, focus and route/runner identification. Workout codes, the wordmark, the continuous-workout decoration and historical zone bars become neutral. Ghost map illustration surfaces and roads also lose their green tint. No second accent is needed for this proposal. Retain text and shape for status and overlapping map markers; color never replaces labels.
+
+Calculated text contrast against the proposed surface: primary 15.22:1, secondary 7.59:1 and accent 11.06:1; on-accent text 12.25:1. Background contrast is higher. Dividers remain subtle, not the sole indicator of a control or state. Verify actual Android text scaling, TalkBack, focus and outdoor readability during implementation.
+
+The launcher proposal changes only its background to #111111; the approved #C4DA73 continuous tilted loop and 108 × 108 geometry remain. Its original approval and asset hashes stay historical evidence, not approval of this new background. Obtain Simon's decision before changing runtime colors or installing a revised icon. The approved LOOP reader content and its runtime hold, revision 5 layout, three tabs and preliminary Ghost layout gate remain in force.
+
 <a id="projektstyrning"></a>
 ## Project governance
 [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. The [roles and decision-making rules](../AGENTS.md#roles-and-decision-making) govern ownership, separate requirements analyst, QA engineer, fullstack developer and UX designer subagents, and team progress updates; the team lead may merge under the conditions in AGENTS.md without separate merge approval from Simon. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.

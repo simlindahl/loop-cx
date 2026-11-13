@@ -3,7 +3,7 @@
 
 <a id="gällande-beslut"></a>
 ## Current decision
-Revision 5's approved layout with the Basalt palette chosen by Simon on 13 November 2026. Space Grotesk, Material Icons, a dark default theme and English apply. Colors and roles are specified under Basalt in knowledge/product.md. The [HTML gallery](mockups/index.html) shows the chosen palette. The color choice does not change workout rules or layout.
+Revision 5's approved layout with the Basalt palette chosen by Simon on 13 November 2026. Space Grotesk, Material Icons, a dark default theme and English apply. Colors and roles are specified under Basalt in knowledge/product.md. The approved palette remains the runtime baseline; the [HTML gallery](mockups/index.html) currently previews the neutral proposal described below. The color choice does not change workout rules or layout.
 
 <a id="statiskt-underlag-för-hela-appen"></a>
 ## Static reference for the whole app
@@ -41,3 +41,7 @@ Simon approved the concrete launcher preview, revision 1, and authorized native 
 Approved SHA-256 identities: foreground `0A8D12E031F7E0366AB1598686371F9AAC57A000FA9FA9388956B60F9AFE79F6`; background `86A2D9A7AFD7C53EA0F59FA53B0C144ED40543A0560FAA8588CF0A85F03295ED`; preview `C6CEB661833BF044A437DDF5447808C3AA242C90348CCE010E2629A81A802755`. The production sources are `src/LoopCx/Resources/AppIcon/appicon.svg` and `appiconfg.svg`. Verify generated Android resources and the installed icon against the approved preview. Themed-launcher behavior is not established by standard icon verification.
 
 Approval is limited to the app icon. It does not approve a wider UI redesign, Ghost detailed layouts or the held What is LOOP? app implementation. Preserve package identity, signing compatibility and existing run data; do not uninstall to refresh launcher artwork.
+
+## Neutral Basalt review proposal · 13 November 2026
+
+Simon requested a monochrome base with one or two accent colors after reviewing the green cast across the UI. The gallery now previews neutral greys with the existing lime as its only accent; [proposed values and contrast](../knowledge/product.md#neutral-basalt-proposal--awaiting-simons-decision) are explicitly pending a decision. This is a proposal, not a new approval. The approved launcher geometry remains; a proposed #111111 launcher background needs a color decision before integration or phone update. Existing runtime holds and detailed-layout approval gates remain.
