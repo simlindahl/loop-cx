@@ -29,6 +29,16 @@ Use one card per bounded work item. A feature issue with remaining work may be T
 5. Retrieve current item and field IDs before writing. Update only the intended item and field, preserve others' changes and avoid duplicates. Read back both status and `Next step` after each update. On failure, report the concrete error and last verified status; do not claim the board was updated.
 6. Reconcile the project at the end of each run. Link the delivery PR and verification results from the correct card. Leave the feature issue open if mandatory acceptance remains. Keep current and recently completed cards; archive older Done cards when needed without deleting issues or PRs.
 
+The enabled GitHub Projects workflows set a PR card to Waiting when a review requests changes and Doing when a review approves the PR. Read back the automated status instead of repeating the same write through CLI. Review approval and Doing do not by themselves authorize merge or mean acceptance is complete. These automations do not update `Next step` or replace ownership assessment: when the agent takes up actionable review changes, set Doing while implementing and verifying them; use Waiting when Simon must act.
+
+### Project status updates
+
+Publish a project-level status update using Projects' **Add status update** whenever a significant milestone is verified, delivery readiness changes, or a material blocker appears, changes or is resolved. Do this proactively within the current task without waiting for Simon to ask. Small edits, routine checks and unchanged blockers do not need an update; consolidate related progress and read the latest update first to avoid duplicates.
+
+Base the update on current Project cards, issues, PRs and verification evidence. Briefly state completed progress, remaining work, changed blockers and the next action with its owner. Link the relevant evidence and distinguish merged delivery from unmerged candidates, automated checks from physical tests, and verified facts from uncertainty. Do not invent target dates or imply acceptance from green CI alone.
+
+Use `gh api graphql` with `createProjectV2StatusUpdate` (there is no dedicated `gh project` status-update command). Retrieve the current project ID before writing and read back the published update to verify its project and content. These updates supplement card status and `Next step`; they do not replace them. Report access/write failures and the last verified state. Publishing a status update requires no repository commit, PR or CI and does not authorize merge or public visibility changes.
+
 GitHub CLI needs the `project` scope. Start with `gh project item-list 2 --owner simlindahl --format json --limit 100` and `gh project field-list 2 --owner simlindahl --format json`. Retrieve additional items if the result does not cover the whole project. Treat denied access as a concrete blocker; do not create a local fallback board that can become stale.
 
 When changing the board workflow, create a clearly marked synthetic draft card in Projects. Test Todo → Doing → Waiting → Doing → Waiting → Done with real writes and read-back after each step. Delete the test card and verify removal. Report synthetic-card results separately from real cards and repository CI.
