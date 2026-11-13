@@ -1,13 +1,14 @@
 ---
 type: Product Decision
-title: LOOP Cx för löpning
+title: LOOP Cx for running
 ---
-# LOOP Cx · officiell löparapp för LOOP:s konditionspass
-Beslutad produktinriktning 12 november 2026. Designrevision 2 väntar på visuell granskning.
-Källor: [Core](https://github.com/simlindahl/second-brain/blob/main/10%20Life/Health%20%26%20Fitness/LOOP/LOOP.md) och [10K-prestation](https://github.com/simlindahl/second-brain/blob/main/10%20Life/Health%20%26%20Fitness/LOOP/Plugins/10K-prestation.md), lästa 12 november 2026.
+<a id="loop-cx--officiell-löparapp-för-loops-konditionspass"></a>
+# LOOP Cx · official running app for LOOP conditioning workouts
+Product direction approved on 12 November 2026. Design revision 2 awaits visual review.
+Sources: [Core](https://github.com/simlindahl/second-brain/blob/main/10%20Life/Health%20%26%20Fitness/LOOP/LOOP.md) and [10K performance](https://github.com/simlindahl/second-brain/blob/main/10%20Life/Health%20%26%20Fitness/LOOP/Plugins/10K-prestation.md), read on 12 November 2026.
 
-Core styr träningsinnehållet. Appen verkställer C1/C2 när löpning väljs. En logg över enbart löpning räcker inte för att härleda nästa steg i hela rotationen C1 → S1 + M → C2 → S2 + M. Behåll fri start och egna favoriter. Rodd och cykel är giltiga inom Core men ligger utanför löparappens nuvarande stöd.
-- C1 Core: leverera en källmärkt favorit med 10 min progressiv uppvärmning, 5 × 3 min kontrollerat hårt, 2 min lätt rörelse mellan arbeten, 5 min lätt avslut. Exakt total 38 min. Core har en inkonsekvent formulering om fyra intervaller; använd tabellens fem i mallen. Undvik lågpulsvarning som driver upp farten tidigt i arbetsfasen. Välj RPE som primärt mål. RPE-tal i mallar är appens föreslagna riktvärden, inte exakta Core-regler.
-- C2 Core: källmärkt zon 2-favorit normalt 45–60 min. Förslag till startvärde 45 min, alltid justerbart. Låt zon/samtalstempo styra. Globalt 3/2 min fortsätter som standard för egna pass; låt källmall ange egna faslängder.
-- Visa kort syfte vid redigering och märk pass med C1/C2/eget i historik och export. Spara mallens källa och revision med passet. En ändrad personlig favorit behöver kunna avvika från officiella malldoser.
-- 10K-plugin: valfri. Flertalet tidsintervaller går att uttrycka. Vecka 9–10 innehåller alternativet 3 × 2 km med 2–3 min jogg, som strider mot beslutad gemensam enhet. Pluginens 3 × 8 min-alternativ kan uttryckas. Inför separat fasenhet endast efter beslut om komplett plugin-stöd. Pluginens C1 anger 10–15 min lätt uppvärmning och nedjogg. Automatisera inte veckokvoter.
+Core governs training content. The app executes C1/C2 when running is selected. A running-only log cannot determine the next step in the complete C1 → S1 + M → C2 → S2 + M rotation. Keep free start and personal favourites. Rowing and cycling are valid within Core but outside the running app's current support.
+- C1 Core: deliver a source-labelled favourite with 10 min progressive warm-up, 5 × 3 min controlled hard effort, 2 min easy movement between efforts and 5 min easy finish. Exactly 38 min total. Core contains an inconsistent reference to four intervals; use the table's five in the template. Avoid low-heart-rate warnings that increase pace early in a work phase. Use RPE as the primary target. Template RPE values are suggested app guidelines, not exact Core rules.
+- C2 Core: a source-labelled zone 2 favourite, normally 45–60 min. Suggested initial value 45 min, always adjustable. Let zone/conversational effort govern. Global 3/2 min remains the default for custom workouts; source templates may specify their own phase durations.
+- Show a short purpose while editing and label workouts as C1/C2/custom in history and export. Save the template source and revision with the session. An edited personal favourite must be able to differ from official template doses.
+- 10K plugin: optional. Most time intervals can be expressed. Weeks 9–10 include a 3 × 2 km option with 2–3 min jogging, which conflicts with the approved shared unit. The plugin's 3 × 8 min alternative can be expressed. Introduce separate phase units only after deciding to support the complete plugin. Its C1 specifies 10–15 min easy warm-up and cool-down jogging. Do not automate weekly quotas.
