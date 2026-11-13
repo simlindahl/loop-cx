@@ -112,3 +112,5 @@ Require(lateStart.ArrivalAt(20) is null, "A missing beginning cannot establish t
 RouteCaptureChecks.Run();
 
 RaceClockChecks.Run();
+
+RouteMatchChecks.Run();
