@@ -6,7 +6,7 @@ title: Future LOOP Core integration
 
 ## Scope and authorization
 
-M2 follows [M1 · LOOP Cx](https://github.com/simlindahl/loop-cx/milestone/1). Simon requested planning and milestone metadata now, not future feature implementation. [M2 · LOOP](https://github.com/simlindahl/loop-cx/milestone/2) integrates the complete Core, including S1/S2 and M, after its initial rename gate. The existing no-server architecture remains; significant architecture, technology, cost and product choices stay with Simon.
+M2 starts after acceptance of [M1 · LOOP Cx](https://github.com/simlindahl/loop-cx/milestone/1). This change records planning and milestone metadata for that future stage. [M2 · LOOP](https://github.com/simlindahl/loop-cx/milestone/2) integrates the complete Core, including S1/S2 and M, after its initial rename gate. The existing no-server architecture remains; significant architecture, technology, cost and product choices stay with Simon.
 
 ## Rename at the start of M2
 
@@ -46,4 +46,4 @@ Resolve these with concrete proposals in the bounded M2 issues before implementa
 - [#43 · Complete Core/Sx integration](https://github.com/simlindahl/loop-cx/issues/43).
 - [#44 · Separate M management and lifecycle decisions](https://github.com/simlindahl/loop-cx/issues/44).
 
-Current documentation/milestone organization is tracked in [#41](https://github.com/simlindahl/loop-cx/issues/41). These links identify planned work, not implementation approval or acceptance.
+Current documentation/milestone organization is tracked in [#41](https://github.com/simlindahl/loop-cx/issues/41). These links identify planned work, not completed acceptance.
