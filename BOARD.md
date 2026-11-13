@@ -8,7 +8,6 @@ Varje rad avser ett avgränsat moment. En feature kan ha återstående implement
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
-| SYNTHETIC-PR-FLOW | Syntetiskt testkort, ska aldrig mergas | — | Verifiera statusbyte och återläsning. |
 | [#1](https://github.com/simlindahl/loop-cx/issues/1) | Återstående Android-stöd och telefonleverans | [#9](https://github.com/simlindahl/loop-cx/pull/9) | Agenten: förbered återstående BLE/ljud/aviseringsstöd och installerbar telefonversion; fysiska prov enligt issuen återstår. |
 | [#2](https://github.com/simlindahl/loop-cx/issues/2) | Komplettera passmotorns acceptans | [#8](https://github.com/simlindahl/loop-cx/pull/8) | Agenten: implementera och verifiera återstående distansstyrning och autopaus. |
 | [#3](https://github.com/simlindahl/loop-cx/issues/3) | Favoritstart och träningsvy | — | Agenten: läs aktuella mockuper och designbeslut; avgränsa första UI-snittet. |
@@ -19,6 +18,7 @@ Varje rad avser ett avgränsat moment. En feature kan ha återstående implement
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
+| SYNTHETIC-PR-FLOW | Syntetiskt testkort, ska aldrig mergas | — | Verifiera statusbyte och återläsning. |
 | [#27](https://github.com/simlindahl/loop-cx/issues/27) | Förbered main-skydd, PR-baserat tavelflöde och obligatoriska checks | — | Agenten: verifiera workflows och syntetiska statusbyten; GitHub kräver Pro eller publikt repo för aktivering. |
 
 ## Waiting
