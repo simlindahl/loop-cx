@@ -7,6 +7,8 @@ public sealed record DistancePolicy(string Version, double MaximumAccuracyMetres
         TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10), 12, 3);
 }
 
+public sealed record DistanceObservation(bool Valid, TimeSpan? PreviousMonotonicTime, TimeSpan MonotonicTime);
+
 public sealed record DistanceFix(TimeSpan MonotonicTime, double Latitude, double Longitude, double? AccuracyMetres);
 public sealed record DistanceSplit(int Number, double MeasuredMetres, TimeSpan ActiveTime, bool HasGaps)
 {
@@ -51,6 +53,8 @@ public sealed class RunDistance
         boundary = started;
         this.phase = phase;
     }
+
+    public DistanceObservation Observation { get; private set; } = new(false, null, TimeSpan.Zero);
 
     public DistanceState Snapshot => new(policy, totalMetres, mainMetres, mainHasGaps, status, [.. splits]);
 
@@ -101,6 +105,8 @@ public sealed class RunDistance
     public bool Observe(DistanceFix fix, TimeSpan receivedAt, TimeSpan mainActiveAtReceipt)
     {
         ArgumentNullException.ThrowIfNull(fix);
+        Observation = new(false, null, fix.MonotonicTime);
+
         if (phase is null) return false;
         // Repeated or stale delivery cannot replace newer evidence or destroy a valid anchor.
         if (lastObserved is { } previous && fix.MonotonicTime <= previous) return false;
@@ -129,6 +135,7 @@ public sealed class RunDistance
             Reject("Implausible GPS jump");
             return false;
         }
+        Observation = new(true, previousValid?.MonotonicTime, fix.MonotonicTime);
         previousValid = fix;
         if (anchor is null)
         {
@@ -204,6 +211,7 @@ public sealed class RunDistance
 
     private void Reject(string reason)
     {
+        Observation = new(false, null, Observation.MonotonicTime);
         anchor = null;
         previousValid = null;
         status = reason;

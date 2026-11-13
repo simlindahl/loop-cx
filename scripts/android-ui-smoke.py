@@ -260,6 +260,20 @@ try:
             assert db.execute("SELECT COUNT(*) FROM export_queue WHERE run_id=?", (c2["Id"],)).fetchone()[0] == 1
             report["c2FrozenMetadata"] = metadata
             assert db.execute("SELECT COUNT(*) FROM run_events WHERE run_id=? AND command='start'", (c2["Id"],)).fetchone()[0] == 1
+            for checked_id in [run_id, c2["Id"]]:
+                checkpoint = json.loads(db.execute("SELECT checkpoint FROM runs WHERE id=?", (checked_id,)).fetchone()[0])
+                statistics = checkpoint["Snapshot"]["Statistics"]
+                assert statistics["Version"] == 1 and statistics["HasSyntheticTime"]
+                assert statistics["Total"]["ActiveTime"] == checkpoint["TotalActiveTime"]
+                assert statistics["Main"]["ActiveTime"] == checkpoint["MainActiveTime"]
+                assert statistics["CurrentSplit"] is None
+                for scope in [statistics["Total"], statistics["Main"], *statistics["CompletedSplits"]]:
+                    assert scope["KnownGpsActiveTime"] == "00:00:00"
+                    assert scope["UnknownGpsActiveTime"] == scope["ActiveTime"]
+                    assert scope["AveragePaceSecondsPerKilometre"] is None
+                    assert scope["AverageHeartRate"] is None and scope["KnownHeartRateActiveTime"] == "00:00:00"
+                    assert scope["UnknownHeartRateActiveTime"] == scope["ActiveTime"]
+            report["persistedStatistics"] = "PASS: actual service/checkpoint active scopes conserved, Unknown GPS/HR remain unknown, final split not duplicated; accelerated debug completion labelled synthetic"
             c1_metadata = json.loads(db.execute("SELECT template_metadata FROM runs WHERE id=?", (run_id,)).fetchone()[0])
             assert c1_metadata["TemplateId"] == "C1" and c1_metadata["IntendedHeartRateZone"] is None
             assert c1_metadata["TemplateRevision"] == 2

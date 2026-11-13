@@ -476,3 +476,111 @@ Require(exactEnd.IsFinished && atEndDecision == MotionDecision.None
     && !exactEnd.PauseAutomatically(TimeSpan.FromSeconds(10), 0)
     && exactEnd.TotalActiveTime == TimeSpan.FromSeconds(10),
     "At exact phase/finish equality the already-processed terminal boundary wins over confirmation.");
+
+// Arrange
+var bracketCoverage = new RunStatistics();
+var bracketDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+bracketCoverage.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(12), RunPhase.Work, false);
+bracketDistance.Observe(Fix(0, 0, 5), TimeSpan.Zero, TimeSpan.Zero);
+bracketCoverage.Observe(bracketDistance.Observation);
+
+// Act
+for (var second = 1; second <= 9; second++)
+{
+    _ = bracketDistance.Observe(Fix(second, 0, 5), TimeSpan.FromSeconds(second), TimeSpan.FromSeconds(second));
+    bracketCoverage.Observe(bracketDistance.Observation);
+}
+bracketDistance.Observe(Fix(10.5, 0, 5), TimeSpan.FromSeconds(12), TimeSpan.FromSeconds(12));
+bracketCoverage.Observe(bracketDistance.Observation);
+bracketCoverage.Observe(bracketDistance.Observation); // Replaying a supported bracket still counts once.
+bracketCoverage.Exclude(TimeSpan.Zero, TimeSpan.FromSeconds(10));
+bracketCoverage.Exclude(TimeSpan.Zero, TimeSpan.FromSeconds(10));
+var delayedCoverage = bracketCoverage.Snapshot(TimeSpan.FromSeconds(12), bracketDistance.Snapshot, true);
+
+// Assert
+Require(delayedCoverage.Total.ActiveTime == TimeSpan.FromSeconds(2)
+    && delayedCoverage.Main.KnownGpsActiveTime == TimeSpan.FromSeconds(.5)
+    && delayedCoverage.Main.UnknownGpsActiveTime == TimeSpan.FromSeconds(1.5),
+    "Union confirming brackets before exact exclusion: preserve supported .5-second tail and unknown 1.5-second receipt lag.");
+Require(delayedCoverage.Main.AveragePaceSecondsPerKilometre is null
+    && delayedCoverage.Main.AverageHeartRate is null
+    && delayedCoverage.Main.KnownHeartRateActiveTime == TimeSpan.Zero
+    && delayedCoverage.Main.UnknownHeartRateActiveTime == delayedCoverage.Main.ActiveTime,
+    "Incomplete/zero-distance pace and unavailable production heart rate remain unknown.");
+
+// Arrange
+var scopedCoverage = new RunStatistics();
+var scopedDistance = new RunDistance(policy, TimeSpan.Zero, RunPhase.Warmup);
+scopedCoverage.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(10), RunPhase.Warmup, false);
+scopedCoverage.Advance(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(110), RunPhase.Work, false);
+scopedCoverage.Advance(TimeSpan.FromSeconds(110), TimeSpan.FromSeconds(210), RunPhase.Recovery, false);
+scopedCoverage.Advance(TimeSpan.FromSeconds(210), TimeSpan.FromSeconds(220), RunPhase.Work, true);
+scopedCoverage.Advance(TimeSpan.FromSeconds(220), TimeSpan.FromSeconds(240), RunPhase.Work, false);
+scopedCoverage.Advance(TimeSpan.FromSeconds(240), TimeSpan.FromSeconds(250), RunPhase.Cooldown, false);
+
+// Act
+scopedDistance.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+scopedCoverage.Observe(scopedDistance.Observation);
+scopedDistance.Observe(Fix(10, 50), TimeSpan.FromSeconds(10), TimeSpan.Zero);
+scopedCoverage.Observe(scopedDistance.Observation);
+scopedDistance.Boundary(RunPhase.Work, TimeSpan.FromSeconds(10), TimeSpan.Zero);
+scopedDistance.Observe(Fix(10, 50), TimeSpan.FromSeconds(10), TimeSpan.Zero);
+scopedCoverage.Observe(scopedDistance.Observation);
+scopedDistance.Observe(Fix(110, 1050), TimeSpan.FromSeconds(110), TimeSpan.FromSeconds(100));
+scopedCoverage.Observe(scopedDistance.Observation);
+scopedDistance.Boundary(RunPhase.Recovery, TimeSpan.FromSeconds(110), TimeSpan.FromSeconds(100));
+scopedDistance.Observe(Fix(210, 2050), TimeSpan.FromSeconds(210), TimeSpan.FromSeconds(200));
+scopedCoverage.Observe(scopedDistance.Observation);
+scopedDistance.Interrupt(TimeSpan.FromSeconds(210), "Manual pause");
+scopedDistance.Reanchor(TimeSpan.FromSeconds(220), "Manual resume");
+scopedDistance.Observe(Fix(220, 3000), TimeSpan.FromSeconds(220), TimeSpan.FromSeconds(200));
+scopedCoverage.Observe(scopedDistance.Observation);
+scopedDistance.Observe(Fix(240, 3200), TimeSpan.FromSeconds(240), TimeSpan.FromSeconds(220));
+scopedCoverage.Observe(scopedDistance.Observation);
+var liveCoverage = scopedCoverage.Snapshot(TimeSpan.FromSeconds(250), scopedDistance.Snapshot, true);
+scopedDistance.Boundary(RunPhase.Cooldown, TimeSpan.FromSeconds(240), TimeSpan.FromSeconds(220));
+scopedDistance.Observe(Fix(240, 3200), TimeSpan.FromSeconds(240), TimeSpan.FromSeconds(220));
+scopedCoverage.Observe(scopedDistance.Observation);
+scopedDistance.Observe(Fix(250, 3250), TimeSpan.FromSeconds(250), TimeSpan.FromSeconds(220));
+scopedCoverage.Observe(scopedDistance.Observation);
+var finalCoverage = scopedCoverage.Snapshot(TimeSpan.FromSeconds(250), scopedDistance.Snapshot, false);
+
+// Assert
+Require(liveCoverage.CurrentSplit is not null && finalCoverage.CurrentSplit is null,
+    "Only the unfinished remainder is current; final partial appears once among completed splits.");
+Require(finalCoverage.Total.ActiveTime == TimeSpan.FromSeconds(240)
+    && finalCoverage.Main.ActiveTime == TimeSpan.FromSeconds(220)
+    && finalCoverage.Main.KnownGpsActiveTime == TimeSpan.FromSeconds(220)
+    && finalCoverage.Main.UnknownGpsActiveTime == TimeSpan.Zero,
+    "Preparation contributes only to total, Recovery to main, pause to neither and valid brackets conserve known active time.");
+Require(finalCoverage.CompletedSplits.Aggregate(TimeSpan.Zero, static (sum, split) => sum + split.ActiveTime)
+    == finalCoverage.Main.ActiveTime
+    && finalCoverage.CompletedSplits.Aggregate(TimeSpan.Zero, static (sum, split) => sum + split.KnownGpsActiveTime)
+    == finalCoverage.Main.KnownGpsActiveTime
+    && Math.Abs(finalCoverage.CompletedSplits.Sum(static split => split.MeasuredMetres) - finalCoverage.Main.MeasuredMetres) < .001,
+    "Kilometre and final-partial coverage/metres use the exact existing distance split boundaries.");
+Require(finalCoverage.Main.AveragePaceSecondsPerKilometre is > 0,
+    "A completely supported positive-distance scope reports its active-time/distance pace.");
+Console.WriteLine("PASS: bracket union, exact retrospective coverage, total/main/current/final split conservation and honest HR unknowns.");
+
+
+// Arrange
+var gapsCoverage = new RunStatistics();
+var gapsDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+gapsCoverage.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(20), RunPhase.Work, false);
+
+// Act
+foreach (var sample in new[] { Fix(2, 0), Fix(4, 0), Fix(3, 0), Fix(6, 0), Fix(7, 0, 100),
+    Fix(8, 0), Fix(9, 0), Fix(20, 0) })
+{
+    _ = gapsDistance.Observe(sample, sample.MonotonicTime < TimeSpan.FromSeconds(4)
+        ? TimeSpan.FromSeconds(4) : sample.MonotonicTime, sample.MonotonicTime);
+    gapsCoverage.Observe(gapsDistance.Observation);
+}
+var honestGaps = gapsCoverage.Snapshot(TimeSpan.FromSeconds(20), gapsDistance.Snapshot, true);
+
+// Assert
+Require(honestGaps.Main.KnownGpsActiveTime == TimeSpan.FromSeconds(5)
+    && honestGaps.Main.UnknownGpsActiveTime == TimeSpan.FromSeconds(15)
+    && honestGaps.Main.MeasuredMetres == 0 && honestGaps.Main.AveragePaceSecondsPerKilometre is null,
+    "Only valid2-6 and8-9 brackets count: initial/final tails, poor quality and excessive gap never extrapolate; old packets do not break newer evidence.");
