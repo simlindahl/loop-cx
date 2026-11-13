@@ -22,8 +22,8 @@ geometry[1] = geometry[1] with { Metres = 999 };
 Require(route.Geometry[1].Metres == 1000, "Geometry is frozen against source mutation; loop endpoint is allowed.");
 
 GhostAttempt Attempt(int id, double seconds, DateTimeOffset local, AttemptQuality quality = AttemptQuality.Verified,
-    RouteKey? routeKey = null, string rules = "synthetic-v1") =>
-    new(Id(id), Id(id + 100), routeKey ?? key, local, "Europe/Stockholm", S(seconds), quality, rules,
+    RouteKey? routeKey = null, string rules = "synthetic-v1", string zone = "Europe/Stockholm") =>
+    new(Id(id), Id(id + 100), routeKey ?? key, local, zone, S(seconds), quality, rules,
         new[] { new GhostPoint(S(0), 0), new GhostPoint(S(seconds), 2000) });
 
 var yearBest = Attempt(10, 1650, new DateTimeOffset(2026, 11, 10, 7, 0, 0, TimeSpan.FromHours(1)));
@@ -58,7 +58,7 @@ var excluded = new[] {
 };
 Require(GhostReferences.Select(route, excluded.Append(yearBest), 2026).PersonalBest == yearBest,
     "Route versions, identity, rule versions and verification verdicts are respected.");
-var boundary = Attempt(30, 1400, new DateTimeOffset(2025, 12, 31, 23, 30, 0, TimeSpan.FromHours(-5)));
+var boundary = Attempt(30, 1400, new DateTimeOffset(2025, 12, 31, 23, 30, 0, TimeSpan.FromHours(-5)), zone: "America/New_York");
 Require(boundary.StartedLocal.UtcDateTime.Year == 2026 && boundary.SavedLocalYear == 2025,
     "A later timezone conversion must not rewrite the saved local year.");
 Require(GhostReferences.Select(route, new[] { boundary }, 2026).YearBest is null, "Year selection uses saved local start.");
@@ -108,3 +108,5 @@ Console.WriteLine("PASS: elapsed-time replay, stops, backtracking, first arrival
 var lateStart = new GhostPlayback(Recording(new(S(5), 10), new(S(10), 20)), S(10));
 Require(lateStart.PositionAt(S(1)) is null, "Never extrapolate before the first measured point.");
 Require(lateStart.ArrivalAt(20) is null, "A missing beginning cannot establish the first arrival.");
+
+RouteCaptureChecks.Run();
