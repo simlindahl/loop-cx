@@ -6,7 +6,7 @@
 
 The [ruleset configuration](../.github/main-ruleset.json) defines `Protect main` for `main`: PR requirement with 0 approvals, resolved review discussions, linear history and required GitHub Actions checks `specification`, `emulator` and `mockups`. The branch must be up to date with main. Deletion and force-push are blocked; the bypass list is empty. Use squash merge. Restrict updates, signed commits and merge queue are not required.
 
-Zero approvals allows merging your own PRs. It does not replace the [repository approval rules](../AGENTS.md#work-tracking-and-status). Update board status directly in [GitHub Projects](https://github.com/users/simlindahl/projects/2); it does not affect main or CI.
+Zero approvals allows merging your own PRs. The lead developer may merge only after subagent review approval and passing required checks under the [repository merge rules](../AGENTS.md#work-tracking-and-status), without a separate merge approval from Simon. Subagent review evidence does not substitute for a GitHub approval required by active platform rules. Update board status directly in [GitHub Projects](https://github.com/users/simlindahl/projects/2); it does not affect main or CI.
 
 <a id="aktivera-efter-verifiering"></a>
 ## Activate after verification

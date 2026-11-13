@@ -14,3 +14,9 @@ dotnet build src/LoopCx/LoopCx.csproj -t:Run -c Debug -p:RuntimeIdentifier=andro
 The home screen should show **Start a run**. This verifies the path from Android startup to a rendered Razor component. GitHub Actions builds a debug-signed x64 APK and tests the same heading through Android's accessibility tree. The APK is available in the run's artifacts.
 
 This first check covers app startup. GPS with a locked screen, WHOOP over BLE, audio and Health Connect are tracked in issue #1. The Windows commands also still need to be tested on Windows.
+
+## USB phone installation
+
+After a valuable feature merge, the lead developer offers Simon installation of the merged app over USB under [AGENTS.md](../AGENTS.md#phone-installation-offers). Offer the new behavior to try and identify outstanding physical acceptance. Installation is optional and requires Simon to accept the offer; it does not block merge unless a physical test is itself mandatory acceptance.
+
+After acceptance, ask Simon to connect and unlock the phone, enable USB debugging and approve the computer if needed. Verify the intended device with `adb devices -l` and select its serial explicitly when multiple devices are connected. Build or select an APK for the merged commit and the phone's actual ABI; the x64 emulator artifact is not a phone build. Use the existing package identity and a compatible signing key, and install with `adb -s <serial> install -r <apk-path>` to retain app data. If signing or version compatibility prevents an update, report the blocker; do not uninstall, clear data or downgrade without separate consent. Confirm the installed version and app startup on the phone, and report physical test results separately from emulator evidence.
