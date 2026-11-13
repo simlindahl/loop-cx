@@ -5,4 +5,4 @@ Använd spec-change för krav/design och verify-run för leverans. Behåll engel
 
 Bygg vertikala funktionssnitt i den modulära monoliten. Följ [Kodorganisation](knowledge/product.md#kodorganisation) även vid första scaffolden; motivera varje nytt lager med det problem det löser.
 
-Inför UI-arbete: läs design/mockups/README.md och berörda vyer i design/mockups/index.html. HTML/CSS är det löpande visuella implementationsunderlaget; knowledge/product.md styr beteendet. Nya vyer är preliminära tills Simon godkänt dem. Behåll PDF-revisionerna som historik. Förändringar i HTML är inte i sig godkännande eller bevis på fungerande Android-funktion.
+Inför UI-arbete: läs design/mockups/README.md och berörda vyer i design/mockups/index.html. HTML/CSS är det löpande visuella implementationsunderlaget; knowledge/product.md styr beteendet. Nya vyer är preliminära tills Simon godkänt dem. PDF-mockuperna är borttagna på Simons begäran den 13 november 2026. Tidigare revisioner finns i Git-historiken. Förändringar i HTML är inte i sig godkännande eller bevis på fungerande Android-funktion.
