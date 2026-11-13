@@ -244,16 +244,29 @@ public sealed class RunService : Service, ILocationListener
         var state = Snapshot!;
         var builder = new Notification.Builder(this, ChannelId)
             .SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
-            .SetContentTitle(state.Paused ? "Paused" : state.Phase)
-            .SetContentText($"{state.RemainingSeconds}s remaining · {state.GpsStatus}")
+            .SetContentTitle(state.Paused
+                ? (session!.PauseReason == PauseReason.Automatic ? "Autopaused" : "Manually paused")
+                : state.Phase)
+            .SetContentText(state.Paused
+                ? (session!.PauseReason == PauseReason.Automatic ? "Move to resume automatically." : "Use Resume to continue.")
+                : $"{state.RemainingSeconds}s remaining · {state.GpsStatus}")
             .SetContentIntent(pendingOpen)
             .SetVisibility(NotificationVisibility.Public)
             .SetOngoing(true);
+        if (state.Paused) builder.SetSubText($"{state.Phase} · {state.RemainingSeconds}s remaining");
+
         var command = state.Paused ? "resume" : "pause";
         builder.AddAction(new Notification.Action.Builder(null, state.Paused ? "Resume" : "Pause",
             PendingIntent.GetService(this, 1, new Intent(this, typeof(RunService)).SetAction(command),
                 PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
-        if (session!.Current?.Kind is RunPhase.Warmup or RunPhase.Cooldown)
+        if (session!.PauseReason == PauseReason.Automatic)
+        {
+            builder.AddAction(new Notification.Action.Builder(null, "Pause manually",
+                PendingIntent.GetService(this, 4, new Intent(this, typeof(RunService)).SetAction("pause"),
+                    PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
+        }
+
+        if (!state.Paused && session!.Current?.Kind is RunPhase.Warmup or RunPhase.Cooldown)
         {
             builder.AddAction(new Notification.Action.Builder(null, "+1 min",
                 PendingIntent.GetService(this, 2, new Intent(this, typeof(RunService)).SetAction("extend"),

@@ -96,7 +96,7 @@ def capture(name, expected, heading_min_height=0):
                 raise AssertionError("UI capture failed three times: " + name) from error
             time.sleep(1)
             continue
-        if any(expected in (n.get("text", "") + n.get("content-desc", "")) for n in root.iter("node")) and heading_height(root, "Paused") >= heading_min_height:
+        if any(expected in (n.get("text", "") + n.get("content-desc", "")) for n in root.iter("node")) and heading_height(root, "Manually paused") >= heading_min_height:
             (OUT / (name + ".xml")).write_text(xml + "\n", encoding="utf-8")
             (OUT / (name + ".png")).write_bytes(adb("exec-out", "screencap", "-p", binary=True))
             report["states"].append(name)
@@ -195,8 +195,8 @@ try:
     button(reachable_button("running-pause", "Pause"), "Pause", tap=True)
     scroll_to_top()
     paused = capture("paused", "Resume")
-    normal_heading_height = heading_height(paused, "Paused")
-    assert normal_heading_height > 0, "Paused heading must have accessible bounds"
+    normal_heading_height = heading_height(paused, "Manually paused")
+    assert normal_heading_height > 0, "Manually paused heading must have accessible bounds"
     normal_height = button(reachable_button("paused-resume", "Resume"), "Resume")
     wait_snapshot(lambda s: s["Id"] == run_id and s["Paused"])
     adb("shell", "settings", "put", "system", "font_scale", "2.0")
@@ -210,8 +210,8 @@ try:
     report["resumeButtonHeightNormalPx"] = normal_height
     report["resumeButtonHeightLargePx"] = large_height
     report["pausedHeadingHeightNormalPx"] = normal_heading_height
-    report["pausedHeadingHeightLargePx"] = heading_height(large, "Paused")
-    report["actualTextScaling"] = "PASS: one-line Paused heading bounds grew at least 40% at system font scale 2.0; screenshots retain exact rendered evidence"
+    report["pausedHeadingHeightLargePx"] = heading_height(large, "Manually paused")
+    report["actualTextScaling"] = "PASS: Manually paused heading rendered bounds grew at least 40% at system font scale 2.0; screenshots retain exact rendered evidence"
     assert snapshot()["Id"] == run_id and snapshot()["Paused"], "Reopen must retain the same paused session"
     button(reachable_button("large-resume-tap", "Resume"), "Resume", tap=True)
     resumed = capture("resumed-large-text", "Pause")
