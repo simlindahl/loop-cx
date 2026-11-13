@@ -9,6 +9,7 @@ const variants = {
 const settings = { warmup: 4, cooldown: 3, overridden: false };
 const targets = { 'C1.1': { mode: 'none' }, 'C1.2': { mode: 'none' }, 'C1.3': { mode: 'none' }, C2: { mode: 'none' } };
 let selected = 'C1.2';
+let c2Duration = 45;
 let favourites = [];
 let starts = [];
 let trigger = null;
@@ -33,7 +34,7 @@ function targetLabel(target) {
 }
 
 function rpe(id) {
-  return `<div class="rpe"><p>Target RPE <strong>${id === 'C2' ? '3' : variants[id].rpe}</strong>${id === 'C2' ? '' : ' · work / recovery'}</p><button type="button" class="info" data-action="rpe" data-id="${id}" aria-label="Explain target RPE for ${id}"><span aria-hidden="true">ⓘ</span></button></div>`;
+  return `<div class="rpe"><p>Target RPE <strong>${id === 'C2' ? '4' : variants[id].rpe}</strong>${id === 'C2' ? '' : ' · work / recovery'}</p><button type="button" class="info" data-action="rpe" data-id="${id}" aria-label="Explain target RPE for ${id}"><span aria-hidden="true">ⓘ</span></button></div>`;
 }
 
 function render() {
@@ -41,10 +42,10 @@ function render() {
   const prep = settings;
   let html = '<p class="eyebrow">LOOP Cx</p><h2>Start a run</h2>';
   html += `<section class="card"><div class="card-heading"><h3>C1 · Intervals</h3><button type="button" class="text" data-action="change">Change</button></div><p class="dose"><strong>${selected} · ${v.title}</strong><br>${v.count} × ${v.work} work · ${v.count - 1} × ${v.recovery} min recovery</p><p>${v.purpose}</p>${rpe(selected)}<p>${durationLabel(v.main)} main · <strong>${durationLabel(total(selected))} total</strong><small>${prep.warmup} min warm-up · ${prep.cooldown} min cool-down<br>${prep.overridden ? 'Settings override' : 'Official variant defaults'}</small></p><p class="small">${escapeText(targetLabel(targets[selected]))}</p><div class="actions"><button type="button" class="primary" data-action="start" data-id="${selected}">Start ${selected}</button><button type="button" data-action="adapt" data-id="${selected}">Adapt target</button></div><button type="button" class="text" data-action="favourite" data-id="${selected}">Save shortcut</button></section>`;
-  html += `<section class="card"><h3>C2 · Zone 2</h3><p class="dose">Easy, conversational running.<br><strong>45 min main / total</strong></p>${rpe('C2')}<p class="small">Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p><p class="small">${escapeText(targetLabel(targets.C2))}</p><div class="actions"><button type="button" class="primary" data-action="start" data-id="C2">Start C2</button><button type="button" data-action="adapt" data-id="C2">Adapt target</button></div><button type="button" class="text" data-action="favourite" data-id="C2">Save shortcut</button></section>`;
+  html += `<section class="card"><div class="card-heading"><h3>C2 · Zone 2</h3><button type="button" class="text" data-action="change-c2" aria-label="Change C2 duration">Change</button></div><p class="dose">Steady, conversational running.<br><strong>${c2Duration} min main / total</strong></p>${rpe('C2')}<p class="small">Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p><p class="small">${escapeText(targetLabel(targets.C2))}</p><div class="actions"><button type="button" class="primary" data-action="start" data-id="C2">Start C2</button><button type="button" data-action="adapt" data-id="C2">Adapt target</button></div><button type="button" class="text" data-action="favourite" data-id="C2">Save shortcut</button></section>`;
   if (favourites.length) html += '<h3>Saved shortcuts</h3>';
   for (const favourite of favourites) {
-    html += `<section class="card"><h3>${escapeText(favourite.name)}</h3><p class="dose">${favourite.variant} · ${durationLabel(favourite.variant === 'C2' ? 45 : total(favourite.variant))} total</p><p class="small">${escapeText(targetLabel(favourite.target))}</p><button type="button" class="primary" data-action="start-favourite" data-id="${favourite.id}">Start ${escapeText(favourite.name)}</button></section>`;
+    html += `<section class="card"><h3>${escapeText(favourite.name)}</h3><p class="dose">${favourite.variant} · ${durationLabel(favourite.variant === 'C2' ? favourite.duration : total(favourite.variant))} total</p><p class="small">${escapeText(targetLabel(favourite.target))}</p><button type="button" class="primary" data-action="start-favourite" data-id="${favourite.id}">Start ${escapeText(favourite.name)}</button></section>`;
   }
   app.innerHTML = html;
 }
@@ -86,7 +87,7 @@ function openRpe(id, opener) {
     'C1.1': 'Work 10: maximal, all-out sprinting. Recovery 2: easy.',
     'C1.2': 'Work 7: hard but repeatable. Recovery 3: easy.',
     'C1.3': 'Work 6: controlled, sustained effort. Recovery 3: easy.',
-    C2: 'Target 3: easy, conversational running at a relaxed, steady effort.'
+    C2: 'Target 4: steady, conversational running. Keep the effort sustainable throughout the run.'
   };
   const guidance = id === 'C1.1'
     ? 'This is a maximal-effort option, not an automatic next step. Keep recoveries easy. Stop rather than force a sprint when control is lost. Perceived effort is not a measured heart-rate value.'
@@ -103,6 +104,11 @@ function chooseVariant(opener) {
   }
   body += '</fieldset><div class="actions"><button class="primary" type="submit">Use variant</button><button type="button" data-dialog="close">Cancel</button></div></form>';
   openDialog('Choose C1', body, opener);
+}
+
+function chooseC2Duration(opener) {
+  const choices = [30, 45, 60].map(value => `<label class="choice"><input type="radio" name="duration" value="${value}" ${c2Duration === value ? 'checked' : ''}><span><strong>${value} minutes</strong><small>${value} min main / total · Target RPE 4<br>No warm-up or cool-down</small></span></label>`).join('');
+  openDialog('Choose C2 duration', `<form id="c2-duration-form"><fieldset><legend>Continuous running</legend>${choices}</fieldset><div class="actions"><button type="submit" class="primary">Use duration</button><button type="button" data-dialog="close">Cancel</button></div></form>`, opener);
 }
 
 function targetForm(id, opener, retained = null) {
@@ -132,8 +138,8 @@ function settingsDialog(opener) {
   openDialog('C1 preparation Settings', body, opener);
 }
 
-function start(id, target, name = '') {
-  const plan = { variant: id, sourceRevision: 'proposed variant set', name, target: clone(target), rpe: id === 'C2' ? '3' : variants[id].rpe, main: id === 'C2' ? 45 : variants[id].main, preparation: id === 'C2' ? { warmup: 0, cooldown: 0 } : clone(settings) };
+function start(id, target, name = '', duration = c2Duration) {
+  const plan = { variant: id, sourceRevision: 'proposed variant set', name, target: clone(target), rpe: id === 'C2' ? '4' : variants[id].rpe, main: id === 'C2' ? duration : variants[id].main, preparation: id === 'C2' ? { warmup: 0, cooldown: 0 } : clone(settings) };
   plan.total = plan.main + plan.preparation.warmup + plan.preparation.cooldown;
   starts.push(plan);
   document.querySelector('#snapshots').innerHTML = starts.map((value, index) => `<li>Preview ${index + 1}: ${value.variant} · ${durationLabel(value.main)} main / ${durationLabel(value.total)} total · preparation ${value.preparation.warmup}/${value.preparation.cooldown} · ${escapeText(targetLabel(value.target))}</li>`).join('');
@@ -146,16 +152,17 @@ app.addEventListener('click', event => {
   const id = button.dataset.id;
   switch (button.dataset.action) {
     case 'change': chooseVariant(button); break;
+    case 'change-c2': chooseC2Duration(button); break;
     case 'rpe': openRpe(id, button); break;
     case 'adapt': targetForm(id, button); break;
     case 'start': start(id, targets[id]); break;
     case 'start-favourite': {
       const favourite = favourites.find(value => value.id === Number(id));
-      start(favourite.variant, favourite.target, favourite.name);
+      start(favourite.variant, favourite.target, favourite.name, favourite.duration);
       break;
     }
     case 'favourite':
-      openDialog('Save a shortcut', `<form id="favourite-form"><p>Save ${id} and its current target. Future starts use the current preparation Settings; previous runs keep their frozen plan.</p><div class="field"><label for="shortcut-name">Shortcut name</label><input id="shortcut-name" required autocomplete="off"></div><div class="actions"><button type="submit" class="primary">Save shortcut</button><button type="button" data-dialog="close">Cancel</button></div><input type="hidden" name="variant" value="${id}"></form>`, button);
+      openDialog('Save a shortcut', `<form id="favourite-form"><p>Save ${id}${id === 'C2' ? ` at ${c2Duration} minutes` : ''} and its current target. C1 starts use the current preparation Settings. C2 has no preparation. Previous runs keep their frozen plan.</p><div class="field"><label for="shortcut-name">Shortcut name</label><input id="shortcut-name" required autocomplete="off"></div><div class="actions"><button type="submit" class="primary">Save shortcut</button><button type="button" data-dialog="close">Cancel</button></div><input type="hidden" name="variant" value="${id}"></form>`, button);
       break;
   }
 });
@@ -177,6 +184,9 @@ dialog.addEventListener('submit', event => {
   if (event.target.id === 'variant-form') {
     selected = event.target.elements.variant.value;
     render();
+  } else if (event.target.id === 'c2-duration-form') {
+    c2Duration = Number(event.target.elements.duration.value);
+    render();
   } else if (event.target.id === 'target-form') {
     const saved = { mode: targetDraft.mode, continuous: targetDraft.id === 'C2' };
     for (const key of ['work', 'recovery']) saved[key] = dialog.querySelector(`#target-${key}`)?.value.trim() || '';
@@ -193,7 +203,7 @@ dialog.addEventListener('submit', event => {
     const name = event.target.elements['shortcut-name'].value.trim();
     if (!name) return;
     const id = event.target.elements.variant.value;
-    favourites.push({ id: nextFavouriteId++, variant: id, name, target: clone(targets[id]) });
+    favourites.push({ id: nextFavouriteId++, variant: id, name, duration: id === 'C2' ? c2Duration : null, target: clone(targets[id]) });
     render();
   } else if (event.target.id === 'settings-form') {
     const warmup = Number(event.target.elements['c1-warmup'].value);
@@ -209,5 +219,5 @@ dialog.addEventListener('submit', event => {
 });
 
 document.querySelector('#review-settings').addEventListener('click', event => settingsDialog(event.currentTarget));
-window.prototypeState = () => clone({ selected, settings, targets, favourites, starts });
+window.prototypeState = () => clone({ selected, c2Duration, settings, targets, favourites, starts });
 render();

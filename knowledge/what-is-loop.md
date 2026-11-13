@@ -89,7 +89,7 @@ Do one working set per exercise per round: **two working sets for each exercise,
 
 #### C2 · Easy conditioning
 
-Accumulate **45–60 minutes** of comfortable, steady movement; 45 minutes is the initial Core template. Running is useful when tolerated, with cycling or rowing as alternatives. Build up if this duration is currently too much.
+Choose **30, 45 or 60 minutes** of comfortable, steady movement; **45 minutes** is the default. The fixed target is **RPE 4**, a programme effort guideline rather than a measured heart-rate zone. Running is useful when tolerated, with cycling or rowing as Core alternatives. Build tolerance if even the shorter duration is currently too much; do not force completion through concerning symptoms.
 
 Use an effort at which conversation remains comfortable. Ease off when maintaining conversation becomes difficult. A wearable can supply context, but is not required. A talk test is a practical effort cue, **not an exact conversion to WHOOP zone 2 or an individually measured physiological threshold**.[2] Do not force a pace just because it was easy last week.
 
