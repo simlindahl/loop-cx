@@ -14,9 +14,11 @@ The first M2 work is to rename the app and GitHub repository to **LOOP**. Cx bec
 
 Before implementation, inventory the display name, launcher/branding, repository URL, README, internal/external links, Projects association, workflows, clone/remotes, APK naming, documentation and distribution instructions. Plan repository-link redirects and validate maintained links and automation after the rename; do not assume every external consumer follows redirects. The approved loop geometry and neutral palette are unchanged by this naming plan.
 
-**Decision gate:** choose explicitly whether Android application ID, internal namespaces and data paths stay compatible or migrate. A product/display/repository rename does not itself authorize changing any of them. Assess installed APK upgrade compatibility, signing, local SQLite/files, Health Connect/external record IDs, export/session identities and recovery. No silent new package, uninstall, downgrade, data wipe or unsupported history conversion. Preserve existing data; agree and verify any migration before changing identity-bearing code.
+**Owner decision, 14 November 2026:** rename technical identity as well as the visible app/repository name. The earlier recommendation to keep the Android package/internal code names was rejected. Simon confirmed that he is the only installed user and accepts a fresh installation without migrating local app history/settings. A data-preserving cross-package migration is therefore not a requirement: do not build a bridge, transfer endpoint or export/import process for this rename.
 
-Observable acceptance: an existing M1 installation updates through the approved path with the same recorded sessions/settings and a usable LOOP-branded app; required repository/document/workflow links resolve. Record actual signing/update/data evidence and remaining limitations. Do not claim this acceptance from a documentation rename.
+Inventory and consistently rename the application ID, namespaces/assembly/project references, activity/manifest bindings, scoped stylesheet references, workflow/script paths and package assumptions. Keep Cx where it denotes LOOP's conditioning domain. A new Android application ID creates a separate installation; describe the delivery as a fresh install, not an in-place update retaining old data. Exact target identifiers must be consistent and checked for collision on the intended device before delivery. Keep the existing signing material rather than creating a key merely for a naming change.
+
+Observable acceptance: after M1 acceptance, the repository and human-facing identity are LOOP, maintained links/workflows/Projects association resolve, and the new technical identity builds, installs and starts successfully on the authorised phone. Simon permits removal/reinstallation of his old app for this transition; preservation or import of its local history is not an acceptance gate. Verify the actual final package/name/icon/startup and ordinary recording entry without claiming old-history continuity. This authorisation is specific to the M2 rename; normal M1 demo updates continue to use their data-retaining update workflow.
 
 ## Complete Core and management boundaries
 
@@ -28,7 +30,7 @@ Observable acceptance examples for later detailed design:
 
 - Managing M and managing Sx are distinct operations; a user editing Sx can select an existing predefined M without editing its definition as part of the Sx form.
 - The complete Core supports the approved S1/S2 + M structure while retaining the current conditioning domain. Exact recording and execution behavior is specified and approved before implementation.
-- Existing running history is preserved through the M2 transition; a running-only log does not claim to know completed strength/M steps.
+- The fresh installation does not claim continuity of the old app's local history. Newly recorded running/Sx/M facts retain their correct ownership; a running-only log does not claim to know completed strength/M steps.
 
 ## Product decisions still open
 

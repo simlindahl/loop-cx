@@ -56,18 +56,23 @@ Core uses **two working sets per exercise to technical failure**. Warm-up and ra
 
 If you are starting a fresh rotation, begin with C1 when you are ready for hard conditioning. If returning from a layoff, use a familiar easy session and rebuild tolerance before treating the full doses below as targets. These are Core defaults, not a fitness test you must pass on day one.
 
-#### C1 · Controlled intervals
+#### C1 · Choose one interval variant
 
-Official C1 revision 2: Simon approved 8/4 preparation on 13 November 2026, superseding the historical 10/5 dose. The main set remains 23 minutes. This is the programme's chosen default, not a research claim that these exact durations are universally optimal. [Decision and app/history boundary](../design/decision.md#official-c1-revision-2--13-november-2026).
+C1 offers three different training emphases. Choose one variant for the C1 step; these are alternatives, not three extra sessions to complete before strength.
 
-- Warm up progressively for **8 minutes**.
-- Complete **5 × 3 minutes** at a hard but controlled effort.
-- Move easily for **2 minutes between efforts**: four recoveries in total.
-- Finish with **4 minutes easy**. Total: **35 minutes**.
+| Variant | Purpose | Work and recovery | Target RPE work / recovery | Total with 4/3 preparation |
+|---|---|---|---|---|
+| C1.1 · SIT | Repeated maximal sprint efforts with substantial recovery; sprint-specific effort with potential aerobic adaptations | 7 × 30 seconds maximal, 3 minutes easy between efforts | 10 / 2 | 28:30 |
+| C1.2 · Aerobic HIIT | Develop aerobic power through sustained, controlled hard efforts | 5 × 3 minutes hard, 2 minutes recovery between efforts | 7 / 3 | 30 min |
+| C1.3 · Threshold intervals | Practise controlled, sustained effort near your individual threshold | 3 × 6 minutes, 3 minutes recovery between efforts | 6 / 3 | 31 min |
 
-Choose running, cycling or rowing according to experience, access and tolerance. Aim for efforts you can repeat without a dramatic collapse in pace or technique. Your breathing should be challenged before a local muscle group gives out. Do not sprint the first repetition or chase a heart-rate number while the sensor catches up. Shorten or stop if safe control is lost.
+The table shows the default counts. You can choose a different repetition count while keeping the planned main set, including recovery, between **10 and 60 minutes**: SIT 4–18 efforts, aerobic HIIT 3–12, threshold 2–7. Work/recovery lengths and RPE stay fixed. These limits are product choices, not a recommendation to use the largest dose or evidence that every allowed SIT count has been validated. There is no planned recovery after the last work effort. Begin with **4 minutes of progressive warm-up** and finish with **3 minutes easy**. These are simple starting defaults, not scientifically established preparation doses for every person. Extend preparation when needed, especially before maximal SIT; a timer reaching zero does not establish readiness. Shorten or stop if safe movement or control is lost.
 
-The running app can execute the running version. It does not provide complete strength or cycling support simply because those activities belong to LOOP.
+RPE means **Rating of Perceived Exertion**: how hard an effort feels on this app's 1–10 scale. These values describe intended effort, not measured heart rate or a laboratory threshold. SIT explicitly asks for maximal effort, whereas aerobic HIIT and threshold intervals ask for repeatable, controlled effort. SIT is not the automatic next step for someone unfamiliar with sprinting or returning from a layoff. Use a familiar activity and appropriate conditions; do not treat maximal-effort research in trained or young participants as proof of suitability for everyone.
+
+Do not chase heart-rate zones during a short effort while the pulse response catches up. High-zone time is a follow-up aim, not a pass/fail target or reason to extend the workout. Preserve the threshold variant's controlled purpose even when less time is recorded in zones 4–5.
+
+The [variant evidence and limits](running-workouts.md#research-basis-and-transfer-limits) explain the primary research behind each purpose and where LOOP makes a programming choice. Research supports the training families, not a guarantee from these exact repetitions, RPE values or preparation lengths. The running app's [delivery boundary](loop-cx.md) remains separate; already recorded plans are unchanged. Cycling and rowing belong to Core but are not supplied as complete app modes by this guide.
 
 #### S1 + M · Hinge, row, squat, push
 
@@ -84,7 +89,7 @@ Do one working set per exercise per round: **two working sets for each exercise,
 
 #### C2 · Easy conditioning
 
-Accumulate **45–60 minutes** of comfortable, steady movement; 45 minutes is the initial Core template. Running is useful when tolerated, with cycling or rowing as alternatives. Build up if this duration is currently too much.
+Choose **20–120 minutes in five-minute steps** of comfortable, steady movement; **45 minutes** is the default. The fixed target is **RPE 4**, a programme effort guideline rather than a measured heart-rate zone. Running is useful when tolerated, with cycling or rowing as Core alternatives. Build tolerance if even the shorter duration is currently too much; do not force completion through concerning symptoms.
 
 Use an effort at which conversation remains comfortable. Ease off when maintaining conversation becomes difficult. A wearable can supply context, but is not required. A talk test is a practical effort cue, **not an exact conversion to WHOOP zone 2 or an individually measured physiological threshold**.[2] Do not force a pace just because it was easy last week.
 

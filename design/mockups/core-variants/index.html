@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LOOP · Core-first approved design reference</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="prototype.js" defer></script>
+</head>
+<body>
+  <main class="review">
+    <header><p class="eyebrow">APPROVED DESIGN REFERENCE · NOT THE INSTALLED APP</p><h1>Two choices.<br>A clear purpose.</h1><p>Approved protocols, selection and Settings behaviour. Everything runs only in this page's memory.</p></header>
+    <div class="layout">
+      <section class="phone" aria-label="Interactive approved Core-first reference"><div id="app"></div></section>
+      <aside>
+        <h2>Approved direction</h2>
+
+        <p><strong>Approved content:</strong> SIT 7 × 30 sec all-out / 6 × 3 min recovery, fixed C1 RPE and shared 4/3 min preparation; C2 20–120 minutes in 5-minute steps (45 default)/RPE 4, no arbitrary workout builder.</p>
+        <p><strong>Approved selection:</strong> start with C1.2 selected, then retain the last selected official variant. Change is one compact dialog; Core remains two choices.</p>
+        <p><strong>Global Settings:</strong> one warm-up/cool-down pair overrides all C1 variants for future starts. Existing favourite shortcuts use the current resolved Settings at their next start. Started/past runs keep their frozen plan.</p>
+        <button type="button" id="review-settings">Preview preparation Settings</button>
+        <p class="small">Settings inputs use positive whole minutes to illustrate the preview; final zero/bounds validation is not decided.</p>
+        <p>C2 uses the approved 20–120-minute slider, in 5-minute steps, with 45 minutes selected initially and fixed RPE 4. A saved C2 shortcut retains its chosen duration and target; C2 never gains preparation. Product limits are guardrails, not evidence that every allowed SIT dose suits every runner.</p>
+        <p>C1 Personalise allows only the work repetition count and optional pace OR zone, keeping phase lengths and RPE fixed. Main set, including recovery, is limited to 10–60 minutes; preparation is outside this limit. Favourites save an official variant plus chosen count and personal target, not a new protocol or revision number. Work/recovery targets use one chosen mode: pace OR zone. The approved first target form uses this single additional mode.</p>
+        <p>Try RPE information, Change, targets, Save shortcut, then Start. Change Settings and start the same shortcut again; previous start snapshots below stay unchanged.</p>
+        <p id="review-event" role="status">No recording has started. Reload resets all examples.</p>
+        <ol id="snapshots" aria-label="Frozen synthetic start snapshots"></ol>
+        <p class="small">This is an approved browser design reference, not evidence for native permissions, sensors, Android text scaling or TalkBack. The approved layout and explicit dose updates are the implementation reference; native QA and unresolved Settings bounds remain separate.</p>
+      </aside>
+    </div>
+  </main>
+  <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+</body>
+</html>
