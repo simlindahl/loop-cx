@@ -9,27 +9,28 @@ namespace LoopCx;
 public sealed class RunJournal : SQLiteOpenHelper
 {
 #if DEBUG
-    private const string DatabaseName = "runs-debug.db";
+    private const string JournalFileName = "runs-debug.db";
 #else
-    private const string DatabaseName = "runs.db";
+    private const string JournalFileName = "runs.db";
 #endif
     private static RunJournal? shared;
     public static RunJournal Shared => shared ??= new RunJournal();
 
-    private RunJournal() : base(global::Android.App.Application.Context, DatabaseName, null, 1)
+    private RunJournal() : base(global::Android.App.Application.Context, JournalFileName, null, 1)
     {
         // Only runs left by an earlier process are interrupted. Never infer missing time.
         WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
     }
 
-    public override void OnCreate(SQLiteDatabase db)
+    public override void OnCreate(SQLiteDatabase? database)
     {
+        var db = database!;
         db.ExecSQL("CREATE TABLE runs (id TEXT PRIMARY KEY, started_utc TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, status TEXT NOT NULL, initial_plan TEXT NOT NULL, checkpoint TEXT NOT NULL)");
         db.ExecSQL("CREATE TABLE locations (run_id TEXT NOT NULL, utc_ms INTEGER NOT NULL, monotonic_ns INTEGER NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, accuracy REAL)");
         db.ExecSQL("CREATE TABLE export_queue (run_id TEXT PRIMARY KEY, status TEXT NOT NULL)");
     }
 
-    public override void OnUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) =>
+    public override void OnUpgrade(SQLiteDatabase? db, int oldVersion, int newVersion) =>
         throw new NotSupportedException("A database migration is required.");
 
     public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
@@ -50,17 +51,18 @@ public sealed class RunJournal : SQLiteOpenHelper
                 SchemaVersion = 1, Snapshot = snapshot, session.Plan, session.Completed,
                 session.PhaseActiveTime, session.TotalActiveTime, session.MainActiveTime
             }));
-            db.InsertWithOnConflict("runs", null, values, ConflictAlgorithm.Replace);
+            if (db.InsertWithOnConflict("runs", null, values, Conflict.Replace) < 0)
+                throw new IOException("The run checkpoint could not be saved.");
             if (session.IsFinished)
             {
-                using var queued = new ContentValues();
-                queued.Put("run_id", id.ToString());
+                using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)");
+                queued.BindString(1, id.ToString());
 #if DEBUG
-                queued.Put("status", "disabled_synthetic");
+                queued.BindString(2, "disabled_synthetic");
 #else
-                queued.Put("status", "pending");
+                queued.BindString(2, "pending");
 #endif
-                db.InsertWithOnConflict("export_queue", null, queued, ConflictAlgorithm.Ignore);
+                queued.ExecuteInsert();
             }
             db.SetTransactionSuccessful();
         }
