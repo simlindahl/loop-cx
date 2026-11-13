@@ -32,6 +32,27 @@ adb shell pm grant se.loopcx.running android.permission.POST_NOTIFICATIONS
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
 adb logcat -c
+dump_window() {
+    local stage=$1
+    local capture_status=1
+    local evidence=verification/c1-ui/strong-smoke
+    mkdir -p "$evidence"
+    for capture_attempt in 1 2 3; do
+        adb shell rm -f /sdcard/loop-window.xml
+        if adb shell uiautomator dump /sdcard/loop-window.xml >"$evidence/$stage-$capture_attempt-dump.txt" 2>&1; then
+            return 0
+        else
+            capture_status=$?
+        fi
+        printf 'capture exit=%s stage=%s attempt=%s\n' "$capture_status" "$stage" "$capture_attempt" >>"$evidence/capture-failures.txt"
+        git rev-parse HEAD 'HEAD^{tree}' >"$evidence/source.txt"
+        adb exec-out screencap -p >"$evidence/$stage-$capture_attempt-failed.png" || true
+        adb logcat -d -t 200 >"$evidence/$stage-$capture_attempt-logcat.txt" || true
+        sleep 1
+    done
+    return "$capture_status"
+}
+
 command() {
     adb shell am start -n se.loopcx.running/.MainActivity --es loop-command "$1"
 }
@@ -86,14 +107,14 @@ print('PASS: one session, locked-screen time and GPS, pause, resume, reopened Ra
 PY
 
 for attempt in {1..30}; do
-    adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
+    dump_window warmup
     if adb shell cat /sdcard/loop-window.xml | grep -F 'Warm-up'; then break; fi
     sleep 2
 done
 adb shell cat /sdcard/loop-window.xml | grep -F 'Warm-up'
 command complete
 for attempt in {1..30}; do
-    adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
+    dump_window finished
     if adb shell cat /sdcard/loop-window.xml | grep -F 'Start C1'; then break; fi
     sleep 1
 done
