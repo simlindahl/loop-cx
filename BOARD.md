@@ -24,7 +24,6 @@ Varje rad avser ett avgränsat moment. En feature kan ha återstående implement
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
-| SYNTHETIC-PR-FLOW | Syntetiskt testkort, ska aldrig mergas | — | Verifiera statusbyte och återläsning. |
 | [PR #8](https://github.com/simlindahl/loop-cx/pull/8) | Lägg till deterministisk passmotor för tidsstyrda intervaller | [#8](https://github.com/simlindahl/loop-cx/pull/8) | Simon: granska diff och verifieringsresultat; godkänn merge. |
 | [PR #9](https://github.com/simlindahl/loop-cx/pull/9) | Koppla tidsstyrd session till Android foreground service och GPS | [#9](https://github.com/simlindahl/loop-cx/pull/9) | Simon: granska diff och verifieringsresultat; godkänn merge. |
 | [PR #14](https://github.com/simlindahl/loop-cx/pull/14) | Bevara registrerade pass i SQLite efter processdöd | [#14](https://github.com/simlindahl/loop-cx/pull/14) | Simon: granska diff och verifieringsresultat; godkänn merge. |
@@ -43,4 +42,5 @@ Granskningsordning: Android #8 → #9 → #14 → #17. Ghost #19 → #20 → #21
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
+| SYNTHETIC-PR-FLOW | Syntetiskt testkort, ska aldrig mergas | — | Verifiera statusbyte och återläsning. |
 | BOARD-1 | Repohanterad tavla, README-länk och uppdaterade instruktioner/projektskills | — | Klart 13 november 2026: sex statusbyten skrivna och återlästa på testgren; testkort borttaget. Main-filer och länkar verifierade; [Repository checks gröna](https://github.com/simlindahl/loop-cx/actions/runs/43371711282). Godkänt arbetssätt infördes direkt på main. |
