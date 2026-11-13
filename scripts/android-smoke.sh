@@ -91,6 +91,32 @@ for attempt in {1..30}; do
     sleep 2
 done
 adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'
+command complete
+for attempt in {1..30}; do
+    adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
+    if adb shell cat /sdcard/loop-window.xml | grep -F 'Start C1'; then break; fi
+    sleep 1
+done
+adb shell cat /sdcard/loop-window.xml | grep -F 'Start C1'
+command start
+sleep 3
+snapshot > /tmp/run-next.json
+python3 - <<'PY'
+import json
+from pathlib import Path
+previous = json.loads(Path('/tmp/run-resume.json').read_text())
+current = json.loads(Path('/tmp/run-next.json').read_text())
+assert current['Id'] != previous['Id'], 'A completed run must allow a new session'
+assert current['Phase'] == 'Warmup' and not current['Paused']
+print('PASS: finishing retires the service and enables a new workout without process restart')
+PY
+
+# Exercise effective/duplicate commands on the session used for recovery assertions.
+command pause
+command pause
+sleep 4
+command resume
+command resume
 # Record manual phase changes, and reject preparation commands during work.
 command extend
 command extend

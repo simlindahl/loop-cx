@@ -143,3 +143,18 @@ Local equivalent with Node and Playwright installed: `node design/mockups/verify
 ## Licenses
 
 Space Grotesk: [SIL Open Font License](FONT-LICENSE.txt), the full variable font from `google/fonts/ofl/spacegrotesk/SpaceGrotesk[wght].ttf`. Material Icons: [Apache 2.0](ICON-LICENSE.txt), the same icon shapes as `design/icons/`. Do not change icon shapes to create a custom icon library.
+
+## What is LOOP? · approved reader reference
+
+Review [the complete English guide](../../knowledge/what-is-loop.md) and [review brief](../../docs/loop-knowledge-review.md) alongside these representative excerpts. Open the gallery locally, select Settings, then What is LOOP? Simon approved the six reader screens at revision `4a4c971` on 13 November 2026; [conditions](../decision.md#what-is-loop--content-and-layout-review) apply. App implementation remains on hold.
+
+| Screen ID | Review purpose |
+|---|---|
+| `loop-about` | Introduction, Get started and optional paths |
+| `loop-start` | Four-part scrolling reading guide |
+| `loop-workouts` | Complete rotation overview |
+| `loop-strength` | Representative S1 card, safe limits and home examples |
+| `loop-learn` | Dose, evidence and recovery context |
+| `loop-sources` | Offline explanations with optional external sources |
+
+All map to **LOOP knowledge — review proposal** in product.md. The reader is not a setup wizard and records no progress. Long frames represent scrolling content; Android scroll, back navigation and TalkBack remain future implementation checks.

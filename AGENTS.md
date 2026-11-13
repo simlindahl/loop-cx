@@ -8,6 +8,20 @@ Build vertical feature slices in the modular monolith. Follow [Code organization
 
 Before UI work, read design/mockups/README.md and the affected screens in design/mockups/index.html. HTML/CSS is the ongoing visual implementation reference; knowledge/product.md governs behavior. New screens remain preliminary until approved by Simon. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history. HTML changes are not themselves design approval or proof of working Android behavior.
 
+## Roles and decision-making
+
+This project-specific division of responsibility overrides the general learning-first workflow where Simon owns the first implementation and reviews technical work. Apply it in future chats without asking Simon to delegate implementation again.
+
+- Simon is the product owner and architect. He owns product goals, priorities and significant architecture decisions.
+- The primary agent is the lead developer. Drive implementation, routine technical decisions, debugging, verification, documentation and work-item coordination autonomously within approved requirements and design. Do not require Simon's first implementation or routine technical review before progressing.
+- Whenever a PR needs review, spawn a separate subagent as tester and requirements reviewer. Give it the issue, relevant specification and acceptance criteria, PR diff and verification evidence. It reviews requirement coverage, observable behavior, tests and material risks, reports findings and verifies relevant corrections. The lead developer coordinates review and fixes through resolution. Do not mark unresolved acceptance criteria as complete or treat subagent review as a GitHub approval when platform rules require one.
+- Ask Simon for decisions that materially affect product direction, significant architecture, cost or risk. Present a concrete recommendation, relevant alternatives and consequences. Existing explicit design approvals, implementation holds, physical-device acceptance and publication permissions remain in force; merge authority follows the work tracking rules below.
+- Give Simon periodic, consolidated progress updates at meaningful milestones: delivered behavior, product progress, next steps and any decisions needed. Avoid routine review requests and unchanged status reports. Complete independent work before escalating and continue other authorized work while awaiting a decision.
+
+## Phone installation offers
+
+After a valuable feature merge, proactively offer Simon a USB installation of the merged app so he can try the delivered behavior on his phone. Explain what is new and useful to try, and distinguish unverified physical behavior from automated evidence. Do not make the offer a merge gate or require installation for documentation-only changes. Wait for Simon to accept before installing; then follow [the phone installation workflow](docs/android.md#usb-phone-installation), preserving existing app data and reporting blockers.
+
 <a id="arbetslista-och-status"></a>
 ## Work tracking and status
 
@@ -19,15 +33,25 @@ Use one card per bounded work item. A feature issue with remaining work may be T
 |---|---|
 | Todo | Planned work that has not started. |
 | Doing | Active work, including implementation and verification. |
-| Waiting | The next step requires Simon's input, decision, review, approval or physical testing. |
+| Waiting | The next step requires Simon's product or architecture decision, explicit approval or physical testing; routine technical review belongs to the reviewer subagent. |
 | Done | Acceptance criteria are verified, required approvals exist and any delivery PR is merged. |
 
 1. Read current project cards and fields and the relevant issues and PRs at the start of each run. Select a bounded work item and set its card to Doing before starting. Update `Next step` and link the evidence.
-2. Update cards and status directly in Projects through `gh project` within the current task. Status changes require no commit, PR or CI. Code, requirements, design and instructions follow normal PR rules. Simon approves merge unless merge of that specific PR has been explicitly delegated. Zero required GitHub approvals do not replace this approval.
+2. Update cards and status directly in Projects through `gh project` within the current task. Status changes require no commit, PR or CI. Code, requirements, design and instructions follow normal PR rules. The lead developer may squash-merge PRs without further approval from Simon once the reviewer subagent has approved the current revision, all required checks have passed for that revision, review findings are resolved and any applicable product, architecture or design decisions and acceptance conditions are satisfied. Record the reviewer outcome and checked commit in the PR. Changes after review require the reviewer to assess the updated revision and affected checks to pass before merge. Do not bypass platform protection or treat zero required GitHub approvals as review evidence.
 3. When the next step requires Simon, finish all independent work on the item first. Set Waiting and specify exactly what Simon needs to do, what it unlocks and a link to review material. Other independent items can continue on separate cards.
 4. After a response, return to Doing if work or verification remains. Set Done only when every completion condition is met. An open PR or green automated tests are not enough for Done. Waiting for CI and technical problems the agent can resolve are Doing, not Waiting; state the blocker and the agent's next action. Automatic closure or merge does not replace assessing remaining acceptance.
 5. Retrieve current item and field IDs before writing. Update only the intended item and field, preserve others' changes and avoid duplicates. Read back both status and `Next step` after each update. On failure, report the concrete error and last verified status; do not claim the board was updated.
 6. Reconcile the project at the end of each run. Link the delivery PR and verification results from the correct card. Leave the feature issue open if mandatory acceptance remains. Keep current and recently completed cards; archive older Done cards when needed without deleting issues or PRs.
+
+The enabled GitHub Projects workflows set a PR card to Waiting when a review requests changes and Doing when a review approves the PR. Read back the automated status instead of repeating the same write through CLI. Review approval and Doing alone do not meet all merge conditions or mean acceptance is complete; follow the merge conditions above. These automations do not update `Next step` or replace ownership assessment: when the agent takes up actionable review changes, set Doing while implementing and verifying them; use Waiting when Simon must act.
+
+### Project status updates
+
+Publish a project-level status update using Projects' **Add status update** whenever a significant milestone is verified, delivery readiness changes, or a material blocker appears, changes or is resolved. Do this proactively within the current task without waiting for Simon to ask. Small edits, routine checks and unchanged blockers do not need an update; consolidate related progress and read the latest update first to avoid duplicates.
+
+Base the update on current Project cards, issues, PRs and verification evidence. Briefly state completed progress, remaining work, changed blockers and the next action with its owner. Link the relevant evidence and distinguish merged delivery from unmerged candidates, automated checks from physical tests, and verified facts from uncertainty. Do not invent target dates or imply acceptance from green CI alone.
+
+Use `gh api graphql` with `createProjectV2StatusUpdate` (there is no dedicated `gh project` status-update command). Retrieve the current project ID before writing and read back the published update to verify its project and content. These updates supplement card status and `Next step`; they do not replace them. Report access/write failures and the last verified state. Publishing a status update requires no repository commit, PR or CI and does not authorize merge or public visibility changes.
 
 GitHub CLI needs the `project` scope. Start with `gh project item-list 2 --owner simlindahl --format json --limit 100` and `gh project field-list 2 --owner simlindahl --format json`. Retrieve additional items if the result does not cover the whole project. Treat denied access as a concrete blocker; do not create a local fallback board that can become stale.
 
