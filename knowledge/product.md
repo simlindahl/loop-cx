@@ -117,3 +117,73 @@ Acceptans: start- och träningsvyn använder tabellens färger utan kvarvarande 
 
 ## Projektstyrning
 GitHub Projects är den gemensamma arbetslistan. Varje byggbar ändring har en issue med länkat krav och acceptansprov. Flytta till In Progress när arbete börjar, länka PR och verifieringsresultat, och flytta till Done när kriterierna uppfyllts. Git är källan för krav och design; Projects visar status. Skapad lokal startstruktur är inte bevis på att fjärrprojektet skapats.
+
+
+## Ghost Run
+
+### Omfattning och ingång
+
+Ghost Run är en separat delfunktion, åtkomlig från Training utan att ändra den befintliga huvudnavigationens tre destinationer. Efter ett avslutat kontinuerligt pass kan löparen välja Save route to Ghost Run i passdetaljen. Åtgärden gäller endast huvudpassets sträcka, inte uppvärmning/nedvarvning. Intervaller, farthare/måltempo och valfritt tidigare försök ingår inte. Ghost Run använder engelska, Basalt, Space Grotesk och Material Icons. Se [preliminära vyer](../design/mockups/index.html#ghost-routes).
+
+### Spara och välja rutt
+
+Spara namngiven rutt med stabilt ID, versions-ID, ordnad geometri, fast start, mål och riktning samt källpassets huvudfas. Granska GPS-underlaget innan sparande; tillåt inte att en väsentlig lucka blir en påhittad sammanhängande rutt. Visa begriplig orsak om rutten inte kan sparas. Källpasset blir första jämförelseunderlaget om hela genomförandet kan verifieras. Rådata och ursprungspass ändras inte när rutten skapas.
+
+Samma ruttversion, start, mål och riktning krävs. Ändrad geometri skapar ny version och jämförs inte automatiskt med gamla rekord. Enbart samma distans räcker inte. Valfri startpunkt, omvänd riktning, flervarvslägen, rutteditor, import och automatisk ruttidentifiering av all historik ligger utanför första versionen. En slinga eller ut-och-tillbaka-rutt får inte avslutas vid en tidig passage nära målet.
+
+### Motståndare och årsurval
+
+Erbjud Year best och Personal best. Year best är lägst verifierad förfluten huvudtid bland kvalificerade genomföranden som startade innevarande kalenderår. Använd försökets sparade lokala startdatum och tidszon; datum får inte flyttas vid senare tidszonsbyte. För en ny start bestäms aktuellt år från lokal tid och fryses vid start. Personal best är lägst verifierad förfluten huvudtid någonsin på samma ruttversion. Vid lika tid används ett stabilt val, exempelvis tidigaste start och sedan pass-ID.
+
+Om samma försök innehar båda rekorden visas detta. Om årsbästa saknas erbjuds Set first time utan spöke eller personbästa om det finns. Saknas båda får löparen sätta första tid utan spöke. Frys referenspass, ruttversion, rekordtid och jämförelseregler vid start; byt aldrig spöke mitt i passet. Ett nytt giltigt resultat uppdaterar tillämpliga rekord först efter mål och färdigställd lagring. Samma inspelning får inte räknas två gånger.
+
+### Start, tävlingsklocka och paus
+
+Start kräver tillräckligt säker position nära rätt start. Visa Move to the start eller GPS uncertain när start inte kan verifieras. Start Ghost Run nollställer tävlingsklockan och startar löpare och spöke tillsammans. Eventuell uppvärmning ligger före denna start; nedvarvning efter mål.
+
+Ruttslut styr huvudpassets slut i Ghost Run och ersätter vanliga tids-/distansmål. Använd monoton förfluten tid från huvudstart till verifierad målpassage. Alla stopp, manuell paus och autopaus ingår i tävlingstiden. Race time keeps running during stops and pauses visas före start.
+
+Pause training pausar vanliga aktiva träningsräknare och coaching enligt grundreglerna men pausar inte tävlingsklockan, spöket eller den GPS-registrering som behövs för ruttverifiering. Spara dessa positionsdata separat som tävlingsunderlag; lägg inte pausad distans i vanliga aktiva räknare. Återuppta inte träning automatiskt efter manuell paus. Uppspelningsunderlaget bevarar även stillastående och paustid. En paus diskvalificerar aldrig i sig ett rekord.
+
+Detta är ett uttryckligt undantag för Ghost Run från grundspecifikationens frysta aktiva mätningar under paus. Även om huvudpasset är träningspausat ska verifierad målpassage kunna avsluta tävlingen. End attempt sparar ofullständig registrering utan rekord. Processdöd får inte skapa ett verifierat resultat genom att fylla i saknad väg eller tid; bevara registrerad del med avbrottsmarkering.
+
+### Uppspelning och jämförelse
+
+Spara råa koordinater, mättid, noggrannhet, UTC, monoton tid/relativ förfluten tid, faser, pauser, dataluckor och kvalitetsstatus. Härled ordnad ruttposition s(t) för aktuellt försök och referensförsök. Använd samma versionsbundna geometri och dokumenterad beräkningsregel för båda; ändra inte gamla resultat tyst när filtren ändras. Referensens tid är förfluten tid, inklusive stopp, och spöket rör sig med inspelade tempovariationer. Interpolera endast mellan tillräckligt täta, giltiga punkter; stora luckor ger okänt underlag.
+
+Meter före = löparens ruttposition minus spökets ruttposition vid samma tävlingstid. Sekunder före = referensens ankomsttid till löparens nuvarande ruttposition minus aktuell tävlingstid. Positivt betyder före. Ankomsttid är första verifierade ankomst i rätt sekvens, även om referensen står still där. Använd inte fågelväg eller meter dividerat med aktuellt tempo för tidsskillnaden. Håll registrerad löpdistans och framsteg längs rutten åtskilda.
+
+Matcha mot en rimlig följd av ruttsegment med tidigare position, möjlig förflyttning, riktning och GPS-kvalitet. Närmaste punkt på hela rutten är otillräckligt vid korsningar, parallella stråk och vändpunkter. Ingen genväg får ge ett falskt försprång eller rekord. Visa avrundade meter/sekunder; visa ungefärlig eller okänd jämförelse när kvaliteten kräver det. Efter spökets mål stannar markören där medan tävlingsklockan och tidsjämförelsen fortsätter till löparens mål. Frys slutresultatet vid löparens verifierade målpassage.
+
+### Giltighet och osäkerhet
+
+Ett rekord kräver rätt start/mål, hela rutten i rätt ordning och tillräckligt underlag för att utesluta betydande genväg eller fel riktning. GPS-bortfall betyder okänd position, inte stillastående. Vid osäker GPS eller tydlig ruttavvikelse fortsätter klocka och spöke men jämförelsetal döljs. Återuppta dem först när rätt position åter är säker. Återinträde kan återställa träningsjämförelsen men får inte i sig bevisa att en överhoppad sträcka genomförts. Pauser eller en kort avvikelse utesluter inte automatiskt rekord om hela rutten fortfarande kan verifieras.
+
+Ofullständiga eller otillräckligt verifierade försök sparas med konkret orsak och påverkar inte rekord. En mindre datalucka är inte automatiskt diskvalificerande, men får inte dölja en möjlig genväg. Lås inte universella gränser före prov: dokumentera och testa start-/måltolerans, ruttkorridor, beständig avvikelse, lucklängd och uppdateringsfrekvens med syntetiska spår samt fysisk Pixel.
+
+### Livekarta, ljud och låst skärm
+
+Visa ordnad ruttlinje med riktning/start/mål, egen fylld accentmarkör och vitt lätt transparent spöke med mörk kontur. Form och text kompletterar färg; båda markörerna ska kunna urskiljas vid överlappning. Tidsskillnad är primärt värde, ungefärligt meteravstånd sekundärt. Följ löparen med återcentrering och valbar ruttöversikt. En avlägsen motståndare får inte tvinga kartan till oläslig zoom. Visa kartstatus separat från GPS-status.
+
+Ge kort avvikelsebesked och valbar uppläsning av jämförelsen, samordnad med ordinarie ljudkö och utan föråldrade besked. Första versionen omfattar ruttlinje, riktning och avvikelsebesked, inte svängnavigation eller omplanering. Android-tjänsten äger tävlingsklocka, GPS, uppspelning och jämförelse. Blazor/karta och avisering konsumerar samma tillstånd; inga separata UI-timers får styra resultat. Låsskärmsavisering visar tävlingstid och jämförelse där Android medger det samt Pause training/Resume training. Exakt systemlayout verifieras på telefon.
+
+Rutt och referensdata laddas lokalt före start; ingen ny server krävs. Registrering och jämförelse ska fungera utan nät/kartnyckel. Bakgrundskarta offline garanteras inte; visa egen ruttgeometri och markörer som enkel ruttöversikt när bakgrundskartan saknas. Stoppa rendering/animation när kartan inte syns och återställ samma session vid öppning. Mät energikostnad för vanlig registrering, Ghost Run med släckt skärm samt synlig karta under jämförbara förhållanden med Pixel/WHOOP/Spotify.
+
+### Acceptansprov och leverans
+
+| Prov | Förväntat resultat |
+|---|---|
+| Spara kontinuerligt huvudpass med in-/utjogg | Egen Ghost Run-rutt av endast huvudfasen. Källpasset bevaras och blir första resultat om verifierat. Intervallpass ger inte åtgärden. |
+| Årsbästa 27:30 år 2026, PB 26:40 år 2025 | Rätt inspelning väljs för respektive läge. Samma rekord för båda märks tydligt. Inget val av farthare eller valfritt försök finns. |
+| Årsskifte, tidszonsbyte och lika tider | Sparat lokalt startår bevaras, årsurval fryses vid ny start och lika tider ger stabilt referensval. |
+| Inget årsbästa eller inga rekord | Första årstid kan sättas utan spöke; PB erbjuds bara om det finns. Första giltiga resultatet blir referens. |
+| Referensen når 2 km 10:12, löparen 10:00 | 12 s ahead. Metervärdet räknas separat från respektive position vid 10:00. |
+| 25 min rörelse och 2 min paus med verifierad full rutt | Tävlingsresultat 27 min och fortsatt PB-behörighet; aktiva räknare följer pausreglerna. Spöke och tävlings-GPS fortsätter under paus och skärmlås. |
+| Referensen står still; mål passeras under träningspaus | Uppspelningen bevarar stoppet. Första ankomst används för tidsskillnad. Mål kan avsluta tävlingen under träningspaus. |
+| Korsning, vändpunkt, parallella stråk, slinga och genväg | Ingen förflyttning till fel ruttsegment, ingen tidig målregistrering, inget rekord genom överhoppat segment. |
+| GPS-bortfall, ruttavvikelse, nätbortfall och processdöd | Okänd jämförelse markeras; inga påhittade mätningar. Nätbortfall stoppar inte lokal tävling. Osäkert/avbrutet försök sparas med orsak utan rekord. |
+| Spöket når mål först eller löparen vinner | Spöket stannar vid målet. Sluttid och rekord beräknas från löparens faktiska målpassage; nästa försök får nytt referensval. |
+| Omöppning/lagringsomförsök efter mål | Samma resultat och referens, inga dubbla rekord eller exportposter. |
+| Pixel/WHOOP/Spotify med synlig/släckt skärm | Samma tävlingsklocka, positionsföljd och session. Ljud, läsbarhet, aviseringsåtgärder och batteriförbrukning redovisas med faktisk evidens. |
+
+Leverera i små vertikala snitt: ruttlagring/rekordurval, deterministisk uppspelning och ruttmatchning, integration med session/paus/persistens, därefter godkänd live-UI och fysisk verifiering. Mockuper är preliminära; beställningen godkänner produktreglerna men inte detaljlayouten. Prototyp/integration och app-UI följer designbeslutsgrinden i AGENTS.md. Nattarbetet får arbeta med datamodell, beräkningsregler, syntetiska verifieringsfall och teknisk analys inom beslutade regler medan detaljlayout granskas. Ingen PR mergas utan Simon.

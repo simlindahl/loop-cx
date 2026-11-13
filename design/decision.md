@@ -14,3 +14,8 @@ Revision 2 återremitterad av Simon avseende palett och layout. Engelska i v1 ä
 Revision 4: mörkt standardtema beslutat. Två vyer i LOOP-Cx-direction-4.pdf visar föreslagen Barlow Semi Condensed med Noto Sans. Inväntar visuellt godkännande.
 
 Revision 5: Simon valde Space Grotesk för hela appens eget UI. Mörkt tema, engelska och Material Icons gäller. Simon godkände layouten som grund för implementationen den 12 november 2026. Underlag: design/LOOP-Cx-direction-5.pdf i commit 12747f7.
+
+## Ghost Run · 13 november 2026
+
+Simon har beslutat om en separat delfunktion med rutter sparade efter kontinuerliga pass och tävling endast mot årsbästa eller personbästa. Tävlingsklockan fortsätter under alla stopp och pauser; paus diskvalificerar inte i sig. Den 13 november beställdes mockuptillägg före specifikation och att funktionen läggs till nattarbetet. Se knowledge/product.md, avsnitt Ghost Run, och mockups/index.html#ghost-routes. De 20 nya tillstånden är preliminära. Produktreglerna ovan är beslutade; detaljlayouten är inte godkänd för app-UI eller integrationsprototyp. Befintliga Basalt-beslut gäller.
+

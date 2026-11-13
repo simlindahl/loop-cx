@@ -137,3 +137,31 @@ Lokal motsvarighet med Node och Playwright installerat: `node design/mockups/ver
 ## Licenser
 
 Space Grotesk: [SIL Open Font License](FONT-LICENSE.txt), full variabel font från `google/fonts/ofl/spacegrotesk/SpaceGrotesk[wght].ttf`. Material Icons: [Apache 2.0](ICON-LICENSE.txt), samma ikonformer som `design/icons/`. Ändra inte ikonernas form för att skapa ett eget ikonbibliotek.
+
+
+## Ghost Run · preliminärt tillägg
+
+Separat delfunktion från Training; spara kontinuerligt huvudpass från passdetaljen. Alla exempel är syntetiska. Kartskissen visar egen exempelgeometri, inte riktiga kartdata eller fungerande navigation. Tävlingsklocka och ruttmätning fortsätter under träningspaus. Endast årsbästa och personbästa ingår. Detaljlayout inväntar granskning.
+
+| Vy | Skärm-ID | Krav |
+|---|---|---|
+| [Ghost Run](index.html#ghost-routes) | `ghost-routes` | Ghost Run |
+| [Your routes](index.html#ghost-empty) | `ghost-empty` | Ghost Run |
+| [Save route to Ghost Run](index.html#ghost-save) | `ghost-save` | Ghost Run |
+| [Park loop](index.html#ghost-choose) | `ghost-choose` | Ghost Run |
+| [One run. Both records.](index.html#ghost-same) | `ghost-same` | Ghost Run |
+| [Set your year best](index.html#ghost-no-year) | `ghost-no-year` | Ghost Run |
+| [Race year best](index.html#ghost-ready) | `ghost-ready` | Ghost Run |
+| [Race personal best](index.html#ghost-ready-pb) | `ghost-ready-pb` | Ghost Run |
+| [Set first time](index.html#ghost-ready-first) | `ghost-ready-first` | Ghost Run |
+| [Ghost Run](index.html#ghost-live) | `ghost-live` | Ghost Run |
+| [Ghost Run](index.html#ghost-live-pb) | `ghost-live-pb` | Ghost Run |
+| [First time this year](index.html#ghost-first-live) | `ghost-first-live` | Ghost Run |
+| [Training paused](index.html#ghost-paused) | `ghost-paused` | Ghost Run |
+| [GPS uncertain](index.html#ghost-uncertain) | `ghost-uncertain` | Ghost Run |
+| [Return to the route](index.html#ghost-off-route) | `ghost-off-route` | Ghost Run |
+| [New year best](index.html#ghost-result) | `ghost-result` | Ghost Run |
+| [Attempt saved](index.html#ghost-unverified) | `ghost-unverified` | Ghost Run |
+| [End this attempt?](index.html#ghost-abandon) | `ghost-abandon` | Ghost Run |
+| [Lock screen · Ghost Run](index.html#ghost-lock) | `ghost-lock` | Ghost Run |
+| [Move to the start](index.html#ghost-not-ready) | `ghost-not-ready` | Ghost Run |
