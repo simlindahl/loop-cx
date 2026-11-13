@@ -46,6 +46,7 @@ internal sealed class NativeFeasibility : Java.Lang.Object
         ownedAssociation = associationId;
         if (owner.CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) != Permission.Granted)
         {
+            StopBluetooth();
             Report("ble:permission-denied;heart-rate=unknown");
             return;
         }
@@ -53,6 +54,7 @@ internal sealed class NativeFeasibility : Java.Lang.Object
         var adapter = ((BluetoothManager?)owner.GetSystemService(Context.BluetoothService))?.Adapter;
         if (adapter is null || !adapter.IsEnabled)
         {
+            StopBluetooth();
             Report("ble:unavailable;heart-rate=unknown");
             return;
         }
