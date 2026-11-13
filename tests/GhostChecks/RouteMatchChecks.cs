@@ -130,9 +130,9 @@ public static class RouteMatchChecks
         Check(raceResult.RaceElapsed == S(1) && raceResult.TrainingActive == S(0.5) && raceResult.TrainingPaused,
             "A matched finish completes race time while training remains paused.");
 
-        Reject(() => new OrderedRouteMatcher(line, policy with { RuleVersion = "other" }), "Do not silently change calculation version.");
-        Reject(() => new OrderedRouteMatcher(line, policy with { MaximumStepMetres = double.NaN }), "Reject non-finite policy limits.");
-        Reject(() => new OrderedRouteMatcher(line, policy with { ProjectionExtentMetres = 5 }), "Do not project an out-of-scope route.");
+        Reject(() => _ = new OrderedRouteMatcher(line, policy with { RuleVersion = "other" }), "Do not silently change calculation version.");
+        Reject(() => _ = new OrderedRouteMatcher(line, policy with { MaximumStepMetres = double.NaN }), "Reject non-finite policy limits.");
+        Reject(() => _ = new OrderedRouteMatcher(line, policy with { ProjectionExtentMetres = 5 }), "Do not project an out-of-scope route.");
         Console.WriteLine("PASS: ordered route segments, fixed start/direction, loops, figure-eight crossing, parallel paths and no shortcut finish.");
         Console.WriteLine("PASS: gaps/re-entry preserve covered prefix, GPS uncertainty/speed/timestamps, frozen goal and matched finish during training pause.");
     }

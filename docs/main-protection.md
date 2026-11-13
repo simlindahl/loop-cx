@@ -11,7 +11,7 @@ Zero approvals allows merging your own PRs. The team lead may merge only after b
 <a id="aktivera-efter-verifiering"></a>
 ## Activate after verification
 
-The configuration file expresses intended state and activates nothing automatically. On 13 November 2026, GitHub API returned 403: rulesets for this private repository require Pro. Protection is therefore not verified active. Keep the repository private until a separate publication decision follows a review of content and history.
+Simon approved publication on 13 November 2026. The repository is public and [Protect main, ruleset 27181142](https://github.com/simlindahl/loop-cx/rules/27181142), was read back active with all five required Actions contexts (integration 15368), strict freshness, zero platform approvals, resolved discussions, linear history, no bypass actors and blocked deletion/force-push. `current_user_can_bypass` is `never`. The earlier private-repository 403 and transition lock were resolved; `isLocked` is false. The configuration file alone does not activate protection. The commands below describe future maintenance, not pending activation.
 
 Prerequisites: GitHub CLI authenticated with administrator permission, a plan that supports repository rulesets and the five required checks available from a recent green PR. Run from the repository root. First check for overlapping existing rulesets:
 
@@ -31,7 +31,7 @@ Allow squash merge in repository merge settings. Linear history prevents merge c
 
 ## Public-fork workflow approval
 
-Only after an explicit public-visibility approval and the visibility change, read the repository's contributor-approval policy, set `all_external_contributors` and read it back. This requires maintainer approval for external contributors' fork PR workflows; it does not approve a workflow or grant it a write token. While private, an unavailable policy is a blocker to verification, not evidence of an active public-fork setting.
+Following the approved visibility change, the contributor policy was read back as `all_external_contributors`; default workflow permissions are read-only and `can_approve_pull_request_reviews=false`. The commands below are for future maintenance. Read back the repository's contributor-approval policy after any authorized change. This requires maintainer approval for external contributors' fork PR workflows; it does not approve a workflow or grant it a write token. While private, an unavailable policy is a blocker to verification, not evidence of an active public-fork setting.
 
 ```powershell
 gh api repos/simlindahl/loop-cx/actions/permissions/fork-pr-contributor-approval

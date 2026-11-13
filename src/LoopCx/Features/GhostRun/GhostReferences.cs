@@ -42,7 +42,7 @@ public sealed class GhostPlayback
 {
     public GhostPlayback(GhostAttempt reference, TimeSpan maxInterpolationGap)
     {
-        if (maxInterpolationGap <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(maxInterpolationGap));
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maxInterpolationGap, TimeSpan.Zero);
         Reference = reference; MaxInterpolationGap = maxInterpolationGap;
     }
 
@@ -51,7 +51,7 @@ public sealed class GhostPlayback
 
     public double? PositionAt(TimeSpan raceElapsed)
     {
-        if (raceElapsed < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(raceElapsed));
+        ArgumentOutOfRangeException.ThrowIfLessThan(raceElapsed, TimeSpan.Zero);
         var points = Reference.Points;
         if (raceElapsed < points[0].Elapsed) return null;
         if (raceElapsed >= Reference.Elapsed)
@@ -91,7 +91,7 @@ public sealed class GhostPlayback
 
     public GhostGap Compare(TimeSpan raceElapsed, double? runnerMetres)
     {
-        if (raceElapsed < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(raceElapsed));
+        ArgumentOutOfRangeException.ThrowIfLessThan(raceElapsed, TimeSpan.Zero);
         if (runnerMetres is null) return new(null, null);
         if (!double.IsFinite(runnerMetres.Value) || runnerMetres.Value < 0)
             throw new ArgumentOutOfRangeException(nameof(runnerMetres));

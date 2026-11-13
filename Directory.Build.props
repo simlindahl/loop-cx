@@ -1,0 +1,23 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>10.0</AnalysisLevel>
+    <AnalysisLevelSecurity>10.0-recommended</AnalysisLevelSecurity>
+    <AnalysisLevelReliability>10.0-recommended</AnalysisLevelReliability>
+    <AnalysisLevelUsage>10.0-recommended</AnalysisLevelUsage>
+    <AnalysisLevelPerformance>10.0-recommended</AnalysisLevelPerformance>
+    <AnalysisLevelMaintainability>10.0-recommended</AnalysisLevelMaintainability>
+    <AnalysisLevelInteroperability>10.0-recommended</AnalysisLevelInteroperability>
+    <AnalysisLevelGlobalization>10.0-recommended</AnalysisLevelGlobalization>
+    <AnalysisLevelDesign>10.0</AnalysisLevelDesign>
+    <AnalysisLevelNaming>10.0</AnalysisLevelNaming>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <Deterministic>true</Deterministic>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+  </PropertyGroup>
+</Project>

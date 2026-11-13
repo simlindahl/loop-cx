@@ -32,8 +32,7 @@ public sealed class TimedSession
     // The caller supplies elapsed monotonic time, allowing deterministic simulation.
     public void Advance(TimeSpan elapsed)
     {
-        if (elapsed < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(elapsed));
+        ArgumentOutOfRangeException.ThrowIfLessThan(elapsed, TimeSpan.Zero);
         if (IsPaused) return;
         while (elapsed > TimeSpan.Zero && Current is { } phase)
         {

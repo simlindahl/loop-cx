@@ -67,7 +67,7 @@ public static class RaceClockChecks
             interrupted.Observe(S(9999)) == retained, "Process interruption preserves only the last known part.");
         var abandoned = new GhostRaceClock(S(0)).EndAttempt(S(12));
         Check(abandoned.RaceElapsed == S(12) && abandoned.State == GhostClockState.Incomplete, "Ending early is distinct from finishing.");
-        Reject(() => new GhostRaceClock(S(-1)), "A negative clock origin is invalid.");
+        Reject(() => _ = new GhostRaceClock(S(-1)), "A negative clock origin is invalid.");
         var invalidFinish = new GhostRaceClock(S(100));
         Reject(() => invalidFinish.CompleteAt(S(99)), "Finish cannot precede the start.");
         Check(invalidFinish.Current.RaceElapsed == S(0) && invalidFinish.Current.State == GhostClockState.Running,

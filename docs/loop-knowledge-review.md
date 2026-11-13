@@ -30,7 +30,7 @@ Primary sources were checked for resistance training, concurrent training, relat
 
 Home examples are proposed adaptations that preserve movement intent where possible. A safe pulling anchor is a genuine equipment constraint. A row is not presented as identical to a vertical pull. Jumps, mixed work and progression thresholds remain practical Core choices rather than scientifically established minimum doses.
 
-The approved [project license scope](../LICENSE.md) applies CC BY-NC 4.0 to original guide text/design and PolyForm Noncommercial 1.0.0 to owned software, preserving third-party terms and statutory exceptions. Attribution is LOOP by Simon Lindahl; commercial licensing enquiries for protected material/code go to simon.a.lindahl@gmail.com. Underlying training ideas are distinct from protected expression. This licensing decision does not release the reader runtime implementation hold or authorize public visibility. Repository and Projects visibility remain subject to separate approval.
+The approved [project license scope](../LICENSE.md) applies CC BY-NC 4.0 to original guide text/design and PolyForm Noncommercial 1.0.0 to owned software, preserving third-party terms and statutory exceptions. Attribution is LOOP by Simon Lindahl; commercial licensing enquiries for protected material/code go to simon.a.lindahl@gmail.com. Underlying training ideas are distinct from protected expression. This licensing decision does not release the reader runtime implementation hold or authorize public visibility. Simon separately approved repository publication; it is now public. The Projects board and `second-brain` remain private. See [publication review](publication-review.md) for that decision and its evidence boundaries.
 
 ## Simon's review
 

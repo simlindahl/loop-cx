@@ -74,7 +74,7 @@ Require(restoredRoute.Key == route.Key && restoredRoute.Geometry.SequenceEqual(r
 Require(restoredAttempt.SavedLocalYear == 2025 && restoredAttempt.StartedLocal.EqualsExact(boundary.StartedLocal) &&
     restoredAttempt.TimeZoneId == boundary.TimeZoneId && restoredAttempt.Points.SequenceEqual(boundary.Points),
     "Attempt JSON round-trip retains local date, timezone and elapsed evidence.");
-Reject(() => new GhostRoute(key, "Bad", Id(3), "v1", new[] { new RouteVertex(10, 10, 0), new RouteVertex(10, 10, double.NaN) }), "Reject non-finite geometry.");
+Reject(() => _ = new GhostRoute(key, "Bad", Id(3), "v1", new[] { new RouteVertex(10, 10, 0), new RouteVertex(10, 10, double.NaN) }), "Reject non-finite geometry.");
 
 GhostAttempt Recording(params GhostPoint[] points) =>
     new(Id(60), Id(160), key, yearBest.StartedLocal, "Europe/Stockholm", points[^1].Elapsed,
