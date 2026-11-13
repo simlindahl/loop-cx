@@ -24,6 +24,10 @@ This project-specific division of responsibility overrides the general learning-
 - Ask Simon for decisions that materially affect product direction, significant architecture, cost or risk. Present a concrete recommendation, relevant alternatives and consequences. Existing explicit design approvals, implementation holds, physical-device acceptance and publication permissions remain in force; merge authority follows the work tracking rules below.
 - The team lead is Simon's point of contact and reports meaningful team progress, material blockers and decisions awaiting Simon, with a recommendation and the impact of waiting. Give periodic consolidated updates at useful milestones; keep internal team discussion and routine coordination out of these updates. Complete independent work before escalating and continue other authorized work while awaiting a decision.
 
+## Shared team principles
+
+Every role applies minimalism and the Pareto principle: choose the simplest solution that demonstrably meets the need and focus effort on the small set of changes that provides the most user value, reduces material risk or supports important learning. Treat 80/20 as a prioritization heuristic, not a measured result; use evidence or explicit hypotheses. Avoid speculative features, abstractions and process or test overhead. This never waives correctness, security, accessibility, mandatory acceptance or required checks.
+
 ## Phone installation offers
 
 After a valuable feature merge, proactively offer Simon a USB installation of the merged app so he can try the delivered behavior on his phone. Explain what is new and useful to try, and distinguish unverified physical behavior from automated evidence. Do not make the offer a merge gate or require installation for documentation-only changes. Wait for Simon to accept before installing; then follow [the phone installation workflow](docs/android.md#usb-phone-installation), preserving existing app data and reporting blockers.
