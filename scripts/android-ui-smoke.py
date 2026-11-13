@@ -7,6 +7,7 @@ import subprocess
 import sys
 import zipfile
 import sqlite3
+from contextlib import closing
 import tempfile
 import time
 import xml.etree.ElementTree as ET
@@ -180,7 +181,9 @@ try:
     idle = capture("idle-offline", "Start C1 · Intervals")
     button(reachable_button("idle-start-c1", "Start C1 · Intervals"), "Start C1 · Intervals", tap=True)
     running = capture("running", "Pause")
-    run_id = wait_snapshot(lambda s: s.get("TemplateId") == "C1" and not s["Paused"])["Id"]
+    c1_start = wait_snapshot(lambda s: s.get("TemplateId") == "C1" and not s["Paused"])
+    assert c1_start["Phase"] == "Warmup" and c1_start["ActiveSeconds"] + c1_start["RemainingSeconds"] == 480
+    run_id = c1_start["Id"]
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "start-c2")
     assert wait_snapshot(lambda s: s["Id"] == run_id)["TemplateId"] == "C1", "C2 duplicate must not replace C1"
     for label in ["Pause", "+1 min", "Start main run"]:
@@ -244,7 +247,7 @@ try:
     with tempfile.TemporaryDirectory() as temporary:
         db_path = Path(temporary) / "synthetic.db"
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
-        with sqlite3.connect(db_path) as db:
+        with closing(sqlite3.connect(db_path)) as db, db:
             status, plan_json, metadata_json = db.execute("SELECT status, initial_plan, template_metadata FROM runs WHERE id=?", (c2["Id"],)).fetchone()
             assert status == "finished"
             plan, metadata = json.loads(plan_json), json.loads(metadata_json)
@@ -255,11 +258,14 @@ try:
             assert db.execute("SELECT COUNT(*) FROM run_events WHERE run_id=? AND command='start'", (c2["Id"],)).fetchone()[0] == 1
             c1_metadata = json.loads(db.execute("SELECT template_metadata FROM runs WHERE id=?", (run_id,)).fetchone()[0])
             assert c1_metadata["TemplateId"] == "C1" and c1_metadata["IntendedHeartRateZone"] is None
+            assert c1_metadata["TemplateRevision"] == 2
+            c1_plan = json.loads(db.execute("SELECT initial_plan FROM runs WHERE id=?", (run_id,)).fetchone()[0])
+            assert len(c1_plan) == 11 and c1_plan[0]["Duration"] == "00:08:00" and c1_plan[-1]["Duration"] == "00:04:00"
             assert db.execute("SELECT COUNT(*) FROM run_events WHERE run_id=? AND command='start'", (run_id,)).fetchone()[0] == 1
         backup = Path(temporary) / "ui-results.db"
         backup.write_bytes(db_path.read_bytes())
         fixture = Path(temporary) / "schema2.db"
-        with sqlite3.connect(fixture) as db:
+        with closing(sqlite3.connect(fixture)) as db, db:
             db.executescript("""
                 CREATE TABLE runs (id TEXT PRIMARY KEY, started_utc TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, status TEXT NOT NULL, initial_plan TEXT NOT NULL, checkpoint TEXT NOT NULL);
                 CREATE TABLE locations (run_id TEXT NOT NULL, utc_ms INTEGER NOT NULL, monotonic_ns INTEGER NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, accuracy REAL);
@@ -275,7 +281,7 @@ try:
         capture("schema2-upgraded-idle", "Start C2 · Zone 2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
-        with sqlite3.connect(db_path) as db:
+        with closing(sqlite3.connect(db_path)) as db, db:
             assert db.execute("PRAGMA user_version").fetchone()[0] == 3
             assert db.execute("SELECT initial_plan, checkpoint, template_metadata FROM runs WHERE id='v2'").fetchone() == ('[]', '{"legacy":true}', None)
             assert db.execute("SELECT checkpoint FROM run_events WHERE run_id='v2'").fetchall() == [('{"event":true}',)]
@@ -284,10 +290,62 @@ try:
         capture("fresh-schema3-idle", "Start C2 · Zone 2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
-        with sqlite3.connect(db_path) as db:
+        with closing(sqlite3.connect(db_path)) as db, db:
             assert db.execute("PRAGMA user_version").fetchone()[0] == 3
             assert "template_metadata" in [row[1] for row in db.execute("PRAGMA table_info(runs)")]
             assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+        # Real schema-3 legacy rows: opening the journal interrupts recording only;
+        # it does not rehydrate or replace frozen plans with the current factory.
+        legacy_plan = [dict(phase) for phase in c1_plan]
+        legacy_plan[0]["Duration"], legacy_plan[-1]["Duration"] = "00:10:00", "00:05:00"
+        legacy_metadata = dict(c1_metadata, TemplateRevision=1)
+        legacy_plan_json = json.dumps(legacy_plan, separators=(",", ":"))
+        legacy_metadata_json = json.dumps(legacy_metadata, separators=(",", ":"))
+        old_rows = []
+        for suffix, status, metadata in [("recording", "recording", legacy_metadata_json),
+                                          ("finished", "finished", legacy_metadata_json),
+                                          ("unknown", "finished", None)]:
+            finished = status == "finished"
+            snapshot_data = {"Phase": "Finished" if finished else "Warmup", "Paused": False,
+                             "ActiveSeconds": 2280 if finished else 120,
+                             "RemainingSeconds": 0 if finished else 480}
+            if metadata is not None:
+                snapshot_data["TemplateId"] = "C1"
+            checkpoint = json.dumps({"SchemaVersion": 1, "Plan": legacy_plan,
+                "Completed": [{"Plan": phase, "ActiveTime": phase["Duration"]} for phase in legacy_plan] if finished else [],
+                "PhaseActiveTime": "00:00:00" if finished else "00:02:00",
+                "TotalActiveTime": "00:38:00" if finished else "00:02:00",
+                "MainActiveTime": "00:23:00" if finished else "00:00:00",
+                "Snapshot": snapshot_data}, separators=(",", ":"))
+            old_rows.append(("legacy-c1-" + suffix, "2026-11-13T08:00:00Z",
+                             "2026-11-13T08:38:00Z" if finished else "2026-11-13T08:02:00Z",
+                             2280000 if finished else 120000, status, legacy_plan_json, checkpoint, metadata))
+        with closing(sqlite3.connect(db_path)) as db, db:
+            db.executemany("INSERT INTO runs VALUES (?,?,?,?,?,?,?,?)", old_rows)
+            db.executemany("INSERT INTO export_queue VALUES (?, 'disabled_synthetic')",
+                           [(row[0],) for row in old_rows if row[4] == "finished"])
+        adb("push", str(db_path), "/data/local/tmp/loop-legacy-c1.db")
+        adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-legacy-c1.db", "databases/runs-debug.db")
+        open_app()
+        capture("legacy-c1-opened-idle", "Start C1 · Intervals")
+        adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "start")
+        new_c1 = wait_snapshot(lambda state: state.get("TemplateId") == "C1" and state["Id"] != run_id)
+        assert new_c1["ActiveSeconds"] + new_c1["RemainingSeconds"] == 480
+        adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
+        wait_snapshot(lambda state: state["Id"] == new_c1["Id"] and state["Phase"] == "Finished")
+        adb("shell", "am", "force-stop", PACKAGE)
+        db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
+        with closing(sqlite3.connect(db_path)) as db, db:
+            for row in old_rows:
+                expected = list(row)
+                if expected[4] == "recording":
+                    expected[4] = "interrupted"
+                assert db.execute("SELECT * FROM runs WHERE id=?", (row[0],)).fetchone() == tuple(expected)
+            assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 4
+            new_plan, new_metadata = db.execute("SELECT initial_plan, template_metadata FROM runs WHERE id=?", (new_c1["Id"],)).fetchone()
+            assert json.loads(new_plan) == c1_plan and json.loads(new_metadata)["TemplateRevision"] == 2
+            assert db.execute("SELECT COUNT(*) FROM export_queue WHERE status!='disabled_synthetic'").fetchone()[0] == 0
+        report["legacyC1"] = "PASS: journal reopen only interrupts old recording; frozen 10/5 plan/checkpoint/v1 or NULL metadata unchanged; separate new start uses 8/4 revision 2"
         adb("push", str(backup), "/data/local/tmp/loop-ui-results.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-ui-results.db", "databases/runs-debug.db")
         report["schemaMigration"] = "PASS: fresh 3 and seeded 2-to-3, existing phase/checkpoint/event payload unchanged and legacy metadata NULL; 1-to-3 covered by stronger smoke"

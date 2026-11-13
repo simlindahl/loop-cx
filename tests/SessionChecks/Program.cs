@@ -257,3 +257,37 @@ duplicateDelivery.Observe(Fix(2, 10), TimeSpan.FromSeconds(2), TimeSpan.FromSeco
 // Assert
 Require(Math.Abs(duplicateDelivery.Snapshot.MainMeasuredMetres - 10) < .001 && !duplicateDelivery.Snapshot.MainHasGaps,
     "Duplicate and out-of-order packets leave newer trusted distance and quality unchanged.");
+
+// Arrange
+var officialC1 = CoreTemplate.CreateC1Session();
+var legacyC1 = TimedSession.Intervals(5, Minutes(3), Minutes(2), 7, 2, Minutes(10), Minutes(5));
+var legacyPlan = System.Text.Json.JsonSerializer.Serialize(legacyC1.Plan);
+var legacyTemplate = CoreTemplate.C1 with { TemplateRevision = 1 };
+
+// Act
+legacyC1.Advance(Minutes(2));
+officialC1.Advance(Minutes(8));
+var officialMainStartsWithoutPreparationTime = officialC1.Current?.Kind == RunPhase.Work
+    && officialC1.MainActiveTime == TimeSpan.Zero;
+officialC1.Advance(Minutes(23));
+var officialCooldown = officialC1.Current?.Kind == RunPhase.Cooldown && officialC1.Remaining == Minutes(4);
+officialC1.Advance(Minutes(4));
+var restoredLegacyPlan = System.Text.Json.JsonSerializer.Deserialize<TimedPhase[]>(legacyPlan)!;
+var legacySaved = new TimedSession(restoredLegacyPlan);
+legacySaved.Advance(Minutes(100));
+
+// Assert
+Require(CoreTemplate.C1.TemplateRevision == 2 && CoreTemplate.C2.TemplateRevision == 1,
+    "Only the new official C1 template revision changes.");
+Require(officialMainStartsWithoutPreparationTime && officialCooldown && officialC1.IsFinished,
+    "Official C1 has an eight-minute warm-up, unchanged main and four-minute cool-down.");
+Require(officialC1.TotalActiveTime == Minutes(35) && officialC1.MainActiveTime == Minutes(23)
+    && officialC1.Completed.Count(static p => p.Plan.Kind == RunPhase.Work) == 5
+    && officialC1.Completed.Count(static p => p.Plan.Kind == RunPhase.Recovery) == 4,
+    "Official C1 totals 35 minutes with five work efforts and four recoveries in its 23-minute main.");
+Require(legacyC1.Remaining == Minutes(8) && legacyTemplate.TemplateRevision == 1
+    && System.Text.Json.JsonSerializer.Serialize(legacyC1.Plan) == legacyPlan,
+    "Creating and advancing revision 2 cannot rewrite an existing revision 1 plan or metadata.");
+Require(legacySaved.TotalActiveTime == Minutes(38) && legacySaved.MainActiveTime == Minutes(23),
+    "Serialized legacy 10/5 plans remain readable with their original 38-minute dose.");
+Console.WriteLine("PASS: official C1 revision 2 is 8/4 and 35 minutes; frozen revision 1 remains 10/5 and 38.");
