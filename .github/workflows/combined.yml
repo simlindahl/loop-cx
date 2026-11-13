@@ -1,0 +1,66 @@
+name: Combined candidate verification
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Record the actual combined source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p verification
+          git rev-parse HEAD > verification/source-head.txt
+          git status --porcelain > verification/source-status.txt
+          test -z "$(git status --porcelain --untracked-files=no)"
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Check session rules
+        run: dotnet run --project tests/SessionChecks
+        env:
+          MSBuildEnableWorkloadResolver: false
+      - name: Check Ghost rules
+        run: dotnet run --project tests/GhostChecks
+        env:
+          MSBuildEnableWorkloadResolver: false
+      - name: Check Ghost SQLite archive
+        run: python3 tests/GhostStorageChecks/check.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: dotnet workload install maui-android
+      - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
+      - run: dotnet build src/LoopCx -c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64
+      - name: Free space for the emulator
+        run: |
+          sudo rm -rf /usr/share/swift /opt/ghc /usr/local/.ghcup /usr/local/share/boost
+          df -h "$HOME"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          emulator-boot-timeout: 300
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          script: bash scripts/android-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combined-candidate-evidence
+          path: |
+            verification/
+            src/LoopCx/bin/Debug/**/*-Signed.apk
+          if-no-files-found: warn
