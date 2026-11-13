@@ -8,15 +8,15 @@ Requirements: [product specification](../knowledge/product.md), issues #1 and #1
 |---|---|---|
 | Android/session | #8 → #9 → #14 → #17 | Timed workout engine, service/GPS, continuous SQLite checkpoints, recovery and command log |
 | Ghost Run | #19 → #20 → #21 → #22 → #23 → #24 | Requirements/mockups, frozen references, main-phase evidence, race clock, ordered matching and SQLite data model |
-| Combined check | This PR after #24 | Temporary source composition and shared build/acceptance tests |
+| Combined check | This PR after #24 | Actual combined source revision and shared build/acceptance tests |
 
-Review order is not merge approval. None of these PRs may be merged without Simon. Main does not yet contain the open candidate changes.
+Review and merge follow the delegated workflow in [AGENTS.md](../AGENTS.md#work-tracking-and-status). Each predecessor must be delivered before its dependent PR merges. Detailed Ghost layouts remain preliminary; standalone rule verification does not approve UI integration.
 
 <a id="vad-kontrollen-gör"></a>
 ## What the check does
-[Combined candidate verification](../.github/workflows/combined.yml) checks out the Ghost candidate and fetches full Git history. It combines Android candidate `d70fe80d431c1762f8e23d260d4a7e73e86a38c2` in a **temporary working copy** using `git merge --no-commit --no-ff`. It creates no merge commit and pushes nothing. The pinned revision makes the result reproducible; new Android-track changes require an explicit updated check.
+[Combined candidate verification](../.github/workflows/combined.yml) verifies the actual checked-out revision containing both tracks. It no longer merges a pinned historical runtime into a temporary tree or resolves conflicts in CI. The artifact records the tested source SHA. Run it on every PR and push to main so code changes cannot silently skip combined checks.
 
-Both tracks changed `scripts/android-smoke.sh`. Automatic resolution preserves the Android candidate's stronger service/GPS/SQLite tests. After English translation, a conflict in docs/android.md may additionally keep the Ghost candidate's English documentation. Only the exact known script conflict or that script plus docs/android.md is allowed; all other conflicts stop the job. The runtime commit remains pinned and the composed production blobs were verified identical before and after this documentation adaptation. Preserve these scenarios at a later approved merge; the Ghost track's simpler startup check must not replace them.
+The combined candidate retains the Android track's stronger service/GPS/SQLite smoke test, including completion followed by a second workout, effective command logging and migration. Ghost rules and host SQLite checks run against the same revision as the Android build.
 
 The job runs:
 1. `dotnet run --project tests/SessionChecks`.
@@ -25,7 +25,7 @@ The job runs:
 4. An Android build of the combined sources.
 5. An API 35 emulator: start/duplicate start, time/GPS with screen off, manual pause, resume, reopened Razor view, process death and exactly preserved SQLite evidence.
 
-The `combined-candidate-evidence` artifact contains source revisions, composition statistics and, when the build succeeds, a debug APK for an x64 emulator. The APK is not a verified Pixel delivery. Add actual results and the run link to the PR description after the job completes.
+The `combined-candidate-evidence` artifact contains the tested source revision and, when the build succeeds, a debug APK for an x64 emulator. The APK is not a verified Pixel delivery. Add actual results and the run link to the PR description after the job completes.
 
 <a id="vad-kontrollen-inte-gör"></a>
 ## What the check does not do
