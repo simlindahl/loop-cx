@@ -58,10 +58,12 @@ If you are starting a fresh rotation, begin with C1 when you are ready for hard 
 
 #### C1 · Controlled intervals
 
-- Warm up progressively for **10 minutes**.
+Official C1 revision 2: Simon approved 8/4 preparation on 13 November 2026, superseding the historical 10/5 dose. The main set remains 23 minutes. This is the programme's chosen default, not a research claim that these exact durations are universally optimal. [Decision and app/history boundary](../design/decision.md#official-c1-revision-2--13-november-2026).
+
+- Warm up progressively for **8 minutes**.
 - Complete **5 × 3 minutes** at a hard but controlled effort.
 - Move easily for **2 minutes between efforts**: four recoveries in total.
-- Finish with **5 minutes easy**. Total: **38 minutes**.
+- Finish with **4 minutes easy**. Total: **35 minutes**.
 
 Choose running, cycling or rowing according to experience, access and tolerance. Aim for efforts you can repeat without a dramatic collapse in pace or technique. Your breathing should be challenged before a local muscle group gives out. Do not sprint the first repetition or chase a heart-rate number while the sensor catches up. Shorten or stop if safe control is lost.
 

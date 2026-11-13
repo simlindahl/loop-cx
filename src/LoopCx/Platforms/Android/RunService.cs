@@ -125,8 +125,7 @@ public sealed class RunService : Service, ILocationListener
             templateMetadata = System.Text.Json.JsonSerializer.Serialize(template);
             session = template.TemplateId == "C2"
                 ? TimedSession.Continuous(TimeSpan.FromMinutes(45), 3)
-                : TimedSession.Intervals(5, TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(2),
-                    7, 2, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
+                : CoreTemplate.CreateC1Session();
             started = DateTimeOffset.UtcNow;
             startedMonotonic = SystemClock.ElapsedRealtime();
             distance = new RunDistance(DistancePolicy.Pilot, TimeSpan.FromMilliseconds(startedMonotonic), session.Current?.Kind);
