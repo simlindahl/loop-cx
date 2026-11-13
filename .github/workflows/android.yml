@@ -1,11 +1,6 @@
 name: Android
 on:
   pull_request:
-    paths:
-      - 'src/**'
-      - 'global.json'
-      - '.github/workflows/android.yml'
-      - 'scripts/android-smoke.sh'
   workflow_dispatch:
 permissions:
   contents: read
