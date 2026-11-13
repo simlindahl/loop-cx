@@ -130,7 +130,7 @@ Acceptance: home and training views use the table's colors without a remaining b
 
 <a id="projektstyrning"></a>
 ## Project governance
-[GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. The [roles and decision-making rules](../AGENTS.md#roles-and-decision-making) govern ownership, subagent requirements/test review and progress updates; the lead developer may merge under the conditions in AGENTS.md without separate merge approval from Simon. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.
+[GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. The [roles and decision-making rules](../AGENTS.md#roles-and-decision-making) govern ownership, separate requirements analyst, QA engineer, fullstack developer and UX designer subagents, and team progress updates; the team lead may merge under the conditions in AGENTS.md without separate merge approval from Simon. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.
 
 ## LOOP knowledge — review proposal
 
