@@ -12,13 +12,16 @@ namespace LoopCx;
         ConfigChanges.Density)]
 public sealed class MainActivity : MauiAppCompatActivity
 {
-#if DEBUG
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        _ = RunJournal.Shared;
+#if DEBUG
         HandleDebugCommand(Intent);
+#endif
     }
 
+#if DEBUG
     protected override void OnNewIntent(Intent? intent)
     {
         base.OnNewIntent(intent);
@@ -28,7 +31,7 @@ public sealed class MainActivity : MauiAppCompatActivity
     private static void HandleDebugCommand(Intent? intent)
     {
         var command = intent?.GetStringExtra("loop-command");
-        if (command is "start" or "pause" or "resume" or "extend" or "skip")
+        if (command is "start" or "pause" or "resume" or "extend" or "skip" or "complete")
             RunService.Command(command);
     }
 #endif

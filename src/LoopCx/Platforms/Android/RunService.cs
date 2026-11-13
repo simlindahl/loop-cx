@@ -17,6 +17,16 @@ public sealed class RunService : Service, ILocationListener
     public static event Action? Changed;
     private TimedSession? session;
     private Guid id;
+    private DateTimeOffset started;
+    private long startedMonotonic;
+    private string initialPlan = "";
+    private RunJournal journal = null!;
+
+    public override void OnCreate()
+    {
+        base.OnCreate();
+        journal = RunJournal.Shared;
+    }
     private Handler? handler;
     private Action? tick;
     private long lastTick;
@@ -50,7 +60,10 @@ public sealed class RunService : Service, ILocationListener
             // Core C1 template revision 1; the stored favorite will supply this plan.
             session = TimedSession.Intervals(5, TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(2),
                 7, 2, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
-            lastTick = SystemClock.ElapsedRealtime();
+            started = DateTimeOffset.UtcNow;
+            startedMonotonic = SystemClock.ElapsedRealtime();
+            initialPlan = System.Text.Json.JsonSerializer.Serialize(session.Plan);
+            lastTick = startedMonotonic;
             var manager = (NotificationManager)GetSystemService(NotificationService)!;
             manager.CreateNotificationChannel(new NotificationChannel(ChannelId, "Running session", NotificationImportance.Low));
             Publish();
@@ -75,6 +88,9 @@ public sealed class RunService : Service, ILocationListener
             case "resume": session.Resume(); break;
             case "extend": session.Extend(); break;
             case "skip": session.SkipPreparation(); break;
+#if DEBUG
+            case "complete": session.Resume(); session.Advance(TimeSpan.FromHours(1)); break;
+#endif
         }
         Publish();
         return StartCommandResult.NotSticky;
@@ -101,6 +117,8 @@ public sealed class RunService : Service, ILocationListener
             session.IsPaused, (long)session.TotalActiveTime.TotalSeconds,
             (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus);
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
+        journal.Checkpoint(id, started, SystemClock.ElapsedRealtime() - startedMonotonic,
+            session, initialPlan, Snapshot);
         Changed?.Invoke();
 #if DEBUG
         global::Android.Util.Log.Info("LoopRun", System.Text.Json.JsonSerializer.Serialize(Snapshot));
@@ -139,6 +157,7 @@ public sealed class RunService : Service, ILocationListener
     public void OnLocationChanged(global::Android.Locations.Location location)
     {
         if (session is null || session.IsFinished || session.IsPaused) return;
+        journal.Location(id, location);
         locations++;
         gpsStatus = location.HasAccuracy ? $"GPS ±{location.Accuracy:0} m" : "GPS accuracy unknown";
         Publish();

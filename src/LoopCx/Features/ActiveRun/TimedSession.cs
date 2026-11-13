@@ -19,6 +19,7 @@ public sealed class TimedSession
             throw new ArgumentException("Every phase needs positive duration and target RPE 1–10.", nameof(plan));
     }
 
+    public IReadOnlyList<TimedPhase> Plan => phases.AsReadOnly();
     public IReadOnlyList<CompletedPhase> Completed => completed.AsReadOnly();
     public TimedPhase? Current => IsFinished ? null : phases[index];
     public bool IsFinished => index == phases.Count;

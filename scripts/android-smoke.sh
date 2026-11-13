@@ -63,8 +63,43 @@ PY
 
 for attempt in {1..30}; do
     adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
-    if adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'; then exit 0; fi
+    if adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'; then break; fi
     sleep 2
 done
-adb logcat -d -s chromium monodroid-assembly DOTNET
-exit 1
+adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'
+# Force-stop commits no shutdown callback: only durable checkpoints may survive.
+command pause
+sleep 2
+snapshot > /tmp/run-before-death.json
+adb shell am force-stop se.loopcx.running
+adb exec-out run-as se.loopcx.running cat databases/runs-debug.db > /tmp/before-death.db
+sleep 3
+command start
+sleep 5
+snapshot > /tmp/run-after-death.json
+command complete
+sleep 3
+adb shell am force-stop se.loopcx.running
+adb exec-out run-as se.loopcx.running cat databases/runs-debug.db > /tmp/after-death.db
+python3 - <<'PY'
+import json, sqlite3
+from pathlib import Path
+before = sqlite3.connect('/tmp/before-death.db')
+after = sqlite3.connect('/tmp/after-death.db')
+old_id = json.loads(Path('/tmp/run-before-death.json').read_text())['Id']
+new_id = json.loads(Path('/tmp/run-after-death.json').read_text())['Id']
+assert old_id != new_id, 'Restart must not silently resume missing measurements'
+fields = 'observed_utc, elapsed_ms, initial_plan, checkpoint'
+saved = before.execute(f'SELECT {fields} FROM runs WHERE id=?', (old_id,)).fetchone()
+recovered = after.execute(f'SELECT {fields} FROM runs WHERE id=?', (old_id,)).fetchone()
+assert saved == recovered, 'Recovery must not invent time, GPS or phases'
+assert after.execute('SELECT status FROM runs WHERE id=?', (old_id,)).fetchone()[0] == 'interrupted'
+checkpoint = json.loads(saved[3])
+assert checkpoint['Snapshot']['Paused']
+assert len(json.loads(saved[2])) == 11, 'Freeze the entire Core C1 plan'
+assert after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone()[0] > 0
+assert before.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone() == after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone()
+assert after.execute('SELECT status FROM runs WHERE id=?', (new_id,)).fetchone()[0] == 'finished'
+assert after.execute('SELECT status FROM export_queue WHERE run_id=?', (new_id,)).fetchall() == [('disabled_synthetic',)]
+print('PASS: SQLite survives process death, interrupted checkpoint unchanged, raw GPS retained, atomic finish and synthetic export disabled')
+PY
