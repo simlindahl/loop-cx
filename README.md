@@ -1,16 +1,17 @@
 # LOOP Cx
-Privat Android-projekt för löpträning. Officiell LOOP Cx-app för C1- och C2-löpning.
-- [Produktspecifikation och acceptansprov](knowledge/product.md)
-- [Statiska HTML-mockuper för hela appen](design/mockups/index.html) · [Öppna och granska](design/mockups/README.md) · [Beslut](design/decision.md)
-- [Arbetsinstruktioner](AGENTS.md)
+Private Android project for running workouts. The official LOOP Cx app for C1 and C2 running.
+- [Product specification and acceptance tests](knowledge/product.md)
+- [Static HTML mockups for the whole app](design/mockups/index.html) · [Open and review](design/mockups/README.md) · [Decisions](design/decision.md)
+- [Working instructions](AGENTS.md)
 
-knowledge/ är ett Open Knowledge Format 0.2-bundle enligt [Googles specifikation](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md). Versionshantera krav, design och evidens här. GitHub Projects följer issues från Todo via In Progress till Done.
+knowledge/ is an Open Knowledge Format 0.2 bundle following [Google's specification](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md). Version requirements, design and evidence here. [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) tracks work through Todo → Doing → Waiting → Done.
 
-[Öppna de statiska mobilmockuperna](design/mockups/index.html) · [Beslut om LOOP Cx](knowledge/loop-cx.md)
+[Open the static mobile mockups](design/mockups/index.html) · [LOOP Cx product decision](knowledge/loop-cx.md)
 
-## Så arbetar vi
+<a id="så-arbetar-vi"></a>
+## How we work
 [Projekttavla](https://github.com/users/simlindahl/projects/2) · [Actions](https://github.com/simlindahl/loop-cx/actions/workflows/check.yml)
 
-Simon prioriterar och fattar produkt- och designbeslut. Agenten tar en issue till In Progress, arbetar på en kortlivad gren och öppnar en PR med krav, resultat och `Closes #nummer`. Simon kan granska diff och evidens där. En fysisk kontroll som ingår i acceptansen ska vara genomförd innan issuen stängs.
+Simon prioritizes work and makes product and design decisions. The agent reads the GitHub project, sets the current card to Doing and works on a short-lived branch with requirements and results. Use `Closes #number` only when the PR fulfils the entire issue; otherwise use `Refs #number`. When the next step requires Simon, set Waiting with a concrete request and linked evidence. Update status directly in Projects through `gh project` and read it back; no board PR or CI is needed for status changes. The [status rules in AGENTS.md](AGENTS.md#work-tracking-and-status) govern this workflow. Simon approves merge unless that specific PR has been explicitly delegated. Complete physical checks that are part of acceptance before closing the issue.
 
-Repository checks körs på PR och push till main och kan startas manuellt. Kör samma kontroll lokalt med `ruby scripts/check_docs.rb`. [Android-kontrollen](.github/workflows/android.yml) bygger en debug-APK och startar appen i emulator. [Kör appen på Windows](docs/android.md).
+Repository checks run on PRs and pushes to main and can be started manually. Run the same check locally with `ruby scripts/check_docs.rb`. The [Android check](.github/workflows/android.yml) builds a debug APK and starts the app in an emulator. [Run the app on Windows](docs/android.md).
