@@ -4,7 +4,7 @@
 
 [Ruleset-konfigurationen](../.github/main-ruleset.json) definierar `Protect main` för `main`: PR-krav med 0 approvals, lösta review-diskussioner, linjär historik och obligatoriska GitHub Actions-checks `specification`, `emulator` och `mockups`. Branchen måste vara aktuell mot main. Radering och force-push blockeras; bypass-listan är tom. Använd squash merge. Restrict updates, signerade commits och merge queue krävs inte.
 
-Noll approvals gör det möjligt att merga egna PR:ar. Det ersätter inte [repoets godkännanderegler](../AGENTS.md#arbetslista-och-status). Även rena tavleändringar går via PR.
+Noll approvals gör det möjligt att merga egna PR:ar. Det ersätter inte [repoets godkännanderegler](../AGENTS.md#arbetslista-och-status). Tavlans status uppdateras direkt i [GitHub Projects](https://github.com/users/simlindahl/projects/2) och berör inte main eller dess CI.
 
 ## Aktivera efter verifiering
 
@@ -28,9 +28,9 @@ Tillåt squash merge i repots merge-inställningar. Linjär historik hindrar mer
 
 ## Verifiera PR-flödet
 
-Alla tre workflows startar på varje PR utan path-filter. Android bygger och kör emulatorprovet; mockup-kontrollen verifierar layout och laddar upp skärmbilder. En grön check betyder att kontrollen körts, även på rena tavleändringar. Manuella körningar finns kvar.
+Alla tre workflows startar på varje PR utan path-filter. Android bygger och kör emulatorprovet; mockup-kontrollen verifierar layout och laddar upp skärmbilder. En grön check betyder att kontrollen körts, även på rena dokumentationsändringar. Manuella körningar finns kvar.
 
-Följ [tavlans testinstruktion](../AGENTS.md#arbetslista-och-status) på en separat testbranch och en märkt test-PR. Prova statusbyten med verkliga commits och återläsning. Stäng test-PR:n utan merge och ta bort testkortet från testbranchen. Testet bevisar branchens tavleflöde och CI; det bevisar inte att rulesetet är aktivt eller att main har uppdaterats.
+Verifiera Projects-flödet med ett syntetiskt kort enligt [tavlans testinstruktion](../AGENTS.md#arbetslista-och-status). Statusbyten i Projects utlöser ingen CI och behöver ingen testbranch eller PR. Repoändringarnas CI och rulesetets aktivering verifieras separat.
 
 ## Referenser
 
