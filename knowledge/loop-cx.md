@@ -15,4 +15,6 @@ Core governs training content. The app executes C1/C2 when running is selected. 
 
 The [C1 variant purposes and evidence](running-workouts.md#c1-variant-purposes-and-evidence) records the subsequently approved three-protocol direction and fixed RPE values, research support and remaining delivery/design decisions. These future variants do not relabel or replace existing frozen C1 revisions.
 
-The subsequent Core-first C2 programme uses 30/45/60-minute choices, default45, targetRPE4 and no preparation. New template revision2 distinguishes this from the delivered revision1/RPE3; actual started plans and historical runs remain frozen. This approved programme change is specified with the new Core-first flows and is not yet runtime delivery.
+The subsequent Core-first C2 programme uses a20–120-minute slider in five-minute steps, default45, targetRPE4 and no preparation. New template revision2 distinguishes this from the delivered revision1/RPE3; actual started plans and historical runs remain frozen. This approved programme change is specified with the new Core-first flows and is not yet runtime delivery.
+
+The approved C1 rep control keeps work/recovery durations and RPE fixed while allowing integer counts whose main set, including recovery, is10–60minutes. Default counts remain6/5/3; saved shortcuts retain selected counts. This supersedes the earlier fixed-count-only interpretation, not the Core-first boundary against a general workout builder.

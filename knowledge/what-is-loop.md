@@ -66,7 +66,7 @@ C1 offers three different training emphases. Choose one variant for the C1 step;
 | C1.2 · Aerobic HIIT | Develop aerobic power through sustained, controlled hard efforts | 5 × 3 minutes hard, 2 minutes recovery between efforts | 7 / 3 | 30 min |
 | C1.3 · Threshold intervals | Practise controlled, sustained effort near your individual threshold | 3 × 6 minutes, 3 minutes recovery between efforts | 6 / 3 | 31 min |
 
-There is no planned recovery after the last work effort. Begin with **4 minutes of progressive warm-up** and finish with **3 minutes easy**. These are simple starting defaults, not scientifically established preparation doses for every person. Extend preparation when needed, especially before maximal SIT; a timer reaching zero does not establish readiness. Shorten or stop if safe movement or control is lost.
+The table shows the default counts. You can choose a different repetition count while keeping the planned main set, including recovery, between **10 and 60 minutes**: SIT 4–14 efforts, aerobic HIIT 3–12, threshold 2–7. Work/recovery lengths and RPE stay fixed. These limits are product choices, not a recommendation to use the largest dose or evidence that every allowed SIT count has been validated. There is no planned recovery after the last work effort. Begin with **4 minutes of progressive warm-up** and finish with **3 minutes easy**. These are simple starting defaults, not scientifically established preparation doses for every person. Extend preparation when needed, especially before maximal SIT; a timer reaching zero does not establish readiness. Shorten or stop if safe movement or control is lost.
 
 RPE means **Rating of Perceived Exertion**: how hard an effort feels on this app's 1–10 scale. These values describe intended effort, not measured heart rate or a laboratory threshold. SIT explicitly asks for maximal effort, whereas aerobic HIIT and threshold intervals ask for repeatable, controlled effort. SIT is not the automatic next step for someone unfamiliar with sprinting or returning from a layoff. Use a familiar activity and appropriate conditions; do not treat maximal-effort research in trained or young participants as proof of suitability for everyone.
 
@@ -89,7 +89,7 @@ Do one working set per exercise per round: **two working sets for each exercise,
 
 #### C2 · Easy conditioning
 
-Choose **30, 45 or 60 minutes** of comfortable, steady movement; **45 minutes** is the default. The fixed target is **RPE 4**, a programme effort guideline rather than a measured heart-rate zone. Running is useful when tolerated, with cycling or rowing as Core alternatives. Build tolerance if even the shorter duration is currently too much; do not force completion through concerning symptoms.
+Choose **20–120 minutes in five-minute steps** of comfortable, steady movement; **45 minutes** is the default. The fixed target is **RPE 4**, a programme effort guideline rather than a measured heart-rate zone. Running is useful when tolerated, with cycling or rowing as Core alternatives. Build tolerance if even the shorter duration is currently too much; do not force completion through concerning symptoms.
 
 Use an effort at which conversation remains comfortable. Ease off when maintaining conversation becomes difficult. A wearable can supply context, but is not required. A talk test is a practical effort cue, **not an exact conversion to WHOOP zone 2 or an individually measured physiological threshold**.[2] Do not force a pace just because it was easy last week.
 
