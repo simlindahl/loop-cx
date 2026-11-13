@@ -38,4 +38,4 @@ Latest licensing intent: attribution, noncommercial reuse, and commercial enquir
 2. Are the workout instructions and proposed home substitutions faithful and practical enough to follow independently?
 3. Approve or adjust the Settings entry, introduction and four-part scrolling guide. Is the amount of optional learning right?
 
-Approval is recorded in [design/decision.md](../design/decision.md#what-is-loop--content-and-layout-review). Agree the implementation split and obtain an instruction to proceed before app code. Licensing and publication remain separate decisions. Static checks cannot establish TalkBack, Android navigation, physical exercise safety or outdoor readability.
+Approval is recorded in [design/decision.md](../design/decision.md#what-is-loop--content-and-layout-review). The implementation split follows the [roles and decision-making rules](../AGENTS.md#roles-and-decision-making). Obtain a separate instruction to proceed before app code; the role agreement does not lift this hold. Licensing and publication remain separate decisions. Static checks cannot establish TalkBack, Android navigation, physical exercise safety or outdoor readability.
