@@ -33,4 +33,3 @@ Simon separately authorized final review and merge of PR #33. App code remains o
 ## Ghost Run · 13 November 2026
 
 Simon approved a separate feature with routes saved after continuous workouts and racing only against year best or personal best. The race clock continues through all stops and pauses; a pause alone does not disqualify. On 13 November, mockup additions were requested before specification and the feature was added to overnight work. See the Ghost Run section in knowledge/product.md and mockups/index.html#ghost-routes. The 20 new states are preliminary. These product rules are approved; detailed layout is not approved for app UI or integration prototypes. Existing Basalt decisions apply.
-
