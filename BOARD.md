@@ -1,6 +1,6 @@
 # LOOP Cx · arbetslista
 
-Status på `main` är aktuell. [Arbetsregler](AGENTS.md#arbetslista-och-status) · [Issues](https://github.com/simlindahl/loop-cx/issues) · [Pull requests](https://github.com/simlindahl/loop-cx/pulls)
+Status på `main` är bekräftad. Statusbyten föreslås via PR och gäller på main först efter merge och återläsning. [Arbetsregler](AGENTS.md#arbetslista-och-status) · [Issues](https://github.com/simlindahl/loop-cx/issues) · [Pull requests](https://github.com/simlindahl/loop-cx/pulls)
 
 Varje rad avser ett avgränsat moment. En feature kan ha återstående implementation i Todo och en del-PR i Waiting. Ingen av de öppna del-PR:arna nedan är mergad; gröna tester innebär inte färdig feature.
 
@@ -18,6 +18,7 @@ Varje rad avser ett avgränsat moment. En feature kan ha återstående implement
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
+| [#27](https://github.com/simlindahl/loop-cx/issues/27) | Förbered main-skydd, PR-baserat tavelflöde och obligatoriska checks | — | Agenten: verifiera workflows och syntetiska statusbyten; GitHub kräver Pro eller publikt repo för aktivering. |
 
 ## Waiting
 
