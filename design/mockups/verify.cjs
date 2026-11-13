@@ -20,7 +20,7 @@ const fs=require('fs');
  }
  await page.setViewportSize({width:1440,height:1000});
  fs.mkdirSync(__dirname+'/qa',{recursive:true});
- for(const id of ['training','work','edit-intervals','easy-run','settings','run-detail','zones','notification-work','sensor-loss','share','history','warm-up','loop-about','loop-start','loop-workouts','loop-strength','loop-learn','loop-sources']){
+ for(const id of ['training','work','edit-intervals','easy-run','settings','run-detail','zones','notification-work','sensor-loss','share','history','warm-up','loop-about','loop-start','loop-workouts','loop-strength','loop-learn','loop-sources','ghost-routes','ghost-choose','ghost-live','ghost-live-pb','ghost-first-live','ghost-off-route','ghost-not-ready']){
   await page.locator('#'+id+' .phone').screenshot({path:__dirname+'/qa/'+id+'.png'});
  }
  const knowledgeNavigation=[];
@@ -39,6 +39,27 @@ const fs=require('fs');
   await page.locator(selector).click();
   knowledgeNavigation.push({expected,actual:await page.evaluate(()=>location.hash)});
  }
+ const ghostNavigation=[];
+ for(const [selector,expected] of [
+  ['#training a[href="#ghost-routes"]','#ghost-routes'],
+  ['#ghost-routes .back','#training'],
+  ['#c2-detail a[href="#ghost-save"]','#ghost-save'],
+  ['#ghost-save .back','#c2-detail'],
+  ['#ghost-routes a[href="#ghost-choose"]','#ghost-choose'],
+  ['#ghost-choose a[href="#ghost-ready"]','#ghost-ready'],
+  ['#ghost-ready .action.primary','#ghost-live'],
+  ['#ghost-live .action.primary','#ghost-paused'],
+  ['#ghost-paused .action.primary','#ghost-live'],
+  ['#ghost-choose a[href="#ghost-ready-pb"]','#ghost-ready-pb'],
+  ['#ghost-ready-pb .action.primary','#ghost-live-pb'],
+  ['#ghost-live-pb .action.primary','#ghost-paused'],
+  ['#ghost-no-year a[href="#ghost-ready-first"]','#ghost-ready-first'],
+  ['#ghost-ready-first .action.primary','#ghost-first-live'],
+  ['#ghost-first-live .action.primary','#ghost-paused']
+ ]){
+  await page.locator(selector).click();
+  ghostNavigation.push({expected,actual:await page.evaluate(()=>location.hash)});
+ }
  await page.locator('#training .action.round').first().click();
  const click=await page.evaluate(()=>location.hash);
  await page.setViewportSize({width:390,height:900});
@@ -50,9 +71,9 @@ const fs=require('fs');
  });
  const scaled=await page.evaluate(()=>[...document.querySelectorAll('.phone')].filter(e=>e.scrollWidth>e.clientWidth+2).map(e=>({id:e.closest('.review-screen').id,w:e.clientWidth,scroll:e.scrollWidth})));
  await page.locator('#work .phone').screenshot({path:__dirname+'/qa/work-text-200.png'});
- const report={structural,layout,knowledgeNavigation,click,scaled,errors,external};
+ const report={structural,layout,knowledgeNavigation,ghostNavigation,click,scaled,errors,external};
  fs.writeFileSync(__dirname+'/qa/report.json',JSON.stringify(report,null,2)+'\n',{encoding:'utf8'});
- if(structural.duplicateIds.length || structural.brokenLinks.length || !structural.fontsLoaded || structural.scripts || external.length || errors.length || click!=='#warm-up' || knowledgeNavigation.some(x=>x.actual!==x.expected) || layout.some(x=>x.document||x.items.length)) process.exitCode=1;
+ if(structural.duplicateIds.length || structural.brokenLinks.length || !structural.fontsLoaded || structural.scripts || external.length || errors.length || click!=='#warm-up' || knowledgeNavigation.some(x=>x.actual!==x.expected) || ghostNavigation.some(x=>x.actual!==x.expected) || layout.some(x=>x.document||x.items.length)) process.exitCode=1;
  console.log(JSON.stringify(report,null,2));
  await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

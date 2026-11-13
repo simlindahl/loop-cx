@@ -115,18 +115,23 @@ Minimalism is measured by the number of decisions the runner makes. After initia
 <a id="basalt--beslutade-färger"></a>
 ### Basalt – approved colors
 
-| Role | Color | Usage |
+Simon approved this exact neutral palette and launcher background on 13 November 2026, superseding the earlier green-tinted Basalt base. This is the canonical color table for app-owned screens.
+
+| Token / role | Color | Usage |
 |---|---|---|
-| Background | #10120F | App background |
-| Surface | #1B1E18 | Groups and navigation bars |
-| Primary text | #EEEFE6 | Headings, timer and measurements |
-| Secondary text | #A6AE9A | Labels and units |
-| Accent | #C4DA73 | Primary actions, active phase and selected destination |
-| On accent | #10120F | Text and icons on filled accent buttons |
+| `--cx-bg` / background | #111111 | App and launcher background |
+| `--cx-surface` / surface | #1C1C1C | Groups and navigation bars |
+| `--cx-text` / primary text | #F2F2F2 | Headings, timer and measurements |
+| `--cx-muted` / secondary text | #ADADAD | Labels, units and neutral graphics |
+| `--cx-accent` / accent | #C4DA73 | Primary actions, active phase, selected destination and focus |
+| `--cx-on-accent` / on accent | #111111 | Text and icons on filled accent buttons |
+| `--cx-line` / decorative divider | #505050 | Subtle separators, not required control/state cues |
 
-The palette replaces revision 5's blue colors; layout, English, Space Grotesk and Material Icons remain. Use the same color roles in every app-owned screen. System-owned Android notifications follow system colors and layout. Color must not carry meaning alone; also use text and shape. Distinguish disabled actions from active ones with state and accessibility information.
+Use a single lime accent for primary actions, the active phase, selected destination, focus and route/runner identification. Workout codes, the wordmark, start-screen plan diagrams and historical zone bars are neutral. Ghost map illustration surfaces and roads have no green tint. Retain text and shape for status and overlapping map markers; color never replaces labels. System-owned Android notifications follow system colors and layout. Distinguish disabled actions from active ones with state and accessibility information.
 
-Acceptance: home and training views use the table's colors without a remaining blue accent. Primary/secondary text and accent text achieve at least 4.5:1 against both background and surface. The calculated minimum contrast is 7.34:1 (secondary text on surface); dark text on accent achieves 12.21:1. Verify text scaling, focus and outdoor readability in the app; static mockups do not prove these behaviors.
+Acceptance: home and training views use this table. Primary/secondary text and accent text achieve at least 4.5:1 against background and surface. Calculated text contrast against surface: primary 15.22:1, secondary 7.59:1 and accent 11.06:1; on-accent text 12.25:1. Background contrast is higher. The #505050 divider has only 2.11:1 contrast against surface and 2.34:1 against background; reserve it for decoration. If an editable field boundary or another non-text cue is needed to identify a control or state, use an existing sufficiently contrasting role such as secondary text and verify at least 3:1 against adjacent colors ([WCAG non-text contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html)). Static read-only field illustrations do not establish editable runtime accessibility. Verify actual Android text scaling, TalkBack, focus and outdoor readability during implementation.
+
+The launcher uses #111111 behind the unchanged approved #C4DA73 continuous tilted loop and 108 × 108 geometry. Preserve package identity, signing compatibility and existing data during the authorized native integration and phone update. The approved LOOP reader content and its runtime hold, revision 5 layout, three tabs and preliminary Ghost layout gate remain in force.
 
 <a id="projektstyrning"></a>
 ## Project governance
