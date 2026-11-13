@@ -190,13 +190,23 @@ internal sealed class NativeFeasibility : Java.Lang.Object
         catch (Java.Lang.SecurityException) { Report("ble:close-permission-revoked"); }
         gatt = null;
         selected = null;
-        if (ownedAssociation >= 0)
-        {
-            try { ((CompanionDeviceManager?)owner.GetSystemService(Context.CompanionDeviceService))?.Disassociate(ownedAssociation); }
-            catch (Java.Lang.RuntimeException) { Report("ble:own-association-cleanup-failed"); }
-            ownedAssociation = -1;
-        }
+        ReleaseAssociation(owner, ownedAssociation);
+        ownedAssociation = -1;
         Report("ble:stopped;heart-rate=unknown");
+    }
+
+    internal static void ReleaseAssociation(Context context, int associationId)
+    {
+        if (associationId < 0) return; // Existing associations never transfer ownership.
+        try
+        {
+            var manager = (CompanionDeviceManager?)context.GetSystemService(Context.CompanionDeviceService);
+            if (manager is null) { Report("ble:own-association-cleanup-unavailable"); return; }
+            if (manager.MyAssociations.Any(association => association.Id == associationId))
+                manager.Disassociate(associationId);
+            Report("ble:own-association-cleaned");
+        }
+        catch (Java.Lang.RuntimeException) { Report("ble:own-association-cleanup-failed"); }
     }
 
     internal void Stop()

@@ -95,7 +95,7 @@ public sealed class MainActivity : MauiAppCompatActivity
             if (address is not null && RunService.Snapshot?.Id == runId)
                 RunService.Probe("ble", runId, address, ownedId);
             else if (ownedId >= 0)
-                ((global::Android.Companion.CompanionDeviceManager?)activity.GetSystemService(CompanionDeviceService))?.Disassociate(ownedId);
+                NativeFeasibility.ReleaseAssociation(activity, ownedId);
         }
 
         public override void OnFailure(Java.Lang.ICharSequence? error) => NativeFeasibility.Report("ble:selection-cancelled-or-failed");

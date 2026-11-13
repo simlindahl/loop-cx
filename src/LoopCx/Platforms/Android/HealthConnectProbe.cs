@@ -58,8 +58,8 @@ internal static class HealthConnectProbe
             if (!existing.StartsWith("loop-isolated-probe-", StringComparison.Ordinal) ||
                 !Guid.TryParseExact(existing["loop-isolated-probe-".Length..], "N", out _))
                 throw new InvalidOperationException("Unknown owned probe marker; refuse mutation.");
-            await Cleanup(context, manager, type, existing, null);
-            Report("reconciled-previous-probe;invoke-again-for-new-test");
+            if (await Cleanup(context, manager, type, existing, null))
+                Report("reconciled-previous-probe;invoke-again-for-new-test");
             return;
         }
         var clientId = "loop-isolated-probe-" + Guid.NewGuid().ToString("N");
@@ -87,7 +87,7 @@ internal static class HealthConnectProbe
         }
     }
 
-    private static async Task Cleanup(Context context, HealthConnectManager manager, Java.Lang.Class type, string clientId, string? returnedId)
+    private static async Task<bool> Cleanup(Context context, HealthConnectManager manager, Java.Lang.Class type, string clientId, string? returnedId)
     {
         var executor = context.MainExecutor!;
         try
@@ -100,10 +100,12 @@ internal static class HealthConnectProbe
             if (remaining.Records?.Count != 0) throw new InvalidOperationException("Own probe cleanup not verified.");
             File.Delete(Path.Combine(context.FilesDir!.AbsolutePath, "hc-probe-owned-id"));
             Report("own-delete-absence-pass");
+            return true;
         }
         catch (Exception exception) when (exception is Java.Lang.RuntimeException or InvalidOperationException or TimeoutException)
         {
             Report("CLEANUP-FAILED:" + exception.GetType().Name);
+            return false;
         }
     }
 

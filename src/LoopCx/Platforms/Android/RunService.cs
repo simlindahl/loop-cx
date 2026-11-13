@@ -19,8 +19,16 @@ public sealed class RunService : Service, ILocationListener
     internal static void Probe(string probe, Guid? expectedRunId, string? address = null, int associationId = -1)
     {
         var context = global::Android.App.Application.Context;
-        context.StartForegroundService(new Intent(context, typeof(RunService)).SetAction("native-probe")
-            .PutExtra("probe", probe).PutExtra("run-id", expectedRunId?.ToString()).PutExtra("address", address).PutExtra("association-id", associationId));
+        try
+        {
+            context.StartForegroundService(new Intent(context, typeof(RunService)).SetAction("native-probe")
+                .PutExtra("probe", probe).PutExtra("run-id", expectedRunId?.ToString()).PutExtra("address", address).PutExtra("association-id", associationId));
+        }
+        catch (Java.Lang.RuntimeException)
+        {
+            if (OperatingSystem.IsAndroidVersionAtLeast(33)) NativeFeasibility.ReleaseAssociation(context, associationId);
+            if (OperatingSystem.IsAndroidVersionAtLeast(33)) NativeFeasibility.Report("probe:service-start-rejected");
+        }
     }
 #endif
     public static RunSnapshot? Snapshot { get; private set; }
@@ -65,9 +73,11 @@ public sealed class RunService : Service, ILocationListener
 #if DEBUG
         if (command == "native-probe" && OperatingSystem.IsAndroidVersionAtLeast(33))
         {
+            var pendingAssociation = intent?.GetIntExtra("association-id", -1) ?? -1;
             // Probes require an existing session and visible-activity entry; never create a hidden workout.
             if (session is null || session.IsFinished || intent?.GetStringExtra("run-id") != id.ToString())
             {
+                NativeFeasibility.ReleaseAssociation(this, pendingAssociation);
                 NativeFeasibility.Report("probe:requires-active-session");
                 if (session is null) StopSelf();
                 return StartCommandResult.NotSticky;
@@ -81,7 +91,8 @@ public sealed class RunService : Service, ILocationListener
                     if (CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
                     {
                         StartForeground(NotificationId, BuildNotification(), ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice);
-                        nativeProbe.Connect(address, intent.GetIntExtra("association-id", -1));
+                        nativeProbe.Connect(address, pendingAssociation);
+                        pendingAssociation = -1; // The probe now owns cleanup, including failed connection paths.
                     }
                 }
                 else if (intent?.GetStringExtra("probe") == "speech") nativeProbe.SpeakOnce();
@@ -91,6 +102,10 @@ public sealed class RunService : Service, ILocationListener
                 NativeFeasibility.Report("probe:permission-or-platform-unavailable");
                 nativeProbe?.Stop();
                 nativeProbe = null;
+            }
+            finally
+            {
+                NativeFeasibility.ReleaseAssociation(this, pendingAssociation);
             }
             return StartCommandResult.NotSticky;
         }

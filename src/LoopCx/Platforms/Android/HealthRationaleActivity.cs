@@ -26,8 +26,13 @@ public sealed class HealthRationaleActivity : Activity
         view.Settings.TextZoom = (int)Math.Round(100 * Resources!.Configuration!.FontScale);
         view.SetBackgroundColor(global::Android.Graphics.Color.Rgb(17, 17, 17));
         view.SetWebViewClient(new LocalPage(this));
-        view.SetOnApplyWindowInsetsListener(new Insets());
-        SetContentView(view);
+        // Insets belong to the outer layout: a scrolling WebView must not draw under system bars.
+        var container = new global::Android.Widget.FrameLayout(this);
+        container.SetClipToPadding(true);
+        container.AddView(view, new global::Android.Widget.FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+        container.SetOnApplyWindowInsetsListener(new Insets());
+        SetContentView(container);
         view.LoadUrl("file:///android_asset/wwwroot/health-connect-rationale.html");
 #else
         Finish();
