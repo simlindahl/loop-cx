@@ -20,3 +20,7 @@ Repository checks run on PRs and pushes to main and can be started manually. And
 ## Publication preparation
 
 Maintained repository and GitHub content uses English; historical commits, comments and binary design assets are preserved. The repository remains private until publication is explicitly approved. No project-wide license has been selected. Read the [publication review](docs/publication-review.md) before proposing a visibility change.
+
+## What is LOOP? · review draft
+
+[English practical guide](knowledge/what-is-loop.md) · [Review brief](docs/loop-knowledge-review.md) · [Settings knowledge mockups](design/mockups/index.html#loop-about). Preliminary content and layout; app implementation awaits Simon's review.
