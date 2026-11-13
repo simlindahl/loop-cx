@@ -1,0 +1,86 @@
+name: Combined candidate verification
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/combined.yml'
+      - 'docs/combined-verification.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      LOOP_RUNTIME_COMMIT: d70fe80d431c1762f8e23d260d4a7e73e86a38c2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Compose the reviewed source candidates without committing or pushing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p verification
+          git rev-parse HEAD > verification/ghost-head.txt
+          printf '%s\n' "$LOOP_RUNTIME_COMMIT" > verification/runtime-head.txt
+          git config user.name "Candidate verification"
+          git config user.email "verification@localhost"
+          merge_status=0
+          git merge --no-commit --no-ff "$LOOP_RUNTIME_COMMIT" || merge_status=$?
+          if [[ "$merge_status" != 0 ]]; then
+            conflicts=$(git diff --name-only --diff-filter=U)
+            if [[ "$conflicts" != "scripts/android-smoke.sh" ]]; then
+              echo "Unexpected source conflict; no automatic resolution is allowed."
+              git status --short
+              exit 1
+            fi
+            # Preserve the service/GPS/process-death scenarios from the runtime candidate.
+            git checkout --theirs -- scripts/android-smoke.sh
+            git add scripts/android-smoke.sh
+          fi
+          [[ -z "$(git diff --name-only --diff-filter=U)" ]]
+          git diff --cached --stat > verification/composition.txt
+          git status --short
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Check session rules
+        run: dotnet run --project tests/SessionChecks
+        env:
+          MSBuildEnableWorkloadResolver: false
+      - name: Check Ghost rules
+        run: dotnet run --project tests/GhostChecks
+        env:
+          MSBuildEnableWorkloadResolver: false
+      - name: Check Ghost SQLite archive
+        run: python3 tests/GhostStorageChecks/check.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: dotnet workload install maui-android
+      - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
+      - run: dotnet build src/LoopCx -c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64
+      - name: Free space for the emulator
+        run: |
+          sudo rm -rf /usr/share/swift /opt/ghc /usr/local/.ghcup /usr/local/share/boost
+          df -h "$HOME"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          emulator-boot-timeout: 300
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          script: bash scripts/android-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combined-candidate-evidence
+          path: |
+            verification/
+            src/LoopCx/bin/Debug/**/*-Signed.apk
+          if-no-files-found: warn
