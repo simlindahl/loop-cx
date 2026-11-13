@@ -31,6 +31,7 @@ public sealed class RunService : Service, ILocationListener
     private Action? tick;
     private long lastTick;
     private int locations;
+    private bool finishLogged;
     private string gpsStatus = "Waiting for GPS";
     private LocationManager? locationManager;
     private const int NotificationId = 1;
@@ -66,7 +67,7 @@ public sealed class RunService : Service, ILocationListener
             lastTick = startedMonotonic;
             var manager = (NotificationManager)GetSystemService(NotificationService)!;
             manager.CreateNotificationChannel(new NotificationChannel(ChannelId, "Running session", NotificationImportance.Low));
-            Publish();
+            Publish("start");
             if (OperatingSystem.IsAndroidVersionAtLeast(29))
                 StartForeground(NotificationId, BuildNotification(), ForegroundService.TypeLocation);
             else StartForeground(NotificationId, BuildNotification());
@@ -82,17 +83,23 @@ public sealed class RunService : Service, ILocationListener
             handler.PostDelayed(tick, 1000);
         }
         AdvanceClock();
-        switch (command)
+        var effective = command switch
         {
-            case "pause": session.Pause(); break;
-            case "resume": session.Resume(); break;
-            case "extend": session.Extend(); break;
-            case "skip": session.SkipPreparation(); break;
+            "pause" => session.Pause(),
+            "resume" => session.Resume(),
+            "extend" => session.Extend(),
+            "skip" => session.SkipPreparation(),
+            _ => false
+        };
 #if DEBUG
-            case "complete": session.Resume(); session.Advance(TimeSpan.FromHours(1)); break;
-#endif
+        if (command == "complete" && !session.IsFinished)
+        {
+            session.Resume();
+            session.Advance(TimeSpan.FromHours(1));
+            effective = true;
         }
-        Publish();
+#endif
+        Publish(effective ? command : null);
         return StartCommandResult.NotSticky;
     }
 
@@ -111,14 +118,16 @@ public sealed class RunService : Service, ILocationListener
         else handler!.PostDelayed(tick!, 1000);
     }
 
-    private void Publish()
+    private void Publish(string? command = null)
     {
+        if (session!.IsFinished && !finishLogged) command ??= "finish";
         Snapshot = new RunSnapshot(id, session!.Current?.Kind.ToString() ?? "Finished",
             session.IsPaused, (long)session.TotalActiveTime.TotalSeconds,
             (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus);
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
-        journal.Checkpoint(id, started, SystemClock.ElapsedRealtime() - startedMonotonic,
-            session, initialPlan, Snapshot);
+        journal.Checkpoint(id, started, lastTick - startedMonotonic,
+            session, initialPlan, Snapshot, command);
+        finishLogged |= session.IsFinished;
         Changed?.Invoke();
 #if DEBUG
         global::Android.Util.Log.Info("LoopRun", System.Text.Json.JsonSerializer.Serialize(Snapshot));

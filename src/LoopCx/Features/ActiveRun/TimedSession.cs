@@ -47,19 +47,35 @@ public sealed class TimedSession
         }
     }
 
-    public void Pause() => IsPaused = !IsFinished;
-    public void Resume() => IsPaused = false;
-
-    public void Extend()
+    public bool Pause()
     {
-        if (Current is { Kind: RunPhase.Warmup or RunPhase.Cooldown } phase)
-            phases[index] = phase with { Duration = phase.Duration + TimeSpan.FromMinutes(1) };
+        if (IsFinished || IsPaused) return false;
+        IsPaused = true;
+        return true;
     }
 
-    public void SkipPreparation()
+    public bool Resume()
     {
-        if (Current?.Kind is RunPhase.Warmup or RunPhase.Cooldown)
-            FinishPhase();
+        if (!IsPaused) return false;
+        IsPaused = false;
+        return true;
+    }
+
+    public bool Extend()
+    {
+        if (Current is { Kind: RunPhase.Warmup or RunPhase.Cooldown } phase)
+        {
+            phases[index] = phase with { Duration = phase.Duration + TimeSpan.FromMinutes(1) };
+            return true;
+        }
+        return false;
+    }
+
+    public bool SkipPreparation()
+    {
+        if (Current?.Kind is not (RunPhase.Warmup or RunPhase.Cooldown)) return false;
+        FinishPhase();
+        return true;
     }
 
     private void FinishPhase()

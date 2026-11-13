@@ -35,3 +35,21 @@ Debug-kommandot `complete` accelererar passet till slut och finns inte i release
 Kvarstår: historik/återhämtningsvy, frysta pulszoner, pulsdata, favoriter, sensorkvalitet,
 lagringsfel i användargränssnittet och Health Connect-omförsök. Fysiska Pixel/WHOOP-prov
 och Windows-prov är ej körda.
+
+## Tidsstämplade manuella ändringar (schema 2)
+Databasversion 2 lägger till `run_events` utan att skriva om tidigare mätningar.
+Paus, fortsättning, +1 min och manuell fasövergång sparas i samma transaktion
+som kontrollpunkten efter kommandot. Händelsen innehåller UTC, monoton förfluten
+tid, aktiv tid, fas och plan. Upprepade paus-/fortsätt-kommandon och fasåtgärder
+som inte gäller i aktuell fas skapar inga falska händelser. Två tryck på +1 min
+är däremot två giltiga ändringar. Start och avslut loggas också.
+
+Efter processdöd bevaras även händelserna exakt. För gamla schema 1-pass finns
+ingen full pauslogg; historiken får inte fylla i den i efterhand.
+Pausstatus och tidsstämplar i händelserna gör det möjligt att skilja förfluten
+paustid från aktiv tid, även om väggklockan justeras under rundan.
+
+`scripts/android-smoke.sh` ersätter endast emulatorns **debugdatabas** med en
+syntetisk schema 1-fixtur före provet. Kör det bara i en dedikerad testemulator.
+Provet verifierar migrering utan dataförlust, effektiv kommandoföljd, dubbletter,
+fasändringar och oförändrad logg efter processdöd. Releasedatabasen berörs inte.
