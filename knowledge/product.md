@@ -132,7 +132,6 @@ Acceptance: home and training views use the table's colors without a remaining b
 ## Project governance
 [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.
 
-
 ## Ghost Run
 
 <a id="omfattning-och-ingång"></a>
