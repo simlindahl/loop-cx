@@ -112,3 +112,148 @@ Require(HeartRateMeasurement.Parse([4, 72]) is null && HeartRateMeasurement.Pars
 Require(HeartRateMeasurement.Parse([]) is null && HeartRateMeasurement.Parse([1, 72]) is null &&
     HeartRateMeasurement.Parse([0, 0]) is null, "Malformed, truncated and zero readings remain unknown.");
 Console.WriteLine("PASS: standard BLE heart-rate payload, 8/16-bit flags and unknown/contact-loss semantics.");
+
+// Arrange
+var policy = DistancePolicy.Pilot with { MaximumGap = TimeSpan.FromSeconds(200), MaximumAge = TimeSpan.FromSeconds(200) };
+var measured = new RunDistance(policy, TimeSpan.Zero, RunPhase.Work);
+static DistanceFix Fix(double seconds, double metres, double accuracy = 1)
+{
+    return new(TimeSpan.FromSeconds(seconds), 0,
+    metres / 6371000 * 180 / Math.PI, accuracy);
+}
+
+// Act
+measured.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+measured.Observe(Fix(100, 1000), TimeSpan.FromSeconds(100), TimeSpan.FromSeconds(100));
+measured.Observe(Fix(200, 2000), TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200));
+measured.Observe(Fix(240, 2400), TimeSpan.FromSeconds(240), TimeSpan.FromSeconds(240));
+measured.Boundary(RunPhase.Cooldown, TimeSpan.FromSeconds(240), TimeSpan.FromSeconds(240));
+var measuredResult = measured.Snapshot;
+
+// Assert
+Require(Math.Abs(measuredResult.MainMeasuredMetres - 2400) < .001 && measuredResult.Splits.Count == 3,
+    "Accepted main distance produces two kilometre splits and the actual final partial.");
+Require(Math.Abs(measuredResult.Splits.Sum(static split => split.MeasuredMetres) - measuredResult.MainMeasuredMetres) < .001
+    && measuredResult.Splits.Aggregate(TimeSpan.Zero, static (sum, split) => sum + split.ActiveTime) == TimeSpan.FromSeconds(240),
+    "Splits conserve accepted distance and active main time.");
+Require(!measuredResult.MainHasGaps && measuredResult.Splits.All(split => !split.HasGaps),
+    "Finishing a completely trusted main run does not manufacture a GPS gap.");
+
+// Arrange
+var interruptedDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+
+// Act
+interruptedDistance.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+interruptedDistance.Observe(Fix(1, 5), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+interruptedDistance.Interrupt(TimeSpan.FromSeconds(2), "Manual pause");
+interruptedDistance.Observe(Fix(10, 100), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(2));
+interruptedDistance.Observe(Fix(11, 105), TimeSpan.FromSeconds(11), TimeSpan.FromSeconds(3));
+var pausedDistance = interruptedDistance.Snapshot.MainMeasuredMetres;
+interruptedDistance.Observe(Fix(11, 105), TimeSpan.FromSeconds(11), TimeSpan.FromSeconds(3));
+interruptedDistance.Observe(Fix(12, 110), TimeSpan.FromSeconds(12), TimeSpan.FromSeconds(4));
+var duplicateDistance = interruptedDistance.Snapshot.MainMeasuredMetres;
+
+// Assert
+Require(Math.Abs(pausedDistance - 10) < .001 && Math.Abs(duplicateDistance - (pausedDistance + 5)) < .001,
+    "Pause breaks anchors; duplicate delivery neither charges twice nor destroys the next real edge.");
+
+// Arrange
+var slowDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+
+// Act
+for (var second = 0; second <= 20; second++)
+    slowDistance.Observe(Fix(second, second, 3), TimeSpan.FromSeconds(second), TimeSpan.FromSeconds(second));
+
+// Assert
+Require(slowDistance.Snapshot.MainMeasuredMetres is > 15 and <= 20.001,
+    "Retained anchors accumulate slow motion despite per-fix movement below accuracy hysteresis.");
+Console.WriteLine("PASS: ordinary measured distance, kilometre/final splits, pause/duplicate gaps and slow-movement anchors.");
+
+// Arrange
+var multipleSplits = new RunDistance(policy, TimeSpan.Zero, RunPhase.Work);
+var rejectedDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+
+// Act
+multipleSplits.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+multipleSplits.Observe(Fix(200, 2200), TimeSpan.FromSeconds(200), TimeSpan.FromSeconds(200));
+multipleSplits.Boundary(null, TimeSpan.FromSeconds(210), TimeSpan.FromSeconds(210));
+rejectedDistance.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+rejectedDistance.Observe(Fix(1, 1000), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+rejectedDistance.Observe(Fix(2, 10), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+rejectedDistance.Observe(Fix(3, 15, 31), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+rejectedDistance.Observe(Fix(4, 20), TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(4));
+rejectedDistance.Observe(Fix(20, 100), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
+rejectedDistance.Observe(Fix(19, 95), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
+rejectedDistance.Observe(Fix(21, 105), TimeSpan.FromSeconds(21), TimeSpan.FromSeconds(21));
+rejectedDistance.Observe(Fix(22, 110), TimeSpan.FromSeconds(22), TimeSpan.FromSeconds(22));
+
+// Assert
+Require(multipleSplits.Snapshot.Splits.Count == 3 &&
+    Math.Abs(multipleSplits.Snapshot.Splits[2].MeasuredMetres - 200) < .001 &&
+    multipleSplits.Snapshot.Splits.Sum(static split => split.ActiveTime.TotalSeconds) == 210,
+    "One accepted edge may cross multiple kilometres; the final active-time tail is conserved.");
+Require(Math.Abs(rejectedDistance.Snapshot.MainMeasuredMetres - 10) < .001 && rejectedDistance.Snapshot.MainHasGaps,
+    "Jump, poor accuracy, long gap and out-of-order fixes never bridge rejected distance.");
+
+// Arrange
+var preparationDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Warmup);
+
+// Act
+preparationDistance.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+preparationDistance.Observe(Fix(1, 5), TimeSpan.FromSeconds(1), TimeSpan.Zero);
+preparationDistance.Boundary(RunPhase.Work, TimeSpan.FromSeconds(2), TimeSpan.Zero);
+preparationDistance.Observe(Fix(1.5, 8), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(1));
+preparationDistance.Observe(Fix(3, 15), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(1));
+preparationDistance.Observe(Fix(4, 20), TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(2));
+preparationDistance.Boundary(RunPhase.Recovery, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3));
+preparationDistance.Observe(Fix(6, 30), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(4));
+preparationDistance.Observe(Fix(7, 35), TimeSpan.FromSeconds(7), TimeSpan.FromSeconds(5));
+
+// Assert
+Require(Math.Abs(preparationDistance.Snapshot.TotalMeasuredMetres - 25) < .001 &&
+    Math.Abs(preparationDistance.Snapshot.MainMeasuredMetres - 20) < .001,
+    "Preparation is excluded from main, recovery included, and a delayed old-phase fix cannot charge the current phase.");
+Console.WriteLine("PASS: distance quality rejection, delayed phase boundaries and multiple split crossings.");
+
+// Arrange
+var stationaryThenJump = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+
+// Act
+for (var second = 0; second <= 60; second++)
+    stationaryThenJump.Observe(Fix(second, 0), TimeSpan.FromSeconds(second), TimeSpan.FromSeconds(second));
+stationaryThenJump.Observe(Fix(61, 100), TimeSpan.FromSeconds(61), TimeSpan.FromSeconds(61));
+
+// Assert
+Require(stationaryThenJump.Snapshot.MainMeasuredMetres == 0 && stationaryThenJump.Snapshot.Status == "Implausible GPS jump",
+    "A long retained stationary anchor cannot dilute the speed of one sudden GPS jump.");
+
+// Arrange
+var continuousRecovery = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+
+// Act
+continuousRecovery.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+continuousRecovery.Observe(Fix(1, 5), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+continuousRecovery.Boundary(RunPhase.Recovery, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+continuousRecovery.Observe(Fix(3, 15), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+
+// Assert
+Require(Math.Abs(continuousRecovery.Snapshot.MainMeasuredMetres - 15) < .001 && !continuousRecovery.Snapshot.MainHasGaps,
+    "A work-to-recovery transition preserves continuous main evidence and creates no artificial GPS gap.");
+
+// Assert
+Require(!measuredResult.MainHasGaps && measuredResult.Splits.All(static split => !split.HasGaps),
+    "Finishing a completely trusted main run does not manufacture a GPS gap.");
+
+// Arrange
+var duplicateDelivery = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+
+// Act
+duplicateDelivery.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+duplicateDelivery.Observe(Fix(1, 5), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+duplicateDelivery.Observe(Fix(1, 5), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+duplicateDelivery.Observe(Fix(.5, 2), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+duplicateDelivery.Observe(Fix(2, 10), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+
+// Assert
+Require(Math.Abs(duplicateDelivery.Snapshot.MainMeasuredMetres - 10) < .001 && !duplicateDelivery.Snapshot.MainHasGaps,
+    "Duplicate and out-of-order packets leave newer trusted distance and quality unchanged.");
