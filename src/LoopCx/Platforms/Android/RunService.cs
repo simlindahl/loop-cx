@@ -172,6 +172,10 @@ public sealed class RunService : Service, ILocationListener
         if (tick is not null) handler?.RemoveCallbacks(tick);
         locationManager?.RemoveUpdates(this);
         StopForeground(StopForegroundFlags.Remove);
+
+        Snapshot = null;
+        Changed?.Invoke();
+
         base.OnDestroy();
     }
 }
