@@ -30,7 +30,7 @@ Primary sources were checked for resistance training, concurrent training, relat
 
 Home examples are proposed adaptations that preserve movement intent where possible. A safe pulling anchor is a genuine equipment constraint. A row is not presented as identical to a vertical pull. Jumps, mixed work and progression thresholds remain practical Core choices rather than scientifically established minimum doses.
 
-Latest licensing intent: attribution, noncommercial reuse, and commercial enquiries (including PT use of protected material/code) to simon.a.lindahl@gmail.com. **This review does not select a license or grant permissions.** Final terms need a separate decision; a ban on reusing underlying training ideas is not interchangeable with copyright licensing of text and code. Repository and Projects remain private.
+The approved [project license scope](../LICENSE.md) applies CC BY-NC 4.0 to original guide text/design and PolyForm Noncommercial 1.0.0 to owned software, preserving third-party terms and statutory exceptions. Attribution is LOOP by Simon Lindahl; commercial licensing enquiries for protected material/code go to simon.a.lindahl@gmail.com. Underlying training ideas are distinct from protected expression. This licensing decision does not release the reader runtime implementation hold or authorize public visibility. Repository and Projects visibility remain subject to separate approval.
 
 ## Simon's review
 
@@ -38,4 +38,4 @@ Latest licensing intent: attribution, noncommercial reuse, and commercial enquir
 2. Are the workout instructions and proposed home substitutions faithful and practical enough to follow independently?
 3. Approve or adjust the Settings entry, introduction and four-part scrolling guide. Is the amount of optional learning right?
 
-Approval is recorded in [design/decision.md](../design/decision.md#what-is-loop--content-and-layout-review). The implementation split follows the [roles and decision-making rules](../AGENTS.md#roles-and-decision-making). Obtain a separate instruction to proceed before app code; the role agreement does not lift this hold. Licensing and publication remain separate decisions. Static checks cannot establish TalkBack, Android navigation, physical exercise safety or outdoor readability.
+Approval is recorded in [design/decision.md](../design/decision.md#what-is-loop--content-and-layout-review). The implementation split follows the [roles and decision-making rules](../AGENTS.md#roles-and-decision-making). Obtain a separate instruction to proceed before app code; the role agreement does not lift this hold. The selected project licenses do not authorize a visibility change. Static checks cannot establish TalkBack, Android navigation, physical exercise safety or outdoor readability.
