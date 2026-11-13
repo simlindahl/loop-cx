@@ -107,3 +107,4 @@ Console.WriteLine("PASS: elapsed-time replay, stops, backtracking, first arrival
 
 var lateStart = new GhostPlayback(Recording(new(S(5), 10), new(S(10), 20)), S(10));
 Require(lateStart.PositionAt(S(1)) is null, "Never extrapolate before the first measured point.");
+Require(lateStart.ArrivalAt(20) is null, "A missing beginning cannot establish the first arrival.");

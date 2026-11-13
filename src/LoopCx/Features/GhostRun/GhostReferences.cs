@@ -73,7 +73,8 @@ public sealed class GhostPlayback
     {
         if (!double.IsFinite(metres) || metres < 0) throw new ArgumentOutOfRangeException(nameof(metres));
         var points = Reference.Points;
-        if (points[0].Known && points[0].Metres == metres) return points[0].Elapsed;
+        if (!points[0].Known || points[0].Elapsed != TimeSpan.Zero || points[0].Metres != 0) return null;
+        if (points[0].Metres == metres) return points[0].Elapsed;
         for (var i = 1; i < points.Count; i++)
         {
             var a = points[i - 1]; var b = points[i];
