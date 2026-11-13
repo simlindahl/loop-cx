@@ -99,3 +99,16 @@ Require(continuous.IsFinished && continuous.Completed.Count == 1 && continuous.T
     && continuous.MainActiveTime == Minutes(45), "C2 finalizes once at 45 active minutes with no preparation.");
 Require(finishedCommandsRejected, "Finalized continuous session rejects pause/resume.");
 Console.WriteLine("PASS: continuous C2 45-minute RPE3 plan, pause/resume and bounded finalization.");
+
+// Arrange / Act: standard BLE Heart Rate Measurement flags and byte order.
+var narrowHeartRate = HeartRateMeasurement.Parse([6, 72]);
+var wideHeartRate = HeartRateMeasurement.Parse([7, 44, 1]);
+
+// Assert: unknown contact, invalid/truncated values and zero never fabricate a reading.
+Require(narrowHeartRate == 72 && wideHeartRate == 300, "Decode 8-bit and little-endian 16-bit heart rate.");
+Require(HeartRateMeasurement.Parse([0, 72]) == 72, "Unavailable contact detection does not reject a valid measurement.");
+Require(HeartRateMeasurement.Parse([4, 72]) is null && HeartRateMeasurement.Parse([5, 44, 1]) is null,
+    "Supported contact detection with lost contact yields unknown heart rate.");
+Require(HeartRateMeasurement.Parse([]) is null && HeartRateMeasurement.Parse([1, 72]) is null &&
+    HeartRateMeasurement.Parse([0, 0]) is null, "Malformed, truncated and zero readings remain unknown.");
+Console.WriteLine("PASS: standard BLE heart-rate payload, 8/16-bit flags and unknown/contact-loss semantics.");

@@ -3,17 +3,24 @@
 
 Install .NET SDK 10.0.100 (x64), JDK 21 and Android Studio. Set JAVA_HOME to your JDK and ANDROID_HOME to your Android SDK. Install Android SDK Platform 36, Build Tools 36.0.0 and Platform Tools in SDK Manager. Add platform-tools to PATH. Create a Pixel emulator with Google APIs API 35 and x86_64 in Device Manager and start it.
 
-Run in PowerShell from the repository root, with the emulator as the only connected device.
+Run in PowerShell from the repository root after selecting the pinned SDK. Set ANDROID_HOME and JAVA_HOME to the actual Android SDK and JDK21 directories. Select the dedicated emulator explicitly even when a phone is connected.
 
 ```powershell
-adb devices
+dotnet --version # Must match global.json: 10.0.100
 dotnet workload install maui-android
-dotnet build src/LoopCx/LoopCx.csproj -t:Run -c Debug -p:RuntimeIdentifier=android-x64
+dotnet build src/LoopCx/LoopCx.csproj -c Debug `
+  -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64 `
+  "-p:AndroidSdkDirectory=$env:ANDROID_HOME" "-p:JavaSdkDirectory=$env:JAVA_HOME"
+$adb = Join-Path $env:ANDROID_HOME 'platform-tools/adb.exe'
+& $adb devices -l
+$emulatorSerial = 'emulator-5580' # Verify the dedicated AVD first; never substitute the phone.
+& $adb -s $emulatorSerial install -r 'src/LoopCx/bin/Debug/net10.0-android36.0/android-x64/se.loopcx.running-Signed.apk'
+& $adb -s $emulatorSerial shell am start -W -n se.loopcx.running/.MainActivity
 ```
 
 The home screen should show **Start a run**. This verifies the path from Android startup to a rendered Razor component. GitHub Actions builds a debug-signed x64 APK and tests the same heading through Android's accessibility tree. The APK is available in the run's artifacts.
 
-This first check covers app startup. GPS with a locked screen, WHOOP over BLE, audio and Health Connect are tracked in issue #1. The Windows commands also still need to be tested on Windows.
+This first check covers app startup. GPS with a locked screen, WHOOP over BLE, audio and Health Connect are tracked in issue #1. Windows strict x64 build, dedicated API35 emulator startup and the existing strong synthetic service/SQLite regression passed on 13 November 2026 at `193fb70909737011016a50e8bce5ee1a1980e2d7`; see the bounded native feasibility section below.
 
 ## USB phone installation
 
@@ -63,7 +70,7 @@ The debug command `complete` accelerates the session to completion and is absent
 
 Outstanding: history/recovery view, frozen heart-rate zones, heart-rate data, favourites, sensor quality,
 storage errors in the UI and Health Connect retries. Physical Pixel/WHOOP tests
-and Windows tests have not run.
+remain separate physical acceptance; Windows foundation build/startup and strong synthetic checks passed at the revision recorded above.
 
 <a id="tidsstämplade-manuella-ändringar-schema-2"></a>
 ## Timestamped manual changes (schema 2)
@@ -93,3 +100,30 @@ A nullable `runs.template_metadata` JSON column freezes TemplateId, Source, Cate
 The [approved launcher decision](../design/decision.md#android-launcher-icon--13-november-2026) identifies the source artwork and approval. MAUI generates density-specific and adaptive Android resources from `Resources/AppIcon/appicon.svg` and `appiconfg.svg`. Both layers use the approved 108-unit canvas with foreground scale 1; Android supplies the launcher mask. The pinned MAUI generator also emits a monochrome entry referencing the same foreground silhouette; no unsupported separate monochrome-file setting is used. Keep the mark inside its existing safe area rather than padding it again.
 
 Verify generated resources and the installed standard icon after rebuilding. Do not uninstall or clear app data to refresh launcher artwork. Standard icon checks do not establish themed-launcher behavior; do not change personal launcher settings during verification. The earlier icon-only delivery did not fix the functional scaffold or its status-bar overlap. The current Core readability slice applies host safe-area insets; its runtime screenshot evidence must verify the result.
+
+## Bounded native feasibility (#1)
+
+Windows foundation evidence used SDK10.0.100/workload10.0.100, JDK21.0.8, Android platform36 and official emulator37.2.13/API35 Google APIs x86_64 image revision9. WHPX was already usable; no driver/security change was made. The isolated AVD booted and the unchanged strong synthetic GPS, service, SQLite, interruption and event checks passed. This Windows result complements the Linux Actions emulator; neither proves a real sensor or outdoor behavior.
+
+Reproduce the Windows x64 build with the pinned SDK, `-c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64`, and explicit `AndroidSdkDirectory`/`JavaSdkDirectory` pointing to the installed Android SDK and JDK21. Start the dedicated AVD, verify its serial and use `adb -s <verified-emulator-serial> install -r <x64-apk>` then `adb -s <verified-emulator-serial> shell am start -W -n se.loopcx.running/.MainActivity`. Never use an unqualified `-t:Run` or ADB command when a personal phone is also connected. Exact local commands, paths, hashes and source/tree evidence remain in the private artifact manifest.
+
+Debug native probes enter through MainActivity's `loop-native-probe` extra. `ble` requests standard Nearby devices permission and, on a subsequent explicit invocation after permission grant, the OS Companion Device Manager Heart Rate chooser. Select/cancel deliberately. An existing active synthetic session is required; probes do not create hidden recordings. The service owns GATT notifications, stale/unknown observations, bounded selected-device reconnects and disposal. A probe-created OS association is removed on stop; existing associations are preserved. `speech` explicitly requests one English TTS phrase through transient audio focus; it never changes music playback/volume. These are diagnostic bindings, not finished coaching or sensor UI.
+
+The approved offline **About this test** page is available from the protected Android Health Connect rationale alias. `health-permission` opens the OS exercise-write permission flow only on the allowlisted debug emulator; `health-rationale` opens the same informational page for verification. Back finishes its activity to the caller. `health-connect` performs no operation without the dedicated hardware guard, available manager, write permission and a single-use private opt-in supplied by `scripts/android-native-smoke.py`. The harness verifies exact serial `emulator-5580`, AVD `LOOP_Cx_QA_API35_193fb70`, API35/ranchu/x86_64, no accounts and no WHOOP installation. It reads/deletes only its unique client/returned record IDs; no broad history access or broad deletion is used. API34+ platform binding feasibility does not promise universal supported-device production export.
+
+Use `python scripts/android-native-smoke.py --mode denied --out <private-artifact-directory>` after denying the OS permission, and `--mode roundtrip` only after granting it in this isolated AVD. Every ADB operation in the harness fixes the serial. A pending native callback is not cleanup success: retain the isolated emulator and reconcile only the probe's owned record, rather than declaring absence while an insert is still in flight. Normal journal synthetic export remains disabled and no exporter/retry worker is added. No health probe may write on the personal phone.
+
+Remaining physical E acceptance must separately record actual results or NOT RUN, owner and equipment reason: real WHOOP broadcast/reconnection; real GPS/lock/slow jogging and standstill (#2); Spotify/audio audibility/focus and lock-notification actions; measured battery per hour; Health Connect→WHOOP credit/duplicates (#4). Ghost physical acceptance remains separately owned by #18. Missing implementation is not a physical-test exemption. Current diagnostic acceptance is recorded in the delivery PR; this section does not claim those unperformed outcomes.
+
+### Physical acceptance retained separately (E)
+
+The bounded native emulator proof does not establish these equipment-dependent results. Preserve exact tested source/conditions when each is performed; an unimplemented production path cannot be called a physical NOT RUN exemption.
+
+| Scenario | Current physical result and reason | Next owner / requirement |
+|---|---|---|
+| Real WHOOP HR broadcast, selected connect, loss and reconnect | NOT RUN: controlled virtual GATT fixture is not the runner's band | QA + Simon with WHOOP; #1 feasibility |
+| Locked Pixel GPS, slow jogging and standing recovery | NOT RUN: synthetic emulator positions do not test real radio/noise | QA + Simon; #1 early proof and #2 motion/autopause quality |
+| Spotify + spoken prompt, focus/volume and phase priority | NOT RUN: no-audio emulator proves callbacks, not hearing/music behavior | QA + Simon on Pixel; #1 |
+| Collapsed/expanded real lock-screen controls and reopening | NOT RUN: emulator notification dispatch is distinct from personal lock-screen settings | QA + Simon with permitted notifications; #1 |
+| Battery per hour under recorded screen/GPS/WHOOP/Spotify conditions | NOT RUN: no measured real-run duration or equipment conditions | QA + Simon; #1, with Ghost comparison separately #18 |
+| Health Connect→WHOOP activity, times/distance/goal credit and autodetection duplicates | NOT RUN: isolated synthetic own-record roundtrip has no real account/import | Simon + QA after production exporter exists; #4 |
