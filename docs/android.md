@@ -1,8 +1,9 @@
-# Kör första Android-bygget på Windows
+<a id="kör-första-android-bygget-på-windows"></a>
+# Run the first Android build on Windows
 
-Installera .NET SDK 10.0.100 (x64), JDK 21 och Android Studio. Sätt JAVA_HOME till din JDK och ANDROID_HOME till din Android SDK. Installera Android SDK Platform 36, Build Tools 36.0.0 och Platform Tools i SDK Manager. Lägg platform-tools på PATH. Skapa en Pixel-emulator med Google APIs API 35 och x86_64 i Device Manager, och starta den.
+Install .NET SDK 10.0.100 (x64), JDK 21 and Android Studio. Set JAVA_HOME to your JDK and ANDROID_HOME to your Android SDK. Install Android SDK Platform 36, Build Tools 36.0.0 and Platform Tools in SDK Manager. Add platform-tools to PATH. Create a Pixel emulator with Google APIs API 35 and x86_64 in Device Manager and start it.
 
-Kör i PowerShell från repots rot med emulatorn som enda anslutna enhet.
+Run in PowerShell from the repository root, with the emulator as the only connected device.
 
 ```powershell
 adb devices
@@ -10,6 +11,6 @@ dotnet workload install maui-android
 dotnet build src/LoopCx/LoopCx.csproj -t:Run -c Debug -p:RuntimeIdentifier=android-x64
 ```
 
-Startsidan ska visa **Start a run**. Det verifierar kedjan från Android-start till renderad Razor-komponent. GitHub Actions bygger en debug-signerad APK för x64 och testar samma rubrik via Androids tillgänglighetsträd. APK:n finns i körningens artefakter.
+The home screen should show **Start a run**. This verifies the path from Android startup to a rendered Razor component. GitHub Actions builds a debug-signed x64 APK and tests the same heading through Android's accessibility tree. The APK is available in the run's artifacts.
 
-Den här första kontrollen omfattar appstart. GPS under låst skärm, WHOOP via BLE, ljud och Health Connect följs upp i issue #1. Windows-kommandona behöver också provköras på Windows.
+This first check covers app startup. GPS with a locked screen, WHOOP over BLE, audio and Health Connect are tracked in issue #1. The Windows commands also still need to be tested on Windows.

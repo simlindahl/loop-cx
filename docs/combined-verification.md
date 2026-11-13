@@ -1,57 +1,42 @@
-# Samlad verifiering och granskningsordning
-Krav: [produktspecifikationen](../knowledge/product.md), issue #1 och #18.
-Detta dokument sammanför verifieringsunderlag; produktregler och designbeslut ändras inte.
+<a id="samlad-verifiering-och-granskningsordning"></a>
+# Combined verification and review order
+Requirements: [product specification](../knowledge/product.md), issues #1 and #18. This document combines verification evidence; product rules and design decisions are unchanged.
 
-## Kandidater
-| Spår | Granskningsordning | Vad som finns |
+<a id="kandidater"></a>
+## Candidates
+| Track | Review order | Available work |
 |---|---|---|
-| Android/session | #8 → #9 → #14 → #17 | Tidsstyrd passmotor, tjänst/GPS, löpande SQLite-kontrollpunkt, återhämtning och kommandologg |
-| Ghost Run | #19 → #20 → #21 → #22 → #23 → #24 | Krav/mockuper, frysta referenser, huvudfasunderlag, tävlingsklocka, ordnad matchning och SQLite-datamodell |
-| Samlad kontroll | Denna PR efter #24 | Tillfällig källkodssammansättning och gemensamma bygg-/acceptansprov |
+| Android/session | #8 → #9 → #14 → #17 | Timed workout engine, service/GPS, continuous SQLite checkpoints, recovery and command log |
+| Ghost Run | #19 → #20 → #21 → #22 → #23 → #24 | Requirements/mockups, frozen references, main-phase evidence, race clock, ordered matching and SQLite data model |
+| Combined check | This PR after #24 | Temporary source composition and shared build/acceptance tests |
 
-Granskningsordningen är inte ett mergegodkännande. Ingen av dessa PR:ar får
-mergas utan Simon. Main innehåller ännu inte de öppna kandidatändringarna.
+Review order is not merge approval. None of these PRs may be merged without Simon. Main does not yet contain the open candidate changes.
 
-## Vad kontrollen gör
-[Combined candidate verification](../.github/workflows/combined.yml) checkar ut
-Ghost-kandidaten och hämtar full Git-historik. Den förenar Android-kandidaten
-`d70fe80d431c1762f8e23d260d4a7e73e86a38c2` i en **tillfällig arbetskopia** med
-`git merge --no-commit --no-ff`. Den skapar ingen mergecommit och pushar inget.
-Den fasta revisionen gör resultatet reproducerbart; nya ändringar i Android-
-spåret måste få en uttrycklig uppdaterad kontroll.
+<a id="vad-kontrollen-gör"></a>
+## What the check does
+[Combined candidate verification](../.github/workflows/combined.yml) checks out the Ghost candidate and fetches full Git history. It combines Android candidate `d70fe80d431c1762f8e23d260d4a7e73e86a38c2` in a **temporary working copy** using `git merge --no-commit --no-ff`. It creates no merge commit and pushes nothing. The pinned revision makes the result reproducible; new Android-track changes require an explicit updated check.
 
-Båda spåren har ändrat `scripts/android-smoke.sh`. Den enda automatiskt tillåtna
-konfliktlösningen behåller Android-kandidatens starkare tjänst-/GPS-/SQLite-prov.
-Andra konflikter stoppar jobbet. Vid senare godkänd merge ska samma scenarier
-bevaras; den enklare startkontrollen från Ghost-spåret får inte ersätta dem.
+Both tracks changed `scripts/android-smoke.sh`. The only automatically allowed conflict resolution preserves the Android candidate's stronger service/GPS/SQLite tests. Other conflicts stop the job. Preserve these scenarios at a later approved merge; the Ghost track's simpler startup check must not replace them.
 
-Jobbet kör:
+The job runs:
 1. `dotnet run --project tests/SessionChecks`.
 2. `dotnet run --project tests/GhostChecks`.
 3. `python3 tests/GhostStorageChecks/check.py`.
-4. Android-bygge av den sammansatta källkoden.
-5. API 35-emulator: start/dubblettstart, släckt skärm med tid/GPS, manuell paus,
-   fortsättning, återöppnad Razor-vy, processdöd och exakt bevarat SQLite-underlag.
+4. An Android build of the combined sources.
+5. An API 35 emulator: start/duplicate start, time/GPS with screen off, manual pause, resume, reopened Razor view, process death and exactly preserved SQLite evidence.
 
-Artefakten `combined-candidate-evidence` innehåller källrevisioner,
-sammansättningsstatistik och, när bygget lyckats, en debug-APK för x64-emulator.
-APK:n är inte en verifierad Pixel-leverans. Faktiskt resultat och körningslänk
-läggs i PR-beskrivningen efter avslutat jobb.
+The `combined-candidate-evidence` artifact contains source revisions, composition statistics and, when the build succeeds, a debug APK for an x64 emulator. The APK is not a verified Pixel delivery. Add actual results and the run link to the PR description after the job completes.
 
-## Vad kontrollen inte gör
-Den kopplar inte in Ghost i Android-tjänsten, GPS, karta, avisering eller UI.
-Ghost-reglerna kompileras i samma app men provas som fristående regler.
-SQLite-schemat provas på host; appen använder inte Ghost-arkivet ännu.
-Ghosts GPS under träningspaus är således inte verifierad av vanliga GPS-provet.
+<a id="vad-kontrollen-inte-gör"></a>
+## What the check does not do
+It does not connect Ghost to the Android service, GPS, map, notification or UI. Ghost rules compile in the same app but are tested as standalone rules. The SQLite schema is tested on the host; the app does not use the Ghost archive yet. Ordinary GPS tests therefore do not verify Ghost GPS during training pause.
 
-## Kvarstående leverans
-- Favoriter, C2/fler passmål, distans-/autopausregler och färdig träningsvy.
-- BLE/WHOOP, ljud/coaching, zonstatistik, karta, JSON-export och Health Connect-omförsök.
-- Ghost-arkivets Android-läs-/skrivkod, frysta startreferenser i tjänsten,
-  fortsatt tävlings-GPS under träningspaus och atomisk slutregistrering.
-- Visuellt godkännande av nya detaljlayouter före ny UI/integrationsprototyp.
-- Fysisk Pixel/WHOOP/Spotify, aviseringsknappar, Windows och energimätning:
-  **ej körda**.
+<a id="kvarstående-leverans"></a>
+## Remaining delivery
+- Favourites, C2/additional workout targets, distance/autopause rules and a finished training view.
+- BLE/WHOOP, audio/coaching, zone statistics, map, JSON export and Health Connect retries.
+- Android readers/writers for the Ghost archive, frozen service-owned start references, continued race GPS during training pause and atomic finalization.
+- Visual approval of new detailed layouts before new UI/integration prototypes.
+- Physical Pixel/WHOOP/Spotify, notification buttons, Windows and energy measurements: **not run**.
 
-Syntetisk hälsoexport är avstängd. Issues #1, #2, #3, #4 och #18 förblir öppna
-med återstående acceptansprov. Projects-verktyg är inte exponerade här.
+Synthetic health export is disabled. Issues #1, #2, #3, #4 and #18 remain open with outstanding acceptance tests. Track current status through GitHub Projects using `gh project` as specified in AGENTS.md.
