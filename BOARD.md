@@ -18,13 +18,13 @@ Varje rad avser ett avgränsat moment. En feature kan ha återstående implement
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
+| SYNTHETIC-PR-FLOW | Syntetiskt testkort, ska aldrig mergas | — | Verifiera statusbyte och återläsning. |
 | [#27](https://github.com/simlindahl/loop-cx/issues/27) | Förbered main-skydd, PR-baserat tavelflöde och obligatoriska checks | — | Agenten: verifiera workflows och syntetiska statusbyten; GitHub kräver Pro eller publikt repo för aktivering. |
 
 ## Waiting
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
-| SYNTHETIC-PR-FLOW | Syntetiskt testkort, ska aldrig mergas | — | Verifiera statusbyte och återläsning. |
 | [PR #8](https://github.com/simlindahl/loop-cx/pull/8) | Lägg till deterministisk passmotor för tidsstyrda intervaller | [#8](https://github.com/simlindahl/loop-cx/pull/8) | Simon: granska diff och verifieringsresultat; godkänn merge. |
 | [PR #9](https://github.com/simlindahl/loop-cx/pull/9) | Koppla tidsstyrd session till Android foreground service och GPS | [#9](https://github.com/simlindahl/loop-cx/pull/9) | Simon: granska diff och verifieringsresultat; godkänn merge. |
 | [PR #14](https://github.com/simlindahl/loop-cx/pull/14) | Bevara registrerade pass i SQLite efter processdöd | [#14](https://github.com/simlindahl/loop-cx/pull/14) | Simon: granska diff och verifieringsresultat; godkänn merge. |
