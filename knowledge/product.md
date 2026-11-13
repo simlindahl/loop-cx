@@ -130,6 +130,7 @@ Acceptance: home and training views use the table's colors without a remaining b
 
 <a id="projektstyrning"></a>
 ## Project governance
+<<<<<<< HEAD
 [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.
 
 ## Ghost Run
@@ -208,3 +209,21 @@ Load route and reference data locally before starting; no new server is needed. 
 | Pixel/WHOOP/Spotify with screen on/off | Same race clock, position sequence and session. Report audio, readability, notification actions and battery use with actual evidence. |
 
 Deliver small vertical slices: route storage/record selection, deterministic playback and route matching, session/pause/persistence integration, then approved live UI and physical verification. Mockups are preliminary; the request approves product rules, not detailed layout. Prototypes/integration and app UI follow the design decision gate in AGENTS.md. Overnight work may cover the data model, calculation rules, synthetic verification and technical analysis within approved rules while detailed layout is reviewed. No PR is merged without Simon.
+=======
+[GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. The [roles and decision-making rules](../AGENTS.md#roles-and-decision-making) govern ownership, subagent requirements/test review and progress updates; the lead developer may merge under the conditions in AGENTS.md without separate merge approval from Simon. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.
+
+## LOOP knowledge — review proposal
+
+An offline reading feature under **Settings → What is LOOP?**, aimed at experienced exercisers adapting training to a busy life. Retain Training, History and Settings as the only main destinations. The feature introduces the complete Core rotation, not just the app's running sessions. It must work without an account, app setup, WHOOP or another wearable.
+
+The proposed landing page has a short introduction, a primary Get started action and optional workout and learning links. Get started is a four-part reading guide: understand the rotation; choose exercises and load; complete the first session; continue and adapt. It does not configure workouts, mark lessons complete or infer the next Core step from the running log. Bundle all explanatory content and references locally; opening an external research source is optional and requires internet.
+
+Content baseline: [What is LOOP? draft](what-is-loop.md). Simon approved the guide and detailed screens at revision `4a4c97170c858c2206b507b0cd9296795b5ccc84` on 13 November 2026. See the [review brief](../docs/loop-knowledge-review.md) and [approval conditions](../design/decision.md#what-is-loop--content-and-layout-review). App implementation remains on hold pending a separate instruction.
+
+Review acceptance:
+- From Settings, open What is LOOP?, read Get started, then return to the introduction and Settings without a new main tab.
+- Explain C1 → S1 + M → C2 → S2 + M, all four workout cards, safe technical failure, gym/home substitutions and continuing after interruptions.
+- Keep two working sets to technical failure as the Core default; identify this as a design choice rather than a universal research requirement.
+- Explanations remain usable offline. External source links are clearly identified. No private second-brain links or personal race data appear.
+- Proposed views use Basalt, local Space Grotesk, visible navigation labels and wrapping text. Static review does not establish Android accessibility or screen-reader behavior.
+>>>>>>> origin/main
