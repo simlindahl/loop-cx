@@ -3,6 +3,9 @@
 ## Gällande beslut
 Revision 5:s godkända layout med Basalt-paletten vald av Simon den 13 november 2026. Space Grotesk, Material Icons, mörkt standardtema och engelska gäller. Färger och roller finns i knowledge/product.md under Basalt. [Revision 6](LOOP-Cx-Basalt-r6.pdf) återger samma start- och träningsvy med den valda paletten. Färgvalet ändrar inte passregler eller layout.
 
+## Statiskt underlag för hela appen
+På Simons begäran den 13 november 2026 används [HTML-galleriet](mockups/index.html) som löpande visuellt underlag i stället för nya PDF:er. [Läsanvisning och kravkoppling](mockups/README.md). Palett, typografi och godkänd revision 5-hierarki gäller fortsatt. Nya skärmar, tillstånd och detaljlayouter är preliminära; beställningen av mockuper innebär inte designgodkännande av dem. Systemägda Android-ytor är illustrationer, inte ett löfte om exakt rendering. PDF:erna bevaras enbart som revisionshistorik.
+
 ## Historik
 Produktnamn, C1/C2-inriktning, Minimalist Material Design, Material Icons och Noto Sans är beslutade av Simon. Visuell utformning i Lopp-mockups.pdf väntar på godkännande före implementation. Revision 1 finns i Git-historiken.
 
