@@ -14,6 +14,16 @@ title: Delivery and acceptance
 4. Connect views, favourites, speech, notification, export and map. Deliver a short test report with actual results and mark physical checks that require the runner's equipment. Do not present synthetic data as evidence of physical behavior.
 
 <a id="acceptansprov"></a>
+## Issue #1 bounded native feasibility
+
+This early integration proof supplements the Windows/emulator foundation; it does not complete all M1 integration features. Preserve outstanding physical Pixel/WHOOP/Spotify/battery acceptance separately. No candidate installation on the personal phone precedes the accepted, merged issue #1 delivery.
+
+- Use only private debug commands and unchanged OS-owned permission/device-selection interfaces. Bluetooth selection must be explicit and cancellable; never auto-connect to an unknown nearby device. A standard Heart Rate service/measurement notification, including 8/16-bit values and missing/contact-loss states, must pass through the real GATT subscription path. Bound scans and selected-device reconnect attempts; serialize callbacks with session/generation checks and dispose on stop. Unknown heart rate is not zero. Virtual fixtures prove binding behavior, not physical WHOOP reliability.
+- An explicitly requested one-shot speech probe waits for TTS initialization, language availability and audio-focus grant. Release focus on completion/error/cancellation/destruction; do not control Spotify playback or change its volume. Device audibility/music behavior remains a separate physical check.
+- Exercise the actual notification PendingIntents against the same service/session and retain duplicate-command guards.
+- Health Connect feasibility is limited to the built-in API34+ binding; earlier Android versions report unsupported. A debug-only isolated test may insert, read back and delete only its own uniquely identified exercise record on the dedicated API35 AVD. Require runtime emulator hardware allowlisting, explicit opt-in and a harness checking the exact serial/AVD, zero accounts and absent WHOOP. Intent extras alone cannot authorize writes. Verify cleanup and report failure; never broadly delete or read other apps' health history. The personal phone writer remains disabled.
+- Normal synthetic/debug journal exports remain disabled before and after the probe. No production exporter, retry worker, zones editor or new database schema is introduced. Real health data and diagnostic artifacts remain private outside Git.
+
 ## Acceptance tests
 | Test | Expected result |
 |---|---|

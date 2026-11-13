@@ -10,9 +10,27 @@ namespace LoopCx;
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
     long RemainingSeconds, int Locations, string GpsStatus, string TemplateId);
 
-[Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation)]
+[Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice)]
 public sealed class RunService : Service, ILocationListener
 {
+#if DEBUG
+    private NativeFeasibility? nativeProbe;
+
+    internal static void Probe(string probe, Guid? expectedRunId, string? address = null, int associationId = -1)
+    {
+        var context = global::Android.App.Application.Context;
+        try
+        {
+            context.StartForegroundService(new Intent(context, typeof(RunService)).SetAction("native-probe")
+                .PutExtra("probe", probe).PutExtra("run-id", expectedRunId?.ToString()).PutExtra("address", address).PutExtra("association-id", associationId));
+        }
+        catch (Java.Lang.RuntimeException)
+        {
+            if (OperatingSystem.IsAndroidVersionAtLeast(33)) NativeFeasibility.ReleaseAssociation(context, associationId);
+            if (OperatingSystem.IsAndroidVersionAtLeast(33)) NativeFeasibility.Report("probe:service-start-rejected");
+        }
+    }
+#endif
     public static RunSnapshot? Snapshot { get; private set; }
     public static event Action? Changed;
     private TimedSession? session;
@@ -52,6 +70,46 @@ public sealed class RunService : Service, ILocationListener
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
         var command = intent?.Action;
+#if DEBUG
+        if (command == "native-probe" && OperatingSystem.IsAndroidVersionAtLeast(33))
+        {
+            var pendingAssociation = intent?.GetIntExtra("association-id", -1) ?? -1;
+            // Probes require an existing session and visible-activity entry; never create a hidden workout.
+            if (session is null || session.IsFinished || intent?.GetStringExtra("run-id") != id.ToString())
+            {
+                NativeFeasibility.ReleaseAssociation(this, pendingAssociation);
+                NativeFeasibility.Report("probe:requires-active-session");
+                if (session is null) StopSelf();
+                return StartCommandResult.NotSticky;
+            }
+
+            try
+            {
+                nativeProbe ??= new NativeFeasibility(this);
+                if (intent?.GetStringExtra("probe") == "ble" && intent.GetStringExtra("address") is { } address)
+                {
+                    if (CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
+                    {
+                        StartForeground(NotificationId, BuildNotification(), ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice);
+                        nativeProbe.Connect(address, pendingAssociation);
+                        pendingAssociation = -1; // The probe now owns cleanup, including failed connection paths.
+                    }
+                }
+                else if (intent?.GetStringExtra("probe") == "speech") nativeProbe.SpeakOnce();
+            }
+            catch (Java.Lang.RuntimeException)
+            {
+                NativeFeasibility.Report("probe:permission-or-platform-unavailable");
+                nativeProbe?.Stop();
+                nativeProbe = null;
+            }
+            finally
+            {
+                NativeFeasibility.ReleaseAssociation(this, pendingAssociation);
+            }
+            return StartCommandResult.NotSticky;
+        }
+#endif
         if (session is null && command is not ("start" or "start-c2"))
         {
             StopSelf();
@@ -132,6 +190,9 @@ public sealed class RunService : Service, ILocationListener
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
             session, initialPlan, templateMetadata, Snapshot, command);
+#if DEBUG
+        if (session.IsFinished && OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
+#endif
         finishLogged |= session.IsFinished;
         Changed?.Invoke();
 #if DEBUG
@@ -183,6 +244,9 @@ public sealed class RunService : Service, ILocationListener
 
     public override void OnDestroy()
     {
+#if DEBUG
+        if (OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
+#endif
         if (tick is not null) handler?.RemoveCallbacks(tick);
         locationManager?.RemoveUpdates(this);
         StopForeground(StopForegroundFlags.Remove);
