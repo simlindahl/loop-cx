@@ -1,8 +1,8 @@
 ---
 name: spec-change
-description: Använd när ett krav, flöde eller en design för löparappen ändras.
+description: Use when a requirement, flow or design for the running app changes.
 ---
-1. Läs AGENTS.md och aktuellt avsnitt i knowledge/product.md. Beskriv användarens konkreta situation och önskat resultat i en GitHub-issue.
-2. Ändra den kanoniska OKF-sidan. Lägg till ett observerbart acceptansexempel och länka från issuen. Bevara YAML-frontmatter med type och relativa länkar.
-3. Uppdatera berörda mockuper. Vid ändrat gränssnitt dokumentera vilket underlag Simon har godkänt i design/decision.md. Ett utkast eller ett agentomdöme är inte ett godkännande.
-4. Dela arbetet i minsta byggbara ändring. Lägg issuen i GitHub Projects, länka PR och redovisa avvikelser mot beslutat krav.
+1. Follow AGENTS.md status rules and use GitHub Projects · LOOP Cx (https://github.com/users/simlindahl/projects/2) before, during and after work. Read AGENTS.md and the relevant knowledge/product.md section. Describe the user's concrete situation and desired result in a GitHub issue.
+2. Update the canonical OKF page. Add an observable acceptance example and link it from the issue. Preserve YAML frontmatter with type and relative links.
+3. Update affected mockups. For UI changes, record the material Simon approved in design/decision.md. A draft or an agent's assessment is not approval.
+4. Split work into the smallest buildable change. Link the issue from the project card, link the PR and report deviations from approved requirements. When the next step needs Simon's input or design approval, follow AGENTS.md Waiting rules.
