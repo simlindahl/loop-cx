@@ -55,7 +55,7 @@ public sealed class RunJournal : SQLiteOpenHelper
                 throw new IOException("The run checkpoint could not be saved.");
             if (session.IsFinished)
             {
-                using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)");
+                using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)")!;
                 queued.BindString(1, id.ToString());
 #if DEBUG
                 queued.BindString(2, "disabled_synthetic");

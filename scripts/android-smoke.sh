@@ -74,11 +74,20 @@ snapshot > /tmp/run-before-death.json
 adb shell am force-stop se.loopcx.running
 adb exec-out run-as se.loopcx.running cat databases/runs-debug.db > /tmp/before-death.db
 sleep 3
+adb logcat -c
 command start
-sleep 5
-snapshot > /tmp/run-after-death.json
+for attempt in {1..60}; do
+    snapshot > /tmp/run-after-death.json
+    if [[ -s /tmp/run-after-death.json ]]; then break; fi
+    sleep 1
+done
+[[ -s /tmp/run-after-death.json ]]
 command complete
-sleep 3
+for attempt in {1..30}; do
+    if snapshot | grep -F '"Phase":"Finished"'; then break; fi
+    sleep 1
+done
+snapshot | grep -F '"Phase":"Finished"'
 adb shell am force-stop se.loopcx.running
 adb exec-out run-as se.loopcx.running cat databases/runs-debug.db > /tmp/after-death.db
 python3 - <<'PY'
