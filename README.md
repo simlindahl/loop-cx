@@ -1,12 +1,12 @@
 # LOOP Cx
 Privat Android-projekt för löpträning. Officiell LOOP Cx-app för C1- och C2-löpning.
 - [Produktspecifikation och acceptansprov](knowledge/product.md)
-- [Design för granskning](design/LOOP-Cx-direction-5.pdf) · [Beslut](design/decision.md)
+- [Statiska HTML-mockuper för hela appen](design/mockups/index.html) · [Öppna och granska](design/mockups/README.md) · [Beslut](design/decision.md)
 - [Arbetsinstruktioner](AGENTS.md)
 
 knowledge/ är ett Open Knowledge Format 0.2-bundle enligt [Googles specifikation](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md). Versionshantera krav, design och evidens här. GitHub Projects följer issues från Todo via In Progress till Done.
 
-[Öppna mobilmockuperna som PDF](design/LOOP-Cx-direction-5.pdf) · [Beslut om LOOP Cx](knowledge/loop-cx.md)
+[Öppna de statiska mobilmockuperna](design/mockups/index.html) · [Beslut om LOOP Cx](knowledge/loop-cx.md)
 
 ## Så arbetar vi
 [Projekttavla](https://github.com/users/simlindahl/projects/2) · [Actions](https://github.com/simlindahl/loop-cx/actions/workflows/check.yml)

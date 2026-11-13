@@ -1,0 +1,41 @@
+name: Static mockup review
+
+on:
+  pull_request:
+    paths:
+      - 'design/mockups/**'
+      - '.github/workflows/mockups.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'design/mockups/**'
+      - '.github/workflows/mockups.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mockups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install review browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/mockup-review" --ignore-scripts --no-package-lock --no-audit --no-fund playwright@1.56.1
+          "$RUNNER_TEMP/mockup-review/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Check offline layout and capture screens
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/mockup-review/node_modules/playwright
+        run: node design/mockups/verify.cjs
+      - name: Upload review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mockup-review
+          path: design/mockups/qa/
+          retention-days: 14
