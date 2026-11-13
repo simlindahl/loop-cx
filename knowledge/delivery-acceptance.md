@@ -51,3 +51,7 @@ Physical-phone testing remains outstanding. Particularly important measurements 
 <a id="projektstyrning"></a>
 ## Project governance
 [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the shared work list. Issues describe requirements; PRs contain implementation and evidence. The [canonical project role and decision rules](../AGENTS.md#roles-and-decision-making), loading the current Dev Team plugin through [team setup](../docs/team-workflow.md#setup), govern role ownership, independent review and team progress updates; the team lead may merge under the conditions in AGENTS.md without separate merge approval from Simon. Follow the [status rules in AGENTS.md](../AGENTS.md#work-tracking-and-status) for Todo → Doing → Waiting → Done, direct status updates through GitHub CLI and verified read-back. Git is the source for requirements and design. A locally created scaffold is not proof that the remote delivery exists.
+
+### Timed autopause evidence boundary
+
+Follow the exact measurement-window and receipt-time [autopause contract](running-workouts.md#autopause-technical-pilot-and-acceptance). Native synthetic evidence must distinguish ten excluded measurement seconds from later active/unknown receipt lag, preserve real extension/manual-command order, retain immutable raw fixes and atomically commit automatic-event timing with corrected state. Physical movement/false-pause calibration remains outstanding until measured on the approved equipment; emulator success does not establish it.

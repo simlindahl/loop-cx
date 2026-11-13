@@ -7,10 +7,10 @@
     {
         <section aria-labelledby="phase-heading">
             <p class="eyebrow">@(state.TemplateId == "C2" ? "C2 · Zone 2" : "C1 · Intervals")</p>
-            <h2 id="phase-heading">@(state.Paused ? "Paused" : PhaseLabel(state.Phase))</h2>
+            <h2 id="phase-heading">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))</h2>
             @if (state.Paused)
             {
-                <p>Training paused · @PhaseLabel(state.Phase)</p>
+                <p>@(IsAutomatic(state) ? "Move to resume automatically." : "Use Resume to continue.") · @PhaseLabel(state.Phase)</p>
             }
             <p class="countdown"><strong>@Clock(state.RemainingSeconds)</strong><span>min:sec remaining</span></p>
             <p class="status">@state.GpsStatus</p>
@@ -19,6 +19,10 @@
             {
                 <div class="actions" aria-label="Workout controls">
                     <button type="button" class="primary" @onclick="TogglePause">@(state.Paused ? "Resume" : "Pause")</button>
+                    @if (IsAutomatic(state))
+                    {
+                        <button type="button" @onclick='() => RunService.Command("pause")'>Pause manually</button>
+                    }
                     @if (state.Phase is "Warmup" or "Cooldown")
                     {
                         <button type="button" @onclick='() => RunService.Command("extend")'>+1 min</button>
@@ -50,6 +54,8 @@
 </main>
 @code {
     private string? error;
+
+    private static bool IsAutomatic(RunSnapshot state) => state.Motion?.PauseReason == LoopCx.Features.ActiveRun.PauseReason.Automatic;
 
     private static string Clock(long seconds) => $"{seconds / 60}:{seconds % 60:00}";
 

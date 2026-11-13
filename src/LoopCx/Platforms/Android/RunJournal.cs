@@ -41,7 +41,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     }
 
     public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
-        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null)
+        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null, AutomaticMotionEvent? automaticEvent = null)
     {
         var db = WritableDatabase!;
         db.BeginTransaction();
@@ -59,6 +59,7 @@ public sealed class RunJournal : SQLiteOpenHelper
             {
                 SchemaVersion = 1,
                 Snapshot = snapshot,
+                AutomaticEvent = automaticEvent,
                 session.Plan,
                 session.Completed,
                 session.PhaseActiveTime,

@@ -74,7 +74,9 @@ snapshot > /tmp/run-duplicate.json
 adb shell input keyevent KEYCODE_HOME
 adb shell input keyevent KEYCODE_SLEEP
 for point in 1 2 3 4 5; do
-    adb emu geo fix 18.06 59.33
+    # This is a moving locked-screen scenario, not the separate standstill test.
+    longitude=$(python3 -c "print(18.06 + $point * 0.00015)")
+    adb emu geo fix "$longitude" 59.33
     sleep 2
 done
 snapshot > /tmp/run-locked.json

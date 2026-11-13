@@ -70,6 +70,7 @@ New C1 plans use template revision 2; existing active/saved revision 1 plans rem
 
 The latest Core-first direction allows bounded C1/C2 personalizations rather than an arbitrary workout builder. Earlier generic builder/flow/numbering approvals and unmerged Time/Distance/Open prototypes are held pending the Core-first redesign; preserved work is not shipping authority. This supersedes the earlier 3/2 request and the subsequent keep 10/5 decision for current official C1 only, without rewriting historical runs. Reader runtime/design holds, identity/signing and physical acceptance remain in force; no phone update is authorized by this decision alone.
 
+
 ## C1 official variants: owner decisions, implementation pending
 
 On 13 November 2026 Simon defined three official C1 protocols, delegated repetition counts and confirmed the resulting fixed RPE/dose proposal. The [owning variant specification](../knowledge/running-workouts.md#c1-variant-purposes-and-evidence) records their distinct purposes, doses, preparation and primary research with transfer limits. Higher-zone time is a follow-up aim, not a completion rule; threshold intent takes precedence for C1.3. RPE is visible/read-only initially; a nearby information button must open a short explanation dialog.
@@ -77,3 +78,11 @@ On 13 November 2026 Simon defined three official C1 protocols, delegated repetit
 This records product/content decisions, not approval of a new screen, dialog layout or runtime implementation. The delivered C1 revision 2 and immutable history remain unchanged until a separately reviewed delivery. Initial variant selection and remaining allowed adjustments need resolution before dependent implementation; revised UX must follow normal approval.
 
 Simon subsequently clarified C1.1 as SIT, C1.2 as aerobic HIIT and C1.3 as threshold intervals, then approved C1.1 as five 30-second maximal efforts with four four-minute easy recoveries and RPE 10/2. This supersedes the preceding controlled short-interval definition; the owning table and research distinguish maximal SIT from aerobic HIIT. Simon then replaced the differing preparation values and intervening 6/3 proposal with a shared 4-minute warm-up and 3-minute cool-down for all C1 variants, retaining in-session extensions. Main sets are unchanged: total25:30/30/34 for SIT/HIIT/threshold. The training guide and owning specification agree; current delivered revision2 and historical plans remain frozen.
+
+
+## Autopause state and controls conformance · 13 November 2026
+
+The team lead adopted UX's bounded mapping to implement the existing requirement to distinguish automatic/manual pause and preserve manual precedence in PR #73. This is conformance within the existing active-run surface/action group and styles, not approval of a new layout, information architecture or preliminary gallery screen. Auto shows **Autopaused**, **Move to resume automatically.**, existing **Resume** and secondary **Pause manually**; Manual shows **Manually paused**, **Use Resume to continue.** and **Resume**. Keep the current phase and frozen values. Standard Android notification titles/text/actions distinguish the same states. The old gallery's five-second explanatory copy is not adopted. Actual tap-to-manual behavior, notification text/actions and reachable ≥48 dp controls at large text require new native evidence; backend-only ADB promotion is insufficient.
+
+
+Paused notification action priority: Manual shows Resume only; Auto shows Resume and Pause manually. Preparation +1/skip notification actions return while running, avoiding four actions being truncated by the system. Existing app preparation commands remain unchanged. Standard notification subtext retains phase/countdown while title/body explain pause reason. This is the lead-confirmed bounded state mapping, not a new Core dose or layout approval.
