@@ -8,7 +8,7 @@ using LoopCx.Features.ActiveRun;
 namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
-    long RemainingSeconds, int Locations, string GpsStatus, string TemplateId);
+    long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null);
 
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice)]
 public sealed class RunService : Service, ILocationListener
@@ -34,6 +34,7 @@ public sealed class RunService : Service, ILocationListener
     public static RunSnapshot? Snapshot { get; private set; }
     public static event Action? Changed;
     private TimedSession? session;
+    private RunDistance? distance;
     private Guid id;
     private DateTimeOffset started;
     private long startedMonotonic;
@@ -126,6 +127,7 @@ public sealed class RunService : Service, ILocationListener
                     7, 2, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
             started = DateTimeOffset.UtcNow;
             startedMonotonic = SystemClock.ElapsedRealtime();
+            distance = new RunDistance(DistancePolicy.Pilot, TimeSpan.FromMilliseconds(startedMonotonic), session.Current?.Kind);
             initialPlan = System.Text.Json.JsonSerializer.Serialize(session.Plan);
             lastTick = startedMonotonic;
             var manager = (NotificationManager)GetSystemService(NotificationService)!;
@@ -146,6 +148,7 @@ public sealed class RunService : Service, ILocationListener
             handler.PostDelayed(tick, 1000);
         }
         AdvanceClock();
+        var phaseBeforeCommand = session.Current?.Kind;
         var effective = command switch
         {
             "pause" => session.Pause(),
@@ -158,10 +161,19 @@ public sealed class RunService : Service, ILocationListener
         if (command == "complete" && !session.IsFinished)
         {
             session.Resume();
-            session.Advance(TimeSpan.FromHours(1));
+            session.Advance(TimeSpan.FromHours(1), (next, consumed) =>
+            {
+                var simulatedAt = TimeSpan.FromMilliseconds(lastTick) + consumed;
+                distance!.UpdateFreshness(simulatedAt);
+                distance.Boundary(next, simulatedAt, session.MainActiveTime);
+            });
             effective = true;
         }
 #endif
+        if (session.Current?.Kind != phaseBeforeCommand)
+            distance!.Boundary(session.Current?.Kind, TimeSpan.FromMilliseconds(lastTick), session.MainActiveTime);
+        else if (effective && command is "pause" or "resume")
+            distance!.Interrupt(TimeSpan.FromMilliseconds(lastTick), "Manual pause boundary");
         Publish(effective ? command : null);
         return StartCommandResult.NotSticky;
     }
@@ -169,7 +181,9 @@ public sealed class RunService : Service, ILocationListener
     private void AdvanceClock()
     {
         var now = SystemClock.ElapsedRealtime();
-        session!.Advance(TimeSpan.FromMilliseconds(now - lastTick));
+        distance!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
+        session!.Advance(TimeSpan.FromMilliseconds(now - lastTick), (next, consumed) =>
+            distance.Boundary(next, TimeSpan.FromMilliseconds(lastTick) + consumed, session.MainActiveTime));
         lastTick = now;
     }
 
@@ -186,7 +200,7 @@ public sealed class RunService : Service, ILocationListener
         if (session!.IsFinished && !finishLogged) command ??= "finish";
         Snapshot = new RunSnapshot(id, session!.Current?.Kind.ToString() ?? "Finished",
             session.IsPaused, (long)session.TotalActiveTime.TotalSeconds,
-            (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus, template.TemplateId);
+            (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus, template.TemplateId, distance?.Snapshot);
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
             session, initialPlan, templateMetadata, Snapshot, command);
@@ -233,12 +247,16 @@ public sealed class RunService : Service, ILocationListener
     {
         if (session is null || session.IsFinished || session.IsPaused) return;
         journal.Location(id, location);
+        AdvanceClock();
+        distance!.Observe(new DistanceFix(TimeSpan.FromMilliseconds(location.ElapsedRealtimeNanos / 1_000_000),
+            location.Latitude, location.Longitude, location.HasAccuracy ? location.Accuracy : null),
+            TimeSpan.FromMilliseconds(lastTick), session.MainActiveTime);
         locations++;
         gpsStatus = location.HasAccuracy ? $"GPS ±{location.Accuracy:0} m" : "GPS accuracy unknown";
         Publish();
     }
 
-    public void OnProviderDisabled(string provider) { gpsStatus = "GPS disabled"; Publish(); }
+    public void OnProviderDisabled(string provider) { gpsStatus = "GPS disabled"; distance?.Unavailable("GPS disabled"); Publish(); }
     public void OnProviderEnabled(string provider) { gpsStatus = "Waiting for GPS"; Publish(); }
     public void OnStatusChanged(string? provider, Availability status, Bundle? extras) { }
 

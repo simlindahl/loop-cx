@@ -30,10 +30,11 @@ public sealed class TimedSession
     public TimeSpan Remaining => Current is { } phase ? phase.Duration - PhaseActiveTime : TimeSpan.Zero;
 
     // The caller supplies elapsed monotonic time, allowing deterministic simulation.
-    public void Advance(TimeSpan elapsed)
+    public void Advance(TimeSpan elapsed, Action<RunPhase?, TimeSpan>? phaseChanged = null)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(elapsed, TimeSpan.Zero);
         if (IsPaused) return;
+        var processed = TimeSpan.Zero;
         while (elapsed > TimeSpan.Zero && Current is { } phase)
         {
             var consumed = elapsed < Remaining ? elapsed : Remaining;
@@ -42,7 +43,12 @@ public sealed class TimedSession
             if (phase.Kind is RunPhase.Work or RunPhase.Recovery)
                 MainActiveTime += consumed;
             elapsed -= consumed;
-            if (Remaining == TimeSpan.Zero) FinishPhase();
+            processed += consumed;
+            if (Remaining == TimeSpan.Zero)
+            {
+                FinishPhase();
+                phaseChanged?.Invoke(Current?.Kind, processed);
+            }
         }
     }
 

@@ -6,5 +6,6 @@
   <ItemGroup>
     <Compile Include="../../src/LoopCx/Features/ActiveRun/TimedSession.cs" Link="TimedSession.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/HeartRateMeasurement.cs" Link="HeartRateMeasurement.cs" />
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/RunDistance.cs" Link="RunDistance.cs" />
   </ItemGroup>
 </Project>
