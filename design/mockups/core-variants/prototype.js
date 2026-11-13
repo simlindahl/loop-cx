@@ -2,7 +2,7 @@ const app = document.querySelector('#app');
 const dialog = document.querySelector('#dialog');
 const reviewEvent = document.querySelector('#review-event');
 const variants = {
-  'C1.1': { title: 'Sprint intervals (SIT)', minutes: 0.5, minCount: 4, maxCount: 14, work: '30 sec', recovery: 4, count: 6, main: 23, rpe: '10 / 2', purpose: 'Repeated maximal, all-out sprints with substantial easy recovery. A maximal-effort option, not an automatic progression.' },
+  'C1.1': { title: 'Sprint intervals (SIT)', minutes: 0.5, minCount: 4, maxCount: 18, work: '30 sec', recovery: 3, count: 8, main: 25, rpe: '10 / 2', purpose: 'Repeated maximal, all-out sprints with substantial easy recovery. A maximal-effort option, not an automatic progression.' },
   'C1.2': { title: 'Aerobic intervals (HIIT)', minutes: 3, minCount: 3, maxCount: 12, work: '3 min', recovery: 2, count: 5, main: 23, rpe: '7 / 3', purpose: 'Develop aerobic power through sustained, controlled hard efforts. Keep the efforts repeatable.' },
   'C1.3': { title: 'Sustained intervals (Threshold)', minutes: 6, minCount: 2, maxCount: 7, work: '6 min', recovery: 3, count: 3, main: 24, rpe: '6 / 3', purpose: 'Practise a controlled, sustained effort near your individual threshold. Prioritise sustainable pacing.' }
 };
