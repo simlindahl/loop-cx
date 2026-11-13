@@ -75,6 +75,9 @@ public sealed class RunService : Service, ILocationListener
             case "resume": session.Resume(); break;
             case "extend": session.Extend(); break;
             case "skip": session.SkipPreparation(); break;
+#if DEBUG
+            case "complete": session.Resume(); session.Advance(TimeSpan.FromHours(1)); break;
+#endif
         }
         Publish();
         return StartCommandResult.NotSticky;
@@ -153,6 +156,10 @@ public sealed class RunService : Service, ILocationListener
         if (tick is not null) handler?.RemoveCallbacks(tick);
         locationManager?.RemoveUpdates(this);
         StopForeground(StopForegroundFlags.Remove);
+
+        Snapshot = null;
+        Changed?.Invoke();
+
         base.OnDestroy();
     }
 }
