@@ -20,8 +20,24 @@ const fs=require('fs');
  }
  await page.setViewportSize({width:1440,height:1000});
  fs.mkdirSync(__dirname+'/qa',{recursive:true});
- for(const id of ['training','work','edit-intervals','easy-run','settings','run-detail','zones','notification-work','sensor-loss','share','history','warm-up']){
+ for(const id of ['training','work','edit-intervals','easy-run','settings','run-detail','zones','notification-work','sensor-loss','share','history','warm-up','loop-about','loop-start','loop-workouts','loop-strength','loop-learn','loop-sources']){
   await page.locator('#'+id+' .phone').screenshot({path:__dirname+'/qa/'+id+'.png'});
+ }
+ const knowledgeNavigation=[];
+ for(const [selector,expected] of [
+  ['#settings a[href="#loop-about"]','#loop-about'],
+  ['#loop-about a[href="#loop-start"]','#loop-start'],
+  ['#loop-start .action.primary','#loop-about'],
+  ['#loop-about a[href="#loop-workouts"]','#loop-workouts'],
+  ['#loop-workouts a[href="#loop-strength"]','#loop-strength'],
+  ['#loop-strength .back','#loop-about'],
+  ['#loop-about a[href="#loop-learn"]','#loop-learn'],
+  ['#loop-learn a[href="#loop-sources"]','#loop-sources'],
+  ['#loop-sources .back','#loop-about'],
+  ['#loop-about .back','#settings']
+ ]){
+  await page.locator(selector).click();
+  knowledgeNavigation.push({expected,actual:await page.evaluate(()=>location.hash)});
  }
  await page.locator('#training .action.round').first().click();
  const click=await page.evaluate(()=>location.hash);
@@ -34,9 +50,9 @@ const fs=require('fs');
  });
  const scaled=await page.evaluate(()=>[...document.querySelectorAll('.phone')].filter(e=>e.scrollWidth>e.clientWidth+2).map(e=>({id:e.closest('.review-screen').id,w:e.clientWidth,scroll:e.scrollWidth})));
  await page.locator('#work .phone').screenshot({path:__dirname+'/qa/work-text-200.png'});
- const report={structural,layout,click,scaled,errors,external};
- fs.writeFileSync(__dirname+'/qa/report.json',JSON.stringify(report,null,2));
- if(structural.duplicateIds.length || structural.brokenLinks.length || !structural.fontsLoaded || structural.scripts || external.length || errors.length || click!=='#warm-up' || layout.some(x=>x.document||x.items.length)) process.exitCode=1;
+ const report={structural,layout,knowledgeNavigation,click,scaled,errors,external};
+ fs.writeFileSync(__dirname+'/qa/report.json',JSON.stringify(report,null,2)+'\n',{encoding:'utf8'});
+ if(structural.duplicateIds.length || structural.brokenLinks.length || !structural.fontsLoaded || structural.scripts || external.length || errors.length || click!=='#warm-up' || knowledgeNavigation.some(x=>x.actual!==x.expected) || layout.some(x=>x.document||x.items.length)) process.exitCode=1;
  console.log(JSON.stringify(report,null,2));
  await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
