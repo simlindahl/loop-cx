@@ -2,14 +2,8 @@ name: Static mockup review
 
 on:
   pull_request:
-    paths:
-      - 'design/mockups/**'
-      - '.github/workflows/mockups.yml'
   push:
     branches: [main]
-    paths:
-      - 'design/mockups/**'
-      - '.github/workflows/mockups.yml'
   workflow_dispatch:
 
 permissions:
