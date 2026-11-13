@@ -32,3 +32,11 @@ The runner selects speech at a custom positive time interval (minutes and second
 Give brief coaching for a pace deviation greater than 10 percent or heart rate outside the selected zone for 30 consecutive active seconds within the same split. The proposed interpretation uses smoothed live pace in seconds/km and valid current heart rate. At 5:00 min/km, the thresholds are 4:30 and 5:30. Reset deviation time on a new split, pause, data gap or return within target. Give one announcement per continuous deviation. RPE without a measurable target provides phase announcements and ordinary summaries.
 
 An ongoing Android notification on the lock screen and in the notification shade shows phase, remaining time/distance, heart rate and pace within the available system space. Warm-up: +1 min and Start main set. Main set: Pause and, for an open-ended workout, Start cool-down or Finish and save. Recovery: Pause. Paused: Resume. Cool-down: +1 min and Finish and save. Tapping the notification opens the current view. Test actual visibility in collapsed and expanded states with lock-screen notifications allowed.
+
+## Proposed details still awaiting product decisions
+
+The existing wording deliberately leaves these interpretations proposed/recommended: when configurable preparation defaults are read and frozen; the active-time/main-distance origin of periodic summaries; whether autopause begins at detection or backdates the confirmation window; and the smoothed-pace/current-heart-rate interpretation used for coaching. Resolve the affected choice before its implementation; this baseline review does not silently promote a proposal to an approved rule. Already approved immutable original plans, frozen zone boundaries, manual-pause precedence and unknown-data behavior remain in force.
+
+## Self-comparison discovery
+
+[#58](https://github.com/simlindahl/loop-cx/issues/58) records the proposed first self-comparison scope and its evidence limits. It is discovery, not implementation approval or a new fitness score; existing recorded facts and frozen plans remain authoritative. Do not infer conditioning improvement from equal planned durations or treat missing measurements as zero.

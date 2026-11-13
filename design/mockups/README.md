@@ -200,3 +200,19 @@ These are proposed corrections to the Ghost addition, not a new approval of its 
 For a visual change, link the relevant screenshots or local presentation/artifact manifest from the PR's [current review handoff](../../docs/team-workflow.md#current-review-handoff), with the tested revision, approval status and static/runtime limitations. Select affected screens and states; this does not require a new capture of all 90 screens. The HTML, owning specification and design decisions remain authoritative; a local contact sheet is presentation material.
 
 Compare Training, Work, Settings, the LOOP reader and Ghost Run against the previous gallery revision. The approved palette removes green undertones from backgrounds, surfaces, text, dividers and the illustrative map. It keeps one lime accent for action and current-state emphasis, while workout codes, wordmark and historical bars become neutral. Layout, labels, navigation and approved reader content are unchanged. The exact palette and neutral launcher background are recorded in design/decision.md; approved loop geometry is unchanged. Decorative dividers do not replace sufficiently contrasting functional control boundaries; see the specification.
+
+## Motion implementation dependencies
+
+All seven motion studies are approved for implementation under the [canonical motion contract](../../knowledge/ux-design.md#approved-motion-and-interaction-system) and [decision](../decision.md#motion-studies-0107--13-november-2026). The original study's narrower starting recommendation is historical. This table maps approved patterns to real surfaces; it neither adds mockups to the 90-screen gallery nor declares their runtime behavior delivered.
+
+| Study | Real operation/view and delivery dependency |
+|---|---|
+| 01 · Press | Existing Core start and training actions; preserve immediate commands and full hit areas |
+| 02 · Phase/state | Real service-owned phase/pause changes; avoid effects on every timer tick |
+| 03 · Navigation | Actual destination changes; full Training/History/Settings navigation must exist, with no fake tabs |
+| 04 · Disclosure | Actual approved details/forms; favourites/history surfaces depend on their implementation, and reader runtime remains held |
+| 05 · Determinate progress | Only a real known value/denominator; no fake loading, sensor values or invented product operation |
+| 06 · Result feedback | Actual confirmed operation outcome; history/export/results depend on those operations and cannot claim success from animation |
+| 07 · Coordinated entrance | Real approved view/state groups, up to three; missing or preliminary screens remain dependent on their existing delivery/design gates |
+
+Browser motion studies are static/interactive reference evidence, not Android text scaling, TalkBack, frame pacing or battery acceptance. Apply the existing exact-head review workflow; do not ask again for approval of the already approved seven-pattern family.

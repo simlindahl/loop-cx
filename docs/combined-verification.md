@@ -3,12 +3,12 @@
 Requirements: [product specification](../knowledge/product.md), issues #1 and #18. This document combines verification evidence; product rules and design decisions are unchanged.
 
 <a id="kandidater"></a>
-## Candidates
+## Historical foundation dependency order
 | Track | Review order | Available work |
 |---|---|---|
 | Android/session | #8 → #9 → #14 → #17 | Timed workout engine, service/GPS, continuous SQLite checkpoints, recovery and command log |
 | Ghost Run | #19 → #20 → #21 → #22 → #23 → #24 | Requirements/mockups, frozen references, main-phase evidence, race clock, ordered matching and SQLite data model |
-| Combined check | This PR after #24 | Actual combined source revision and shared build/acceptance tests |
+| Combined check | Merged #25 after #24 | Actual combined source revision and shared build/acceptance tests |
 
 Review and merge follow the delegated workflow in [AGENTS.md](../AGENTS.md#work-tracking-and-status). Each predecessor must be delivered before its dependent PR merges. Detailed Ghost layouts remain preliminary; standalone rule verification does not approve UI integration.
 
@@ -32,11 +32,12 @@ The `combined-candidate-evidence` artifact contains the tested source revision a
 It does not connect Ghost to the Android service, GPS, map, notification or UI. Ghost rules compile in the same app but are tested as standalone rules. The SQLite schema is tested on the host; the app does not use the Ghost archive yet. Ordinary GPS tests therefore do not verify Ghost GPS during training pause.
 
 <a id="kvarstående-leverans"></a>
-## Remaining delivery
-- Favourites, C2/additional workout targets, distance/autopause rules and a finished training view.
-- BLE/WHOOP, audio/coaching, zone statistics, map, JSON export and Health Connect retries.
-- Android readers/writers for the Ghost archive, frozen service-owned start references, continued race GPS during training pause and atomic finalization.
-- Visual approval of new detailed layouts before new UI/integration prototypes.
-- Physical Pixel/WHOOP/Spotify, notification buttons, Windows and energy measurements: **not run**.
+## Current delivered baseline and remaining acceptance
 
-Synthetic health export is disabled. Issues #1, #2, #3, #4 and #18 remain open with outstanding acceptance tests. Track current status through GitHub Projects using `gh project` as specified in AGENTS.md.
+At merged PR #50 (`1b5caa1`), initial Core C2 starts one 45-minute work phase at target RPE 3, with no preparation phases; the C1 readable slice, immutable template metadata and large-text emulator evidence are delivered. This does not implement favourites, duration editing or complete statistics. At merged PR #64 (`9334e94`), Windows x64 build/AVD and controlled BLE/GATT, one-shot TTS, actual notification dispatch and isolated own-record Health Connect feasibility passed. [Android delivery](android.md) distinguishes exact-source evidence and retained physical E tests. Neither a virtual peripheral nor a no-audio emulator proves real WHOOP or Spotify behavior.
+
+Remaining delivery includes favourites/editing and additional targets, distance/autopause/statistics rules, a complete training/history view, production BLE/WHOOP/coaching/zones, map, JSON and a production idempotent Health Connect exporter/retries. The isolated probe is not that exporter. Android Ghost archive readers/writers/migration, frozen service-owned references, race GPS during training pause and atomic finalization remain; standalone rules/host DDL do not prove native Ghost integration. New detailed layouts retain their approval gates.
+
+Physical Pixel/WHOOP/Spotify, real lock-screen behavior, battery and WHOOP import/goal credit remain individually recorded as NOT RUN where unverified; Windows foundation acceptance has passed. [#1](https://github.com/simlindahl/loop-cx/issues/1) is the accepted early foundation, not all M1 acceptance. Remaining owning issues include #2, #3, #4 and #18; current status belongs to GitHub Projects and the current delivery handoff. Normal synthetic health export remains disabled.
+
+Repository publication/licensing and active protection were completed separately under [publication review](publication-review.md); the private source and Projects board remain private. The accepted `9334e94` ARM64 phone update preserved signing and private data and startup was verified; its exact artifact proof belongs to the current delivery handoff. This never establishes sensor or outdoor acceptance. Historical runs above retain their original scope and are not relabelled as results of later source revisions.
