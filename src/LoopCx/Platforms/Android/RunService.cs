@@ -8,7 +8,7 @@ using LoopCx.Features.ActiveRun;
 namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
-    long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null);
+    long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null, MotionState? Motion = null);
 
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice)]
 public sealed class RunService : Service, ILocationListener
@@ -35,6 +35,8 @@ public sealed class RunService : Service, ILocationListener
     public static event Action? Changed;
     private TimedSession? session;
     private RunDistance? distance;
+    private RunMotion? motion;
+    private RunDistance.CandidateDistance? candidateDistance;
     private Guid id;
     private DateTimeOffset started;
     private long startedMonotonic;
@@ -128,6 +130,8 @@ public sealed class RunService : Service, ILocationListener
             started = DateTimeOffset.UtcNow;
             startedMonotonic = SystemClock.ElapsedRealtime();
             distance = new RunDistance(DistancePolicy.Pilot, TimeSpan.FromMilliseconds(startedMonotonic), session.Current?.Kind);
+            motion = new RunMotion(MovementPolicy.Pilot);
+            motion.Boundary(TimeSpan.FromMilliseconds(startedMonotonic));
             initialPlan = System.Text.Json.JsonSerializer.Serialize(session.Plan);
             lastTick = startedMonotonic;
             var manager = (NotificationManager)GetSystemService(NotificationService)!;
@@ -171,9 +175,17 @@ public sealed class RunService : Service, ILocationListener
         }
 #endif
         if (session.Current?.Kind != phaseBeforeCommand)
+        {
             distance!.Boundary(session.Current?.Kind, TimeSpan.FromMilliseconds(lastTick), session.MainActiveTime);
+            motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
+            candidateDistance = null;
+        }
         else if (effective && command is "pause" or "resume")
+        {
             distance!.Interrupt(TimeSpan.FromMilliseconds(lastTick), "Manual pause boundary");
+            motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
+            candidateDistance = null;
+        }
         Publish(effective ? command : null);
         return StartCommandResult.NotSticky;
     }
@@ -181,9 +193,18 @@ public sealed class RunService : Service, ILocationListener
     private void AdvanceClock()
     {
         var now = SystemClock.ElapsedRealtime();
-        distance!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
+        if (!session!.IsPaused) distance!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
+        motion!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
+
+        if (motion.Candidate is null) candidateDistance = null;
+
         session!.Advance(TimeSpan.FromMilliseconds(now - lastTick), (next, consumed) =>
-            distance.Boundary(next, TimeSpan.FromMilliseconds(lastTick) + consumed, session.MainActiveTime));
+        {
+            var boundaryAt = TimeSpan.FromMilliseconds(lastTick) + consumed;
+            distance!.Boundary(next, boundaryAt, session.MainActiveTime);
+            motion.Boundary(boundaryAt);
+            candidateDistance = null;
+        });
         lastTick = now;
     }
 
@@ -195,15 +216,15 @@ public sealed class RunService : Service, ILocationListener
         else handler!.PostDelayed(tick!, 1000);
     }
 
-    private void Publish(string? command = null)
+    private void Publish(string? command = null, AutomaticMotionEvent? automaticEvent = null)
     {
         if (session!.IsFinished && !finishLogged) command ??= "finish";
         Snapshot = new RunSnapshot(id, session!.Current?.Kind.ToString() ?? "Finished",
             session.IsPaused, (long)session.TotalActiveTime.TotalSeconds,
-            (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus, template.TemplateId, distance?.Snapshot);
+            (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus, template.TemplateId, distance?.Snapshot, motion?.Snapshot(session.PauseReason));
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
-            session, initialPlan, templateMetadata, Snapshot, command);
+            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent);
 #if DEBUG
         if (session.IsFinished && OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif
@@ -245,18 +266,48 @@ public sealed class RunService : Service, ILocationListener
 
     public void OnLocationChanged(global::Android.Locations.Location location)
     {
-        if (session is null || session.IsFinished || session.IsPaused) return;
+        if (session is null || session.IsFinished || session.PauseReason == PauseReason.Manual) return;
+
         journal.Location(id, location);
         AdvanceClock();
-        distance!.Observe(new DistanceFix(TimeSpan.FromMilliseconds(location.ElapsedRealtimeNanos / 1_000_000),
-            location.Latitude, location.Longitude, location.HasAccuracy ? location.Accuracy : null),
-            TimeSpan.FromMilliseconds(lastTick), session.MainActiveTime);
+        var receivedAt = TimeSpan.FromMilliseconds(lastTick);
+        var fix = new DistanceFix(TimeSpan.FromMilliseconds(location.ElapsedRealtimeNanos / 1_000_000),
+            location.Latitude, location.Longitude, location.HasAccuracy ? location.Accuracy : null);
+        var moved = !session.IsPaused && distance!.Observe(fix, receivedAt, session.MainActiveTime);
+        var decision = motion!.Observe(fix, receivedAt, session.PhaseIndex, session.Current?.Kind, session.PauseReason, moved);
+        AutomaticMotionEvent? automaticEvent = null;
+
+        if (decision == MotionDecision.CandidateStarted)
+        {
+            // Capture after this onset fix, preserving the genuine edge leading into it.
+            candidateDistance = distance!.CaptureCandidate();
+        }
+        else if (decision == MotionDecision.Pause && candidateDistance is { } candidate &&
+            session.PauseAutomatically(TimeSpan.FromSeconds(10), motion.Event!.PhaseIndex))
+        {
+            automaticEvent = motion.Event;
+            distance!.ConfirmStandstill(candidate, receivedAt,
+                receivedAt > automaticEvent!.ExcludedThroughMonotonicTime);
+            candidateDistance = null;
+        }
+        else if (decision == MotionDecision.Resume && session.ResumeAutomatically())
+        {
+            automaticEvent = motion.Event;
+            distance!.Reanchor(receivedAt, "Automatic resume boundary");
+            motion.Boundary(receivedAt);
+            candidateDistance = null;
+        }
+        else if (motion.Candidate is null)
+        {
+            candidateDistance = null;
+        }
+
         locations++;
         gpsStatus = location.HasAccuracy ? $"GPS ±{location.Accuracy:0} m" : "GPS accuracy unknown";
-        Publish();
+        Publish(automaticEvent?.Kind, automaticEvent);
     }
 
-    public void OnProviderDisabled(string provider) { gpsStatus = "GPS disabled"; distance?.Unavailable("GPS disabled"); Publish(); }
+    public void OnProviderDisabled(string provider) { gpsStatus = "GPS disabled"; distance?.Unavailable("GPS disabled"); motion?.Unavailable(); candidateDistance = null; Publish(); }
     public void OnProviderEnabled(string provider) { gpsStatus = "Waiting for GPS"; Publish(); }
     public void OnStatusChanged(string? provider, Availability status, Bundle? extras) { }
 

@@ -257,3 +257,170 @@ duplicateDelivery.Observe(Fix(2, 10), TimeSpan.FromSeconds(2), TimeSpan.FromSeco
 // Assert
 Require(Math.Abs(duplicateDelivery.Snapshot.MainMeasuredMetres - 10) < .001 && !duplicateDelivery.Snapshot.MainHasGaps,
     "Duplicate and out-of-order packets leave newer trusted distance and quality unchanged.");
+
+
+// Arrange
+var motionPolicy = MovementPolicy.Pilot;
+var motionRun = TimedSession.Continuous(Minutes(45), 3);
+var motionRules = new RunMotion(motionPolicy);
+var stationary = new DistanceFix(TimeSpan.Zero, 59, 18, 5);
+var startedCandidate = motionRules.Observe(stationary, TimeSpan.Zero, 0, RunPhase.Work, PauseReason.None, false);
+
+// Act
+for (var second = 1; second <= 9; second++)
+{
+    motionRun.Advance(TimeSpan.FromSeconds(1));
+    motionRules.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(second) },
+        TimeSpan.FromSeconds(second), 0, RunPhase.Work, PauseReason.None, false);
+}
+var beforeThreshold = motionRules.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(9.999) },
+    TimeSpan.FromSeconds(9.999), 0, RunPhase.Work, PauseReason.None, false);
+motionRun.Advance(TimeSpan.FromSeconds(3));
+var delayedConfirmation = motionRules.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(10.5) },
+    TimeSpan.FromSeconds(12), 0, RunPhase.Work, PauseReason.None, false);
+var autoPaused = motionRun.PauseAutomatically(TimeSpan.FromSeconds(10), motionRules.Event!.PhaseIndex);
+motionRun.Advance(TimeSpan.FromSeconds(20));
+var delayedEvent = motionRules.Event;
+
+// Assert
+Require(startedCandidate == MotionDecision.CandidateStarted && beforeThreshold == MotionDecision.None
+    && delayedConfirmation == MotionDecision.Pause && autoPaused, "Only a continuous reliable ten-second window confirms.");
+Require(motionRun.TotalActiveTime == TimeSpan.FromSeconds(2) && motionRun.MainActiveTime == TimeSpan.FromSeconds(2)
+    && motionRun.Remaining == Minutes(45) - TimeSpan.FromSeconds(2),
+    "Sample10.5/receipt12 excludes exactly ten seconds and retains the two-second active tail.");
+Require(delayedEvent!.OnsetMonotonicTime == TimeSpan.Zero
+    && delayedEvent.ExcludedThroughMonotonicTime == TimeSpan.FromSeconds(10)
+    && delayedEvent.SampleMonotonicTime == TimeSpan.FromSeconds(10.5)
+    && delayedEvent.DetectedMonotonicTime == TimeSpan.FromSeconds(12), "Keep all four timing meanings explicit.");
+
+// Arrange
+var extendedRun = TimedSession.Intervals(1, Minutes(3), Minutes(2), 7, 2, Minutes(8), Minutes(4));
+var initialDose = extendedRun.Plan[0].Duration;
+
+// Act
+extendedRun.Advance(TimeSpan.FromSeconds(5));
+var extended = extendedRun.Extend();
+extendedRun.Advance(TimeSpan.FromSeconds(5));
+var extendedPaused = extendedRun.PauseAutomatically(TimeSpan.FromSeconds(10), 0);
+var promotedManual = extendedRun.Pause();
+var automaticResumeRejected = !extendedRun.ResumeAutomatically();
+var manualResumed = extendedRun.Resume();
+
+// Assert
+Require(extended && extendedPaused && extendedRun.Plan[0].Duration == initialDose + Minutes(1)
+    && extendedRun.Remaining == Minutes(9), "Retrospective exclusion never restores away the real extension.");
+Require(promotedManual && automaticResumeRejected && manualResumed,
+    "Explicit Pause promotes automatic pause to manual; only manual Resume releases it.");
+
+// Arrange
+var interruptedMotion = new RunMotion(motionPolicy);
+interruptedMotion.Observe(stationary, TimeSpan.Zero, 0, RunPhase.Work, PauseReason.None, false);
+
+// Act
+interruptedMotion.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(2) },
+    TimeSpan.FromSeconds(2), 0, RunPhase.Work, PauseReason.None, false);
+interruptedMotion.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(1) },
+    TimeSpan.FromSeconds(2), 0, RunPhase.Work, PauseReason.None, false);
+var retainedOnset = interruptedMotion.Candidate!.OnsetMonotonicTime;
+interruptedMotion.UpdateFreshness(TimeSpan.FromSeconds(6));
+var gapCleared = interruptedMotion.Candidate is null;
+interruptedMotion.Boundary(TimeSpan.FromSeconds(6));
+var recoveryDecision = interruptedMotion.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(7) },
+    TimeSpan.FromSeconds(7), 1, RunPhase.Recovery, PauseReason.None, false);
+var finishedDecision = interruptedMotion.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(8) },
+    TimeSpan.FromSeconds(8), 2, null, PauseReason.None, false);
+
+// Assert
+Require(retainedOnset == TimeSpan.Zero && gapCleared && recoveryDecision == MotionDecision.None
+    && finishedDecision == MotionDecision.None && interruptedMotion.Candidate is null,
+    "Old packets preserve newer evidence; actual gaps, recovery and finish cannot confirm standstill.");
+
+// Arrange
+var oppositeCluster = new RunMotion(motionPolicy);
+var precise = stationary with { AccuracyMetres = 1 };
+oppositeCluster.Observe(precise, TimeSpan.Zero, 0, RunPhase.Work, PauseReason.None, false);
+
+// Act
+oppositeCluster.Observe(precise with { MonotonicTime = TimeSpan.FromSeconds(1), Latitude = 59 - 2d / 111195 },
+    TimeSpan.FromSeconds(1), 0, RunPhase.Work, PauseReason.None, false);
+var opposite = oppositeCluster.Observe(precise with { MonotonicTime = TimeSpan.FromSeconds(2), Latitude = 59 + 2d / 111195 },
+    TimeSpan.FromSeconds(2), 0, RunPhase.Work, PauseReason.None, true);
+
+// Assert
+Require(opposite == MotionDecision.None && oppositeCluster.Candidate is null,
+    "An accepted moving edge cancels even when both endpoints lie inside the stationary cluster.");
+Console.WriteLine("PASS: exact ten-second retrospective autopause, delayed receipt tail, manual precedence, extension and quality barriers.");
+
+
+// Arrange
+var splitRollback = new RunDistance(policy, TimeSpan.Zero, RunPhase.Work);
+splitRollback.Observe(Fix(0, 0), TimeSpan.Zero, TimeSpan.Zero);
+splitRollback.Observe(Fix(100, 999), TimeSpan.FromSeconds(100), TimeSpan.FromSeconds(100));
+var onsetDerived = splitRollback.CaptureCandidate();
+var priorMeasured = splitRollback.Snapshot.MainMeasuredMetres;
+
+// Act
+splitRollback.ConfirmStandstill(onsetDerived, TimeSpan.FromSeconds(112), true);
+splitRollback.Reanchor(TimeSpan.FromSeconds(120), "Automatic resume");
+splitRollback.Observe(Fix(120, 1500), TimeSpan.FromSeconds(120), TimeSpan.FromSeconds(102));
+splitRollback.Observe(Fix(121, 1506), TimeSpan.FromSeconds(121), TimeSpan.FromSeconds(103));
+splitRollback.Boundary(null, TimeSpan.FromSeconds(121), TimeSpan.FromSeconds(103));
+var conservedSplits = splitRollback.Snapshot;
+
+// Assert
+Require(Math.Abs(conservedSplits.MainMeasuredMetres - (priorMeasured + 6)) < .001
+    && conservedSplits.Splits.Count == 2 && Math.Abs(conservedSplits.Splits[0].MeasuredMetres - 1000) < .001,
+    "Onset near a kilometre keeps prior distance and does not bridge automatic-pause relocation.");
+Require(conservedSplits.Splits.Aggregate(TimeSpan.Zero, static (sum, split) => sum + split.ActiveTime)
+    == TimeSpan.FromSeconds(103) && conservedSplits.MainHasGaps,
+    "Ten excluded seconds disappear from split totals; the two-second active unknown tail remains.");
+
+// Arrange
+var boundaryRun = TimedSession.Intervals(2, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(4), 7, 2,
+    TimeSpan.Zero, TimeSpan.Zero);
+var boundaryMotion = new RunMotion(motionPolicy);
+var boundaryCandidate = boundaryMotion.Observe(Fix(0, 0), TimeSpan.Zero, 0, RunPhase.Work, PauseReason.None, false);
+
+// Act
+boundaryRun.Advance(TimeSpan.FromSeconds(10), (_, consumed) => boundaryMotion.Boundary(consumed));
+var lateOldPhaseSample = boundaryMotion.Observe(Fix(5, 0), TimeSpan.FromSeconds(10), boundaryRun.PhaseIndex,
+    boundaryRun.Current?.Kind, PauseReason.None, false);
+var oldPhaseCannotRewind = !boundaryRun.PauseAutomatically(TimeSpan.FromSeconds(10), 0);
+boundaryRun.Advance(TimeSpan.FromSeconds(100));
+var finishedCannotRewind = !boundaryRun.PauseAutomatically(TimeSpan.FromSeconds(10), boundaryRun.PhaseIndex);
+
+// Assert
+Require(boundaryCandidate == MotionDecision.CandidateStarted && lateOldPhaseSample == MotionDecision.None
+    && oldPhaseCannotRewind && finishedCannotRewind && boundaryRun.TotalActiveTime == TimeSpan.FromSeconds(16),
+    "Boundary-first processing prevents old samples crossing recovery, repeated work instances or finish.");
+
+// Arrange
+var slowJog = new RunMotion(motionPolicy);
+var jogEverPaused = false;
+var automaticResume = new RunMotion(motionPolicy);
+for (var second = 0; second <= 10; second++)
+{
+    automaticResume.Observe(Fix(second, 0, 5), TimeSpan.FromSeconds(second), 0, RunPhase.Work, PauseReason.None, false);
+}
+
+// Act
+for (var second = 0; second <= 20; second++)
+{
+    // Distance hysteresis may still report no accepted edge at this slow speed.
+    jogEverPaused |= slowJog.Observe(Fix(second, second * .6, 5), TimeSpan.FromSeconds(second),
+        0, RunPhase.Work, PauseReason.None, false) == MotionDecision.Pause;
+}
+automaticResume.Unavailable();
+var firstReacquired = automaticResume.Observe(Fix(15, 100, 5), TimeSpan.FromSeconds(15), 0,
+    RunPhase.Work, PauseReason.Automatic, false);
+var confirmedResume = automaticResume.Observe(Fix(17, 111, 5), TimeSpan.FromSeconds(18), 0,
+    RunPhase.Work, PauseReason.Automatic, false);
+var resumeEvent = automaticResume.Event;
+
+// Assert
+Require(!jogEverPaused, "Slow movement cannot become standstill just because distance hysteresis hides individual edges.");
+Require(firstReacquired == MotionDecision.None && confirmedResume == MotionDecision.Resume
+    && resumeEvent!.SampleMonotonicTime == TimeSpan.FromSeconds(17)
+    && resumeEvent.DetectedMonotonicTime == TimeSpan.FromSeconds(18),
+    "Unknown while automatic pause waits for fresh positive movement and resumes only at receipt.");
+Console.WriteLine("PASS: autopause kilometre conservation, phase-instance/final barriers, slow jog and unknown-to-resume.");

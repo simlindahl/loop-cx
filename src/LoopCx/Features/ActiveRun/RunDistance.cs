@@ -98,17 +98,17 @@ public sealed class RunDistance
         Reject(reason);
     }
 
-    public void Observe(DistanceFix fix, TimeSpan receivedAt, TimeSpan mainActiveAtReceipt)
+    public bool Observe(DistanceFix fix, TimeSpan receivedAt, TimeSpan mainActiveAtReceipt)
     {
         ArgumentNullException.ThrowIfNull(fix);
-        if (phase is null) return;
+        if (phase is null) return false;
         // Repeated or stale delivery cannot replace newer evidence or destroy a valid anchor.
-        if (lastObserved is { } previous && fix.MonotonicTime <= previous) return;
+        if (lastObserved is { } previous && fix.MonotonicTime <= previous) return false;
         if (fix.MonotonicTime < boundary || fix.MonotonicTime > receivedAt ||
             receivedAt - fix.MonotonicTime > policy.MaximumAge)
         {
             Reject("Invalid sample time");
-            return;
+            return false;
         }
         var gap = lastObserved is { } last && fix.MonotonicTime - last > policy.MaximumGap;
         lastObserved = fix.MonotonicTime;
@@ -118,16 +118,16 @@ public sealed class RunDistance
             accuracy <= 0 || accuracy > policy.MaximumAccuracyMetres)
         {
             Reject("Uncertain GPS");
-            return;
+            return false;
         }
         var sampleMainTime = IsMain(phase) ? mainActiveAtReceipt - (receivedAt - fix.MonotonicTime) : mainActiveAtReceipt;
-        if (sampleMainTime < TimeSpan.Zero) { Reject("Ambiguous active time"); return; }
+        if (sampleMainTime < TimeSpan.Zero) { Reject("Ambiguous active time"); return false; }
         if (gap) Reject("GPS gap");
         if (previousValid is { } previousFix &&
             Metres(previousFix, fix) / (fix.MonotonicTime - previousFix.MonotonicTime).TotalSeconds > policy.MaximumSpeedMetresPerSecond)
         {
             Reject("Implausible GPS jump");
-            return;
+            return false;
         }
         previousValid = fix;
         if (anchor is null)
@@ -136,22 +136,53 @@ public sealed class RunDistance
             anchorMainTime = sampleMainTime;
             if (IsMain(phase) && sampleMainTime > TimeSpan.Zero) mainHasGaps = splitHasGaps = true;
             status = "Acquiring distance";
-            return;
+            return false;
         }
         var metres = Metres(anchor, fix);
         var elapsed = (fix.MonotonicTime - anchor.MonotonicTime).TotalSeconds;
         if (elapsed <= 0 || metres / elapsed > policy.MaximumSpeedMetresPerSecond)
         {
             Reject("Implausible GPS jump");
-            return;
+            return false;
         }
         var movementThreshold = Math.Max(policy.MinimumMovementMetres, anchor.AccuracyMetres!.Value + accuracy);
-        if (metres < movementThreshold) { status = "GPS tracking"; return; }
+        if (metres < movementThreshold) { status = "GPS tracking"; return false; }
         totalMetres += metres;
         if (IsMain(phase)) AddMain(metres, anchorMainTime, sampleMainTime);
         anchor = fix;
         anchorMainTime = sampleMainTime;
         status = "GPS tracking";
+
+        return true;
+    }
+
+    // Only derived counters are captured. Plans, commands and raw observations never roll back.
+    public sealed record CandidateDistance(int SplitCount, TimeSpan SplitStarted, double SplitMetres,
+        bool SplitHasGaps, bool MainHasGaps, double TotalMetres, double MainMetres);
+
+    public CandidateDistance CaptureCandidate() => new(splits.Count, splitStarted, splitMetres,
+        splitHasGaps, mainHasGaps, totalMetres, mainMetres);
+
+    public void ConfirmStandstill(CandidateDistance candidate, TimeSpan at, bool unknownTail)
+    {
+        splits.RemoveRange(candidate.SplitCount, splits.Count - candidate.SplitCount);
+        splitStarted = candidate.SplitStarted;
+        splitMetres = candidate.SplitMetres;
+        splitHasGaps = candidate.SplitHasGaps;
+        mainHasGaps = candidate.MainHasGaps;
+        totalMetres = candidate.TotalMetres;
+        mainMetres = candidate.MainMetres;
+        Reanchor(at, "Automatic pause");
+
+        if (unknownTail && IsMain(phase)) mainHasGaps = splitHasGaps = true;
+    }
+
+    public void Reanchor(TimeSpan at, string reason)
+    {
+        boundary = at > boundary ? at : boundary;
+        anchor = previousValid = null;
+        lastObserved = null;
+        status = reason;
     }
 
     private void AddMain(double metres, TimeSpan from, TimeSpan to)
@@ -184,7 +215,7 @@ public sealed class RunDistance
         return phase is RunPhase.Work or RunPhase.Recovery;
     }
 
-    private static double Metres(DistanceFix a, DistanceFix b)
+    internal static double Metres(DistanceFix a, DistanceFix b)
     {
         const double radius = 6371000;
         var radians = Math.PI / 180;

@@ -1,5 +1,6 @@
 namespace LoopCx.Features.ActiveRun;
 
+public enum PauseReason { None, Manual, Automatic }
 public enum RunPhase { Warmup, Work, Recovery, Cooldown }
 public sealed record TimedPhase(RunPhase Kind, TimeSpan Duration, int TargetRpe);
 public sealed record CompletedPhase(TimedPhase Plan, TimeSpan ActiveTime);
@@ -23,7 +24,9 @@ public sealed class TimedSession
     public IReadOnlyList<CompletedPhase> Completed => completed.AsReadOnly();
     public TimedPhase? Current => IsFinished ? null : phases[index];
     public bool IsFinished => index == phases.Count;
-    public bool IsPaused { get; private set; }
+    public int PhaseIndex => index;
+    public PauseReason PauseReason { get; private set; }
+    public bool IsPaused => PauseReason != PauseReason.None;
     public TimeSpan PhaseActiveTime { get; private set; }
     public TimeSpan TotalActiveTime { get; private set; }
     public TimeSpan MainActiveTime { get; private set; }
@@ -54,15 +57,42 @@ public sealed class TimedSession
 
     public bool Pause()
     {
-        if (IsFinished || IsPaused) return false;
-        IsPaused = true;
+        if (IsFinished || PauseReason == PauseReason.Manual) return false;
+        PauseReason = PauseReason.Manual;
         return true;
     }
 
     public bool Resume()
     {
         if (!IsPaused) return false;
-        IsPaused = false;
+        PauseReason = PauseReason.None;
+        return true;
+    }
+
+    public bool PauseAutomatically(TimeSpan excludedActiveTime, int expectedPhaseIndex)
+    {
+        if (IsFinished || IsPaused || index != expectedPhaseIndex || Current?.Kind == RunPhase.Recovery ||
+            excludedActiveTime != TimeSpan.FromSeconds(10) || PhaseActiveTime < excludedActiveTime)
+        {
+            return false;
+        }
+
+        PhaseActiveTime -= excludedActiveTime;
+        TotalActiveTime -= excludedActiveTime;
+
+        if (Current?.Kind == RunPhase.Work) MainActiveTime -= excludedActiveTime;
+
+        PauseReason = PauseReason.Automatic;
+
+        return true;
+    }
+
+    public bool ResumeAutomatically()
+    {
+        if (PauseReason != PauseReason.Automatic) return false;
+
+        PauseReason = PauseReason.None;
+
         return true;
     }
 
@@ -88,7 +118,7 @@ public sealed class TimedSession
         completed.Add(new CompletedPhase(phases[index], PhaseActiveTime));
         index++;
         PhaseActiveTime = TimeSpan.Zero;
-        if (IsFinished) IsPaused = false;
+        if (IsFinished) PauseReason = PauseReason.None;
     }
 
     public static TimedSession Continuous(TimeSpan duration, int targetRpe) =>
