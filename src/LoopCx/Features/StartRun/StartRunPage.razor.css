@@ -1,0 +1,62 @@
+main {
+    max-width: 48rem;
+    margin-inline: auto;
+    padding: 24px;
+}
+
+h1 {
+    margin: 0 0 32px;
+    font-size: 1.75rem;
+}
+
+h2 {
+    margin: 0 0 24px;
+    font-size: 2rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+h3 {
+    margin: 0 0 16px;
+    font-size: 1.125rem;
+}
+
+.eyebrow, .status, .countdown span {
+    color: var(--cx-muted);
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+}
+
+.countdown {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 24px;
+}
+
+.countdown strong {
+    font-size: 3rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.workout {
+    margin-block-end: 16px;
+    background: var(--cx-surface);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+[role="alert"] {
+    border-inline-start: 4px solid var(--cx-accent);
+    padding-inline-start: 16px;
+    overflow-wrap: anywhere;
+}

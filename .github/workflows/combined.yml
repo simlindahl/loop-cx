@@ -43,6 +43,8 @@ jobs:
       - run: dotnet workload install maui-android
       - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
       - run: dotnet build src/LoopCx -c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64
+      - name: Verify packaged scoped stylesheet and font license
+        run: python3 scripts/android-ui-smoke.py --check-package
       - name: Free space for the emulator
         run: |
           sudo rm -rf /usr/share/swift /opt/ghc /usr/local/.ghcup /usr/local/share/boost
@@ -55,7 +57,9 @@ jobs:
           api-level: 35
           arch: x86_64
           target: google_apis
-          script: bash scripts/android-smoke.sh
+          script: |
+            bash scripts/android-smoke.sh
+            python3 scripts/android-ui-smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

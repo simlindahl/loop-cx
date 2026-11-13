@@ -32,6 +32,27 @@ adb shell pm grant se.loopcx.running android.permission.POST_NOTIFICATIONS
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
 adb logcat -c
+dump_window() {
+    local stage=$1
+    local capture_status=1
+    local evidence=verification/c1-ui/strong-smoke
+    mkdir -p "$evidence"
+    for capture_attempt in 1 2 3; do
+        adb shell rm -f /sdcard/loop-window.xml
+        if adb shell uiautomator dump /sdcard/loop-window.xml >"$evidence/$stage-$capture_attempt-dump.txt" 2>&1; then
+            return 0
+        else
+            capture_status=$?
+        fi
+        printf 'capture exit=%s stage=%s attempt=%s\n' "$capture_status" "$stage" "$capture_attempt" >>"$evidence/capture-failures.txt"
+        git rev-parse HEAD 'HEAD^{tree}' >"$evidence/source.txt"
+        adb exec-out screencap -p >"$evidence/$stage-$capture_attempt-failed.png" || true
+        adb logcat -d -t 200 >"$evidence/$stage-$capture_attempt-logcat.txt" || true
+        sleep 1
+    done
+    return "$capture_status"
+}
+
 command() {
     adb shell am start -n se.loopcx.running/.MainActivity --es loop-command "$1"
 }
@@ -86,14 +107,14 @@ print('PASS: one session, locked-screen time and GPS, pause, resume, reopened Ra
 PY
 
 for attempt in {1..30}; do
-    adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
-    if adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'; then break; fi
+    dump_window warmup
+    if adb shell cat /sdcard/loop-window.xml | grep -F 'Warm-up'; then break; fi
     sleep 2
 done
-adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'
+adb shell cat /sdcard/loop-window.xml | grep -F 'Warm-up'
 command complete
 for attempt in {1..30}; do
-    adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
+    dump_window finished
     if adb shell cat /sdcard/loop-window.xml | grep -F 'Start C1'; then break; fi
     sleep 1
 done
@@ -177,9 +198,10 @@ assert after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,))
 assert before.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone() == after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone()
 assert after.execute('SELECT status FROM runs WHERE id=?', (new_id,)).fetchone()[0] == 'finished'
 assert after.execute('SELECT status FROM export_queue WHERE run_id=?', (new_id,)).fetchall() == [('disabled_synthetic',)]
-assert after.execute('PRAGMA user_version').fetchone()[0] == 2
+assert after.execute('PRAGMA user_version').fetchone()[0] == 3
 legacy = after.execute("SELECT elapsed_ms, status, initial_plan, checkpoint FROM runs WHERE id='legacy-run'").fetchone()
 assert legacy == (2000, 'interrupted', '[]', '{"legacy":true}')
+assert after.execute("SELECT template_metadata FROM runs WHERE id='legacy-run'").fetchone()[0] is None
 assert after.execute("SELECT COUNT(*) FROM locations WHERE run_id='legacy-run'").fetchone()[0] == 1
 assert after.execute("SELECT COUNT(*) FROM run_events WHERE run_id='legacy-run'").fetchone()[0] == 0, 'Never invent old events'
 rows = after.execute('SELECT command, elapsed_ms, checkpoint FROM run_events WHERE run_id=? ORDER BY sequence', (old_id,)).fetchall()

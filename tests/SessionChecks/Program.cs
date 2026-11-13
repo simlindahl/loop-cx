@@ -73,3 +73,29 @@ commands.Advance(Minutes(100));
 Require(!commands.Pause() && !commands.Resume() && !commands.SkipPreparation() && !commands.Extend(),
     "Completed runs reject every interactive command.");
 Console.WriteLine("PASS: effective command results distinguish state changes from duplicate or inapplicable actions.");
+
+// Arrange
+var continuous = TimedSession.Continuous(Minutes(45), 3);
+var initialPhase = continuous.Current;
+
+// Act
+continuous.Advance(Minutes(20));
+var paused = continuous.Pause();
+continuous.Advance(Minutes(10));
+var pausedMainTime = continuous.MainActiveTime;
+var pausedRemaining = continuous.Remaining;
+var preparationRejected = !continuous.Extend() && !continuous.SkipPreparation();
+var resumed = continuous.Resume();
+continuous.Advance(Minutes(100));
+var finishedCommandsRejected = !continuous.Pause() && !continuous.Resume();
+
+// Assert
+Require(continuous.Plan.Count == 1 && initialPhase == new TimedPhase(RunPhase.Work, Minutes(45), 3),
+    "C2 starts directly in one 45-minute work phase at RPE 3.");
+Require(paused && pausedMainTime == Minutes(20) && pausedRemaining == Minutes(25),
+    "Pause freezes continuous main time and countdown.");
+Require(preparationRejected && resumed, "C2 has no preparation actions and resumes explicitly.");
+Require(continuous.IsFinished && continuous.Completed.Count == 1 && continuous.TotalActiveTime == Minutes(45)
+    && continuous.MainActiveTime == Minutes(45), "C2 finalizes once at 45 active minutes with no preparation.");
+Require(finishedCommandsRejected, "Finalized continuous session rejects pause/resume.");
+Console.WriteLine("PASS: continuous C2 45-minute RPE3 plan, pause/resume and bounded finalization.");

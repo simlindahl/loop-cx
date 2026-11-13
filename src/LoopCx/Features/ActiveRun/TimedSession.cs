@@ -86,6 +86,9 @@ public sealed class TimedSession
         if (IsFinished) IsPaused = false;
     }
 
+    public static TimedSession Continuous(TimeSpan duration, int targetRpe) =>
+        new([new TimedPhase(RunPhase.Work, duration, targetRpe)]);
+
     public static TimedSession Intervals(int repetitions, TimeSpan work, TimeSpan recovery,
         int workRpe, int recoveryRpe, TimeSpan warmup, TimeSpan cooldown)
     {
