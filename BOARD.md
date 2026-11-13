@@ -18,7 +18,6 @@ Varje rad avser ett avgränsat moment. En feature kan ha återstående implement
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
-| BOARD-1 | Införa och verifiera repohanterad tavla | — | Agenten: uppdatera README, instruktioner och projektskills; verifiera på main. |
 
 ## Waiting
 
@@ -42,3 +41,4 @@ Granskningsordning: Android #8 → #9 → #14 → #17. Ghost #19 → #20 → #21
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
+| BOARD-1 | Repohanterad tavla, README-länk och uppdaterade instruktioner/projektskills | — | Klart 13 november 2026: sex statusbyten skrivna och återlästa på testgren; testkort borttaget. Main-filer och länkar verifierade; [Repository checks gröna](https://github.com/simlindahl/loop-cx/actions/runs/43371711282). Godkänt arbetssätt infördes direkt på main. |
