@@ -45,8 +45,6 @@ snapshot > /tmp/run-still-paused.json
 command resume
 sleep 4
 snapshot > /tmp/run-resume.json
-adb shell uiautomator dump /sdcard/loop-window.xml
-adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'
 python3 - <<'PY'
 import json
 from pathlib import Path
@@ -62,3 +60,11 @@ assert still['ActiveSeconds'] == pause['ActiveSeconds']
 assert not resume['Paused'] and resume['ActiveSeconds'] > still['ActiveSeconds']
 print('PASS: one session, locked-screen time and GPS, pause, resume, reopened Razor UI')
 PY
+
+for attempt in {1..30}; do
+    adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
+    if adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'; then exit 0; fi
+    sleep 2
+done
+adb logcat -d -s chromium monodroid-assembly DOTNET
+exit 1
