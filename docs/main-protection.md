@@ -31,3 +31,7 @@ Tillåt squash merge i repots merge-inställningar. Linjär historik hindrar mer
 Alla tre workflows startar på varje PR utan path-filter. Android bygger och kör emulatorprovet; mockup-kontrollen verifierar layout och laddar upp skärmbilder. En grön check betyder att kontrollen körts, även på rena tavleändringar. Manuella körningar finns kvar.
 
 Följ [tavlans testinstruktion](../AGENTS.md#arbetslista-och-status) på en separat testbranch och en märkt test-PR. Prova statusbyten med verkliga commits och återläsning. Stäng test-PR:n utan merge och ta bort testkortet från testbranchen. Testet bevisar branchens tavleflöde och CI; det bevisar inte att rulesetet är aktivt eller att main har uppdaterats.
+
+## Referenser
+
+[GitHub: tillgängliga ruleset-regler](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets) · [GitHub: obligatoriska checks och överhoppade workflows](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
