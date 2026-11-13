@@ -12,13 +12,16 @@ namespace LoopCx;
         ConfigChanges.Density)]
 public sealed class MainActivity : MauiAppCompatActivity
 {
-#if DEBUG
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        _ = RunJournal.Shared;
+#if DEBUG
         HandleDebugCommand(Intent);
+#endif
     }
 
+#if DEBUG
     protected override void OnNewIntent(Intent? intent)
     {
         base.OnNewIntent(intent);

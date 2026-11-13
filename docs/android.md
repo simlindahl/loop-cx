@@ -24,3 +24,26 @@ After acceptance, ask Simon to connect and unlock the phone, enable USB debuggin
 ## Android session scaffold
 
 The service-backed scaffold starts the C1 timed protocol, records GPS updates and supports pause/resume and preparation commands. The emulator smoke test verifies one session through duplicate starts, screen lock and reopening, then completion and a second workout in the same process. Completion retires the service and restores the start action. The debug-only completion command accelerates this regression; release builds do not expose it. This is a functional scaffold, not the approved final UI or a physically verified GPS/BLE/audio/Health Connect delivery.
+
+<a id="sessionsjournal-och-återhämtning"></a>
+## Session journal and recovery
+The service saves a SQLite checkpoint for each published state: stable ID, UTC start,
+latest observation, monotonic elapsed time, original plan, current plan (including
+extensions), completed phases and active counters. GPS observations are saved with
+UTC, monotonic timestamp and accuracy. This is raw data, not calculated distance.
+
+On first opening after process death, mark a remaining recording as `interrupted`.
+Do not fill in missing time or distance or resume the session automatically.
+The recorded part remains for future history views; recovery UI is not included yet.
+Write finalization and one unique export queue entry in the same transaction. No exporter exists yet.
+
+Debug uses `runs-debug.db`; release uses `runs.db`. Debug queue entries are always
+`disabled_synthetic`; no Health Connect export is implemented or enabled.
+The SQLite test in `scripts/android-smoke.sh` uses force-stop, copies
+the database through run-as and compares the checkpoint byte for byte after restart.
+It also checks preserved GPS rows and atomic finalization with export disabled.
+The debug command `complete` accelerates the session to completion and is absent from release.
+
+Outstanding: history/recovery view, frozen heart-rate zones, heart-rate data, favourites, sensor quality,
+storage errors in the UI and Health Connect retries. Physical Pixel/WHOOP tests
+and Windows tests have not run.
