@@ -31,11 +31,19 @@ jobs:
           git merge --no-commit --no-ff "$LOOP_RUNTIME_COMMIT" || merge_status=$?
           if [[ "$merge_status" != 0 ]]; then
             conflicts=$(git diff --name-only --diff-filter=U)
-            if [[ "$conflicts" != "scripts/android-smoke.sh" ]]; then
-              echo "Unexpected source conflict; no automatic resolution is allowed."
-              git status --short
-              exit 1
-            fi
+            case "$conflicts" in
+              "scripts/android-smoke.sh") ;;
+              $'docs/android.md\nscripts/android-smoke.sh')
+                # Keep the translated documentation; runtime code remains pinned.
+                git checkout --ours -- docs/android.md
+                git add docs/android.md
+                ;;
+              *)
+                echo "Unexpected source conflict; no automatic resolution is allowed."
+                git status --short
+                exit 1
+                ;;
+            esac
             # Preserve the service/GPS/process-death scenarios from the runtime candidate.
             git checkout --theirs -- scripts/android-smoke.sh
             git add scripts/android-smoke.sh

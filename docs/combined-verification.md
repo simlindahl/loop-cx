@@ -16,7 +16,7 @@ Review order is not merge approval. None of these PRs may be merged without Simo
 ## What the check does
 [Combined candidate verification](../.github/workflows/combined.yml) checks out the Ghost candidate and fetches full Git history. It combines Android candidate `d70fe80d431c1762f8e23d260d4a7e73e86a38c2` in a **temporary working copy** using `git merge --no-commit --no-ff`. It creates no merge commit and pushes nothing. The pinned revision makes the result reproducible; new Android-track changes require an explicit updated check.
 
-Both tracks changed `scripts/android-smoke.sh`. The only automatically allowed conflict resolution preserves the Android candidate's stronger service/GPS/SQLite tests. Other conflicts stop the job. Preserve these scenarios at a later approved merge; the Ghost track's simpler startup check must not replace them.
+Both tracks changed `scripts/android-smoke.sh`. Automatic resolution preserves the Android candidate's stronger service/GPS/SQLite tests. After English translation, a conflict in docs/android.md may additionally keep the Ghost candidate's English documentation. Only the exact known script conflict or that script plus docs/android.md is allowed; all other conflicts stop the job. The runtime commit remains pinned and the composed production blobs were verified identical before and after this documentation adaptation. Preserve these scenarios at a later approved merge; the Ghost track's simpler startup check must not replace them.
 
 The job runs:
 1. `dotnet run --project tests/SessionChecks`.
