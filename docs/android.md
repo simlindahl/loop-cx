@@ -66,3 +66,9 @@ pause time from active time even if the wall clock changes during the run.
 synthetic schema 1 fixture before testing. Run it only in a dedicated test emulator.
 The test verifies migration without data loss, effective command order, duplicates,
 phase changes and an unchanged log after process death. The release database is unaffected.
+
+## Launcher icon
+
+The [approved launcher decision](../design/decision.md#android-launcher-icon--13-november-2026) identifies the source artwork and approval. MAUI generates density-specific and adaptive Android resources from `Resources/AppIcon/appicon.svg` and `appiconfg.svg`. Both layers use the approved 108-unit canvas with foreground scale 1; Android supplies the launcher mask. The pinned MAUI generator also emits a monochrome entry referencing the same foreground silhouette; no unsupported separate monochrome-file setting is used. Keep the mark inside its existing safe area rather than padding it again.
+
+Verify generated resources and the installed standard icon after rebuilding. Do not uninstall or clear app data to refresh launcher artwork. Standard icon checks do not establish themed-launcher behavior; do not change personal launcher settings during verification. The functional training scaffold and its status-bar overlap remain outside this icon-only change.
