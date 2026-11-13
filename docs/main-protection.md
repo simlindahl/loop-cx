@@ -1,37 +1,42 @@
-# Skydda main
+<a id="skydda-main"></a>
+# Protect main
 
-## Önskat skydd
+<a id="önskat-skydd"></a>
+## Intended protection
 
-[Ruleset-konfigurationen](../.github/main-ruleset.json) definierar `Protect main` för `main`: PR-krav med 0 approvals, lösta review-diskussioner, linjär historik och obligatoriska GitHub Actions-checks `specification`, `emulator` och `mockups`. Branchen måste vara aktuell mot main. Radering och force-push blockeras; bypass-listan är tom. Använd squash merge. Restrict updates, signerade commits och merge queue krävs inte.
+The [ruleset configuration](../.github/main-ruleset.json) defines `Protect main` for `main`: PR requirement with 0 approvals, resolved review discussions, linear history and required GitHub Actions checks `specification`, `emulator` and `mockups`. The branch must be up to date with main. Deletion and force-push are blocked; the bypass list is empty. Use squash merge. Restrict updates, signed commits and merge queue are not required.
 
-Noll approvals gör det möjligt att merga egna PR:ar. Det ersätter inte [repoets godkännanderegler](../AGENTS.md#arbetslista-och-status). Tavlans status uppdateras direkt i [GitHub Projects](https://github.com/users/simlindahl/projects/2) och berör inte main eller dess CI.
+Zero approvals allows merging your own PRs. It does not replace the [repository approval rules](../AGENTS.md#work-tracking-and-status). Update board status directly in [GitHub Projects](https://github.com/users/simlindahl/projects/2); it does not affect main or CI.
 
-## Aktivera efter verifiering
+<a id="aktivera-efter-verifiering"></a>
+## Activate after verification
 
-Konfigurationsfilen är ett önskat läge och aktiverar inget automatiskt. Den 13 november 2026 svarade GitHub API med 403: rulesets i det privata repot kräver Pro. Skyddet är därför inte verifierat aktivt. Behåll repot privat tills ett separat beslut om publicering har fattats efter granskning av innehåll och historik.
+The configuration file expresses intended state and activates nothing automatically. On 13 November 2026, GitHub API returned 403: rulesets for this private repository require Pro. Protection is therefore not verified active. Keep the repository private until a separate publication decision follows a review of content and history.
 
-Förutsättningar: GitHub CLI med inloggning och administratörsbehörighet, ett abonnemang som stöder rulesets för repot samt de tre checksen tillgängliga från en färsk grön PR. Kör från reporoten. Kontrollera först att inga befintliga rulesets överlappar:
+Prerequisites: GitHub CLI authenticated with administrator permission, a plan that supports repository rulesets and the three checks available from a recent green PR. Run from the repository root. First check for overlapping existing rulesets:
 
 ```powershell
 gh api repos/simlindahl/loop-cx/rulesets
 ```
 
-Efter att workflow- och tavelflödesändringen har mergats och lästs tillbaka, skapa rulesetet en gång:
+After the workflow and board changes are merged and read back, create the ruleset once:
 
 ```powershell
 gh api --method POST repos/simlindahl/loop-cx/rulesets --input .github/main-ruleset.json
 ```
 
-Om rulesetet redan finns, läs det och uppdatera dess verifierade ID med PUT i stället för att skapa en dubblett. Läs tillbaka rulesetet med ID:t från API-resultatet och kontrollera samtliga regler, checks, appkälla och tom bypass-lista. Rapportera inte skyddet som aktivt innan återläsningen bekräftar det.
+If the ruleset already exists, read it and update its verified ID with PUT instead of creating a duplicate. Read back the ruleset using the ID returned by the API and check every rule, check, app source and the empty bypass list. Do not report protection as active before read-back confirms it.
 
-Tillåt squash merge i repots merge-inställningar. Linjär historik hindrar merge commits; rebase är också förenligt med den regeln, men squash är arbetssättet här.
+Allow squash merge in repository merge settings. Linear history prevents merge commits; rebase is also compatible with that rule, but squash is the workflow here.
 
-## Verifiera PR-flödet
+<a id="verifiera-pr-flödet"></a>
+## Verify the PR workflow
 
-Alla tre workflows startar på varje PR utan path-filter. Android bygger och kör emulatorprovet; mockup-kontrollen verifierar layout och laddar upp skärmbilder. En grön check betyder att kontrollen körts, även på rena dokumentationsändringar. Manuella körningar finns kvar.
+All three workflows start on every PR without path filters. Android builds and runs the emulator test; the mockup check verifies layout and uploads screenshots. A green check means the test ran, including on documentation-only changes. Manual runs remain available.
 
-Verifiera Projects-flödet med ett syntetiskt kort enligt [tavlans testinstruktion](../AGENTS.md#arbetslista-och-status). Statusbyten i Projects utlöser ingen CI och behöver ingen testbranch eller PR. Repoändringarnas CI och rulesetets aktivering verifieras separat.
+Verify the Projects workflow with a synthetic card following the [board test instructions](../AGENTS.md#work-tracking-and-status). Projects status changes trigger no CI and need no test branch or PR. Verify repository CI and ruleset activation separately.
 
-## Referenser
+<a id="referenser"></a>
+## References
 
-[GitHub: tillgängliga ruleset-regler](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets) · [GitHub: obligatoriska checks och överhoppade workflows](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
+[GitHub: available ruleset rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets) · [GitHub: required checks and skipped workflows](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)

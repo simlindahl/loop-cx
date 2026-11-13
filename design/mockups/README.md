@@ -1,139 +1,145 @@
-# LOOP Cx · statiska mockuper
+<a id="loop-cx--statiska-mockuper"></a>
+# LOOP Cx · static mockups
 
-Öppna `index.html` direkt i en webbläsare. Inget byggsteg, ingen server och inget nät krävs. Från repo-roten på Windows: `Start-Process .\design\mockups\index.html` i PowerShell. GitHubs filvy visar HTML-källan; den kör inte galleriet.
+Open `index.html` directly in a browser. No build, server or network is required. From the repository root on Windows: `Start-Process .\design\mockups\index.html` in PowerShell. GitHub's file view shows the HTML source; it does not run the gallery.
 
-En enda HTML-fil med gemensam inline-CSS, inbäddad Space Grotesk och Googles Material Icons. Det underlättar öppning offline och gör att mått, färgroller, komponentstruktur och tillstånd går att överföra till Blazor. Den stora första CSS-regeln innehåller fontdata; hoppa till `:root` för designtokens och till önskat skärm-ID för markup.
+One HTML file with shared inline CSS, embedded Space Grotesk and Google Material Icons. This supports offline viewing and transferring dimensions, color roles, component structure and states to Blazor. The large first CSS rule contains font data; jump to `:root` for design tokens and to the desired screen ID for markup.
 
-## Vad som gäller
+<a id="vad-som-gäller"></a>
+## What applies
 
-Basalt, engelska, Space Grotesk, Material Icons och revision 5:s inriktning är beslutade. Nya vyer och detaljlayouter är **preliminära** och inväntar Simons granskning. Läs [designbeslut](../decision.md) och [produktspecifikation](../../knowledge/product.md). Mockupbeställningen är inte ett designgodkännande. PDF-mockuperna är borttagna på Simons begäran den 13 november 2026. Tidigare revisioner finns i Git-historiken.
+Basalt, English, Space Grotesk, Material Icons and revision 5's direction are approved. New screens and detailed layouts are **preliminary** and await Simon's review. Read the [design decisions](../decision.md) and [product specification](../../knowledge/product.md). Requesting mockups does not approve their design. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
 
-Galleriets index och bildtexter är granskningsverktyg, inte app-UI. Klick på en åtgärd går till ett statiskt exempel med ankarlänk. Inga data ändras; formulär är skrivskyddade och brytare är bilder av tillstånd. Ingen JavaScript, sensoråtkomst, Android-behörighet, GPS, lagring, uppläsning eller export körs. Tider och mätningar är syntetiska. Låsskärm, aviseringspanel och delningsmeny ägs av Android och kan se annorlunda ut på telefonen. Kartan är avsiktligt en markerad platshållare.
+The gallery index and captions are review tools, not app UI. Clicking an action follows an anchor to a static example. No data changes; forms are read-only and switches illustrate states. No JavaScript, sensor access, Android permissions, GPS, storage, speech or export runs. Times and measurements are synthetic. The lock screen, notification shade and share sheet belong to Android and may look different on a phone. The map is deliberately a labelled placeholder.
 
-## Använd vid implementation
+<a id="använd-vid-implementation"></a>
+## Use during implementation
 
-1. Läs motsvarande krav i produktspecifikationen och välj skärm-ID nedan.
-2. Återanvänd `--cx-*`-tokens och HTML-strukturen som utgångspunkt för små Razor-komponenter i rätt vertikalt funktionssnitt. `.review-*`, `.gallery`, `.phone` och `.statusbar` är endast granskningsramar.
-3. Flytta gemensam CSS och det inbäddade typsnittet till appens lokala resurser. Koppla beteendet till den gemensamma passmodellen; ankarlänkar ska inte bli appens passlogik.
-4. Verifiera i Android-emulatorn och på Pixel enligt acceptansproven. HTML visar avsikt, inte bevis för bakgrundsregistrering eller Android-integration.
+1. Read the corresponding product requirement and choose a screen ID below.
+2. Reuse `--cx-*` tokens and HTML structure as starting points for small Razor components in the correct vertical slice. `.review-*`, `.gallery`, `.phone` and `.statusbar` are review frames only.
+3. Move shared CSS and the embedded font to local app resources. Connect behavior to the shared session model; anchor links must not become workout logic.
+4. Verify in the Android emulator and on Pixel against acceptance tests. HTML shows intent, not proof of background recording or Android integration.
 
-## Vyer och kravkoppling
+<a id="vyer-och-kravkoppling"></a>
+## Screens and requirements mapping
 
 ### Setup
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [First launch](index.html#welcome) | `welcome` | Produkt och leverans; Android |
-| [Permissions](index.html#permissions) | `permissions` | Integration, lagring och fel – Android |
+| [First launch](index.html#welcome) | `welcome` | Product and delivery; Android |
+| [Permissions](index.html#permissions) | `permissions` | Integration, storage and errors – Android |
 
 ### Training
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Training](index.html#training) | `training` | Vyer och utformning; LOOP Core |
-| [No personal favourites](index.html#empty-training) | `empty-training` | Vyer och utformning – Starta pass |
-| [Manage favourites](index.html#manage) | `manage` | Vyer och utformning – Starta pass |
-| [Reordered favourites](index.html#manage-ordered) | `manage-ordered` | Vyer och utformning – ordna favoriter |
-| [Delete confirmation](index.html#delete-workout) | `delete-workout` | Vyer och utformning – ta bort favorit |
+| [Training](index.html#training) | `training` | Screens and layout; LOOP Core |
+| [No personal favourites](index.html#empty-training) | `empty-training` | Screens and layout – Start a workout |
+| [Manage favourites](index.html#manage) | `manage` | Screens and layout – Start a workout |
+| [Reordered favourites](index.html#manage-ordered) | `manage-ordered` | Screens and layout – reorder favourites |
+| [Delete confirmation](index.html#delete-workout) | `delete-workout` | Screens and layout – delete a favourite |
 
 ### Editor
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Choose workout type](index.html#workout-type) | `workout-type` | Pass och statistik – kontinuerligt/intervall |
-| [Interval favourite](index.html#edit-intervals) | `edit-intervals` | Pass och statistik 2–4; Återkoppling |
-| [Distance intervals](index.html#edit-distance) | `edit-distance` | Pass och statistik 2 |
-| [Continuous favourite](index.html#edit-easy) | `edit-easy` | Pass och statistik 1, 3, 4 |
-| [Finish condition](index.html#edit-open) | `edit-open` | Pass och statistik 1; Återkoppling – öppet slut |
-| [Intensity target](index.html#edit-target) | `edit-target` | Pass och statistik 3; Återkoppling |
-| [One-off workout](index.html#run-once) | `run-once` | Vyer och utformning – enstaka pass |
+| [Choose workout type](index.html#workout-type) | `workout-type` | Workouts and statistics – continuous/interval |
+| [Interval favourite](index.html#edit-intervals) | `edit-intervals` | Workouts and statistics 2–4; Feedback |
+| [Distance intervals](index.html#edit-distance) | `edit-distance` | Workouts and statistics 2 |
+| [Continuous favourite](index.html#edit-easy) | `edit-easy` | Workouts and statistics 1, 3, 4 |
+| [Finish condition](index.html#edit-open) | `edit-open` | Workouts and statistics 1; Feedback – open finish |
+| [Intensity target](index.html#edit-target) | `edit-target` | Workouts and statistics 3; Feedback |
+| [One-off workout](index.html#run-once) | `run-once` | Screens and layout – one-off workout |
 
 ### Run
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Warm-up](index.html#warm-up) | `warm-up` | Pass och statistik 4; LOOP Core |
-| [Warm-up extended](index.html#warm-up-extended) | `warm-up-extended` | Pass och statistik 4 |
-| [Work interval](index.html#work) | `work` | Vyer och utformning – Träningsvy; Pass och statistik 2 |
-| [Timed recovery](index.html#recovery) | `recovery` | Pass och statistik 2, 6 |
-| [Distance recovery](index.html#distance-recovery) | `distance-recovery` | Pass och statistik 2, 6 |
-| [Zone 2 run](index.html#easy-run) | `easy-run` | LOOP Core; Pass och statistik 1, 3 |
-| [Distance-based run](index.html#tempo-run) | `tempo-run` | Pass och statistik 1, 3 |
-| [Open finish](index.html#open-run) | `open-run` | Pass och statistik 1; Återkoppling – öppet slut |
-| [Open finish, no cool-down](index.html#open-no-cooldown) | `open-no-cooldown` | Återkoppling – öppet slut |
-| [Manual pause](index.html#paused) | `paused` | Pass och statistik 6 |
-| [Automatic pause](index.html#autopaused) | `autopaused` | Pass och statistik 6 |
-| [Cool-down](index.html#cool-down) | `cool-down` | Pass och statistik 4, 5 |
-| [Cool-down extended](index.html#cool-down-extended) | `cool-down-extended` | Pass och statistik 4 |
+| [Warm-up](index.html#warm-up) | `warm-up` | Workouts and statistics 4; LOOP Core |
+| [Warm-up extended](index.html#warm-up-extended) | `warm-up-extended` | Workouts and statistics 4 |
+| [Work interval](index.html#work) | `work` | Screens and layout – Training view; Workouts and statistics 2 |
+| [Timed recovery](index.html#recovery) | `recovery` | Workouts and statistics 2, 6 |
+| [Distance recovery](index.html#distance-recovery) | `distance-recovery` | Workouts and statistics 2, 6 |
+| [Zone 2 run](index.html#easy-run) | `easy-run` | LOOP Core; Workouts and statistics 1, 3 |
+| [Distance-based run](index.html#tempo-run) | `tempo-run` | Workouts and statistics 1, 3 |
+| [Open finish](index.html#open-run) | `open-run` | Workouts and statistics 1; Feedback – open finish |
+| [Open finish, no cool-down](index.html#open-no-cooldown) | `open-no-cooldown` | Feedback – open finish |
+| [Manual pause](index.html#paused) | `paused` | Workouts and statistics 6 |
+| [Automatic pause](index.html#autopaused) | `autopaused` | Workouts and statistics 6 |
+| [Cool-down](index.html#cool-down) | `cool-down` | Workouts and statistics 4, 5 |
+| [Cool-down extended](index.html#cool-down-extended) | `cool-down-extended` | Workouts and statistics 4 |
 
 ### History
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Saved locally](index.html#saved) | `saved` | Integration, lagring och fel – Lokal databas/Health Connect |
-| [Interrupted recording](index.html#interrupted) | `interrupted` | Integration, lagring och fel – processdöd |
-| [Run history](index.html#history) | `history` | Vyer och utformning – Historik |
-| [Empty history](index.html#empty-history) | `empty-history` | Vyer och utformning – Historik |
-| [Run details](index.html#run-detail) | `run-detail` | Vyer och utformning – Historik; Pass och statistik 5; AI-export |
-| [Easy run details](index.html#c2-detail) | `c2-detail` | LOOP Core; Historik; Pass och statistik 1 |
-| [Interrupted run detail](index.html#interrupted-detail) | `interrupted-detail` | Integration, lagring och fel – avbrott |
-| [Phases and splits](index.html#splits) | `splits` | Pass och statistik 1, 2, 5 |
-| [Continuous splits](index.html#continuous-splits) | `continuous-splits` | Pass och statistik 1 |
-| [Recorded zones](index.html#zone-history) | `zone-history` | Pass och statistik 5; WHOOP |
-| [Recorded route](index.html#route) | `route` | Integration, lagring och fel – Karta |
-| [Unavailable map](index.html#route-offline) | `route-offline` | Integration, lagring och fel – Karta; Pass och statistik 7 |
-| [Share run data](index.html#share) | `share` | Integration, lagring och fel – AI-export |
+| [Saved locally](index.html#saved) | `saved` | Integration, storage and errors – Local database/Health Connect |
+| [Interrupted recording](index.html#interrupted) | `interrupted` | Integration, storage and errors – process death |
+| [Run history](index.html#history) | `history` | Screens and layout – History |
+| [Empty history](index.html#empty-history) | `empty-history` | Screens and layout – History |
+| [Run details](index.html#run-detail) | `run-detail` | Screens and layout – History; Workouts and statistics 5; AI export |
+| [Easy run details](index.html#c2-detail) | `c2-detail` | LOOP Core; History; Workouts and statistics 1 |
+| [Interrupted run detail](index.html#interrupted-detail) | `interrupted-detail` | Integration, storage and errors – interruption |
+| [Phases and splits](index.html#splits) | `splits` | Workouts and statistics 1, 2, 5 |
+| [Continuous splits](index.html#continuous-splits) | `continuous-splits` | Workouts and statistics 1 |
+| [Recorded zones](index.html#zone-history) | `zone-history` | Workouts and statistics 5; WHOOP |
+| [Recorded route](index.html#route) | `route` | Integration, storage and errors – Map |
+| [Unavailable map](index.html#route-offline) | `route-offline` | Integration, storage and errors – Map; Workouts and statistics 7 |
+| [Share run data](index.html#share) | `share` | Integration, storage and errors – AI export |
 
 ### System
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Share sheet boundary](index.html#share-sheet) | `share-sheet` | AI-export |
-| [Lock screen · warm-up](index.html#notification-warm) | `notification-warm` | Återkoppling – mini-UI |
-| [Lock screen · work](index.html#notification-work) | `notification-work` | Återkoppling – mini-UI |
-| [Lock screen · recovery](index.html#notification-recovery) | `notification-recovery` | Återkoppling – mini-UI |
-| [Lock screen · paused](index.html#notification-paused) | `notification-paused` | Återkoppling – mini-UI |
-| [Lock screen · cool-down](index.html#notification-cool) | `notification-cool` | Återkoppling – mini-UI |
-| [Notification · open finish](index.html#notification-open) | `notification-open` | Återkoppling – mini-UI |
+| [Share sheet boundary](index.html#share-sheet) | `share-sheet` | AI export |
+| [Lock screen · warm-up](index.html#notification-warm) | `notification-warm` | Feedback – mini-UI |
+| [Lock screen · work](index.html#notification-work) | `notification-work` | Feedback – mini-UI |
+| [Lock screen · recovery](index.html#notification-recovery) | `notification-recovery` | Feedback – mini-UI |
+| [Lock screen · paused](index.html#notification-paused) | `notification-paused` | Feedback – mini-UI |
+| [Lock screen · cool-down](index.html#notification-cool) | `notification-cool` | Feedback – mini-UI |
+| [Notification · open finish](index.html#notification-open) | `notification-open` | Feedback – mini-UI |
 
 ### Settings
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Settings](index.html#settings) | `settings` | Vyer och utformning – Inställningar |
-| [WHOOP connection](index.html#devices) | `devices` | Integration, lagring och fel – WHOOP |
-| [Find a band](index.html#pairing) | `pairing` | Integration, lagring och fel – WHOOP |
-| [No band found](index.html#pairing-empty) | `pairing-empty` | Integration, lagring och fel – WHOOP/Android |
-| [Band disconnected](index.html#devices-disconnected) | `devices-disconnected` | Integration, lagring och fel – WHOOP |
-| [Personal heart-rate zones](index.html#zones) | `zones` | Integration, lagring och fel – WHOOP; Pass och statistik 5 |
-| [Zone validation](index.html#zone-error) | `zone-error` | WHOOP – ordnade gränser |
-| [Audio coaching](index.html#audio) | `audio` | Återkoppling under passet |
-| [Distance audio summaries](index.html#audio-distance) | `audio-distance` | Återkoppling; Acceptansprov 2,4 km |
-| [Health Connect settings](index.html#health-settings) | `health-settings` | Integration, lagring och fel – Health Connect |
+| [Settings](index.html#settings) | `settings` | Screens and layout – Settings |
+| [WHOOP connection](index.html#devices) | `devices` | Integration, storage and errors – WHOOP |
+| [Find a band](index.html#pairing) | `pairing` | Integration, storage and errors – WHOOP |
+| [No band found](index.html#pairing-empty) | `pairing-empty` | Integration, storage and errors – WHOOP/Android |
+| [Band disconnected](index.html#devices-disconnected) | `devices-disconnected` | Integration, storage and errors – WHOOP |
+| [Personal heart-rate zones](index.html#zones) | `zones` | Integration, storage and errors – WHOOP; Workouts and statistics 5 |
+| [Zone validation](index.html#zone-error) | `zone-error` | WHOOP – ordered boundaries |
+| [Audio coaching](index.html#audio) | `audio` | Feedback during workouts |
+| [Distance audio summaries](index.html#audio-distance) | `audio-distance` | Feedback; Acceptance tests 2.4 km |
+| [Health Connect settings](index.html#health-settings) | `health-settings` | Integration, storage and errors – Health Connect |
 
 ### Export
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Export pending](index.html#export-pending) | `export-pending` | Health Connect – säkra omförsök |
-| [Export needs permission](index.html#export-action) | `export-action` | Health Connect – ändrad behörighet |
+| [Export pending](index.html#export-pending) | `export-pending` | Health Connect – safe retries |
+| [Export needs permission](index.html#export-action) | `export-action` | Health Connect – changed permissions |
 | [Export complete](index.html#exported) | `exported` | Health Connect; Health Connect → WHOOP |
 
 ### Errors
 
-| Vy | Skärm-ID | Krav i product.md |
+| Screen | Screen ID | Requirement in product.md |
 |---|---|---|
-| [Permission denied](index.html#permission-denied) | `permission-denied` | Integration, lagring och fel – Android |
-| [Distance requires GPS](index.html#distance-blocked) | `distance-blocked` | Android – distans nödvändig |
-| [Sensor loss in a run](index.html#sensor-loss) | `sensor-loss` | Pass och statistik 7; WHOOP |
-| [Distance phase with GPS loss](index.html#distance-wait) | `distance-wait` | Pass och statistik 7 |
+| [Permission denied](index.html#permission-denied) | `permission-denied` | Integration, storage and errors – Android |
+| [Distance requires GPS](index.html#distance-blocked) | `distance-blocked` | Android – distance required |
+| [Sensor loss in a run](index.html#sensor-loss) | `sensor-loss` | Workouts and statistics 7; WHOOP |
+| [Distance phase with GPS loss](index.html#distance-wait) | `distance-wait` | Workouts and statistics 7 |
 
-## Granskningskontroll
+<a id="granskningskontroll"></a>
+## Review checks
 
-[Static mockup review](../../.github/workflows/mockups.yml) använder Chromium på GitHub Actions. Kontrollen öppnar filen offline, granskar trasiga ankarlänkar, dubbla ID:n, inbäddad font, skript och externa anrop. Den mäter horisontellt överflöde vid 360, 390, 700, 1024 och 1440 px, följer Start C1 till uppvärmning och sparar representativa skärmbilder samt `report.json` som Actions-artifact `mockup-review`. En approximation av 200 % textskalning rapporteras separat; den ersätter inte Androids systemtextskalning eller TalkBack.
+[Static mockup review](../../.github/workflows/mockups.yml) uses Chromium on GitHub Actions. The check opens the file offline and checks broken anchors, duplicate IDs, the embedded font, scripts and external requests. It measures horizontal overflow at 360, 390, 700, 1024 and 1440 px, follows Start C1 to warm-up and saves representative screenshots and `report.json` as the `mockup-review` Actions artifact. An approximation of 200% text scaling is reported separately; it does not replace Android system text scaling or TalkBack.
 
-Lokal motsvarighet med Node och Playwright installerat: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` kan ange en separat installation. Skärmbilder och rapport hamnar i `design/mockups/qa/` och ska inte checkas in. Arbetsmiljön här kunde inte starta lokal Chromium; browserkontrollerna utförs därför i Actions. Registrera faktiskt resultat i PR efter körningen.
+Local equivalent with Node and Playwright installed: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` can select a separate installation. Screenshots and the report are written to `design/mockups/qa/` and must not be committed. This working environment could not start local Chromium, so browser checks run in Actions. Record actual results in the PR after the run.
 
-## Licenser
+<a id="licenser"></a>
+## Licenses
 
-Space Grotesk: [SIL Open Font License](FONT-LICENSE.txt), full variabel font från `google/fonts/ofl/spacegrotesk/SpaceGrotesk[wght].ttf`. Material Icons: [Apache 2.0](ICON-LICENSE.txt), samma ikonformer som `design/icons/`. Ändra inte ikonernas form för att skapa ett eget ikonbibliotek.
+Space Grotesk: [SIL Open Font License](FONT-LICENSE.txt), the full variable font from `google/fonts/ofl/spacegrotesk/SpaceGrotesk[wght].ttf`. Material Icons: [Apache 2.0](ICON-LICENSE.txt), the same icon shapes as `design/icons/`. Do not change icon shapes to create a custom icon library.

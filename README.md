@@ -1,17 +1,22 @@
 # LOOP Cx
-Privat Android-projekt för löpträning. Officiell LOOP Cx-app för C1- och C2-löpning.
-- [Produktspecifikation och acceptansprov](knowledge/product.md)
-- [Statiska HTML-mockuper för hela appen](design/mockups/index.html) · [Öppna och granska](design/mockups/README.md) · [Beslut](design/decision.md)
-- [Arbetslista · Todo / Doing / Waiting / Done](https://github.com/users/simlindahl/projects/2)
-- [Arbetsinstruktioner](AGENTS.md)
+Private Android project for running workouts. The official LOOP Cx app for C1 and C2 running.
+- [Product specification and acceptance tests](knowledge/product.md)
+- [Static HTML mockups for the whole app](design/mockups/index.html) · [Open and review](design/mockups/README.md) · [Decisions](design/decision.md)
+- [Work list · Todo / Doing / Waiting / Done](https://github.com/users/simlindahl/projects/2)
+- [Working instructions](AGENTS.md)
 
-knowledge/ är ett Open Knowledge Format 0.2-bundle enligt [Googles specifikation](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md). Versionshantera krav, design och evidens här. [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) följer arbetet genom Todo → Doing → Waiting → Done.
+knowledge/ is an Open Knowledge Format 0.2 bundle following [Google's specification](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md). Version requirements, design and evidence here. [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) tracks work through Todo → Doing → Waiting → Done.
 
-[Öppna de statiska mobilmockuperna](design/mockups/index.html) · [Beslut om LOOP Cx](knowledge/loop-cx.md)
+[Open the static mobile mockups](design/mockups/index.html) · [LOOP Cx product decision](knowledge/loop-cx.md)
 
-## Så arbetar vi
-[Arbetslista](https://github.com/users/simlindahl/projects/2) · [Actions](https://github.com/simlindahl/loop-cx/actions/workflows/check.yml)
+<a id="så-arbetar-vi"></a>
+## How we work
+[Work list](https://github.com/users/simlindahl/projects/2) · [Actions](https://github.com/simlindahl/loop-cx/actions/workflows/check.yml)
 
-Simon prioriterar och fattar produkt- och designbeslut. Agenten läser GitHub-projektet, sätter aktuellt kort till Doing och arbetar på en kortlivad branch med krav och resultat. Använd `Closes #nummer` bara när PR:n uppfyller hela issuen; annars `Refs #nummer`. När nästa steg kräver Simon sätts Waiting med en konkret begäran och länkat underlag. Status uppdateras direkt i Projects via `gh project` och läses tillbaka; ingen tavle-PR eller CI behövs för statusbyten. [Statusreglerna i AGENTS.md](AGENTS.md#arbetslista-och-status) styr arbetssättet. Simon godkänner merge om inte den aktuella PR:n uttryckligen har delegerats. En fysisk kontroll som ingår i acceptansen ska vara genomförd innan issuen stängs.
+Simon prioritizes work and makes product and design decisions. The agent reads the GitHub project, sets the current card to Doing and works on a short-lived branch with requirements and results. Use `Closes #number` only when the PR fulfils the entire issue; otherwise use `Refs #number`. When the next step requires Simon, set Waiting with a concrete request and linked evidence. Update status directly in Projects through `gh project` and read it back; no board PR or CI is needed for status changes. The [status rules in AGENTS.md](AGENTS.md#work-tracking-and-status) govern this workflow. Simon approves merge unless that specific PR has been explicitly delegated. Complete physical checks that are part of acceptance before closing the issue.
 
-Repository checks körs på PR och push till main och kan startas manuellt. Android och Static mockup review körs på varje PR utan path-filter, även vid rena dokumentationsändringar, och kan startas manuellt. Static mockup review körs även vid push till main. Checks heter `specification`, `emulator` och `mockups`. Emulatorn kör ett riktigt build och smoke-test även när appkoden inte har ändrats. Se [main-skydd och aktivering](docs/main-protection.md). Kör samma kontroll lokalt med `ruby scripts/check_docs.rb`. [Android-kontrollen](.github/workflows/android.yml) bygger en debug-APK och startar appen i emulator. [Kör appen på Windows](docs/android.md).
+Repository checks run on PRs and pushes to main and can be started manually. Android and Static mockup review run on every PR without path filters, including documentation-only changes, and can be started manually. Static mockup review also runs on pushes to main. Check names are `specification`, `emulator` and `mockups`. The emulator performs a real build and smoke test even when app code has not changed. See [main protection and activation](docs/main-protection.md). Run the repository check locally with `ruby scripts/check_docs.rb`. The [Android check](.github/workflows/android.yml) builds a debug APK and starts the app in an emulator. [Run the app on Windows](docs/android.md).
+
+## Publication preparation
+
+Maintained repository and GitHub content uses English; historical commits, comments and binary design assets are preserved. The repository remains private until publication is explicitly approved. No project-wide license has been selected. Read the [publication review](docs/publication-review.md) before proposing a visibility change.
