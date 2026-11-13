@@ -87,10 +87,10 @@ PY
 
 for attempt in {1..30}; do
     adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
-    if adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'; then break; fi
+    if adb shell cat /sdcard/loop-window.xml | grep -F 'Warm-up'; then break; fi
     sleep 2
 done
-adb shell cat /sdcard/loop-window.xml | grep -F 'Warmup'
+adb shell cat /sdcard/loop-window.xml | grep -F 'Warm-up'
 command complete
 for attempt in {1..30}; do
     adb shell uiautomator dump /sdcard/loop-window.xml >/dev/null
