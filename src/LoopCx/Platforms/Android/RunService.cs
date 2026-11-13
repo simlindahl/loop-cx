@@ -8,7 +8,7 @@ using LoopCx.Features.ActiveRun;
 namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
-    long RemainingSeconds, int Locations, string GpsStatus);
+    long RemainingSeconds, int Locations, string GpsStatus, string TemplateId);
 
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation)]
 public sealed class RunService : Service, ILocationListener
@@ -20,6 +20,8 @@ public sealed class RunService : Service, ILocationListener
     private DateTimeOffset started;
     private long startedMonotonic;
     private string initialPlan = "";
+    private CoreTemplate template = CoreTemplate.C1;
+    private string templateMetadata = "";
     private RunJournal journal = null!;
 
     public override void OnCreate()
@@ -43,14 +45,14 @@ public sealed class RunService : Service, ILocationListener
     {
         var context = global::Android.App.Application.Context;
         var intent = new Intent(context, typeof(RunService)).SetAction(command);
-        if (command == "start") context.StartForegroundService(intent);
+        if (command is "start" or "start-c2") context.StartForegroundService(intent);
         else context.StartService(intent);
     }
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
         var command = intent?.Action;
-        if (session is null && command != "start")
+        if (session is null && command is not ("start" or "start-c2"))
         {
             StopSelf();
             return StartCommandResult.NotSticky;
@@ -58,9 +60,12 @@ public sealed class RunService : Service, ILocationListener
         if (session is null)
         {
             id = Guid.NewGuid();
-            // Core C1 template revision 1; the stored favorite will supply this plan.
-            session = TimedSession.Intervals(5, TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(2),
-                7, 2, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
+            template = command == "start-c2" ? CoreTemplate.C2 : CoreTemplate.C1;
+            templateMetadata = System.Text.Json.JsonSerializer.Serialize(template);
+            session = template.TemplateId == "C2"
+                ? TimedSession.Continuous(TimeSpan.FromMinutes(45), 3)
+                : TimedSession.Intervals(5, TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(2),
+                    7, 2, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
             started = DateTimeOffset.UtcNow;
             startedMonotonic = SystemClock.ElapsedRealtime();
             initialPlan = System.Text.Json.JsonSerializer.Serialize(session.Plan);
@@ -123,10 +128,10 @@ public sealed class RunService : Service, ILocationListener
         if (session!.IsFinished && !finishLogged) command ??= "finish";
         Snapshot = new RunSnapshot(id, session!.Current?.Kind.ToString() ?? "Finished",
             session.IsPaused, (long)session.TotalActiveTime.TotalSeconds,
-            (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus);
+            (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus, template.TemplateId);
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
-            session, initialPlan, Snapshot, command);
+            session, initialPlan, templateMetadata, Snapshot, command);
         finishLogged |= session.IsFinished;
         Changed?.Invoke();
 #if DEBUG

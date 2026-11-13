@@ -23,7 +23,15 @@ After acceptance, ask Simon to connect and unlock the phone, enable USB debuggin
 
 ## Android session scaffold
 
-The service-backed scaffold starts the C1 timed protocol, records GPS updates and supports pause/resume and preparation commands. The emulator smoke test verifies one session through duplicate starts, screen lock and reopening, then completion and a second workout in the same process. Completion retires the service and restores the start action. The debug-only completion command accelerates this regression; release builds do not expose it. This is a functional scaffold, not the approved final UI or a physically verified GPS/BLE/audio/Health Connect delivery.
+The service-backed scaffold starts the C1 timed interval protocol or the approved C2 continuous protocol, records GPS updates and supports pause/resume and preparation commands. The emulator smoke test verifies one session through duplicate starts, screen lock and reopening, then completion and a second workout in the same process. Completion retires the service and restores the start action. The debug-only completion command accelerates this regression; release builds do not expose it. This is a functional scaffold, not the approved final UI or a physically verified GPS/BLE/audio/Health Connect delivery.
+
+## Core start and C1 readable flow slice
+
+The Core start and C1 scaffold use the approved neutral Basalt tokens and the gallery's locally bundled Space Grotesk font. The start card, phase heading, min:sec countdown, GPS status and active time show only existing service state. Visible Start, Pause/Resume, +1 min, Start main run and Finish actions retain existing command and permission behavior. Controls have a 48 CSS-pixel minimum target and wrap rather than hiding actions. C2 starts one 45-minute work phase at the approved target RPE 3, with no warm-up or cool-down. Zone 2 is intent, not measured guidance. Favourites management, additional statistics and preliminary detailed training layouts remain outside this slice. Both starts retain the existing location-permission prerequisite; timed recording without that permission remains an outstanding delivery gap.
+
+The MAUI ContentPage explicitly applies container safe-area insets for system bars and cutouts ([MAUI safe areas](https://learn.microsoft.com/dotnet/maui/user-interface/safe-area?view=net-maui-10.0)); CSS does not guess a status-bar height. The Android WebView text zoom follows the current system font scale when its handler is created; activity recreation retains the service-owned recording. This is a bounded readability slice, not completion of issue #3 or approval of a full runtime design.
+
+After the stronger service regression, `scripts/android-ui-smoke.py` runs only in a dedicated emulator. It uses real accessible Start/Pause/Resume controls, checks 48 dp bounds using emulator density, verifies one session across reopening, and captures offline/normal/large-system-text screenshots, accessibility XML and a source/environment manifest under `verification/c1-ui`. It restores font scale and connectivity in a finally block. The large-text check requires the accessible one-line Paused heading to grow meaningfully after font scale 2.0, not just a changed setting. Review screenshots for insets and wrapping; the bounds check does not claim an exact doubling of every glyph. Bundled font presence and an offline screenshot do not independently prove which font the WebView loaded. TalkBack, physical outdoor readability and sensor acceptance remain separate checks. Local ARM64 build evidence does not replace emulator acceptance.
 
 <a id="sessionsjournal-och-återhämtning"></a>
 ## Session journal and recovery
@@ -67,8 +75,12 @@ synthetic schema 1 fixture before testing. Run it only in a dedicated test emula
 The test verifies migration without data loss, effective command order, duplicates,
 phase changes and an unchanged log after process death. The release database is unaffected.
 
+## Frozen Core template metadata (schema 3)
+
+A nullable `runs.template_metadata` JSON column freezes TemplateId, Source, Category, TemplateRevision and IntendedHeartRateZone when a session starts. C1 and C2 share the existing session, command and journal path. Duplicate starts, including a different template, do not replace the running plan or metadata. The stored `initial_plan` remains the original phase-array format and checkpoint schema remains 1. Migration from database schema 1 or 2 preserves old rows with NULL metadata; it does not invent historical template identity. Events retain their existing columns and finalization/export-queue transaction.
+
 ## Launcher icon
 
 The [approved launcher decision](../design/decision.md#android-launcher-icon--13-november-2026) identifies the source artwork and approval. MAUI generates density-specific and adaptive Android resources from `Resources/AppIcon/appicon.svg` and `appiconfg.svg`. Both layers use the approved 108-unit canvas with foreground scale 1; Android supplies the launcher mask. The pinned MAUI generator also emits a monochrome entry referencing the same foreground silhouette; no unsupported separate monochrome-file setting is used. Keep the mark inside its existing safe area rather than padding it again.
 
-Verify generated resources and the installed standard icon after rebuilding. Do not uninstall or clear app data to refresh launcher artwork. Standard icon checks do not establish themed-launcher behavior; do not change personal launcher settings during verification. The functional training scaffold and its status-bar overlap remain outside this icon-only change.
+Verify generated resources and the installed standard icon after rebuilding. Do not uninstall or clear app data to refresh launcher artwork. Standard icon checks do not establish themed-launcher behavior; do not change personal launcher settings during verification. The earlier icon-only delivery did not fix the functional scaffold or its status-bar overlap. The current Core readability slice applies host safe-area insets; its runtime screenshot evidence must verify the result.

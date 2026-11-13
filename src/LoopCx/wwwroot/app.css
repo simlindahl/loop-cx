@@ -1,0 +1,55 @@
+@font-face {
+    font-family: "Space Grotesk";
+    src: url("fonts/space-grotesk.ttf") format("truetype");
+    font-weight: 300 700;
+    font-display: swap;
+}
+
+:root {
+    color-scheme: dark;
+    --cx-bg: #111111;
+    --cx-surface: #1C1C1C;
+    --cx-text: #F2F2F2;
+    --cx-muted: #ADADAD;
+    --cx-accent: #C4DA73;
+    --cx-on-accent: #111111;
+    --cx-line: #505050;
+    font-family: "Space Grotesk", sans-serif;
+    font-variant-numeric: tabular-nums;
+    background: var(--cx-bg);
+    color: var(--cx-text);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+button {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 12px 20px;
+    border: 1px solid var(--cx-muted);
+    border-radius: 12px;
+    background: var(--cx-surface);
+    color: var(--cx-text);
+    font: inherit;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+button.primary {
+    border-color: var(--cx-accent);
+    background: var(--cx-accent);
+    color: var(--cx-on-accent);
+}
+
+button:focus-visible {
+    outline: 3px solid var(--cx-accent);
+    outline-offset: 4px;
+}

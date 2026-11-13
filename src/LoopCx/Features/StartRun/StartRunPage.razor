@@ -1,35 +1,69 @@
 @implements IDisposable
 <main>
-    <h1>LOOP Cx</h1>
+    <header>
+        <h1>LOOP Cx</h1>
+    </header>
     @if (RunService.Snapshot is { } state)
     {
-        <h2>@(state.Paused ? "Paused" : state.Phase)</h2>
-        <p>@state.RemainingSeconds s remaining</p>
-        <p>@state.GpsStatus</p>
-        <p>Active time · @state.ActiveSeconds s</p>
-        @if (state.Phase != "Finished")
-        {
-            <button @onclick="TogglePause">@(state.Paused ? "Resume" : "Pause")</button>
-            @if (state.Phase is "Warmup" or "Cooldown")
+        <section aria-labelledby="phase-heading">
+            <p class="eyebrow">@(state.TemplateId == "C2" ? "C2 · Zone 2" : "C1 · Intervals")</p>
+            <h2 id="phase-heading">@(state.Paused ? "Paused" : PhaseLabel(state.Phase))</h2>
+            @if (state.Paused)
             {
-                <button @onclick='() => RunService.Command("extend")'>+1 min</button>
-                <button @onclick='() => RunService.Command("skip")'>@(state.Phase == "Warmup" ? "Start main run" : "Finish")</button>
+                <p>Training paused · @PhaseLabel(state.Phase)</p>
             }
-        }
+            <p class="countdown"><strong>@Clock(state.RemainingSeconds)</strong><span>min:sec remaining</span></p>
+            <p class="status">@state.GpsStatus</p>
+            <p>Active time · @Clock(state.ActiveSeconds) min:sec</p>
+            @if (state.Phase != "Finished")
+            {
+                <div class="actions" aria-label="Workout controls">
+                    <button type="button" class="primary" @onclick="TogglePause">@(state.Paused ? "Resume" : "Pause")</button>
+                    @if (state.Phase is "Warmup" or "Cooldown")
+                    {
+                        <button type="button" @onclick='() => RunService.Command("extend")'>+1 min</button>
+                        <button type="button" @onclick='() => RunService.Command("skip")'>@(state.Phase == "Warmup" ? "Start main run" : "Finish")</button>
+                    }
+                </div>
+            }
+        </section>
     }
     else
     {
-        <h2>Start a run</h2>
-        <button @onclick="Start">Start C1 · Intervals</button>
+        <section aria-labelledby="start-heading">
+            <h2 id="start-heading">Start a run</h2>
+            <div class="workout">
+                <h3>C1 · Intervals</h3>
+                <button type="button" class="primary" @onclick="() => Start(false)">Start C1 · Intervals</button>
+            </div>
+            <div class="workout">
+                <h3>C2 · Zone 2</h3>
+                <p>45 min · Target RPE 3 · Zone 2 target</p>
+                <button type="button" class="primary" @onclick="() => Start(true)">Start C2 · Zone 2</button>
+            </div>
+        </section>
     }
-    @if (error is not null) { <p role="alert">@error</p> }
+    @if (error is not null)
+    {
+        <p role="alert">@error</p>
+    }
 </main>
 @code {
     private string? error;
+
+    private static string Clock(long seconds) => $"{seconds / 60}:{seconds % 60:00}";
+
+    private static string PhaseLabel(string phase) => phase switch
+    {
+        "Warmup" => "Warm-up",
+        "Cooldown" => "Cool-down",
+        _ => phase
+    };
+
     protected override void OnInitialized() => RunService.Changed += Refresh;
     private void Refresh() => _ = InvokeAsync(StateHasChanged);
     private void TogglePause() => RunService.Command(RunService.Snapshot?.Paused == true ? "resume" : "pause");
-    private async Task Start()
+    private async Task Start(bool continuous)
     {
         var granted = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
         if (granted != PermissionStatus.Granted)
@@ -39,7 +73,7 @@
         }
         if (OperatingSystem.IsAndroidVersionAtLeast(33))
             await Permissions.RequestAsync<NotificationPermission>();
-        RunService.Command("start");
+        RunService.Command(continuous ? "start-c2" : "start");
     }
     public void Dispose() => RunService.Changed -= Refresh;
 }

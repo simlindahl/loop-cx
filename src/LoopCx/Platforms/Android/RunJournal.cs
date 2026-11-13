@@ -16,7 +16,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     private static RunJournal? shared;
     public static RunJournal Shared => shared ??= new RunJournal();
 
-    private RunJournal() : base(global::Android.App.Application.Context, JournalFileName, null, 2)
+    private RunJournal() : base(global::Android.App.Application.Context, JournalFileName, null, 3)
     {
         // Only runs left by an earlier process are interrupted. Never infer missing time.
         WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
@@ -25,7 +25,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     public override void OnCreate(SQLiteDatabase? database)
     {
         var db = database!;
-        db.ExecSQL("CREATE TABLE runs (id TEXT PRIMARY KEY, started_utc TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, status TEXT NOT NULL, initial_plan TEXT NOT NULL, checkpoint TEXT NOT NULL)");
+        db.ExecSQL("CREATE TABLE runs (id TEXT PRIMARY KEY, started_utc TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, status TEXT NOT NULL, initial_plan TEXT NOT NULL, checkpoint TEXT NOT NULL, template_metadata TEXT)");
         db.ExecSQL("CREATE TABLE locations (run_id TEXT NOT NULL, utc_ms INTEGER NOT NULL, monotonic_ns INTEGER NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, accuracy REAL)");
         db.ExecSQL("CREATE TABLE export_queue (run_id TEXT PRIMARY KEY, status TEXT NOT NULL)");
         CreateEvents(db);
@@ -36,12 +36,12 @@ public sealed class RunJournal : SQLiteOpenHelper
 
     public override void OnUpgrade(SQLiteDatabase? db, int oldVersion, int newVersion)
     {
-        if (oldVersion == 1 && newVersion == 2) CreateEvents(db!);
-        else throw new NotSupportedException("A database migration is required.");
+        if (oldVersion < 2) CreateEvents(db!);
+        if (oldVersion < 3) db!.ExecSQL("ALTER TABLE runs ADD COLUMN template_metadata TEXT");
     }
 
     public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
-        TimedSession session, string initialPlan, RunSnapshot snapshot, string? command = null)
+        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null)
     {
         var db = WritableDatabase!;
         db.BeginTransaction();
@@ -54,9 +54,16 @@ public sealed class RunJournal : SQLiteOpenHelper
             values.Put("elapsed_ms", elapsedMilliseconds);
             values.Put("status", session.IsFinished ? "finished" : "recording");
             values.Put("initial_plan", initialPlan);
-            values.Put("checkpoint", JsonSerializer.Serialize(new {
-                SchemaVersion = 1, Snapshot = snapshot, session.Plan, session.Completed,
-                session.PhaseActiveTime, session.TotalActiveTime, session.MainActiveTime
+            values.Put("template_metadata", templateMetadata);
+            values.Put("checkpoint", JsonSerializer.Serialize(new
+            {
+                SchemaVersion = 1,
+                Snapshot = snapshot,
+                session.Plan,
+                session.Completed,
+                session.PhaseActiveTime,
+                session.TotalActiveTime,
+                session.MainActiveTime
             }));
             if (db.InsertWithOnConflict("runs", null, values, Conflict.Replace) < 0)
                 throw new IOException("The run checkpoint could not be saved.");
@@ -68,6 +75,7 @@ public sealed class RunJournal : SQLiteOpenHelper
                 recorded.Remove("started_utc");
                 recorded.Remove("status");
                 recorded.Remove("initial_plan");
+                recorded.Remove("template_metadata");
                 recorded.Put("run_id", id.ToString());
                 recorded.Put("command", command);
                 db.InsertOrThrow("run_events", null, recorded);

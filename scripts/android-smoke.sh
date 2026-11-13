@@ -177,9 +177,10 @@ assert after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,))
 assert before.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone() == after.execute('SELECT COUNT(*) FROM locations WHERE run_id=?', (old_id,)).fetchone()
 assert after.execute('SELECT status FROM runs WHERE id=?', (new_id,)).fetchone()[0] == 'finished'
 assert after.execute('SELECT status FROM export_queue WHERE run_id=?', (new_id,)).fetchall() == [('disabled_synthetic',)]
-assert after.execute('PRAGMA user_version').fetchone()[0] == 2
+assert after.execute('PRAGMA user_version').fetchone()[0] == 3
 legacy = after.execute("SELECT elapsed_ms, status, initial_plan, checkpoint FROM runs WHERE id='legacy-run'").fetchone()
 assert legacy == (2000, 'interrupted', '[]', '{"legacy":true}')
+assert after.execute("SELECT template_metadata FROM runs WHERE id='legacy-run'").fetchone()[0] is None
 assert after.execute("SELECT COUNT(*) FROM locations WHERE run_id='legacy-run'").fetchone()[0] == 1
 assert after.execute("SELECT COUNT(*) FROM run_events WHERE run_id='legacy-run'").fetchone()[0] == 0, 'Never invent old events'
 rows = after.execute('SELECT command, elapsed_ms, checkpoint FROM run_events WHERE run_id=? ORDER BY sequence', (old_id,)).fetchall()

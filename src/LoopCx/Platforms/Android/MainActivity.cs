@@ -31,7 +31,7 @@ public sealed class MainActivity : MauiAppCompatActivity
     private static void HandleDebugCommand(Intent? intent)
     {
         var command = intent?.GetStringExtra("loop-command");
-        if (command is "start" or "pause" or "resume" or "extend" or "skip" or "complete")
+        if (command is "start" or "start-c2" or "pause" or "resume" or "extend" or "skip" or "complete")
             RunService.Command(command);
     }
 #endif
