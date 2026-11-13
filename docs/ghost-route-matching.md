@@ -1,6 +1,6 @@
 <a id="ghost-run-ordnad-ruttmatchning"></a>
 # Ghost Run: ordered route matching
-Requirements: [Ghost Run](../knowledge/product.md#ghost-run), Playback and comparison, and Validity and uncertainty. Part of #18, on top of #22.
+Requirements: [Ghost Run](../knowledge/ghost-run.md#ghost-run), Playback and comparison, and Validity and uncertainty. Part of #18, on top of #22.
 
 `OrderedRouteMatcher` is a standalone C# rule for synthetic verification and future field tests. It reads the same frozen route version as the reference and requires an explicit versioned policy. No Android sensor, map, view or SQLite integration is included.
 

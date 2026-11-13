@@ -8,7 +8,7 @@ One HTML file with shared inline CSS, embedded Space Grotesk and Google Material
 <a id="vad-som-gäller"></a>
 ## What applies
 
-Basalt, English, Space Grotesk, Material Icons and revision 5's direction are approved. Simon approved the exact neutral Basalt palette and launcher background on 13 November 2026; see the [canonical colors and contrast](../../knowledge/product.md#basalt--approved-colors). New screens and detailed layouts are **preliminary** and await Simon's review. Read the [design decisions](../decision.md) and [product specification](../../knowledge/product.md). Requesting mockups does not approve their design. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
+Basalt, English, Space Grotesk, Material Icons and revision 5's direction are approved. Simon approved the exact neutral Basalt palette and launcher background on 13 November 2026; see the [canonical colors and contrast](../../knowledge/ux-design.md#basalt--approved-colors). New screens and detailed layouts are **preliminary** and await Simon's review. Read the [design decisions](../decision.md) and [product specification](../../knowledge/product.md). Requesting mockups does not approve their design. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
 
 The gallery index and captions are review tools, not app UI. Clicking an action follows an anchor to a static example. No data changes; forms are read-only and switches illustrate states. No JavaScript, sensor access, Android permissions, GPS, storage, speech or export runs. Times and measurements are synthetic. The lock screen, notification shade and share sheet belong to Android and may look different on a phone. The map is deliberately a labelled placeholder.
 
@@ -25,14 +25,14 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### Setup
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [First launch](index.html#welcome) | `welcome` | Product and delivery; Android |
 | [Permissions](index.html#permissions) | `permissions` | Integration, storage and errors – Android |
 
 ### Training
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Training](index.html#training) | `training` | Screens and layout; LOOP Core |
 | [No personal favourites](index.html#empty-training) | `empty-training` | Screens and layout – Start a workout |
@@ -42,7 +42,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### Editor
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Choose workout type](index.html#workout-type) | `workout-type` | Workouts and statistics – continuous/interval |
 | [Interval favourite](index.html#edit-intervals) | `edit-intervals` | Workouts and statistics 2–4; Feedback |
@@ -54,7 +54,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### Run
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Warm-up](index.html#warm-up) | `warm-up` | Workouts and statistics 4; LOOP Core |
 | [Warm-up extended](index.html#warm-up-extended) | `warm-up-extended` | Workouts and statistics 4 |
@@ -72,7 +72,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### History
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Saved locally](index.html#saved) | `saved` | Integration, storage and errors – Local database/Health Connect |
 | [Interrupted recording](index.html#interrupted) | `interrupted` | Integration, storage and errors – process death |
@@ -90,7 +90,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### System
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Share sheet boundary](index.html#share-sheet) | `share-sheet` | AI export |
 | [Lock screen · warm-up](index.html#notification-warm) | `notification-warm` | Feedback – mini-UI |
@@ -102,7 +102,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### Settings
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Settings](index.html#settings) | `settings` | Screens and layout – Settings |
 | [WHOOP connection](index.html#devices) | `devices` | Integration, storage and errors – WHOOP |
@@ -117,7 +117,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### Export
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Export pending](index.html#export-pending) | `export-pending` | Health Connect – safe retries |
 | [Export needs permission](index.html#export-action) | `export-action` | Health Connect – changed permissions |
@@ -125,7 +125,7 @@ The gallery index and captions are review tools, not app UI. Clicking an action 
 
 ### Errors
 
-| Screen | Screen ID | Requirement in product.md |
+| Screen | Screen ID | Requirement via product.md |
 |---|---|---|
 | [Permission denied](index.html#permission-denied) | `permission-denied` | Integration, storage and errors – Android |
 | [Distance requires GPS](index.html#distance-blocked) | `distance-blocked` | Android – distance required |
@@ -157,7 +157,7 @@ Review [the complete English guide](../../knowledge/what-is-loop.md) and [review
 | `loop-learn` | Dose, evidence and recovery context |
 | `loop-sources` | Offline explanations with optional external sources |
 
-All map to **LOOP knowledge — review proposal** in product.md. The reader is not a setup wizard and records no progress. Long frames represent scrolling content; Android scroll, back navigation and TalkBack remain future implementation checks.
+All map to **LOOP knowledge — review proposal** in [the reader specification](../../knowledge/loop-knowledge.md). The reader is not a setup wizard and records no progress. Long frames represent scrolling content; Android scroll, back navigation and TalkBack remain future implementation checks.
 
 <a id="ghost-run--preliminärt-tillägg"></a>
 ## Ghost Run · preliminary addition

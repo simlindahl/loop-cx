@@ -6,7 +6,7 @@
 
 - [Complete English reading guide](../knowledge/what-is-loop.md).
 - [Offline, clickable mockup gallery](../design/mockups/index.html#loop-about); open the HTML locally, not GitHub's source viewer.
-- [Proposed feature acceptance](../knowledge/product.md#loop-knowledge--review-proposal).
+- [Proposed feature acceptance](../knowledge/loop-knowledge.md#loop-knowledge--review-proposal).
 
 The guide is the full content draft. Phone frames are representative excerpts that test hierarchy and navigation; they do not reproduce every paragraph. Implementation must bundle the approved complete content, not just these excerpts. No app configuration, reading progress, new main tab or automatic rotation tracking is proposed.
 
