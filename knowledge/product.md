@@ -138,7 +138,7 @@ An offline reading feature under **Settings → What is LOOP?**, aimed at experi
 
 The proposed landing page has a short introduction, a primary Get started action and optional workout and learning links. Get started is a four-part reading guide: understand the rotation; choose exercises and load; complete the first session; continue and adapt. It does not configure workouts, mark lessons complete or infer the next Core step from the running log. Bundle all explanatory content and references locally; opening an external research source is optional and requires internet.
 
-Content baseline: [What is LOOP? draft](what-is-loop.md). Scope and detailed screens await review in the [review brief](../docs/loop-knowledge-review.md). No app implementation is authorized by this proposal.
+Content baseline: [What is LOOP? draft](what-is-loop.md). Simon approved the guide and detailed screens at revision `4a4c97170c858c2206b507b0cd9296795b5ccc84` on 13 November 2026. See the [review brief](../docs/loop-knowledge-review.md) and [approval conditions](../design/decision.md#what-is-loop--content-and-layout-review). App implementation remains on hold pending a separate instruction.
 
 Review acceptance:
 - From Settings, open What is LOOP?, read Get started, then return to the introduction and Settings without a new main tab.

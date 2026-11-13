@@ -4,7 +4,7 @@ title: What is LOOP?
 ---
 # What is LOOP?
 
-**Draft for review · LOOP by Simon Lindahl**
+**Approved implementation reference · LOOP by Simon Lindahl**
 
 You know how to train. Finding room for it is the harder part now. Work runs late, children get sick, travel interrupts routines, and a missed Monday can turn a weekly plan into a small administrative problem.
 
@@ -144,7 +144,7 @@ This guide assumes prior training experience. It cannot assess an injury or medi
 
 ## Sources and limits
 
-The explanations above are intended to be bundled offline. The links below open external sources and require internet. Research supports general principles; it does not certify LOOP's exact rotation, set count, jump dose or mixed finish. LOOP-specific defaults and the interpretation of these sources remain subject to review.
+The explanations above are intended to be bundled offline. The links below open external sources and require internet. Research supports general principles; it does not certify LOOP's exact rotation, set count, jump dose or mixed finish. Simon approved this content as an implementation reference on 13 November 2026. Future changes to Core defaults require a separate review.
 
 1. [ACSM resistance training guidance update, 2026](https://acsm.org/resistance-training-guidelines-update-2026/) and [position stand, DOI 10.1249/MSS.0000000000003897](https://doi.org/10.1249/MSS.0000000000003897). Broad evidence on resistance training, equipment, effort and programming; failure is not a universal requirement.
 2. [CDC: Measuring physical activity intensity](https://www.cdc.gov/physical-activity-basics/measuring/index.html). Talk test and relative effort; no device-specific zone equivalence is inferred.

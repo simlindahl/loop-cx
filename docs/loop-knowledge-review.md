@@ -1,6 +1,6 @@
 # What is LOOP? · review brief
 
-13 November 2026 · Refs #32 · **Draft for Simon's review. No app implementation or publication approval.**
+13 November 2026 · Refs #32 · **Content and mockups approved by Simon on 13 November 2026 at revision `4a4c971`. App implementation and publication remain on hold.**
 
 ## Review material
 
@@ -38,4 +38,4 @@ Latest licensing intent: attribution, noncommercial reuse, and commercial enquir
 2. Are the workout instructions and proposed home substitutions faithful and practical enough to follow independently?
 3. Approve or adjust the Settings entry, introduction and four-part scrolling guide. Is the amount of optional learning right?
 
-After approval: record the approved content/design revision and agree the implementation split before app code. Licensing and publication remain separate decisions. Static checks cannot establish TalkBack, Android navigation, physical exercise safety or outdoor readability.
+Approval is recorded in [design/decision.md](../design/decision.md#what-is-loop--content-and-layout-review). Agree the implementation split and obtain an instruction to proceed before app code. Licensing and publication remain separate decisions. Static checks cannot establish TalkBack, Android navigation, physical exercise safety or outdoor readability.
