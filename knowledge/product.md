@@ -30,7 +30,7 @@ Read this entry point and the affected owning specification before a change. Rul
 - [M1 · LOOP Cx](https://github.com/simlindahl/loop-cx/milestone/1): complete the current running app and existing acceptance, including Ghost and required physical evidence. Current naming/identity remains.
 - [M2 · LOOP](https://github.com/simlindahl/loop-cx/milestone/2): first rename app and repository to LOOP through the [transition gate](loop-core-roadmap.md#rename-at-the-start-of-m2), then integrate complete Core including S1/S2 and separately managed M selected from Sx. M2 starts after M1 acceptance and its rename/update/data/link gate.
 
-A merged slice is not full milestone acceptance. Publication and licensing still require separate approval.
+A merged slice is not full milestone acceptance. Publication and licensing were separately approved; the repository is public. The Projects board and private source repository remain private. See [publication review](../docs/publication-review.md) for the decision and evidence boundaries.
 
 ## Legacy requirement links
 

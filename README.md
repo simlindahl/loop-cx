@@ -1,5 +1,5 @@
 # LOOP Cx
-Private Android project for running workouts. The official LOOP Cx app for C1 and C2 running.
+Android project for running workouts. The official LOOP Cx app for C1 and C2 running.
 - [Product specifications and acceptance owners](knowledge/product.md)
 - [M1 · LOOP Cx](https://github.com/simlindahl/loop-cx/milestone/1) · [M2 · LOOP and rename gate](knowledge/loop-core-roadmap.md)
 - [Static HTML mockups for the whole app](design/mockups/index.html) · [Open and review](design/mockups/README.md) · [Decisions](design/decision.md)
@@ -20,7 +20,7 @@ Repository checks run on PRs and pushes to main and can be started manually. And
 
 ## Publication preparation
 
-Maintained repository and GitHub content uses English; historical commits, comments and binary design assets are preserved. The repository remains private until publication is explicitly approved. The [license scope map](LICENSE.md) applies PolyForm Noncommercial 1.0.0 to owned software and CC BY-NC 4.0 to original text/design, preserving third-party terms. Commercial licensing enquiries: [simon.a.lindahl@gmail.com](mailto:simon.a.lindahl@gmail.com). Read the [publication review](docs/publication-review.md) before proposing a visibility change.
+Maintained repository and GitHub content uses English; historical commits, comments and binary design assets are preserved. Simon approved publication on 13 November 2026; the repository is public, with [active main protection](https://github.com/simlindahl/loop-cx/rules/27181142). The linked Projects board and `second-brain` source repository remain private. The [license scope map](LICENSE.md) applies PolyForm Noncommercial 1.0.0 to owned software and CC BY-NC 4.0 to original text/design, preserving third-party terms. Commercial licensing enquiries: [simon.a.lindahl@gmail.com](mailto:simon.a.lindahl@gmail.com). Read the [publication review](docs/publication-review.md) for the recorded approval, exposure-review evidence and limitations.
 
 ## What is LOOP? · approved reference
 

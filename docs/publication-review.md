@@ -1,15 +1,15 @@
 # Publication review
 
-Updated on 13 November 2026. The repository remains **private**. Simon approved the identity/history, material-rights, private-reference and license decisions below. Final public visibility has **not** been approved. License preparation and this review do not change visibility, publish the private source repository or authorize a history rewrite.
+Updated on 13 November 2026. Simon approved final publication after the exposure review and the identity/history, material-rights, private-reference and license decisions below. The repository is now **public**. The linked Projects board and `second-brain` source repository remain **private**. No history rewrite or private-source publication is authorized.
 
 ## Current publication preparation
 
 - The approved [license scope map](../LICENSE.md) applies PolyForm Noncommercial 1.0.0 to owned software and CC BY-NC 4.0 to original text/design. Official full texts are included under `LICENSES/`; existing third-party notices remain unchanged.
 - The successful pre-PR50-merge history follow-up scanned **134 reachable commits**, approximately **2.27 MB**, including candidate `f60c023fb25181fcae94e5de0eb4e56f8abfc9cf`, with no Gitleaks findings. The earlier incomplete 104-commit attempt was a failed diagnostic, not acceptance. This evidence does not claim that later commit metadata or GitHub exposure has already been reviewed.
 - The GitHub refresh inventory snapshot contains **498 Actions runs and 229 artifacts**. Downloads and review are still ongoing; these are inventory totals, not completed scan counts. The older 108-log/35-artifact inventory below remains historical evidence and does not cover later material.
-- **Required before visibility approval:** the team lead must record the final reviewed revision/cutoff, actual downloaded/scanned/unavailable counts, findings and limitations, and the post-snapshot delta outcome in [live issue #51 and its current review handoff](https://github.com/simlindahl/loop-cx/issues/51). That delta includes relevant new commits, Actions logs/artifacts and other GitHub-exposed material produced after the snapshot, including this delivery's CI. A pending or failed exposure review does not satisfy the publication gate.
+- **Final exposure-review record:** [issue #51 and its delivery handoff](https://github.com/simlindahl/loop-cx/issues/51) own the final reviewed revision/cutoff, actual scanned/unavailable counts, findings, limitations and post-snapshot delta outcome. The snapshot figures above remain historical evidence; they do not describe every later GitHub change.
 
-This candidate is based on merged PR50 main `1b5caa1c100929810abe314bbd918cd4d9d96739`. Complete its independent review and required checks, then use the live handoff above for current audit readiness before requesting the final public-visibility decision. Exposure freshness is established by that delta review, not by a no-op commit or CI rerun solely to create newer logs. This document does not claim that the refresh, visibility change or active protection is complete.
+Publication and active protection were verified after Simon's separate approval. [Protect main 27181142](https://github.com/simlindahl/loop-cx/rules/27181142) is active with the five required contexts, strict freshness, zero platform approvals and no bypass actors (`current_user_can_bypass=never`). Fork approval is `all_external_contributors`, default tokens are read-only and automatic PR approvals are disabled. The transition lock is resolved (`isLocked=false`). See [main protection](main-protection.md) for maintenance and the historical blocker.
 
 ## Historical baseline evidence
 
@@ -33,7 +33,7 @@ Simon explicitly approved the following on 13 November 2026:
 3. **Material rights.** Simon confirmed rights to the training and design material, including historical PNG/PDF references, for the approved licensing/publication preparation. This owner confirmation is distinct from the earlier visual/secret review and does not replace third-party notices or grant rights Simon does not own.
 4. **Project licenses.** Owned software uses PolyForm Noncommercial 1.0.0; original text/design uses CC BY-NC 4.0 under [LICENSE.md](../LICENSE.md). Commercial enquiries go to simon.a.lindahl@gmail.com. The scope distinguishes protected material/code from underlying training ideas and preserves the standard terms' permissions and statutory exceptions.
 
-**Still required:** approve the final repository visibility change separately after the fresh exposure review. If approved, activate and read back `Protect main` under [main protection instructions](main-protection.md); a stored JSON configuration is not active protection. After approved publication, configure and read back the intended `all_external_contributors` fork-workflow approval policy while retaining read-only tokens/no automatic PR approvals, and confirm Projects visibility separately. This license task does not approve any of those external changes.
+**Completed publication decision:** Simon separately approved public repository visibility; activation and protection read-back were verified. Projects and the private source repository remain private. These approvals do not release product implementation holds or authorize later visibility/protection changes. The final exposure-review handoff is linked from [#51](https://github.com/simlindahl/loop-cx/issues/51), with the publication decision tracked in [#27](https://github.com/simlindahl/loop-cx/issues/27).
 
 ## Language and history boundaries
 
@@ -45,7 +45,7 @@ Existing commits and branch names are unchanged. Past discussion/review comments
 
 No-secret findings are evidence from the stated tools and scope, not a guarantee. Binary payloads, compiled application behavior, external/private source rights and every possible personal datum have not been exhaustively certified. New commits, logs, artifacts or GitHub edits after this snapshot require a proportionate follow-up review before publication. Do not delete historical evidence, rotate credentials, rewrite history or change visibility without the relevant authorization; no credential requiring rotation was identified in these scans.
 
-The next publication request should present the current refresh findings and the recorded owner decisions, request explicit final public visibility approval and confirm follow-up protection verification. Translation/review readiness is distinct from publication approval and from feature acceptance.
+Future exposed changes require proportionate review against these boundaries. Publication approval and active protection remain distinct from feature acceptance; reader runtime implementation is still on hold.
 
 ## Sources
 
