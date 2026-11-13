@@ -1,12 +1,15 @@
 ---
-name: Ändring
-about: Beskriv en byggbar ändring med verifierbart resultat
+name: Change
+about: Describe a buildable change with a verifiable result
 ---
-## Behov
-Vad ska löparen eller utvecklaren kunna göra?
+<a id="behov"></a>
+## Need
+What should the runner or developer be able to do?
 
-## Krav och acceptansprov
-Länka specifikationsavsnitt. Ange ett konkret exempel och förväntat resultat.
+<a id="krav-och-acceptansprov"></a>
+## Requirements and acceptance tests
+Link the specification section. Give a concrete example and expected result.
 
-## Verifiering
-Ange passmotor, emulator eller fysisk telefon.
+<a id="verifiering"></a>
+## Verification
+Specify workout engine, emulator or physical phone.

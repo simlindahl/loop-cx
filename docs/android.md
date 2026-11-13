@@ -1,8 +1,9 @@
-# Kör första Android-bygget på Windows
+<a id="kör-första-android-bygget-på-windows"></a>
+# Run the first Android build on Windows
 
-Installera .NET SDK 10.0.100 (x64), JDK 21 och Android Studio. Sätt JAVA_HOME till din JDK och ANDROID_HOME till din Android SDK. Installera Android SDK Platform 36, Build Tools 36.0.0 och Platform Tools i SDK Manager. Lägg platform-tools på PATH. Skapa en Pixel-emulator med Google APIs API 35 och x86_64 i Device Manager, och starta den.
+Install .NET SDK 10.0.100 (x64), JDK 21 and Android Studio. Set JAVA_HOME to your JDK and ANDROID_HOME to your Android SDK. Install Android SDK Platform 36, Build Tools 36.0.0 and Platform Tools in SDK Manager. Add platform-tools to PATH. Create a Pixel emulator with Google APIs API 35 and x86_64 in Device Manager and start it.
 
-Kör i PowerShell från repots rot med emulatorn som enda anslutna enhet.
+Run in PowerShell from the repository root, with the emulator as the only connected device.
 
 ```powershell
 adb devices
@@ -10,28 +11,29 @@ dotnet workload install maui-android
 dotnet build src/LoopCx/LoopCx.csproj -t:Run -c Debug -p:RuntimeIdentifier=android-x64
 ```
 
-Startsidan ska visa **Start a run**. Det verifierar kedjan från Android-start till renderad Razor-komponent. GitHub Actions bygger en debug-signerad APK för x64 och testar samma rubrik via Androids tillgänglighetsträd. APK:n finns i körningens artefakter.
+The home screen should show **Start a run**. This verifies the path from Android startup to a rendered Razor component. GitHub Actions builds a debug-signed x64 APK and tests the same heading through Android's accessibility tree. The APK is available in the run's artifacts.
 
-Den här första kontrollen omfattar appstart. GPS under låst skärm, WHOOP via BLE, ljud och Health Connect följs upp i issue #1. Windows-kommandona behöver också provköras på Windows.
+This first check covers app startup. GPS with a locked screen, WHOOP over BLE, audio and Health Connect are tracked in issue #1. The Windows commands also still need to be tested on Windows.
 
-## Sessionsjournal och återhämtning
-Tjänsten sparar en SQLite-kontrollpunkt per publicerat tillstånd: stabilt ID, start i UTC,
-senaste observation, förfluten monoton tid, ursprunglig plan, aktuell plan (inklusive
-förlängningar), slutförda faser och aktiva räknare. GPS-observationer sparas med
-UTC, monoton tidsstämpel och noggrannhet. Detta är rådata, inte beräknad distans.
+<a id="sessionsjournal-och-återhämtning"></a>
+## Session journal and recovery
+The service saves a SQLite checkpoint for each published state: stable ID, UTC start,
+latest observation, monotonic elapsed time, original plan, current plan (including
+extensions), completed phases and active counters. GPS observations are saved with
+UTC, monotonic timestamp and accuracy. This is raw data, not calculated distance.
 
-Vid första öppning efter processdöd märks kvarvarande registrering som `interrupted`.
-Ingen återstående tid eller väg fylls i och passet fortsätter inte automatiskt.
-Den registrerade delen finns kvar för kommande historikvyer; inget återhämtnings-UI ingår ännu.
-Avslut och en unik exportköpost skrivs i samma transaktion. Någon exportör finns ännu inte.
+On first opening after process death, mark a remaining recording as `interrupted`.
+Do not fill in missing time or distance or resume the session automatically.
+The recorded part remains for future history views; recovery UI is not included yet.
+Write finalization and one unique export queue entry in the same transaction. No exporter exists yet.
 
-Debug använder `runs-debug.db`, release `runs.db`. Debug-köposter är alltid
-`disabled_synthetic`; ingen Health Connect-export är implementerad eller aktiverad.
-SQLite-provet i `scripts/android-smoke.sh` dödar processen med force-stop, kopierar
-databasen via run-as och jämför kontrollpunkten efter omstart byte för byte.
-Det kontrollerar även bevarade GPS-rader och atomiskt avslut med avstängd export.
-Debug-kommandot `complete` accelererar passet till slut och finns inte i release.
+Debug uses `runs-debug.db`; release uses `runs.db`. Debug queue entries are always
+`disabled_synthetic`; no Health Connect export is implemented or enabled.
+The SQLite test in `scripts/android-smoke.sh` uses force-stop, copies
+the database through run-as and compares the checkpoint byte for byte after restart.
+It also checks preserved GPS rows and atomic finalization with export disabled.
+The debug command `complete` accelerates the session to completion and is absent from release.
 
-Kvarstår: historik/återhämtningsvy, frysta pulszoner, pulsdata, favoriter, sensorkvalitet,
-lagringsfel i användargränssnittet och Health Connect-omförsök. Fysiska Pixel/WHOOP-prov
-och Windows-prov är ej körda.
+Outstanding: history/recovery view, frozen heart-rate zones, heart-rate data, favourites, sensor quality,
+storage errors in the UI and Health Connect retries. Physical Pixel/WHOOP tests
+and Windows tests have not run.
