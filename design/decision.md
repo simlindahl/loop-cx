@@ -1,8 +1,9 @@
-# LOOP Cx · designbeslut
-Produktnamn, C1/C2-inriktning, Minimalist Material Design, Material Icons och Noto Sans är beslutade av Simon. Visuell utformning i Lopp-mockups.pdf väntar på godkännande före implementation. Revision 1 finns i Git-historiken.
+<a id="loop-cx--designbeslut"></a>
+# LOOP Cx · design decisions
+Simon approved the product name, C1/C2 direction, Minimalist Material Design, Material Icons and Noto Sans. The visual design in Lopp-mockups.pdf awaits approval before implementation. Revision 1 remains in Git history.
 
-Revision 2 återremitterad av Simon avseende palett och layout. Engelska i v1 är beslutat. Revision 3, Track, prövar två vyer i LOOP-Cx-direction-3.pdf; inväntar granskning.
+Simon requested changes to revision 2's palette and layout. English in v1 is approved. Revision 3, Track, explores two views in LOOP-Cx-direction-3.pdf and awaits review.
 
-Revision 4: mörkt standardtema beslutat. Två vyer i LOOP-Cx-direction-4.pdf visar föreslagen Barlow Semi Condensed med Noto Sans. Inväntar visuellt godkännande.
+Revision 4: a dark default theme was approved. Two views in LOOP-Cx-direction-4.pdf propose Barlow Semi Condensed with Noto Sans. Awaiting visual approval.
 
-Revision 5: Simon valde Space Grotesk för hela appens eget UI. Mörkt tema, engelska och Material Icons gäller. Simon godkände layouten som grund för implementationen den 12 november 2026. Underlag: design/LOOP-Cx-direction-5.pdf i commit 12747f7.
+Revision 5: Simon chose Space Grotesk for all app-owned UI. A dark theme, English and Material Icons apply. Simon approved the layout as the implementation baseline on 12 November 2026. Reference: design/LOOP-Cx-direction-5.pdf in commit 12747f7.
