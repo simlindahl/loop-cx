@@ -45,6 +45,7 @@ assert adb("shell", "getprop", "ro.kernel.qemu") == "1", "Dedicated emulator req
 original_scale = adb("shell", "settings", "get", "system", "font_scale")
 original_wifi = adb("shell", "settings", "get", "global", "wifi_on")
 original_data = adb("shell", "settings", "get", "global", "mobile_data")
+original_location = adb("shell", "cmd", "location", "is-location-enabled")
 report = {"source": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
           "density": adb("shell", "wm", "density"), "size": adb("shell", "wm", "size"),
           "fontScaleBefore": original_scale, "states": [],
@@ -174,6 +175,9 @@ def wait_snapshot(predicate):
 
 
 try:
+    # Manual UI controls are tested under Unknown GPS; dedicated native motion tests own autopause.
+    adb("shell", "cmd", "location", "set-location-enabled", "false")
+    report["movementScenario"] = "Unknown GPS: manual UI evidence only, not autopause acceptance"
     adb("shell", "svc", "wifi", "disable")
     adb("shell", "svc", "data", "disable")
     adb("shell", "settings", "put", "system", "font_scale", "1.0")
@@ -351,6 +355,7 @@ try:
         report["schemaMigration"] = "PASS: fresh 3 and seeded 2-to-3, existing phase/checkpoint/event payload unchanged and legacy metadata NULL; 1-to-3 covered by stronger smoke"
     print("PASS: real C1/C2 Start/Pause/Resume, 48dp actions, actual large-text growth, same sessions and frozen C2 metadata")
 finally:
+    adb("shell", "cmd", "location", "set-location-enabled", original_location)
     if original_scale == "null":
         adb("shell", "settings", "delete", "system", "font_scale")
     else:

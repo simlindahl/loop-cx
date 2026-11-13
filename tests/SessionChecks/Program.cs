@@ -258,7 +258,6 @@ duplicateDelivery.Observe(Fix(2, 10), TimeSpan.FromSeconds(2), TimeSpan.FromSeco
 Require(Math.Abs(duplicateDelivery.Snapshot.MainMeasuredMetres - 10) < .001 && !duplicateDelivery.Snapshot.MainHasGaps,
     "Duplicate and out-of-order packets leave newer trusted distance and quality unchanged.");
 
-
 // Arrange
 var motionPolicy = MovementPolicy.Pilot;
 var motionRun = TimedSession.Continuous(Minutes(45), 3);
@@ -270,7 +269,7 @@ var startedCandidate = motionRules.Observe(stationary, TimeSpan.Zero, 0, RunPhas
 for (var second = 1; second <= 9; second++)
 {
     motionRun.Advance(TimeSpan.FromSeconds(1));
-    motionRules.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(second) },
+    _ = motionRules.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(second) },
         TimeSpan.FromSeconds(second), 0, RunPhase.Work, PauseReason.None, false);
 }
 var beforeThreshold = motionRules.Observe(stationary with { MonotonicTime = TimeSpan.FromSeconds(9.999) },
@@ -341,9 +340,9 @@ var precise = stationary with { AccuracyMetres = 1 };
 oppositeCluster.Observe(precise, TimeSpan.Zero, 0, RunPhase.Work, PauseReason.None, false);
 
 // Act
-oppositeCluster.Observe(precise with { MonotonicTime = TimeSpan.FromSeconds(1), Latitude = 59 - 2d / 111195 },
+oppositeCluster.Observe(precise with { MonotonicTime = TimeSpan.FromSeconds(1), Latitude = 59 - (2d / 111195) },
     TimeSpan.FromSeconds(1), 0, RunPhase.Work, PauseReason.None, false);
-var opposite = oppositeCluster.Observe(precise with { MonotonicTime = TimeSpan.FromSeconds(2), Latitude = 59 + 2d / 111195 },
+var opposite = oppositeCluster.Observe(precise with { MonotonicTime = TimeSpan.FromSeconds(2), Latitude = 59 + (2d / 111195) },
     TimeSpan.FromSeconds(2), 0, RunPhase.Work, PauseReason.None, true);
 
 // Assert
@@ -400,7 +399,7 @@ var jogEverPaused = false;
 var automaticResume = new RunMotion(motionPolicy);
 for (var second = 0; second <= 10; second++)
 {
-    automaticResume.Observe(Fix(second, 0, 5), TimeSpan.FromSeconds(second), 0, RunPhase.Work, PauseReason.None, false);
+    _ = automaticResume.Observe(Fix(second, 0, 5), TimeSpan.FromSeconds(second), 0, RunPhase.Work, PauseReason.None, false);
 }
 
 // Act
@@ -458,3 +457,22 @@ Require(legacyC1.Remaining == Minutes(8) && legacyTemplate.TemplateRevision == 1
 Require(legacySaved.TotalActiveTime == Minutes(38) && legacySaved.MainActiveTime == Minutes(23),
     "Serialized legacy 10/5 plans remain readable with their original 38-minute dose.");
 Console.WriteLine("PASS: official C1 revision 2 is 8/4 and 35 minutes; frozen revision 1 remains 10/5 and 38.");
+
+// Arrange
+var exactEnd = TimedSession.Continuous(TimeSpan.FromSeconds(10), 3);
+var exactEndMotion = new RunMotion(motionPolicy);
+for (var second = 0; second < 10; second++)
+{
+    _ = exactEndMotion.Observe(Fix(second, 0, 5), TimeSpan.FromSeconds(second), 0, RunPhase.Work, PauseReason.None, false);
+}
+
+// Act
+exactEnd.Advance(TimeSpan.FromSeconds(10), (_, at) => exactEndMotion.Boundary(at));
+var atEndDecision = exactEndMotion.Observe(Fix(10, 0, 5), TimeSpan.FromSeconds(10), exactEnd.PhaseIndex,
+    exactEnd.Current?.Kind, PauseReason.None, false);
+
+// Assert
+Require(exactEnd.IsFinished && atEndDecision == MotionDecision.None
+    && !exactEnd.PauseAutomatically(TimeSpan.FromSeconds(10), 0)
+    && exactEnd.TotalActiveTime == TimeSpan.FromSeconds(10),
+    "At exact phase/finish equality the already-processed terminal boundary wins over confirmation.");

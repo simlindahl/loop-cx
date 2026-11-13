@@ -129,7 +129,10 @@ public sealed class RunService : Service, ILocationListener
             started = DateTimeOffset.UtcNow;
             startedMonotonic = SystemClock.ElapsedRealtime();
             distance = new RunDistance(DistancePolicy.Pilot, TimeSpan.FromMilliseconds(startedMonotonic), session.Current?.Kind);
-            motion = new RunMotion(MovementPolicy.Pilot);
+            motion = new RunMotion(MovementPolicy.Pilot with
+            {
+                MaximumSpeedMetresPerSecond = DistancePolicy.Pilot.MaximumSpeedMetresPerSecond
+            }, TimeSpan.FromMilliseconds(startedMonotonic));
             motion.Boundary(TimeSpan.FromMilliseconds(startedMonotonic));
             initialPlan = System.Text.Json.JsonSerializer.Serialize(session.Plan);
             lastTick = startedMonotonic;

@@ -1,17 +1,17 @@
 namespace LoopCx.Features.ActiveRun;
 
 public sealed record MovementPolicy(string Version, double MaximumAccuracyMetres, TimeSpan MaximumGap,
-    TimeSpan MaximumAge, double StationaryRadiusMetres, double MinimumResumeMetres)
+    TimeSpan MaximumAge, double StationaryRadiusMetres, double MinimumResumeMetres, double MaximumSpeedMetresPerSecond)
 {
     public static MovementPolicy Pilot { get; } = new("timed-motion-pilot-v1", 5,
-        TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3), 2, 3);
+        TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3), 2, 3, 12);
 }
 
 public sealed record StandstillCandidate(int PhaseIndex, TimeSpan OnsetMonotonicTime,
     TimeSpan ExcludedThroughMonotonicTime);
 public sealed record AutomaticMotionEvent(string Kind, int PhaseIndex, TimeSpan? OnsetMonotonicTime,
     TimeSpan? ExcludedThroughMonotonicTime, TimeSpan SampleMonotonicTime, TimeSpan DetectedMonotonicTime);
-public sealed record MotionState(MovementPolicy Policy, PauseReason PauseReason, string Observation,
+public sealed record MotionState(MovementPolicy Policy, TimeSpan StartedMonotonicTime, PauseReason PauseReason, string Observation,
     StandstillCandidate? Candidate);
 public enum MotionDecision { None, CandidateStarted, Pause, Resume }
 
@@ -19,13 +19,14 @@ public enum MotionDecision { None, CandidateStarted, Pause, Resume }
 public sealed class RunMotion
 {
     private readonly MovementPolicy policy;
+    private readonly TimeSpan started;
     private DistanceFix? origin;
     private DistanceFix? previous;
     private TimeSpan? lastObserved;
     private TimeSpan boundary;
     private string observation = "Unknown";
 
-    public RunMotion(MovementPolicy policy)
+    public RunMotion(MovementPolicy policy, TimeSpan started = default)
     {
         ArgumentNullException.ThrowIfNull(policy);
 
@@ -33,17 +34,19 @@ public sealed class RunMotion
             policy.MaximumAge <= TimeSpan.Zero || !double.IsFinite(policy.MaximumAccuracyMetres) ||
             policy.MaximumAccuracyMetres <= 0 || !double.IsFinite(policy.StationaryRadiusMetres) ||
             policy.StationaryRadiusMetres <= 0 || !double.IsFinite(policy.MinimumResumeMetres) ||
-            policy.MinimumResumeMetres <= policy.StationaryRadiusMetres)
+            policy.MinimumResumeMetres <= policy.StationaryRadiusMetres ||
+            !double.IsFinite(policy.MaximumSpeedMetresPerSecond) || policy.MaximumSpeedMetresPerSecond <= 0)
         {
             throw new ArgumentException("Movement policy requires finite positive conservative limits.", nameof(policy));
         }
 
         this.policy = policy;
+        this.started = boundary = started;
     }
 
     public StandstillCandidate? Candidate { get; private set; }
     public AutomaticMotionEvent? Event { get; private set; }
-    public MotionState Snapshot(PauseReason reason) => new(policy, reason, observation, Candidate);
+    public MotionState Snapshot(PauseReason reason) => new(policy, started, reason, observation, Candidate);
 
     public void Boundary(TimeSpan at)
     {
@@ -81,7 +84,7 @@ public sealed class RunMotion
         if (lastObserved is { } observed && fix.MonotonicTime - observed > policy.MaximumGap) ResetEvidence();
 
         if (previous is { } prior && RunDistance.Metres(prior, fix) /
-            (fix.MonotonicTime - prior.MonotonicTime).TotalSeconds > DistancePolicy.Pilot.MaximumSpeedMetresPerSecond)
+            (fix.MonotonicTime - prior.MonotonicTime).TotalSeconds > policy.MaximumSpeedMetresPerSecond)
         {
             lastObserved = fix.MonotonicTime;
             ResetEvidence();
