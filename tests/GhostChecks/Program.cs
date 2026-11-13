@@ -110,3 +110,5 @@ Require(lateStart.PositionAt(S(1)) is null, "Never extrapolate before the first 
 Require(lateStart.ArrivalAt(20) is null, "A missing beginning cannot establish the first arrival.");
 
 RouteCaptureChecks.Run();
+
+RaceClockChecks.Run();
