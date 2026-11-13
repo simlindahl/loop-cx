@@ -17,4 +17,4 @@ The [C1 variant purposes and evidence](running-workouts.md#c1-variant-purposes-a
 
 The subsequent Core-first C2 programme uses a20–120-minute slider in five-minute steps, default45, targetRPE4 and no preparation. New template revision2 distinguishes this from the delivered revision1/RPE3; actual started plans and historical runs remain frozen. This approved programme change is specified with the new Core-first flows and is not yet runtime delivery.
 
-The approved C1 rep control keeps work/recovery durations and RPE fixed while allowing integer counts whose main set, including recovery, is10–60minutes. Default counts are8/5/3; saved shortcuts retain selected counts. This supersedes the earlier fixed-count-only interpretation, not the Core-first boundary against a general workout builder.
+The approved C1 rep control keeps work/recovery durations and RPE fixed while allowing integer counts whose main set, including recovery, is10–60minutes. Default counts are7/5/3; saved shortcuts retain selected counts. This supersedes the earlier fixed-count-only interpretation, not the Core-first boundary against a general workout builder.

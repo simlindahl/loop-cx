@@ -62,7 +62,7 @@ C1 offers three different training emphases. Choose one variant for the C1 step;
 
 | Variant | Purpose | Work and recovery | Target RPE work / recovery | Total with 4/3 preparation |
 |---|---|---|---|---|
-| C1.1 · SIT | Repeated maximal sprint efforts with substantial recovery; sprint-specific effort with potential aerobic adaptations | 8 × 30 seconds maximal, 3 minutes easy between efforts | 10 / 2 | 32 min |
+| C1.1 · SIT | Repeated maximal sprint efforts with substantial recovery; sprint-specific effort with potential aerobic adaptations | 7 × 30 seconds maximal, 3 minutes easy between efforts | 10 / 2 | 28:30 |
 | C1.2 · Aerobic HIIT | Develop aerobic power through sustained, controlled hard efforts | 5 × 3 minutes hard, 2 minutes recovery between efforts | 7 / 3 | 30 min |
 | C1.3 · Threshold intervals | Practise controlled, sustained effort near your individual threshold | 3 × 6 minutes, 3 minutes recovery between efforts | 6 / 3 | 31 min |
 
