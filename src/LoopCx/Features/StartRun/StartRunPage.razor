@@ -1,4 +1,45 @@
+@implements IDisposable
 <main>
     <h1>LOOP Cx</h1>
-    <h2>Start a run</h2>
+    @if (RunService.Snapshot is { } state)
+    {
+        <h2>@(state.Paused ? "Paused" : state.Phase)</h2>
+        <p>@state.RemainingSeconds s remaining</p>
+        <p>@state.GpsStatus</p>
+        <p>Active time · @state.ActiveSeconds s</p>
+        @if (state.Phase != "Finished")
+        {
+            <button @onclick="TogglePause">@(state.Paused ? "Resume" : "Pause")</button>
+            @if (state.Phase is "Warmup" or "Cooldown")
+            {
+                <button @onclick='() => RunService.Command("extend")'>+1 min</button>
+                <button @onclick='() => RunService.Command("skip")'>@(state.Phase == "Warmup" ? "Start main run" : "Finish")</button>
+            }
+        }
+    }
+    else
+    {
+        <h2>Start a run</h2>
+        <button @onclick="Start">Start C1 · Intervals</button>
+    }
+    @if (error is not null) { <p role="alert">@error</p> }
 </main>
+@code {
+    private string? error;
+    protected override void OnInitialized() => RunService.Changed += Refresh;
+    private void Refresh() => _ = InvokeAsync(StateHasChanged);
+    private void TogglePause() => RunService.Command(RunService.Snapshot?.Paused == true ? "resume" : "pause");
+    private async Task Start()
+    {
+        var granted = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        if (granted != PermissionStatus.Granted)
+        {
+            error = "Location permission is required for this GPS preview. Enable it in Android settings.";
+            return;
+        }
+        if (OperatingSystem.IsAndroidVersionAtLeast(33))
+            await Permissions.RequestAsync<NotificationPermission>();
+        RunService.Command("start");
+    }
+    public void Dispose() => RunService.Changed -= Refresh;
+}
