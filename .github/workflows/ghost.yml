@@ -4,6 +4,8 @@ on:
     paths:
       - 'src/LoopCx/Features/GhostRun/**'
       - 'tests/GhostChecks/**'
+      - 'tests/GhostStorageChecks/**'
+      - 'storage/ghost/**'
       - '.github/workflows/ghost.yml'
       - 'global.json'
   push:
@@ -24,3 +26,5 @@ jobs:
       - run: dotnet run --project tests/GhostChecks
         env:
           MSBuildEnableWorkloadResolver: false
+      - name: Check Ghost SQLite archive
+        run: python3 tests/GhostStorageChecks/check.py
