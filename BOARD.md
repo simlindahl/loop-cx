@@ -9,12 +9,12 @@
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
+| TEST-BOARD | Syntetiskt statusprov | — | Agenten: fortsätt flödesprov |
 
 ## Waiting
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
-| TEST-BOARD | Syntetiskt statusprov | — | Simon: syntetiskt beslut för flödesprov |
 
 ## Done
 
