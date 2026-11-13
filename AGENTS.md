@@ -6,7 +6,9 @@ Use spec-change for requirements/design and verify-run for delivery. Keep app te
 
 Build vertical feature slices in the modular monolith. Follow [Code organization](knowledge/product.md#code-organization), including the initial scaffold; justify each new layer by the problem it solves.
 
+Before UI work, read design/mockups/README.md and the affected screens in design/mockups/index.html. HTML/CSS is the ongoing visual implementation reference; knowledge/product.md governs behavior. New screens remain preliminary until approved by Simon. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history. HTML changes are not themselves design approval or proof of working Android behavior.
 
+<a id="arbetslista-och-status"></a>
 ## Work tracking and status
 
 [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the only current board. The project belongs to `simlindahl`, has number `2` and is linked to this repository. Issues own requirements and discussion; PRs own diffs and verification results. Requirements, design and code are versioned in Git. Do not recreate a parallel board in the repository.
