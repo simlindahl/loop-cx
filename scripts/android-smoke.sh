@@ -87,6 +87,17 @@ assert current['Phase'] == 'Warmup' and not current['Paused']
 print('PASS: finishing retires the service and enables a new workout without process restart')
 PY
 
+# Deliver measurements to the second session that the recovery test actually kills.
+for point in 1 2 3; do
+    adb emu geo fix 18.06 59.33
+    sleep 2
+done
+snapshot > /tmp/run-next-gps.json
+python3 - <<'PY'
+import json
+from pathlib import Path
+assert json.loads(Path('/tmp/run-next-gps.json').read_text())['Locations'] > 0
+PY
 # Force-stop commits no shutdown callback: only durable checkpoints may survive.
 command pause
 sleep 2
