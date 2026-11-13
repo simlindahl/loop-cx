@@ -48,6 +48,14 @@
           {
             "context": "mockups",
             "integration_id": 15368
+          },
+          {
+            "context": "deterministic",
+            "integration_id": 15368
+          },
+          {
+            "context": "candidate",
+            "integration_id": 15368
           }
         ]
       }
