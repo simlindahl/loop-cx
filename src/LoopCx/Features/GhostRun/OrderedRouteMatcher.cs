@@ -47,8 +47,9 @@ public sealed class OrderedRouteMatcher
 
     public RouteMatchSnapshot Start(RecordedRouteFix fix)
     {
+        ArgumentNullException.ThrowIfNull(fix);
         if (startedAt is not null) return Current;
-        if (fix is not null && fix == lastInput) return Current;
+        if (fix == lastInput) return Current;
         var problem = Validate(fix, out var point);
         if (problem is not null) return Unknown(problem.Value);
         if (fix.GapBefore) return Unknown(RouteMatchProblem.Gap);
@@ -60,7 +61,8 @@ public sealed class OrderedRouteMatcher
 
     public RouteMatchSnapshot Observe(RecordedRouteFix fix)
     {
-        if (finishedAt is not null || (fix is not null && fix == lastInput)) return Current;
+        ArgumentNullException.ThrowIfNull(fix);
+        if (finishedAt is not null || fix == lastInput) return Current;
         if (startedAt is null) return Unknown(RouteMatchProblem.StartRequired);
         var problem = Validate(fix, out var point);
         if (problem is not null) return Unknown(problem.Value);
@@ -122,7 +124,7 @@ public sealed class OrderedRouteMatcher
     private RouteMatchProblem? Validate(RecordedRouteFix fix, out PlanePoint point)
     {
         point = default;
-        if (fix is null || fix.Elapsed < TimeSpan.Zero)
+        if (fix.Elapsed < TimeSpan.Zero)
             return RouteMatchProblem.InvalidFix;
         if (lastInput is not null && fix.Elapsed <= lastInput.Elapsed)
             return RouteMatchProblem.NonMonotonicTime;
