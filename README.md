@@ -1,6 +1,7 @@
 # LOOP Cx
 Private Android project for running workouts. The official LOOP Cx app for C1 and C2 running.
-- [Product specification and acceptance tests](knowledge/product.md)
+- [Product specifications and acceptance owners](knowledge/product.md)
+- [M1 · LOOP Cx](https://github.com/simlindahl/loop-cx/milestone/1) · [M2 · LOOP and rename gate](knowledge/loop-core-roadmap.md)
 - [Static HTML mockups for the whole app](design/mockups/index.html) · [Open and review](design/mockups/README.md) · [Decisions](design/decision.md)
 - [Work list · Todo / Doing / Waiting / Done](https://github.com/users/simlindahl/projects/2)
 - [Working instructions](AGENTS.md)

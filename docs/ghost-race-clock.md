@@ -1,6 +1,6 @@
 <a id="ghost-run-fristående-tävlingsklocka"></a>
 # Ghost Run: standalone race clock
-Requirements: [Ghost Run](../knowledge/product.md#ghost-run), Start, race clock and pause, and Playback and comparison. Part of #18, on top of PR #21.
+Requirements: [Ghost Run](../knowledge/ghost-run.md#ghost-run), Start, race clock and pause, and Playback and comparison. Part of #18, on top of PR #21.
 
 `GhostRaceClock` takes explicit absolute monotonic timestamps. It calls no system clock, sensor, Android service or UI timer. At later integration, the caller must feed it from the same service-owned session that controls training.
 

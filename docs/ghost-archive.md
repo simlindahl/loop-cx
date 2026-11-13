@@ -1,6 +1,6 @@
 <a id="ghost-run-sqlite-arkivets-datamodell"></a>
 # Ghost Run: SQLite archive data model
-Requirements: [Ghost Run](../knowledge/product.md#ghost-run), Save and select a route, Opponent and year selection, and Validity and uncertainty. Part of #18, on top of #23.
+Requirements: [Ghost Run](../knowledge/ghost-run.md#ghost-run), Save and select a route, Opponent and year selection, and Validity and uncertainty. Part of #18, on top of #23.
 
 `storage/ghost/schema-1.sql` defines a separate SQLite namespace:
 - `ghost_routes`: frozen version, source session, name, calculation revision, geometry and quality policy.

@@ -1,12 +1,12 @@
 <a id="arbete-i-detta-repo"></a>
 # Working in this repository
-Read knowledge/product.md before every change. [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the work list; the Git-versioned specification governs behavior. Link the issue, requirement section, acceptance test and PR. Update the specification first when behavior changes.
+Read knowledge/product.md and the affected owning specification linked from it before every change. [GitHub Projects · LOOP Cx](https://github.com/users/simlindahl/projects/2) is the work list; the Git-versioned specification governs behavior. Link the issue, requirement section, acceptance test and PR. Update the specification first when behavior changes.
 Simon approved revision 5 as the implementation baseline. For a design change, show a new mockup and await a decision. Record the approved version/commit and any conditions in design/decision.md before app code, scaffolding or integration prototypes.
 Use spec-change for requirements/design and verify-run for delivery. Keep app text and voice coaching in English, use synthetic test data and store measurements locally. Never commit keys, signing certificates or real running sessions.
 
-Build vertical feature slices in the modular monolith. Follow [Code organization](knowledge/product.md#code-organization), including the initial scaffold; justify each new layer by the problem it solves.
+Build vertical feature slices in the modular monolith. Follow [Code organization](knowledge/architecture.md#code-organization), including the initial scaffold; justify each new layer by the problem it solves.
 
-Before UI work, read design/mockups/README.md and the affected screens in design/mockups/index.html. HTML/CSS is the ongoing visual implementation reference; knowledge/product.md governs behavior. New screens remain preliminary until approved by Simon. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history. HTML changes are not themselves design approval or proof of working Android behavior.
+Before UI work, read design/mockups/README.md and the affected screens in design/mockups/index.html. HTML/CSS is the ongoing visual implementation reference; the owning specifications linked from knowledge/product.md govern behavior. New screens remain preliminary until approved by Simon. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history. HTML changes are not themselves design approval or proof of working Android behavior.
 
 ## Roles and decision-making
 

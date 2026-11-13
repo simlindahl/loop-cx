@@ -1,6 +1,6 @@
 <a id="ghost-run-ruttunderlag-från-kontinuerlig-huvudfas"></a>
 # Ghost Run: route evidence from a continuous main phase
-Requirements: [Ghost Run](../knowledge/product.md#ghost-run), Save and select a route and Validity and uncertainty. Part of issue #18, on top of PR #20.
+Requirements: [Ghost Run](../knowledge/ghost-run.md#ghost-run), Save and select a route and Validity and uncertainty. Part of issue #18, on top of PR #20.
 
 `MainRouteCapture.Build` is a standalone calculation rule. It reads a completed continuous recording with phase-labelled raw GPS fixes and creates frozen route geometry and playback evidence from the main phase only. It reads no Android sensor, database, map or view.
 

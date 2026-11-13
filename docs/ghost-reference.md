@@ -1,6 +1,6 @@
 <a id="ghost-run-fristående-referensregler"></a>
 # Ghost Run: standalone reference rules
-Requirements: [Ghost Run](../knowledge/product.md#ghost-run), issue #18. Requirements/design dependency: PR #19.
+Requirements: [Ghost Run](../knowledge/ghost-run.md#ghost-run), issue #18. Requirements/design dependency: PR #19.
 
 This delivery contains a frozen data model for route versions and attempts, JSON round-trip support, deterministic record selection and playback of already derived route positions. It includes no Android service, GPS, map or UI integration.
 
