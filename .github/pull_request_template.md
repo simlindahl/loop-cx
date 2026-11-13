@@ -4,6 +4,14 @@ Closes #
 ## Change
 Describe the behavior and link its requirement section. For a design change, link the design decision.
 
+## Current review handoff
+
+- Exact head and base revisions; bounded diff and linked issue/owning specification/acceptance criteria.
+- Design status: approved or preliminary; static reference or runtime change; applicable decision and holds.
+- Applicable verification and artifact manifest links, tested revision/environment, evidence limits and pending gates.
+
+Maintain this as the single current handoff under [the team workflow](../docs/team-workflow.md#current-review-handoff). Label superseded results as history when revisions change.
+
 <a id="verifiering"></a>
 ## Verification
 State the test environment and observed result. Distinguish emulator tests from physical tests and report remaining checks.

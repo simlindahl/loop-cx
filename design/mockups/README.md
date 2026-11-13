@@ -197,4 +197,6 @@ These are proposed corrections to the Ghost addition, not a new approval of its 
 
 ## Approved neutral palette
 
+For a visual change, link the relevant screenshots or local presentation/artifact manifest from the PR's [current review handoff](../../docs/team-workflow.md#current-review-handoff), with the tested revision, approval status and static/runtime limitations. Select affected screens and states; this does not require a new capture of all 90 screens. The HTML, owning specification and design decisions remain authoritative; a local contact sheet is presentation material.
+
 Compare Training, Work, Settings, the LOOP reader and Ghost Run against the previous gallery revision. The approved palette removes green undertones from backgrounds, surfaces, text, dividers and the illustrative map. It keeps one lime accent for action and current-state emphasis, while workout codes, wordmark and historical bars become neutral. Layout, labels, navigation and approved reader content are unchanged. The exact palette and neutral launcher background are recorded in design/decision.md; approved loop geometry is unchanged. Decorative dividers do not replace sufficiently contrasting functional control boundaries; see the specification.
