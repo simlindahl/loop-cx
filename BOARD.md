@@ -4,12 +4,12 @@
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
-| TEST-BOARD | Syntetiskt statusprov | — | Agenten: fortsätt flödesprov |
 
 ## Doing
 
 | Ärende | Arbete | PR | Nästa steg |
 |---|---|---|---|
+| TEST-BOARD | Syntetiskt statusprov | — | Agenten: fortsätt flödesprov |
 
 ## Waiting
 
