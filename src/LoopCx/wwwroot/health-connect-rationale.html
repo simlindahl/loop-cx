@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>About this test</title>
+  <title>About this isolated Health Connect test</title>
   <style>
     @font-face {
       font-family: "Space Grotesk";
@@ -102,27 +102,13 @@
   <main>
     <header>
       <p>LOOP Cx · Health Connect</p>
-      <h1>About this test</h1>
+      <h1>About this isolated Health Connect test</h1>
     </header>
     <aside>Debug test · Dedicated emulator only</aside>
     <section>
-      <h2>Why exercise access?</h2>
-      <p>This compatibility check writes one synthetic exercise session to Health Connect on this test emulator.</p>
-    </section>
-    <section>
-      <h2>What data is used?</h2>
-      <p>The check uses only the test session it creates. It does not read your health history or send this test data to WHOOP or a cloud service.</p>
-    </section>
-    <section>
-      <h2>What happens afterwards?</h2>
-      <p>The check attempts to delete its test session and reports whether cleanup was verified. If it fails, the test record may remain in Health Connect.</p>
-    </section>
-    <section>
-      <h2>Your choice</h2>
-      <p>You can deny this permission or revoke it in Health Connect. Normal workout export stays off in this diagnostic build.</p>
+      <p>This test uses synthetic data on the dedicated test emulator. It temporarily writes one running session, one distance record and one heart-rate record. It reads and deletes only records created with the test's own IDs, then checks that they are absent. It does not read other health records or use an account. The test is not a real workout and does not mark a workout as exported.</p>
     </section>
     <footer>
-      <p>This page explains the test. Permissions are selected in Android's Health Connect screen.</p>
       <button type="button" onclick="location.href='loop-probe://back'">Back</button>
     </footer>
   </main>

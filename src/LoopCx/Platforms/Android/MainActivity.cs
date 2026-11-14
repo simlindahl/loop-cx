@@ -112,6 +112,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
         }
         var probe = intent?.GetStringExtra("loop-native-probe");
         intent?.RemoveExtra("loop-native-probe");
+        if (probe is "health-provider-verification-dry-run" or "health-provider-verification" && OperatingSystem.IsAndroidVersionAtLeast(35))
+        {
+            _ = HealthConnectProviderVerificationProbe.Run(this, probe.EndsWith("-dry-run", StringComparison.Ordinal));
+            return;
+        }
         if (probe == "storage-corruption")
         {
             RunSaveCorruptionProbe.Run(this);

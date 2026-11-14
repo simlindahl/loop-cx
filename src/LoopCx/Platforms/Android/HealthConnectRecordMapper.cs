@@ -32,6 +32,14 @@ internal static class HealthConnectRecordMapper
     }
 
 #if DEBUG
+    internal static HCNativeRecords BuildIsolatedProviderFixture(HCWritePlanV1 plan)
+    {
+        var expected = HCProviderVerification.Fixture();
+        if (!plan.HasValidHash() || plan.PayloadHash != expected.PayloadHash)
+            throw new InvalidDataException("Only the exact versioned synthetic fixture may use this isolated builder seam.");
+        return new("constructed-isolated-synthetic", null, BuildRecords(expected));
+    }
+
     internal static void RunIsolatedProbe(Android.Content.Context context)
     {
         if (Android.OS.Build.Hardware != "ranchu" || Android.OS.Build.Product != "sdk_gphone64_x86_64"
