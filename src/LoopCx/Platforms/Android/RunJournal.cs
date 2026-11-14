@@ -16,11 +16,27 @@ public sealed class RunJournal : SQLiteOpenHelper
 #endif
     private static RunJournal? shared;
     public static RunJournal Shared => shared ??= new RunJournal();
+    private readonly PreservingCorruptionHandler corruptionHandler;
 
-    private RunJournal() : base(global::Android.App.Application.Context, JournalFileName, null, 5)
+    private RunJournal() : this(JournalFileName, true, new PreservingCorruptionHandler()) { }
+
+    private RunJournal(string fileName, bool markInterrupted, PreservingCorruptionHandler handler)
+        : base(global::Android.App.Application.Context, fileName, null, 5, handler)
     {
+        corruptionHandler = handler;
         // Only runs left by an earlier process are interrupted. Never infer missing time.
-        WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
+        if (markInterrupted) WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
+    }
+
+    private sealed class PreservingCorruptionHandler : Java.Lang.Object, global::Android.Database.IDatabaseErrorHandler
+    {
+        internal int Calls { get; private set; }
+        public void OnCorruption(SQLiteDatabase? database)
+        {
+            Calls++;
+            // Do not call DefaultDatabaseErrorHandler, close/delete files or return into openInner retry.
+            throw new SQLiteDatabaseCorruptException("Local database corruption: preserving files; automatic recovery is disabled.");
+        }
     }
 
     public override void OnConfigure(SQLiteDatabase? database)
@@ -66,18 +82,27 @@ public sealed class RunJournal : SQLiteOpenHelper
     public void Commit(RunSaveBatch batch)
     {
         try { CommitTransaction(batch); }
-        catch (SQLiteDatabaseCorruptException error)
-        {
-            throw new RunSaveReadException("Local database is corrupt. No repair or overwrite was attempted.", error);
-        }
-        catch (SQLiteCantOpenDatabaseException error)
-        {
-            throw new RunSaveReadException("Local database could not be opened. Saving cannot be retried in this run.", error);
-        }
-        catch (SQLiteException error) { throw new IOException("Recent recording could not be saved.", error); }
+        catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
     }
 
+    internal static IOException ClassifyNativeFailure(SQLiteException error) => error switch
+    {
+        SQLiteDatabaseCorruptException => new RunSaveReadException("Local database is corrupt. No repair or overwrite was attempted.", error),
+        SQLiteCantOpenDatabaseException => new RunSaveReadException("Local database could not be opened. Saving cannot be retried in this run.", error),
+        _ => new IOException("Recent recording could not be saved.", error)
+    };
+
 #if DEBUG
+    internal static RunJournal OpenCorruptionProbe(string name)
+    {
+        const string prefix = "run-save-corrupt-probe-";
+        if (!name.StartsWith(prefix, StringComparison.Ordinal) || !name.EndsWith(".db", StringComparison.Ordinal)
+            || !Guid.TryParseExact(name[prefix.Length..^3], "N", out _))
+            throw new ArgumentException("Only a uniquely owned scratch database is permitted.");
+        return new(name, false, new PreservingCorruptionHandler());
+    }
+    internal int ProbeCorruptionCallbacks => corruptionHandler.Calls;
+
     internal void SetSaveFailureForProbe(Guid runId, bool enabled)
     {
         var db = WritableDatabase!;

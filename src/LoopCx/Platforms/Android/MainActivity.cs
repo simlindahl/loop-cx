@@ -112,6 +112,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
         }
         var probe = intent?.GetStringExtra("loop-native-probe");
         intent?.RemoveExtra("loop-native-probe");
+        if (probe == "storage-corruption")
+        {
+            RunSaveCorruptionProbe.Run(this);
+            return;
+        }
         if (probe == "health-outbox")
         {
             HealthConnectOutboxProbe.Run(this);
