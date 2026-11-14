@@ -232,6 +232,28 @@ public sealed class RunJournal : SQLiteOpenHelper
         return ExportRunV1.Project(snapshot);
     }
 
+    public string ReadShareJson(Guid id)
+    {
+        var db = ReadableDatabase!;
+        ExportJournalSnapshot snapshot;
+        string? recovered;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            snapshot = ReadExportSnapshot(db, id);
+            using var row = db.RawQuery("SELECT recovery_saved_utc FROM runs WHERE id = ?", [id.ToString()])!;
+            if (!row.MoveToFirst()) throw new KeyNotFoundException("The recorded run no longer exists.");
+            recovered = row.IsNull(0) ? null : row.GetString(0);
+            db.SetTransactionSuccessful();
+        }
+        finally { db.EndTransaction(); }
+
+        var owner = RunService.Snapshot;
+        var activeOwner = owner is not null && (owner.Phase != "Finished" || owner.Storage?.State != "saved") ? owner.Id : (Guid?)null;
+
+        return RunJsonSharing.Project(snapshot, recovered, activeOwner);
+    }
+
     public StoredRunArchive ReadFinishedRuns()
     {
         var db = ReadableDatabase!;
