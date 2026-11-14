@@ -56,7 +56,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     }
 
     public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
-        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null, AutomaticMotionEvent? automaticEvent = null, string? heartRateMetadata = null, HeartRateObservation? heartRateObservation = null, RunStartContext? startContext = null, IReadOnlyList<PhaseBoundaryFact>? phaseBoundaries = null)
+        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null, AutomaticMotionEvent? automaticEvent = null, string? heartRateMetadata = null, HeartRateObservation? heartRateObservation = null, RunStartContext? startContext = null, IReadOnlyList<PhaseBoundaryFact>? phaseBoundaries = null, RunTerminalContext? terminalContext = null)
     {
         var db = WritableDatabase!;
         db.BeginTransaction();
@@ -79,6 +79,7 @@ public sealed class RunJournal : SQLiteOpenHelper
                 AutomaticEvent = automaticEvent,
                 StartContext = startContext,
                 PhaseBoundaries = phaseBoundaries,
+                TerminalContext = terminalContext,
                 session.Plan,
                 session.Completed,
                 session.PhaseActiveTime,

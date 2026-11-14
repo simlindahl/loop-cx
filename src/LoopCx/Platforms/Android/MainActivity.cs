@@ -107,6 +107,11 @@ public sealed class MainActivity : MauiAppCompatActivity
         }
         var probe = intent?.GetStringExtra("loop-native-probe");
         intent?.RemoveExtra("loop-native-probe");
+        if (probe == "health-records" && OperatingSystem.IsAndroidVersionAtLeast(34))
+        {
+            HealthConnectRecordMapper.RunIsolatedProbe(this);
+            return;
+        }
         if (probe == "health-rationale" && OperatingSystem.IsAndroidVersionAtLeast(35))
         {
             StartActivity(new Intent(this, typeof(HealthRationaleActivity)));
