@@ -1060,3 +1060,5 @@ HeartRateSettingsChecks.Run();
 HCOutboxChecks.Run();
 
 RunSaveChecks.Run();
+
+StoredHistoryChecks.Run();

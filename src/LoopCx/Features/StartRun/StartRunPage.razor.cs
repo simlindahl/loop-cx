@@ -16,6 +16,9 @@ public partial class StartRunPage
     private string? lastMotionKey;
     private bool managing;
     private bool showSettings;
+    private bool showHistory;
+    private Guid? historyInitialRun;
+    private LoopCx.Features.History.HistoryPage? historyPage;
     private LoopCx.Features.Settings.SettingsPage? settingsPage;
     private bool managePending;
     private Guid? editingShortcutId;
@@ -41,7 +44,7 @@ public partial class StartRunPage
     private bool warmupEnabled;
     private bool cooldownEnabled;
 
-    private string MotionSurface => showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
+    private string MotionSurface => showHistory ? "history" : showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
     private string MotionKey => $"{MotionSurface}:{RunService.Snapshot?.Id}:{RunService.Snapshot?.Phase}:{RunService.Snapshot?.Motion?.PauseReason}";
 
     private CoreStartRequest SelectedC1 => statePreferences.SelectedC1;
@@ -145,6 +148,32 @@ public partial class StartRunPage
         RunService.DismissSaved();
     }
 
+    private async Task OpenHistory(Guid? runId)
+    {
+        if (showHistory && runId is null)
+        {
+            if (historyPage is not null) await historyPage.ShowList();
+            return;
+        }
+        showSettings = false;
+        settingsPage = null;
+        historyInitialRun = runId;
+        showHistory = true;
+        CoreDialogNavigation.Close = () => _ = InvokeAsync(() => historyPage?.GoBack() ?? Task.CompletedTask);
+    }
+
+    private void ShowTraining()
+    {
+        showHistory = false;
+        historyPage = null;
+        showSettings = false;
+        settingsPage = null;
+        managing = false;
+        CoreDialogNavigation.Close = null;
+        RunService.DismissSaved(); // Guarded: never dismisses an active or failed-save owner.
+        focusPending = RunService.Snapshot is null ? "start-heading" : "phase-heading";
+    }
+
     private async Task Start(CoreStartRequest request)
     {
         try
@@ -211,6 +240,8 @@ public partial class StartRunPage
 
     private void OpenSettingsDestination()
     {
+        showHistory = false;
+        historyPage = null;
         showSettings = true;
         CoreDialogNavigation.Close = () => _ = InvokeAsync(() => settingsPage?.GoBack() ?? Task.CompletedTask);
     }
@@ -458,6 +489,7 @@ public partial class StartRunPage
     public async Task CloseDialog()
     {
         CoreDialogNavigation.Close = managing ? () => _ = InvokeAsync(CloseManage)
+            : showHistory ? () => _ = InvokeAsync(() => historyPage?.GoBack() ?? Task.CompletedTask)
             : showSettings ? () => _ = InvokeAsync(() => settingsPage?.GoBack() ?? Task.CompletedTask) : null;
         if (module is not null) await module.InvokeVoidAsync("close");
         dialogMode = null;

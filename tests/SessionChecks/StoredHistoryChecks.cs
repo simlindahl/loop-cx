@@ -1,0 +1,78 @@
+using System.Text.Json;
+using LoopCx.Features.ActiveRun;
+using LoopCx.Features.ExportRun;
+using LoopCx.Features.History;
+
+internal static class StoredHistoryChecks
+{
+    internal static void Run()
+    {
+        // Arrange: frozen v1 is deliberately different from today's Core and Settings.
+        var id = Guid.NewGuid();
+        var started = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var legacy = TimedSession.Intervals(5, TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(2),
+            8, 2, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
+        var plan = legacy.Plan.ToArray();
+        var main = new MeasuredStatistics(TimeSpan.FromMinutes(23), 4000, TimeSpan.FromMinutes(20), TimeSpan.FromMinutes(3))
+        { AverageHeartRate = 118, KnownHeartRateActiveTime = TimeSpan.FromMinutes(10) };
+        var total = new MeasuredStatistics(TimeSpan.FromMinutes(38), 6000, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(8));
+        var stats = new RunStatisticsState(1, DistancePolicy.Pilot, TimeSpan.FromMinutes(40), total, main, [main], null, false);
+        PhaseBoundaryFact Boundary(int previous, int? next, long elapsed)
+        {
+            return new(previous, next, plan[previous].Kind,
+            next is { } index ? plan[index].Kind : null, elapsed, elapsed + 10, started.AddMilliseconds(elapsed + 10), started.AddMilliseconds(elapsed), false);
+        }
+
+        var boundaries = new[] { Boundary(0, 1, 600000), Boundary(9, 10, 2070000), Boundary(10, null, 2370000) };
+        var checkpoint = JsonSerializer.SerializeToElement(new
+        {
+            SchemaVersion = 1,
+            Snapshot = new { Statistics = stats },
+            Plan = plan,
+            Completed = plan.Select(phase => new CompletedPhase(phase, phase.Duration)),
+            TotalActiveTime = TimeSpan.FromMinutes(38),
+            MainActiveTime = TimeSpan.FromMinutes(23),
+            PhaseBoundaries = boundaries
+        });
+        var template = JsonSerializer.SerializeToElement(new CoreTemplate("C1", "LOOP Core", "intervals", 1, null));
+        var setup = JsonSerializer.SerializeToElement(new HeartRateSetup(new(1, null, HeartRatePolicy.Pilot, [new(1, 100, 119)]), null));
+        var snapshot = new ExportJournalSnapshot(id, started.ToString("O"), started.AddMinutes(40).ToString("O"), 2400000,
+            "finished", JsonSerializer.SerializeToElement(plan), template, setup, checkpoint, "disabled_synthetic", [], [], []);
+
+        // Act
+        var result = StoredRunProjection.Detail(snapshot, null);
+        var legacyUnknown = StoredRunProjection.Detail(snapshot with { Checkpoint = JsonSerializer.SerializeToElement(new { legacy = true }), Template = null, HeartRateSetup = null }, null);
+        var noFacts = StoredRunProjection.Detail(snapshot with
+        {
+            Checkpoint = JsonSerializer.SerializeToElement(new
+            {
+                SchemaVersion = 1,
+                Snapshot = new { Statistics = stats },
+                Plan = plan,
+                Completed = plan.Select(phase => new CompletedPhase(phase, phase.Duration))
+            })
+        }, null);
+        var unacknowledged = StoredRunProjection.Detail(snapshot with { ExportStatus = "exported" }, null);
+
+        // Assert
+        if (result.Summary.TotalActive != TimeSpan.FromMinutes(38) || result.MainActive != TimeSpan.FromMinutes(23)
+            || result.MainElapsed != TimeSpan.FromSeconds(1470) || result.TotalElapsed != TimeSpan.FromSeconds(2370)
+            || result.Main?.AverageHeartRate != 118 || result.Main.AveragePaceSecondsPerKilometre is not null
+            || result.Warmup != TimeSpan.FromMinutes(10) || result.Cooldown != TimeSpan.FromMinutes(5)
+            || result.Zones?.Single().MaximumBpm != 119 || !result.Summary.Source.Contains("revision 1", StringComparison.Ordinal)
+            || result.Summary.ExportLabel != "Not exported · debug/synthetic" || unacknowledged.Summary.ExportLabel == "Exported"
+            || legacyUnknown.Summary.Total is not null || legacyUnknown.TotalElapsed is not null || legacyUnknown.Targets is not null
+            || legacyUnknown.Zones is not null || noFacts.MainElapsed is not null || noFacts.TotalElapsed is not null)
+        {
+            throw new InvalidOperationException("Stored detail must preserve frozen values and provenance; absent facts or ACK cannot be invented.");
+        }
+
+        try { _ = StoredRunProjection.Detail(snapshot with { Status = "interrupted" }, null); }
+        catch (InvalidDataException)
+        {
+            Console.WriteLine("PASS: finished History preserves frozen plan/stats/zones, elapsed boundary evidence and legacy unknowns; interrupted/exported claims guarded.");
+            return;
+        }
+        throw new InvalidOperationException("Interrupted recordings must not be relabelled finished.");
+    }
+}

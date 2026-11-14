@@ -3,6 +3,7 @@ using Android.Database.Sqlite;
 using System.Text.Json;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
+using LoopCx.Features.History;
 
 namespace LoopCx;
 
@@ -15,7 +16,11 @@ public sealed class RunJournal : SQLiteOpenHelper
     private const string JournalFileName = "runs.db";
 #endif
     private static RunJournal? shared;
-    public static RunJournal Shared => shared ??= new RunJournal();
+    private static readonly object SharedGate = new();
+    public static RunJournal Shared
+    {
+        get { lock (SharedGate) return shared ??= new RunJournal(); }
+    }
     private readonly PreservingCorruptionHandler corruptionHandler;
 
     private RunJournal() : this(JournalFileName, true, new PreservingCorruptionHandler()) { }
@@ -206,6 +211,47 @@ public sealed class RunJournal : SQLiteOpenHelper
         finally { db.EndTransaction(); }
 
         return ExportRunV1.Project(snapshot);
+    }
+
+    public StoredRunArchive ReadFinishedRuns()
+    {
+        var db = ReadableDatabase!;
+        var rows = new List<StoredRunRow>();
+        var unreadable = 0;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            using var cursor = db.RawQuery("SELECT r.id, r.started_utc, r.status, r.template_metadata, r.checkpoint, q.status, q.attempt_json FROM runs r LEFT JOIN export_queue q ON q.run_id = r.id WHERE r.status = 'finished' ORDER BY julianday(r.started_utc) DESC, r.id", null)!;
+            while (cursor.MoveToNext())
+            {
+                if (!Guid.TryParse(cursor.GetString(0), out var id)) { unreadable++; continue; }
+                rows.Add(new(id, cursor.GetString(1)!, cursor.GetString(2)!, cursor.IsNull(3) ? null : cursor.GetString(3),
+                    cursor.GetString(4)!, cursor.IsNull(5) ? null : cursor.GetString(5), cursor.IsNull(6) ? null : cursor.GetString(6)));
+            }
+            using var interrupted = db.RawQuery("SELECT COUNT(*) FROM runs WHERE status = 'interrupted'", null)!;
+            interrupted.MoveToFirst();
+            var result = new StoredRunArchive(rows, interrupted.GetInt(0), unreadable);
+            db.SetTransactionSuccessful();
+            return result;
+        }
+        finally { db.EndTransaction(); }
+    }
+
+    public StoredRunDetail ReadFinishedRun(Guid id)
+    {
+        var db = ReadableDatabase!;
+        ExportJournalSnapshot snapshot;
+        string? attempt;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            snapshot = ReadExportSnapshot(db, id);
+            using var queue = db.RawQuery("SELECT attempt_json FROM export_queue WHERE run_id = ?", [id.ToString()])!;
+            attempt = queue.MoveToFirst() && !queue.IsNull(0) ? queue.GetString(0) : null;
+            db.SetTransactionSuccessful();
+        }
+        finally { db.EndTransaction(); }
+        return StoredRunProjection.Detail(snapshot, attempt);
     }
 
     // Caller owns the single transaction; all values are detached before returning.
