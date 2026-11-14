@@ -104,6 +104,24 @@ public partial class StartRunPage
     private static string TargetLabel(CoreTargets? target, bool continuous = false) => target is null || target.Mode == CoreTargetMode.None ? "RPE only"
         : $"{(continuous ? "Continuous target" : "Work target")}: {(target.Mode == CoreTargetMode.Pace ? Clock(target.Work!.Value) + " min/km" : "Zone " + target.Work)}"
             + (target.Recovery is { } recovery ? $" · Recovery: {(target.Mode == CoreTargetMode.Pace ? Clock(recovery) + " min/km" : "Zone " + recovery)}" : "");
+    private static string StatisticTime(MeasuredStatistics? value) => value is null ? "Unavailable" : Clock((long)value.ActiveTime.TotalSeconds);
+    private static string StatisticDistance(MeasuredStatistics? value) => value is null ? "Unavailable" : value.MeasuredMetres is > 0 || value.KnownGpsActiveTime > TimeSpan.Zero
+        ? (value.MeasuredMetres / 1000).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "Unavailable";
+    private static string Pace(double? seconds) => seconds is > 0 && double.IsFinite(seconds.Value) ? Clock((long)Math.Round(seconds.Value)) : "Unavailable";
+    private static string HeartRate(double? bpm) => bpm is > 0 && double.IsFinite(bpm.Value) ? Math.Round(bpm.Value).ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "Unavailable";
+    private static string CoverageLabel(MeasuredStatistics? value) => value is null ? "Unavailable"
+        : $"GPS {Clock((long)value.KnownGpsActiveTime.TotalSeconds)} known, {Clock((long)value.UnknownGpsActiveTime.TotalSeconds)} unknown; HR {Clock((long)value.KnownHeartRateActiveTime.TotalSeconds)} known, {Clock((long)value.UnknownHeartRateActiveTime.TotalSeconds)} unknown (min:sec).";
+    private static string PhaseTargetLabel(RunSnapshot state)
+    {
+        if (state.Phase is not ("Work" or "Recovery")) return "";
+        var target = state.FrozenTemplate?.Targets;
+        var value = state.Phase == "Recovery" ? target?.Recovery : target?.Work;
+        if (target is null || target.Mode == CoreTargetMode.None || value is null) return "RPE only";
+
+        return target.Mode == CoreTargetMode.Pace ? $"Target pace {Clock(value.Value)} min/km · intended effort"
+            : $"Target Zone {value} · intended effort, not a measurement";
+    }
+
     private static void TogglePause() => RunService.Command(RunService.Snapshot?.Paused == true ? "resume" : "pause");
 
     private async Task Start(CoreStartRequest request)
