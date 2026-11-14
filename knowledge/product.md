@@ -14,6 +14,8 @@ Read this entry point and the affected owning specification before a change. Rul
 
 | Owner | Scope |
 |---|---|
+| [LOOP system reference](training/system.md) | General training rules, assumptions and deliberate tradeoffs; supporting health/mobility and generic event resources link from this owner |
+| [What is LOOP?](what-is-loop.md) | Pedagogical projection of the system reference, not a second training-rule authority; revised content awaits review and reader runtime stays held |
 | [Running workouts](running-workouts.md) | Current product delivery, C1/C2, workout/phase/statistics/pause rules and coaching |
 | [Architecture](architecture.md) | Approved local modular monolith, service ownership and code organization |
 | [Integrations and data](integrations-data.md) | Android permissions, WHOOP, SQLite, maps, Health Connect and JSON |
@@ -23,7 +25,7 @@ Read this entry point and the affected owning specification before a change. Rul
 | [LOOP knowledge feature](loop-knowledge.md) | Approved reader scope and acceptance; runtime implementation remains on hold |
 | [Future LOOP Core](loop-core-roadmap.md) | M2 planning, rename gate, Sx/M management boundary and open product decisions |
 
-[Training guide](what-is-loop.md) owns the approved explanatory Core content. [C1/C2 product decision](loop-cx.md) retains source-template decisions. [Design decisions](../design/decision.md) record approvals; [AGENTS.md](../AGENTS.md) owns delivery/review rules. GitHub Projects is the sole work list; milestones group outcomes and do not replace issue acceptance.
+[LOOP system reference](training/system.md) is the proposed migrated owner of general Core content under [#97](https://github.com/simlindahl/loop-cx/issues/97); the [training guide](what-is-loop.md) explains it. The [migration record](../docs/loop-source-migration.md) identifies provenance, reconciliation and the pending private pointer change. App specifications retain resolved-plan, measurement, recording and acceptance contracts; their numerical runtime tables are synchronized projections, not separate general training authorities. [C1/C2 product decision](loop-cx.md) retains source-template decisions. [Design decisions](../design/decision.md) record approvals; [AGENTS.md](../AGENTS.md) owns delivery/review rules. GitHub Projects is the sole work list; milestones group outcomes and do not replace issue acceptance.
 
 ## Milestones
 

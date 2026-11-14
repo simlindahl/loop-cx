@@ -1,20 +1,23 @@
 # What is LOOP? · review brief
 
-13 November 2026 · Refs #32 · **Content and mockups approved by Simon on 13 November 2026 at revision `4a4c971`. App implementation and publication remain on hold.**
+14 November 2026 refresh · Refs #32 and [#97](https://github.com/simlindahl/loop-cx/issues/97). **The prior content/mockup approval is revision `4a4c971` from 13 November. The new wording is a review draft, not a retroactive extension of that approval. Reader app implementation remains on hold. Repository publication was separately approved and completed.**
 
 ## Review material
 
 - [Complete English reading guide](../knowledge/what-is-loop.md).
+- [LOOP system reference](../knowledge/training/system.md) and [ownership migration](loop-source-migration.md): general rule owner and supporting resources; the guide explains them.
 - [Offline, clickable mockup gallery](../design/mockups/index.html#loop-about); open the HTML locally, not GitHub's source viewer.
 - [Proposed feature acceptance](../knowledge/loop-knowledge.md#loop-knowledge--review-proposal).
 
-The guide is the full content draft. Phone frames are representative excerpts that test hierarchy and navigation; they do not reproduce every paragraph. Implementation must bundle the approved complete content, not just these excerpts. No app configuration, reading progress, new main tab or automatic rotation tracking is proposed.
+The guide is the revised content draft. Existing phone frames represent the previously approved hierarchy/navigation and historical copy; they do not automatically show or approve this refresh. Implementation must bundle the reviewed complete content and internal references, not just frame excerpts. No new app configuration, reading progress, main tab or automatic rotation tracking is proposed.
 
 ## Decisions already reflected
 
 Audience: experienced exercisers adapting to career, family, travel and other demands. Explain the complete Core without requiring an app or wearable. Entry under Settings, short introduction, Get started, optional deeper learning. Four-part reading flow. Gym and home choices. Attribution: LOOP by Simon Lindahl. Private reference links and personal race data are excluded.
 
-Core defaults remain two working sets to technical failure, safe stops and recovery adjustments. C1 uses five efforts and exactly 38 minutes, matching the existing product decision. This resolves the private source's conflicting prose about four efforts; it is not a new training-rule change. Optional mobility material is not turned into a mandatory daily routine. Existing app WHOOP integration requirements are unchanged.
+Core defaults retain two working sets to technical failure, safe stops and recovery adjustments. The original review's single five-effort/38-minute C1 is historical, not the new-start dose. The subsequently approved three-protocol family and shared 4/3 defaults govern the synchronized current reference; frozen historical plans remain unchanged. Optional mobility stays optional. Brand-neutral BLE/HRR requirements remain with their current owners.
+
+The requested refresh explains the interrupted-life assumption, experience/autoregulation, order versus dose, general capacity versus specialization, failure/fatigue, exercise choices and M/recovery compromises. Get started keeps brief why statements; Learn more/system reference carry deeper detail. The new reader has no visible RPE and invents no replacement zone defaults. Its optional Ghost rationale explains personal mastery and contextual self-reference without claiming a health score, compulsory race frequency, leaderboard superiority or complete-programme validation. Ghost runtime rules and [#96](https://github.com/simlindahl/loop-cx/issues/96) target/presentation choices keep their own owners.
 
 ## Proposed navigation
 

@@ -22,7 +22,9 @@ Observable acceptance: after M1 acceptance, the repository and human-facing iden
 
 ## Complete Core and management boundaries
 
-The [approved training guide](what-is-loop.md#get-started) owns Core content and safety guidance: C1 → S1 + M → C2 → S2 + M. S1 covers hinge, horizontal pull, single-leg squat and horizontal push; S2 covers single-leg squat, vertical pull, hinge and vertical push. M is the mixed finish after strength, not a fifth rotation step. Do not silently turn training examples into new mandatory app rules.
+The [LOOP system reference](training/system.md) owns general training rules and rationale; the [guide](what-is-loop.md#get-started) is their pedagogical projection. The [ownership migration](../docs/loop-source-migration.md) does not change M2 authorization, rename timing, Sx/M boundaries or recording requirements. Numerical runtime contracts stay with their app owners and remain synchronized with approved system changes.
+
+The [system reference](training/system.md) owns Core content and safety guidance, explained by the [training guide](what-is-loop.md#get-started): C1 → S1 + M → C2 → S2 + M. S1 covers hinge, horizontal pull, single-leg squat and horizontal push; S2 covers single-leg squat, vertical pull, hinge and vertical push. M is the mixed finish after strength, not a fifth rotation step. Do not silently turn training examples into new mandatory app rules.
 
 M management must be clearly **separate from Sx management**. Within Sx, select a **predefined M**. These are product constraints, not approval for standalone M execution, an automatic rotation engine or a custom exercise/workout library.
 

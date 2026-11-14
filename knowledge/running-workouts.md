@@ -6,6 +6,8 @@ title: Running workouts
 
 [Product entry point and ownership](product.md). M1 requirements unless explicitly marked otherwise.
 
+General training rules and their rationale belong to the [LOOP system reference](training/system.md); [What is LOOP?](what-is-loop.md) is its explanatory guide. This file owns app execution, resolved/frozen plans, measurement, coaching and acceptance. Its numerical protocol tables are synchronized runtime projections; historical versions remain immutable. The [14 November content refresh](../design/decision.md#loop-content-ownership-refresh) introduces no new dose. The owner's removal of RPE from presentation and requested zone-based direction await the bounded [#96](https://github.com/simlindahl/loop-cx/issues/96) contract/design decision: existing RPE-bearing app clauses below describe the delivered/historical contract until that replacement is decided and implemented. Do not infer zone defaults, remove pace support or rewrite raw/export history from this content migration.
+
 <a id="produkt-och-leverans"></a>
 ## Product and delivery
 An English-language running app for a runner who rotates between a few favourite workouts. After initial setup, a saved workout must start from the home screen with one tap. The same recording must work with the screen visible, Spotify in the foreground and the phone locked. Deliver an Android app, an installable APK for private use, reproducible Windows instructions and a verification report. The first target phone is a Pixel with a WHOOP band. No server is needed. Private APK distribution is the proposed default.
