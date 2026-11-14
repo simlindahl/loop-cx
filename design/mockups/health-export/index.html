@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <meta content="dark" name="color-scheme"/>
+  <title>Health Connect, sharing and recovery · approved reference</title>
+  <link rel="stylesheet" href="style.css">
+ </head><body><svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
+   <defs>
+    <symbol id="icon-add" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z">
+     </path>
+    </symbol>
+    <symbol id="icon-chevron_right" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z">
+     </path>
+    </symbol>
+    <symbol id="icon-directions_run" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z">
+     </path>
+    </symbol>
+    <symbol id="icon-history" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z">
+     </path>
+    </symbol>
+    <symbol id="icon-pause" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z">
+     </path>
+    </symbol>
+    <symbol id="icon-play_arrow" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M8 5v14l11-7z">
+     </path>
+    </symbol>
+    <symbol id="icon-settings" viewbox="0 0 24 24">
+     <g>
+      <path d="M0,0h24v24H0V0z" fill="none">
+      </path>
+      <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z">
+      </path>
+     </g>
+    </symbol>
+   </defs>
+  </svg><header class="review-header"><p><strong>Approved design direction, not runtime acceptance.</strong> See <a href="../../decision.md#m1-integration-approval">the scope and conditions</a>. No Ghost layout or reader-runtime approval is implied.</p><p><strong>Latest approved affordance condition:</strong> existing navigation rows now have a permanent separate trailing chevron and focus/pressed feedback. Static measurements remain plain values. No destination or link has been added. Earlier screenshots are historical; the versioned HTML is the current reference.</p><div class="review-kicker">Health Connect WRITE + Share workout data · approved reference</div><h1>Saved locally. Export status stays honest.</h1><p>This repository-owned reference reuses existing History/detail/export/share screens. It adds only initial Health Connect opt-in and an abstract OS write-permission boundary. No write, file creation, share, account or permission request runs.</p><p><strong>One bounded layout decision:</strong> Health Connect opt-in/status paths and Share workout data, in their existing Settings/History context. The detailed gallery sources were preliminary; the later explicit owner response approves this revised direction. Neither debug test rationale nor static examples establish working production export.</p><p>Review: <a href="#health-off">Off → write access</a> · <a href="#export-pending">Pending</a> · <a href="#export-action">Action required</a> · <a href="#exported">Exported</a> · <a href="#share">JSON sharing disclosure</a>.</p><p>“Exported” means confirmed written to Health Connect, not WHOOP import. The displayed exported example is an illustration, not an exporter result. JSON sharing includes recorded coordinates and health data; no recipient is inferred. Historical synthetic plan figures remain frozen examples, not current defaults.</p></header><div class="review-layout"><nav class="review-index" aria-label="Export review states"><a href="#saved">Saved locally</a><a href="#history">Run history</a><a href="#run-detail">Run details</a><a href="#c2-detail">Easy run details</a><a href="#share">Share workout data</a><a href="#share-sheet">Share sheet boundary</a><a href="#health-settings">Health Connect settings</a><a href="#export-pending">Export pending</a><a href="#export-action">Export needs permission</a><a href="#exported">Export complete</a><a href="#health-off">Health Connect · Off</a><a href="#health-write-request">Health Connect write access</a><a href="#recording-recovery-proposal">New: interruption / saving errors</a></nav><main class="gallery" id="gallery"><section class="review-group"><h2>Existing context and bounded opt-in/share states</h2><div class="screens"><article aria-labelledby="heading-saved" class="review-screen" id="saved">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-saved">
+          Saved locally
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Saved locally" class="screen-index" href="#saved">
+         28
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="../index.html#training">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           Run saved.
+          </h2>
+          <p>
+           C1 / Intervals
+          </p>
+         </header>
+         <div class="body">
+          <p class="big-result">
+           38:00
+           <span>
+            total
+           </span>
+          </p>
+          <p class="big-result">
+           6.35
+           <span>
+            km
+           </span>
+          </p>
+          <div class="row">
+           <span>
+            Main set
+           </span>
+           <span class="row-value">
+            23:00 · 4.20 km
+           </span>
+          </div>
+          <a class="row" href="#export-pending">
+           <span>
+            Health Connect
+           </span>
+           <span class="row-value">
+            Pending
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="action primary" href="#run-detail">
+           View run
+          </a>
+          <a class="action secondary" href="../index.html#training">
+           Back to training
+          </a>
+         </div>
+        </div>
+       </div>
+       <p class="screen-note">
+        Local save is complete before export. Synthetic mock data must never be written to Health Connect.
+       </p>
+       <p class="requirement">
+        Spec: Integration, storage and errors – Local database/Health Connect
+       </p>
+      </article>
+<article aria-labelledby="heading-history" class="review-screen" id="history">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-history">
+          Run history
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Run history" class="screen-index" href="#history">
+         30
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="../index.html#training">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           History
+          </h2>
+          <p>
+           Your work, kept local.
+          </p>
+         </header>
+         <div class="body">
+          <a class="row" href="#run-detail">
+           <span>
+            C1 · Intervals
+            <small>
+             12 Nov · 38:00 total · Exported
+            </small>
+           </span>
+           <span class="row-value">
+            6.35 km
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="row" href="#c2-detail">
+           <span>
+            C2 · Easy run
+            <small>
+             10 Nov · 45:00 main set · Exported
+            </small>
+           </span>
+           <span class="row-value">
+            7.50 km
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="row" href="../index.html#interrupted-detail">
+           <span>
+            Easy miles
+            <small>
+             8 Nov · Interrupted · Action needed
+            </small>
+           </span>
+           <span class="row-value">
+            2.14 km
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+         </div>
+        </div>
+        <nav aria-label="App" class="bottom-nav">
+         <a href="../index.html#training">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-directions_run">
+           </use>
+          </svg>
+          <span>
+           Training
+          </span>
+         </a>
+         <a aria-current="page" href="#history">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-history">
+           </use>
+          </svg>
+          <span>
+           History
+          </span>
+         </a>
+         <a href="../index.html#settings">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-settings">
+           </use>
+          </svg>
+          <span>
+           Settings
+          </span>
+         </a>
+        </nav>
+       </div>
+       <p class="screen-note">
+        Dates and measurements are synthetic examples; this is not Simon’s training history.
+       </p>
+       <p class="requirement">
+        Spec: Screens and layout – History
+       </p>
+      </article>
+<article aria-labelledby="heading-run-detail" class="review-screen" id="run-detail">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-run-detail">
+          Run details
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Run details" class="screen-index" href="#run-detail">
+         32
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="#history">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           C1 / Intervals
+          </h2>
+          <p>
+           12 Nov 2026 · 07:00
+          </p>
+         </header>
+         <div class="body">
+          <p class="big-result">
+           6.35
+           <span>
+            km total
+           </span>
+          </p>
+          <div class="row">
+           <span>
+            Total active / elapsed
+           </span>
+           <span class="row-value">
+            38:00 / 39:12
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Main active / elapsed
+           </span>
+           <span class="row-value">
+            23:00 / 24:12
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Main distance / avg pace
+           </span>
+           <span class="row-value">
+            4.20 km / 5:29/km
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Main average heart rate
+           </span>
+           <span class="row-value">
+            149 bpm
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Warm-up / cool-down
+           </span>
+           <span class="row-value">
+            10:00 / 5:00
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Pauses
+           </span>
+           <span class="row-value">
+            1:12 · manual
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Workout source
+           </span>
+           <span class="row-value">
+            LOOP Core · C1 · rev 1
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Target effort
+           </span>
+           <span class="row-value">
+            Work 8 / recovery 2
+           </span>
+          </div>
+          <a class="row" href="../index.html#splits">
+           <span>
+            Splits &amp; phases
+           </span>
+           <span class="row-value">
+            9 phases
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="row" href="../index.html#zone-history">
+           <span>
+            Time in zones
+           </span>
+           <span class="row-value">
+            Frozen start boundaries
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="row" href="../index.html#route">
+           <span>
+            Route
+           </span>
+           <span class="row-value">
+            6.35 km
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="row" href="#exported">
+           <span>
+            Health Connect
+           </span>
+           <span class="row-value">
+            Exported
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="action primary" href="#share">
+           Share workout data
+          </a>
+         </div>
+        </div>
+        <nav aria-label="App" class="bottom-nav">
+         <a href="../index.html#training">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-directions_run">
+           </use>
+          </svg>
+          <span>
+           Training
+          </span>
+         </a>
+         <a aria-current="page" href="#history">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-history">
+           </use>
+          </svg>
+          <span>
+           History
+          </span>
+         </a>
+         <a href="../index.html#settings">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-settings">
+           </use>
+          </svg>
+          <span>
+           Settings
+          </span>
+         </a>
+        </nav>
+       </div>
+       <p class="requirement">
+        Spec: Screens and layout – History; Workouts and statistics 5; AI export
+       </p>
+      </article>
+<article aria-labelledby="heading-c2-detail" class="review-screen" id="c2-detail">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-c2-detail">
+          Easy run details
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Easy run details" class="screen-index" href="#c2-detail">
+         33
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="#history">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           C2 / Easy run
+          </h2>
+          <p>
+           10 Nov 2026 · 07:00
+          </p>
+         </header>
+         <div class="body">
+          <p class="big-result">
+           7.50
+           <span>
+            km main set
+           </span>
+          </p>
+          <div class="row">
+           <span>
+            Main active / elapsed
+           </span>
+           <span class="row-value">
+            45:00 / 45:00
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Main average pace
+           </span>
+           <span class="row-value">
+            6:00/km
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Target
+           </span>
+           <span class="row-value">
+            Zone 2 · RPE 3
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Source
+           </span>
+           <span class="row-value">
+            LOOP Core · C2 · rev 1
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Warm-up / cool-down
+           </span>
+           <span class="row-value">
+            Off / Off
+           </span>
+          </div>
+          <a class="row" href="../index.html#continuous-splits">
+           <span>
+            Splits
+           </span>
+           <span class="row-value">
+            7 × 1 km + 0.5 km
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="row" href="#exported">
+           <span>
+            Health Connect
+           </span>
+           <span class="row-value">
+            Exported
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a class="action secondary" href="../index.html#ghost-save">Save route to Ghost Run</a>
+          <a class="action primary" href="#share">
+           Share workout data
+          </a>
+         </div>
+        </div>
+        <nav aria-label="App" class="bottom-nav">
+         <a href="../index.html#training">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-directions_run">
+           </use>
+          </svg>
+          <span>
+           Training
+          </span>
+         </a>
+         <a aria-current="page" href="#history">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-history">
+           </use>
+          </svg>
+          <span>
+           History
+          </span>
+         </a>
+         <a href="../index.html#settings">
+          <svg aria-hidden="true" class="icon">
+           <use href="../index.html#icon-settings">
+           </use>
+          </svg>
+          <span>
+           Settings
+          </span>
+         </a>
+        </nav>
+       </div>
+       <p class="screen-note">
+        Historical C2 revision 1 example: RPE 3 and no warm-up/cool-down. This is not the new Core-first start prescription.
+       </p>
+       <p class="requirement">
+        Spec: LOOP Core; History; Workouts and statistics 1
+       </p>
+      </article>
+<article aria-labelledby="heading-share" class="review-screen" id="share">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-share">
+          Share workout data
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Share workout data" class="screen-index" href="#share">
+         40
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="#run-detail">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           Your run, as data.
+          </h2>
+          <p>
+           A UTF-8 JSON file.
+          </p>
+         </header>
+         <div class="body">
+          <p>
+           Includes the frozen plan, target RPE, phases, splits, heart rate, route coordinates, pauses and data gaps.
+          </p>
+          <div class="row">
+           <span>
+            Filename
+           </span>
+           <span class="row-value">
+            loop-cx-run.json
+           </span>
+          </div>
+          <div class="row">
+           <span>
+            Schema
+           </span>
+           <span class="row-value">
+            Versioned · units explicit
+           </span>
+          </div>
+          <aside class="notice">
+           <strong>
+            Contains your route
+           </strong>
+           <p>
+            Full export includes precise coordinates and UTC timestamps.
+           </p>
+          </aside>
+          <a class="action primary" href="#share-sheet">
+           Open Android share sheet
+          </a>
+         </div>
+        </div>
+       </div>
+       <p class="screen-note">
+        File is illustrative. The HTML does not create or share an actual run.
+       </p>
+       <p class="requirement">
+        Spec: Integration, storage and errors – AI export
+       </p>
+      </article>
+<article aria-labelledby="heading-share-sheet" class="review-screen" id="share-sheet">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-share-sheet">
+          Share sheet boundary
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Share sheet boundary" class="screen-index" href="#share-sheet">
+         41
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="#share">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           Share workout data
+          </h2>
+         </header>
+         <div class="body">
+          <div class="system-boundary">
+           <h3>
+            Android share sheet
+           </h3>
+           <p>
+            The system chooses available apps and their layout.
+           </p>
+           <strong>
+            loop-cx-run.json
+           </strong>
+          </div>
+          <a class="action secondary" href="#run-detail">
+           Back to run
+          </a>
+         </div>
+        </div>
+       </div>
+       <p class="screen-note">
+        System-owned surface. No real recipients, apps or accounts are inferred.
+       </p>
+       <p class="requirement">
+        Spec: AI export
+       </p>
+      </article>
+<p class="screen-note">Return or cancellation leaves the local run and Health Connect status unchanged. Opening the sheet is not proof that a recipient received the file.</p>
+<article aria-labelledby="heading-health-settings" class="review-screen" id="health-settings">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-health-settings">
+          Health Connect settings
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Health Connect settings" class="screen-index" href="#health-settings">
+         51
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="../index.html#settings">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           Health Connect
+          </h2>
+          <p>
+           Your run is always saved locally first.
+          </p>
+         </header>
+         <div class="body">
+          <div class="row">
+           <span>
+            Automatic export
+           </span>
+           <span aria-label="Automatic export: on" class="switch on" role="img">
+            <i>
+            </i>
+           </span>
+          </div>
+          <a class="row" href="#export-action">
+           <span>
+            Write permission
+           </span>
+           <span class="row-value">
+            Granted
+
+           </span>
+          <svg aria-hidden="true" focusable="false" class="navigation-indicator" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <aside class="notice">
+           <strong>
+            Whole-run export
+           </strong>
+           <p>
+            Includes warm-up, main set, recovery and cool-down. Writes a running session, distance and available heart rate.
+           </p>
+          </aside>
+          <a class="action secondary" href="#export-pending">
+           View pending exports
+          </a>
+          <p>
+           WHOOP handles its own import. “Exported” means written to Health Connect, not confirmed in WHOOP.
+          </p>
+         </div>
+        </div>
+       </div>
+       <p class="requirement">
+        Spec: Integration, storage and errors – Health Connect
+       </p>
+      </article>
+<p class="screen-note review-links">Review initial state: <a href="#health-off">automatic export off</a>.</p>
+<article aria-labelledby="heading-export-pending" class="review-screen" id="export-pending">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-export-pending">
+          Export pending
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Export pending" class="screen-index" href="#export-pending">
+         52
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="#run-detail">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           Saved. Export pending.
+          </h2>
+         </header>
+         <div class="body">
+          <aside class="notice">
+           <strong>
+            Queued for Health Connect
+           </strong>
+           <p>
+            Local history is ready. Retry when the integration is available.
+           </p>
+          </aside>
+          <div class="row">
+           <span>
+            Run
+           </span>
+           <span class="row-value">
+            C1 · 12 Nov
+           </span>
+          </div>
+          <a class="action primary" href="#exported">
+           Retry export
+          </a>
+          <a class="action secondary" href="#health-settings">
+           Review settings
+          </a>
+         </div>
+        </div>
+       </div>
+       <p class="screen-note">
+        Navigation illustrates a successful retry; no write takes place. Stable IDs prevent duplicate records in implementation.
+       </p>
+       <p class="requirement">
+        Spec: Health Connect – safe retries
+       </p>
+      </article>
+<article aria-labelledby="heading-export-action" class="review-screen" id="export-action">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-export-action">
+          Export needs permission
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Export needs permission" class="screen-index" href="#export-action">
+         53
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="#run-detail">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           Permission needed.
+          </h2>
+         </header>
+         <div class="body">
+          <aside class="notice">
+           <strong>
+            Run saved locally
+           </strong>
+           <p>
+            Allow Health Connect write access to export this run. Your recording is safe.
+           </p>
+          </aside>
+          <a class="action primary" href="#health-settings">
+           Review Health Connect access
+          </a>
+          <a class="action secondary" href="#history">
+           Return to history
+          </a>
+         </div>
+        </div>
+       </div>
+       <p class="requirement">
+        Spec: Health Connect – changed permissions
+       </p>
+      </article>
+<article aria-labelledby="heading-exported" class="review-screen" id="exported">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-exported">
+          Export complete
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Export complete" class="screen-index" href="#exported">
+         54
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+         <header class="page-header">
+          <a class="back" href="#run-detail">
+           ←
+           <span>
+            Back
+           </span>
+          </a>
+          <h2>
+           Exported.
+          </h2>
+          <p>
+           Written to Health Connect.
+          </p>
+         </header>
+         <div class="body">
+          <aside class="notice">
+           <strong>
+            One running session
+           </strong>
+           <p>
+            Whole run, distance and available heart-rate samples were exported.
+           </p>
+          </aside>
+          <p>
+           Written to Health Connect does not confirm WHOOP import. Check WHOOP separately.
+          </p>
+          <a class="action primary" href="#run-detail">
+           Back to run
+          </a>
+         </div>
+        </div>
+       </div>
+       <p class="requirement">
+        Spec: Health Connect; Health Connect → WHOOP
+       </p>
+      </article>
+<article aria-labelledby="heading-health-off" class="review-screen" id="health-off">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-health-off">
+          Health Connect · Off
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Health Connect · Off" class="screen-index" href="#health-off">
+         53
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+    <header class="page-header"><a class="back" href="../index.html#settings">← Settings</a><h2>Health Connect · Off</h2></header>
+         <div class="body"><p>Your run is saved locally whether Health Connect is enabled or not.</p><aside class="notice"><strong>Automatic export is off</strong><p>Enable write access to export running sessions, distance and available heart-rate data to Health Connect. No other apps’ health history is read.</p></aside><a class="action primary" href="#health-write-request">Enable Health Connect</a><a class="action secondary" href="#history">Keep local only</a>
+         </div>
+        </div>
+       </div>
+       <p class="requirement">
+        Spec: Health Connect – changed permissions
+       </p>
+      </article>
+<article aria-labelledby="heading-health-write-request" class="review-screen" id="health-write-request">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-health-write-request">
+          Health Connect write access
+         </h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Health Connect write access" class="screen-index" href="#health-write-request">
+         53
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content">
+    <header class="page-header"><a class="back" href="#health-off">← Health Connect</a><h2>Health Connect write access</h2></header>
+         <div class="body"><aside class="notice"><strong>Android permission UI</strong><p>The system asks for the required write categories: running sessions, distance and heart rate. Its exact appearance and choices depend on Android.</p></aside><p>Denying access keeps your local run available. Export requires the relevant write access; permission alone does not mean a run has been exported.</p><a class="action secondary" href="#health-off">Back to Health Connect</a>
+         </div>
+        </div>
+       </div>
+       <p class="requirement">
+        Spec: Health Connect – changed permissions
+       </p>
+      </article>
+<p class="screen-note review-links">Review system outcomes (not app buttons): <a href="#health-settings">write access granted</a> · <a href="#export-action">write access denied/revoked</a>.</p></div></section><section class="review-group" id="recording-recovery-proposal"><h2>Interrupted recording and saving errors · approved direction</h2><p>Delta against main e973e5c. Separately approved in the subsequent explicit four-package owner response, with latest feedback as conditions. The earlier History/Health Connect/share question alone did not cover this delta. Static illustrations only: no timer recovery, save, retry, discard, export or device action runs. Unknown fields are intentional; no minutes, distance or stop time has been invented. The live error example reuses historical Work illustration data unchanged.</p><p>Review alternatives: <a href="#interrupted">Interrupted</a> · <a href="#interrupted-save-error">Save failed</a> · <a href="#interrupted-detail">Confirmed local save</a> · <a href="#storage-error">Live saving error</a>.</p><div class="screens"><article aria-labelledby="heading-interrupted" class="review-screen" id="interrupted">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-interrupted">Interrupted recording</h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Interrupted recording" class="screen-index" href="#interrupted">
+         29
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content"><header class="page-header"><h2>Your run was interrupted.</h2><p>Only the last saved recording can be recovered.</p></header><div class="body"><aside class="notice"><strong>Partial recording</strong><p>No time or distance is added after the last saved checkpoint. The actual stop time is unknown.</p></aside><div class="row"><span>Last saved active time</span><span class="row-value">Unavailable</span></div><div class="row"><span>Last saved distance</span><span class="row-value">Unavailable</span></div><p>Known values will come from this recording. Unavailable values stay unknown.</p><a class="action primary" href="#interrupted-detail">Save recorded part</a></div>
+        </div>
+       </div><p class="screen-note">Static success-path illustration only. In production, stay here until the same recording is committed; do not resume the interrupted timer. Unknown values deliberately illustrate missing checkpoint fields.</p><p class="requirement">Approved reference · integrations-data: local database / interrupted recording</p></article><article aria-labelledby="heading-interrupted-save-error" class="review-screen" id="interrupted-save-error">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-interrupted-save-error">Recorded-part save failed</h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Interrupted recording" class="screen-index" href="#interrupted">
+         29
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content"><header class="page-header"><h2>Your run was interrupted.</h2><p>Only the last saved recording can be recovered.</p></header><div class="body"><aside class="notice"><strong>Partial recording</strong><p>No time or distance is added after the last saved checkpoint. The actual stop time is unknown.</p></aside><div class="row"><span>Last saved active time</span><span class="row-value">Unavailable</span></div><div class="row"><span>Last saved distance</span><span class="row-value">Unavailable</span></div><p>Known values will come from this recording. Unavailable values stay unknown.</p><aside class="notice" role="alert" aria-labelledby="save-failure-title"><strong id="save-failure-title">Could not save the recorded part.</strong><p>Save is not confirmed. Try again.</p></aside><a class="action primary" href="#interrupted-detail">Retry save</a></div>
+        </div>
+       </div><p class="screen-note">The approved retry reuses the immutable recording ID. This anchor illustrates a confirmed-success outcome, not a real database operation. A second failure stays on this form; no automatic discard or new workout.</p><p class="requirement">Approved reference · integrations-data: local database / interrupted recording</p></article><article aria-labelledby="heading-interrupted-detail" class="review-screen" id="interrupted-detail">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-interrupted-detail">Saved interrupted run</h3>
+         <span class="screen-status">
+          Approved direction
+         </span>
+        </div>
+        <a aria-label="Link to Interrupted run detail" class="screen-index" href="#interrupted-detail">
+         34
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content"><header class="page-header"><a class="back" href="#history">← History</a><h2>Interrupted run</h2><p>Partial recording · saved locally</p></header><div class="body"><aside class="notice"><strong>Partial recording</strong><p>No time or distance is added after the last saved checkpoint. The actual stop time is unknown.</p></aside><div class="row"><span>Last saved active time</span><span class="row-value">Unavailable</span></div><div class="row"><span>Last saved distance</span><span class="row-value">Unavailable</span></div><div class="row"><span>Actual stop time</span><span class="row-value">Unknown</span></div><aside class="notice"><strong>Not exported to Health Connect</strong><p>A supported recorded end time is required for export.</p></aside><a class="action secondary" href="#share">Share workout data</a></div>
+        </div>
+       </div><p class="screen-note">Shown only after local commit succeeds. The interruption marker and unknown end remain. Local saving does not establish Health Connect eligibility; it must not manufacture a finish time. No map, plan, duration or export state is invented.</p><p class="requirement">Approved reference · integrations-data: local database / interrupted recording</p></article><article aria-labelledby="heading-storage-error" class="review-screen" id="storage-error">
+       <header class="screen-heading">
+        <div>
+         <h3 id="heading-storage-error">Saving interrupted during a live run</h3>
+         <span class="screen-status">
+          Approved direction · inline error only
+         </span>
+        </div>
+        <a aria-label="Link to Work interval" class="screen-index" href="#storage-error">
+         17
+        </a>
+       </header>
+       <div class="phone">
+        <div aria-hidden="true" class="statusbar">
+         <span>
+          07:18
+         </span>
+         <span>
+          5G · 92%
+         </span>
+        </div>
+        <div class="phone-content"><aside class="notice" role="alert" aria-labelledby="live-save-error"><strong id="live-save-error">Recent recording could not be saved.</strong><p>Recent data may be lost if the app closes. Training is still running.</p><a class="action secondary" href="#storage-error">Retry saving</a></aside>
+         <header class="run-header">
+          <a class="run-name" href="#storage-error">
+           C1 / Intervals
+          </a>
+          <h2>
+           Work 3 of 5
+          </h2>
+          <p>
+           Target effort RPE 8
+          </p>
+          <div class="countdown">
+           <strong>
+            1:18
+           </strong>
+           <span>
+            remaining
+           </span>
+          </div>
+          <div aria-label="Work repetition 3 of 5" class="segments" role="img">
+           <i class="complete">
+           </i>
+           <i class="complete">
+           </i>
+           <i class="current">
+           </i>
+           <i class="">
+           </i>
+           <i class="">
+           </i>
+          </div>
+         </header>
+         <section class="statistics">
+          <h3>
+           Main set &amp; split
+          </h3>
+          <table>
+           <thead>
+            <tr>
+             <td>
+             </td>
+             <th scope="col">
+              Main set
+             </th>
+             <th scope="col">
+              This split
+             </th>
+            </tr>
+           </thead>
+           <tbody>
+            <tr>
+             <th scope="row">
+              Time
+             </th>
+             <td>
+              11:42
+             </td>
+             <td>
+              1:42
+             </td>
+            </tr>
+            <tr>
+             <th scope="row">
+              Distance
+             </th>
+             <td>
+              2.00 km
+             </td>
+             <td>
+              0.34 km
+             </td>
+            </tr>
+            <tr>
+             <th scope="row">
+              Avg pace
+             </th>
+             <td>
+              5:51
+              <wbr/>
+              /km
+             </td>
+             <td>
+              5:00
+              <wbr/>
+              /km
+             </td>
+            </tr>
+            <tr>
+             <th scope="row">
+              Avg HR
+             </th>
+             <td>
+              149 bpm
+             </td>
+             <td>
+              157 bpm
+             </td>
+            </tr>
+           </tbody>
+          </table>
+         </section>
+         <section aria-label="Live measurements" class="live">
+          <div>
+           <span>
+            Live pace
+           </span>
+           <strong class="accent">
+            4:58
+           </strong>
+           <small>
+            min/km
+           </small>
+          </div>
+          <div>
+           <span>
+            Heart rate
+           </span>
+           <strong>
+            159
+           </strong>
+           <small>
+            bpm
+           </small>
+          </div>
+         </section>
+         <footer class="run-controls">
+          <a class="action primary" href="#storage-error">
+           <svg aria-hidden="true" class="icon">
+            <use href="#icon-pause">
+            </use>
+           </svg>
+           Pause
+          </a>
+         </footer>
+        </div>
+       </div>
+       <p class="screen-note">Only the inline error addition is approved here. Existing Work contents are historical synthetic examples, not current defaults. Approved continuation keeps existing Pause/Resume available; no automatic pause or additional Continue mode. Show this running wording only while the service is actually running. Retry is a static self-link, never fake success.</p>
+       <p class="requirement">
+        Spec: Screens and layout – Training view; Workouts and statistics 2
+       </p>
+      </article></div></section></main></div></body></html>

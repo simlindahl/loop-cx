@@ -8,7 +8,13 @@ The large index.html gallery is one HTML file with shared inline CSS, embedded S
 <a id="vad-som-gäller"></a>
 ## What applies
 
-Basalt, English, Space Grotesk, Material Icons and revision 5's direction are approved. Simon approved the exact neutral Basalt palette and launcher background on 13 November 2026; see the [canonical colors and contrast](../../knowledge/ux-design.md#basalt--approved-colors). New screens and detailed layouts are **preliminary** and await Simon's review. Read the [design decisions](../decision.md) and [product specification](../../knowledge/product.md). Requesting mockups does not approve their design. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
+Basalt, English, Space Grotesk, Material Icons and revision 5's direction are approved. Simon approved the exact neutral Basalt palette and launcher background on 13 November 2026; see the [canonical colors and contrast](../../knowledge/ux-design.md#basalt--approved-colors). Except for the explicitly approved references below, new screens and detailed layouts are **preliminary** and await Simon's review. Read the [design decisions](../decision.md) and [product specification](../../knowledge/product.md). Requesting mockups does not approve their design. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
+
+## Approved integration references
+
+The [Settings integration reference](settings-integrations/index.html) and [History/Health Connect/share/recovery reference](health-export/index.html) are the current approved directions for their identified surfaces under the [14 November decision](../decision.md#m1-integration-approval). Their scope notes distinguish actual approved states from contextual links and static success illustrations. The latest HRR result preview uses a locally color-coded proportional reserve bar and exact-BPM legend under the [scoped chart exception](../../knowledge/ux-design.md#heart-rate-zone-preview-colors), not editable-looking result fields. Audio behavior has one [normative owner](../../knowledge/running-workouts.md#audio-configuration-and-coaching).
+
+These portable references supersede the matching older detailed gallery states, including manual-zone illustrations. They do not approve the wider gallery, revised Ghost details or reader runtime. Both use existing fonts/assets, run offline and perform no real permissions, sensor, save, health or share operations. Run `node design/mockups/verify-integrations.cjs` for the focused browser checks; output shares the existing `qa/` evidence directory and must not be committed. Native and physical acceptance remain separate.
 
 ## Approved Core-first reference
 
@@ -143,7 +149,7 @@ In the large index.html gallery, the index and captions are review tools, not ap
 
 [Static mockup review](../../.github/workflows/mockups.yml) uses Chromium on GitHub Actions. The check opens the file offline and checks broken anchors, duplicate IDs, the embedded font, scripts and external requests. It measures horizontal overflow at 360, 390, 700, 1024 and 1440 px, follows Start C1 to warm-up and saves representative screenshots and `report.json` as the `mockup-review` Actions artifact. An approximation of 200% text scaling is reported separately; it does not replace Android system text scaling or TalkBack.
 
-Local equivalent with Node and Playwright installed: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` can select a separate installation. Screenshots and the report are written to `design/mockups/qa/` and must not be committed. Record actual local and Actions results in the PR; browser availability depends on the environment. The verifier also follows Ghost route entry, return to session details, and the pause action in each live reference mode.
+Local equivalent with Node and Playwright installed: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` can select a separate installation; `PLAYWRIGHT_CHANNEL` can select an installed browser such as `chrome` instead of Playwright's bundled browser. Screenshots and the report are written to `design/mockups/qa/` and must not be committed. Record actual local and Actions results in the PR; browser availability depends on the environment. The verifier also follows Ghost route entry, return to session details, and the pause action in each live reference mode. The same CI job also runs `verify-integrations.cjs` for the approved portable integration references.
 
 <a id="licenser"></a>
 ## Licenses

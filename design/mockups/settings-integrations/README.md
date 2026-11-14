@@ -1,0 +1,9 @@
+# Approved Settings integration reference
+
+Open [index.html](index.html) locally. This is a synthetic browser-memory reference for brand-neutral deliberate HR connection, resting/maximum HR inputs, read-only HRR visualisation and the saved-shortcut audio form. It performs no scan, permission request, sensor connection, audio or persistence.
+
+The [decision record](../../decision.md#m1-integration-approval) identifies the approved policy inputs and latest requested HRR presentation. The locally color-coded bar shows proportions of heart-rate reserve, not recorded zone time; its [scoped palette exception](../../../knowledge/ux-design.md#heart-rate-zone-preview-colors) changes no global accent. The exact-BPM legend remains visible without interaction; only the two input values are editable. The [integration specification](../../../knowledge/integrations-data.md#personal-heart-rate-zones) owns calculation, validation and frozen provenance. The [audio specification](../../../knowledge/running-workouts.md#audio-configuration-and-coaching) owns global Core defaults and shortcut inheritance; this example shows one explicit shortcut.
+
+The script is copied unchanged from the latest identified presentation. The stylesheet uses the existing repository font asset, and outside-phone review captions link to current canonical owners. Earlier manual-boundary, neutral-bar and table-style screenshots are historical. Other destinations shown as context, Ghost detailed layouts and the reader runtime hold do not gain approval from this reference.
+
+Run `node design/mockups/verify-integrations.cjs` from the repository root with Playwright installed. `PLAYWRIGHT_MODULE` may select an existing installation; `PLAYWRIGHT_CHANNEL` may select an installed browser. Output goes to `design/mockups/qa/integrations/` and must not be committed. Browser checks do not establish Android text scaling, TalkBack, actual sensors or physical WHOOP compatibility.

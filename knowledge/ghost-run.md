@@ -13,6 +13,13 @@ title: Ghost Run
 
 Ghost Run is a separate feature, accessible from Training without changing the existing three main navigation destinations. After a completed continuous workout, the runner can choose Save route to Ghost Run in session details. This applies only to main-set distance, not warm-up/cool-down. Intervals, pacers/target pace and arbitrary previous attempts are excluded. Ghost Run uses English, Basalt, Space Grotesk and Material Icons. See the [preliminary screens](../design/mockups/index.html#ghost-routes).
 
+<a id="race-identity-and-applicability"></a>
+#### Race identity and applicability
+
+Ghost Run is a competitive activity separate from Core/Cx conditioning. Starting, executing, displaying, recording and exporting a race must identify Ghost Run, its route/version and frozen reference/race rules. Do not use C2/Zone 2, an easy-run purpose, RPE 4 or a Core template revision as race identity. RPE and optional pace/HR-zone targets are not applicable: neither ask for nor display them. Represent that explicitly as null/absent under the versioned contract, never RPE 0 or a fabricated C2 template. Measured pace/HR remain valid measurements, distinct from training targets.
+
+A race can use a route captured from C2 without becoming C2. The source remains a completed continuous workout's contiguous main route only; intervals, imported tracks, automatic route detection and arbitrary builders are not added. Preserve source warm-up/cool-down exclusion, original metadata and raw data. Shared timing, recording or training-active accounting does not transfer a Core classification to the race. The existing race-clock, pause, route/reference and quality rules below remain unchanged; this product decision does not approve revised detailed Ghost layouts or release the reader runtime hold.
+
 <a id="spara-och-välja-rutt"></a>
 ### Save and select a route
 
@@ -69,6 +76,7 @@ Load route and reference data locally before starting; no new server is needed. 
 | Test | Expected result |
 |---|---|
 | Save a continuous main set with warm-up/cool-down | A Ghost Run route from the main phase only. Preserve the source session; it becomes the first result if verified. Interval sessions do not offer the action. |
+| Race a route captured from C2 | Race UI/metadata/export identifies Ghost Run, route/version and frozen reference, with RPE and optional pace/zone targets not applicable. Measured HR/pace remain available. The source C2 history retains its original RPE/template and exports. |
 | Year best 27:30 in 2026, PB 26:40 in 2025 | Select the correct recording for each mode. Clearly label one record holding both. No pacer or arbitrary attempt selection. |
 | Year change, time-zone change and tied times | Preserve the stored local start year, freeze year selection at a new start and use stable reference selection for ties. |
 | No year best or no records | Set the first time for the year without a ghost; offer PB only if one exists. The first valid result becomes the reference. |
