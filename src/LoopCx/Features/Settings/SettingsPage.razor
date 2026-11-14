@@ -1,0 +1,69 @@
+@implements IAsyncDisposable
+@inject Microsoft.JSInterop.IJSRuntime JS
+<section aria-labelledby="settings-heading">
+    <button type="button" @onclick="GoBack">@(page == "settings" ? "← Training" : "← Settings")</button>
+    <h2 id="settings-heading" data-motion-group tabindex="-1">@Title</h2>
+    @if (message is not null) { <p role="status">@message</p> }
+    @if (error is not null) { <p id="heart-rate-settings-error" role="alert">@error</p> }
+    @if (page == "settings")
+    {
+        <p>Set once. Keep running.</p>
+        <button class="setting-row" type="button" @onclick='() => Open("connection")'>Heart-rate connection <small>@ConnectionStatus</small></button>
+        <button class="setting-row" type="button" @onclick="OpenZones">Heart-rate zones <small>@ProfileStatus</small></button>
+        <button id="warmup-cooldown-settings" class="setting-row" type="button" @onclick="OnWarmupCooldown">Warm-up and cool-down <small>Global C1 defaults</small></button>
+    }
+    else if (page == "connection")
+    {
+        <p>For sensors that broadcast the standard Bluetooth LE Heart Rate service. This does not imply support for every watch, ANT+ or cloud connection. For example, a WHOOP band needs heart-rate broadcast enabled.</p>
+        <section class="card">
+            <h3>@ConnectionStatus</h3>
+            @if (configuration.DeviceAddress is not null)
+            {
+                <p>@(configuration.DeviceName ?? "Selected sensor")</p>
+                @if (LiveSource is { } live)
+                {
+                    <p>Heart rate <strong>@(live.CurrentBpm?.ToString() ?? "Unavailable")</strong> bpm</p>
+                    <p>@QualityLabel(live.Quality)</p>
+                }
+                else { <p>Selected · connects when a run starts.</p> }
+                <button type="button" @onclick="RemoveSelection">Remove selection for new runs</button>
+            }
+            else { <p>Connect a compatible Bluetooth LE Heart Rate sensor. If your sensor requires heart-rate broadcast, turn it on and keep the sensor nearby.</p> }
+        </section>
+        @if (DifferentActiveSource) { <p>The current run keeps its original sensor and zones. This selection applies to new runs.</p> }
+        <p>Confirm the sensor is yours in Android's chooser. No nearby device is selected automatically.</p>
+        <button class="primary" type="button" disabled="@selecting" @onclick="SelectSensor">@(selecting ? "Waiting for Android selection…" : "Select sensor")</button>
+        <button type="button" @onclick="ReviewAccess">Review Android access</button>
+        <p class="small">You can run without heart rate. Missing readings stay unknown. Settings does not start a background heart-rate connection.</p>
+    }
+    else
+    {
+        <p>Heart-rate reserve</p>
+        <p>Enter your own resting and maximum heart rates. No values are estimated or imported.</p>
+        @if (configuration.ReserveProfile is null && configuration.Zones.Count > 0)
+        { <p>Your existing manually configured ranges are preserved until you explicitly save new zones.</p> }
+        <form @onsubmit="SaveZones" @onsubmit:preventDefault novalidate>
+            <div class="field"><label for="resting-heart-rate">Resting heart rate (bpm)</label><input id="resting-heart-rate" inputmode="numeric" @bind="resting" @bind:event="oninput" @bind:after="ClearZoneError" aria-describedby="@(invalidField is not null ? "heart-rate-settings-error" : null)" aria-invalid="@(invalidField == "resting-heart-rate")" required /></div>
+            <div class="field"><label for="maximum-heart-rate">Maximum heart rate (bpm)</label><input id="maximum-heart-rate" inputmode="numeric" @bind="maximum" @bind:event="oninput" @bind:after="ClearZoneError" aria-describedby="@(invalidField is not null ? "heart-rate-settings-error" : null)" aria-invalid="@(invalidField == "maximum-heart-rate")" required /></div>
+            @if (Preview is { } zones)
+            {
+                <figure class="hrr-overview">
+                    <figcaption>Your heart-rate range</figcaption>
+                    <div class="hrr-scale" aria-hidden="true"><span style="--portion:40;--zone-colour:var(--hrr-zone-0)">Below 1</span>@for (var index = 1; index <= 5; index++) { <span style="@($"--portion:{(index == 1 ? 20 : 10)};--zone-colour:var(--hrr-zone-{index})")">@index</span> }</div>
+                    <div class="hrr-axis" aria-hidden="true"><span>@resting bpm<br />resting</span><span>@maximum bpm<br />maximum</span></div>
+                    <p class="small">Bar widths show heart-rate reserve, not time in zones.</p>
+                </figure>
+                <dl class="hrr-ranges">
+                    <div><dt>Below Zone 1</dt><dd>Below @zones[0].MinimumBpm bpm</dd></div>
+                    @foreach (var zone in zones)
+                    { <div><dt><span class="swatch" aria-hidden="true" style="@($"background:var(--hrr-zone-{zone.Number})")"></span>Zone @zone.Number</dt><dd>@zone.MinimumBpm–@zone.MaximumBpm bpm</dd></div> }
+                    <div><dt>Above configured maximum</dt><dd>Above @zones[^1].MaximumBpm bpm</dd></div>
+                </dl>
+                <p class="small">Valid readings outside the zones stay known. Missing or invalid readings remain unknown.</p>
+            }
+            else { <p>Enter valid values to see calculated zones.</p> }
+            <p>Save applies to new runs. Active runs and saved history keep their original zones. No automatic updates from your sensor or cloud.</p>
+            <div class="actions"><button class="primary" type="submit">Save zones</button><button type="button" @onclick="CancelZones">Cancel</button></div>
+        </form>
+    }
+</section>

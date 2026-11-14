@@ -4,8 +4,13 @@
 <main data-motion-surface="@MotionSurface">
     <header>
         <h1>LOOP Cx</h1>
+        @if (!showSettings && RunService.Snapshot is not null) { <button id="active-settings" type="button" @onclick="OpenSettingsDestination">Settings</button> }
     </header>
-    @if (RunService.Snapshot is { } state)
+    @if (showSettings)
+    {
+        <LoopCx.Features.Settings.SettingsPage @ref="settingsPage" OnTraining="CloseSettingsDestination" OnWarmupCooldown="OpenSettings" />
+    }
+    else if (RunService.Snapshot is { } state)
     {
         <section aria-labelledby="phase-heading">
             <p class="eyebrow">@(state.FrozenTemplate?.ProtocolId ?? state.TemplateId) · @(state.FrozenTemplate?.ShortcutName ?? (state.TemplateId == "C2" ? "Zone 2" : "Intervals"))</p>
@@ -123,7 +128,7 @@
         <section aria-labelledby="start-heading">
             <div class="card-heading" data-motion-group>
 <h2 id="start-heading" tabindex="-1">Start a run</h2>
-<button id="core-settings" type="button" @onclick="OpenSettings">Settings</button>
+<button id="core-settings" type="button" @onclick="OpenSettingsDestination">Settings</button>
 </div>
             <section class="workout" data-core-card data-motion-group aria-labelledby="c1-heading">
                 <div class="card-heading">

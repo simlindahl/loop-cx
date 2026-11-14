@@ -3,7 +3,7 @@ using LoopCx.Features.ActiveRun;
 
 namespace LoopCx;
 
-// Backend seam for a later approved Settings surface. Invalid saved configuration is never overwritten.
+// Selected source and optional HRR profile. Loading invalid settings never overwrites saved bytes.
 internal static class HeartRatePreferences
 {
     private const string Key = "heart-rate-configuration-v1";
