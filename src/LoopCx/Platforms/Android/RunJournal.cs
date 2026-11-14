@@ -17,7 +17,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     private static RunJournal? shared;
     public static RunJournal Shared => shared ??= new RunJournal();
 
-    private RunJournal() : base(global::Android.App.Application.Context, JournalFileName, null, 4)
+    private RunJournal() : base(global::Android.App.Application.Context, JournalFileName, null, 5)
     {
         // Only runs left by an earlier process are interrupted. Never infer missing time.
         WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
@@ -34,10 +34,13 @@ public sealed class RunJournal : SQLiteOpenHelper
         var db = database!;
         db.ExecSQL("CREATE TABLE runs (id TEXT PRIMARY KEY, started_utc TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, status TEXT NOT NULL, initial_plan TEXT NOT NULL, checkpoint TEXT NOT NULL, template_metadata TEXT)");
         db.ExecSQL("CREATE TABLE locations (run_id TEXT NOT NULL, utc_ms INTEGER NOT NULL, monotonic_ns INTEGER NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, accuracy REAL)");
-        db.ExecSQL("CREATE TABLE export_queue (run_id TEXT PRIMARY KEY, status TEXT NOT NULL)");
+        CreateExportQueue(db);
         CreateEvents(db);
         CreateHeartRate(db);
     }
+
+    internal static void CreateExportQueue(SQLiteDatabase db) =>
+        db.ExecSQL("CREATE TABLE export_queue (run_id TEXT PRIMARY KEY, status TEXT NOT NULL, attempt_json TEXT, last_error TEXT)");
 
     private static void CreateEvents(SQLiteDatabase db) =>
         db.ExecSQL("CREATE TABLE run_events (sequence INTEGER PRIMARY KEY, run_id TEXT NOT NULL, command TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, checkpoint TEXT NOT NULL)");
@@ -53,6 +56,11 @@ public sealed class RunJournal : SQLiteOpenHelper
         if (oldVersion < 2) CreateEvents(db!);
         if (oldVersion < 3) db!.ExecSQL("ALTER TABLE runs ADD COLUMN template_metadata TEXT");
         if (oldVersion < 4) CreateHeartRate(db!);
+        if (oldVersion < 5)
+        {
+            db!.ExecSQL("ALTER TABLE export_queue ADD COLUMN attempt_json TEXT");
+            db.ExecSQL("ALTER TABLE export_queue ADD COLUMN last_error TEXT");
+        }
     }
 
     public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
@@ -137,28 +145,35 @@ public sealed class RunJournal : SQLiteOpenHelper
         db.BeginTransactionNonExclusive();
         try
         {
-            using var run = db.RawQuery("SELECT started_utc, observed_utc, elapsed_ms, status, initial_plan, template_metadata, heart_rate_metadata, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
-            if (!run.MoveToFirst()) throw new KeyNotFoundException("The recorded run does not exist.");
-            var events = new List<ExportEvent>();
-            using (var rows = db.RawQuery("SELECT sequence, command, observed_utc, elapsed_ms, checkpoint FROM run_events WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
-                while (rows.MoveToNext()) events.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetString(2)!, rows.GetLong(3), ParseJson(rows.GetString(4)!)));
-            var locations = new List<ExportLocation>();
-            using (var rows = db.RawQuery("SELECT rowid, utc_ms, monotonic_ns, latitude, longitude, accuracy FROM locations WHERE run_id = ? ORDER BY rowid", [id.ToString()])!)
-                while (rows.MoveToNext()) locations.Add(new(rows.GetLong(0), rows.GetLong(1), rows.GetLong(2), rows.GetDouble(3), rows.GetDouble(4), rows.IsNull(5) ? null : rows.GetDouble(5)));
-            var heartRate = new List<ExportHeartRate>();
-            using (var rows = db.RawQuery("SELECT sequence, receipt_utc, receipt_monotonic_ticks, bpm, quality FROM heart_rate WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
-                while (rows.MoveToNext()) heartRate.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetLong(2), rows.IsNull(3) ? null : rows.GetInt(3), rows.GetString(4)!));
-            using var queue = db.RawQuery("SELECT status FROM export_queue WHERE run_id = ?", [id.ToString()])!;
-            var exportStatus = queue.MoveToFirst() ? queue.GetString(0) : null;
-            snapshot = new(id, run.GetString(0)!, run.GetString(1)!, run.GetLong(2), run.GetString(3)!,
-                ParseJson(run.GetString(4)!), run.IsNull(5) ? null : ParseJson(run.GetString(5)!),
-                run.IsNull(6) ? null : ParseJson(run.GetString(6)!), ParseJson(run.GetString(7)!), exportStatus,
-                events, locations, heartRate);
+            snapshot = ReadExportSnapshot(db, id);
             db.SetTransactionSuccessful();
         }
         finally { db.EndTransaction(); }
 
         return ExportRunV1.Project(snapshot);
+    }
+
+    // Caller owns the single transaction; all values are detached before returning.
+    internal static ExportJournalSnapshot ReadExportSnapshot(SQLiteDatabase db, Guid id)
+    {
+        if (!db.InTransaction()) throw new InvalidOperationException("A consistent export snapshot requires a transaction.");
+        using var run = db.RawQuery("SELECT started_utc, observed_utc, elapsed_ms, status, initial_plan, template_metadata, heart_rate_metadata, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
+        if (!run.MoveToFirst()) throw new KeyNotFoundException("The recorded run does not exist.");
+        var events = new List<ExportEvent>();
+        using (var rows = db.RawQuery("SELECT sequence, command, observed_utc, elapsed_ms, checkpoint FROM run_events WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
+            while (rows.MoveToNext()) events.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetString(2)!, rows.GetLong(3), ParseJson(rows.GetString(4)!)));
+        var locations = new List<ExportLocation>();
+        using (var rows = db.RawQuery("SELECT rowid, utc_ms, monotonic_ns, latitude, longitude, accuracy FROM locations WHERE run_id = ? ORDER BY rowid", [id.ToString()])!)
+            while (rows.MoveToNext()) locations.Add(new(rows.GetLong(0), rows.GetLong(1), rows.GetLong(2), rows.GetDouble(3), rows.GetDouble(4), rows.IsNull(5) ? null : rows.GetDouble(5)));
+        var heartRate = new List<ExportHeartRate>();
+        using (var rows = db.RawQuery("SELECT sequence, receipt_utc, receipt_monotonic_ticks, bpm, quality FROM heart_rate WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
+            while (rows.MoveToNext()) heartRate.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetLong(2), rows.IsNull(3) ? null : rows.GetInt(3), rows.GetString(4)!));
+        using var queue = db.RawQuery("SELECT status FROM export_queue WHERE run_id = ?", [id.ToString()])!;
+        var exportStatus = queue.MoveToFirst() ? queue.GetString(0) : null;
+        return new(id, run.GetString(0)!, run.GetString(1)!, run.GetLong(2), run.GetString(3)!,
+            ParseJson(run.GetString(4)!), run.IsNull(5) ? null : ParseJson(run.GetString(5)!),
+            run.IsNull(6) ? null : ParseJson(run.GetString(6)!), ParseJson(run.GetString(7)!), exportStatus,
+            events, locations, heartRate);
     }
 
     private static JsonElement ParseJson(string value)
