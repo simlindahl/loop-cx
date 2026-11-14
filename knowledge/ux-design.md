@@ -41,9 +41,14 @@ Recovery labels distinguish last-saved values, Partial/Interrupted and unknown a
 
 The owner separately approved the concrete [twenty-one-state Ghost reference](../design/mockups/ghost-run/index.html#ghost-routes) under its [recorded decision](../design/decision.md#ghost-layout-approval). It shows separate race identity and route/reference/comparison facts without RPE or optional pace/zone editors/labels, retaining measured statistics and distinct race versus training-active time. The earlier Core/Work and integration approvals did not themselves approve Ghost; this subsequent decision resolves the identified detailed-layout gate. It does not establish working maps, race quality, actual Verified records, native accessibility or physical acceptance. New material changes retain their normal decision rules, and the reader runtime hold remains unchanged.
 
-### Live heart-rate exploration
+<a id="live-measurement-motion"></a>
+### Live measurement motion
 
-UX is exploring a more alive presentation of live heart rate. This is a proposal task, not approved runtime animation or a change to the motion contract. Any proposal must respect minimalism, truthful freshness/unknown states, accessibility and reduced motion, and must not claim beat-precise timing from a BPM value or local BLE notification receipt. Keep current sensor digits and recording semantics unchanged until a concrete design is approved and verified.
+The owner approved the [live-measurements visual reference](../design/mockups/live-metrics/index.html), under the [recorded source-bound decision](../design/decision.md#live-measurement-motion-approval). Keep actual BPM digits, units and layout stable; a neutral Material Filled favorite symbol in a fixed slot to their right pulses symbolically at 60000/BPM. BLE receipt is not a heartbeat, and this is not ECG or beat-precise timing. Actual fresh HR may continue during Manual/Auto pause without implying active training time; stale/contact-invalid/unknown HR stops the effect and remains unavailable.
+
+A neutral arrow and explicit Faster/Steady/Slower label accompany live pace. Faster/Slower uses restrained repeating directional motion whose speed follows current running speed; Steady is static. Keep digits and labels stable, decorative symbols hidden from screen readers and avoid repeated announcements, flashing or good/bad color judgment. [The workout owner](running-workouts.md#pace-trend-direction) defines comparison/reset semantics and the uncalibrated parameter boundary. This narrowly approved data-indicative motion does not relax the wider motion contract or permit decorative background loops.
+
+Pending/hidden/reduced-motion states stop effects, retaining truthful static information. Resolve the existing native motion preference before first effect and after background return; reuse its bridge and dispose effects/listeners on unmount. No interpolation, measured step-frequency or GPS-rhythm claims. This is visual approval, not delivered app behavior: runtime lifecycle, accessibility, battery and physical acceptance remain to be verified. No new sensor/recording policy, animation framework or reader-runtime release is authorized.
 
 <a id="basalt--beslutade-färger"></a>
 ### Basalt – approved colors
