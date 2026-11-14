@@ -11,6 +11,9 @@ public sealed record HeartRateZone(int Number, int MinimumBpm, int MaximumBpm);
 public sealed record HeartRateConfiguration(int Version, string? DeviceAddress, HeartRatePolicy Policy,
     IReadOnlyList<HeartRateZone> Zones)
 {
+    public HeartRateReserveProfile? ReserveProfile { get; init; }
+    public string? DeviceName { get; init; }
+
     public static HeartRateConfiguration Empty { get; } = new(1, null, HeartRatePolicy.Pilot, []);
 
     public static HeartRateSetup ReadOptional(string? json)
@@ -39,9 +42,11 @@ public sealed record HeartRateConfiguration(int Version, string? DeviceAddress, 
         if (Version != 1 || Policy.Version != 1 || Policy.MaximumGap <= TimeSpan.Zero || Policy.MaximumGap > TimeSpan.FromSeconds(30))
             throw new ArgumentException("The heart-rate quality policy is not supported.");
 
-        if (DeviceAddress is not null && (DeviceAddress.Length != 17 || DeviceAddress.Where((_, index) => index % 3 == 2).Any(character => character != ':') ||
-            DeviceAddress.Where((_, index) => index % 3 != 2).Any(character => !Uri.IsHexDigit(character))))
+        if (DeviceAddress is not null && (DeviceAddress.Length != 17 || DeviceAddress.Where(static (_, index) => index % 3 == 2).Any(static character => character != ':') ||
+            DeviceAddress.Where(static (_, index) => index % 3 != 2).Any(static character => !Uri.IsHexDigit(character))))
+        {
             throw new ArgumentException("Choose a valid heart-rate device address.");
+        }
 
         for (var index = 0; index < Zones.Count; index++)
         {
@@ -49,8 +54,13 @@ public sealed record HeartRateConfiguration(int Version, string? DeviceAddress, 
 
             if (zone is null || zone.Number != index + 1 || zone.MinimumBpm <= 0 || zone.MaximumBpm < zone.MinimumBpm ||
                 (index > 0 && zone.MinimumBpm != Zones[index - 1].MaximumBpm + 1))
+            {
                 throw new ArgumentException("Personal zones must have ordered, contiguous, non-overlapping whole-BPM boundaries.");
+            }
         }
+
+        if (ReserveProfile is not null && !ReserveProfile.ResolveZones().SequenceEqual(Zones))
+            throw new ArgumentException("Stored HRR inputs and resolved zones disagree.");
 
         if (Zones.Count is not (0 or 5)) throw new ArgumentException("Supply all five personal zones or leave zones unconfigured.");
     }
