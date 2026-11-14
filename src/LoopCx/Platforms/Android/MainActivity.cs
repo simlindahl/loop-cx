@@ -67,6 +67,28 @@ public sealed class MainActivity : MauiAppCompatActivity
             if (Guid.TryParse(archiveSeed, out var seed)) _ = Task.Run(() => NativeGhostArchiveProbe.Run(seed));
             return;
         }
+        var exportRun = intent?.GetStringExtra("loop-export-json-run");
+        intent?.RemoveExtra("loop-export-json-run");
+        if (exportRun is not null && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")
+        {
+            var exportDirectory = global::Android.App.Application.Context.FilesDir!.AbsolutePath;
+            // Test the same synchronous backend on a worker while normal service callbacks continue.
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    if (!Guid.TryParse(exportRun, out var exportId)) throw new ArgumentException("Invalid run identity.");
+                    var json = RunJournal.Shared.ExportJson(exportId);
+                    File.WriteAllText(Path.Combine(exportDirectory, $"run-export-{exportId}.json"), json, new System.Text.UTF8Encoding(false));
+                    global::Android.Util.Log.Info("LoopRun", "Local JSON test snapshot saved privately.");
+                }
+                catch (Exception problem) when (problem is ArgumentException or KeyNotFoundException or IOException or System.Text.Json.JsonException)
+                {
+                    global::Android.Util.Log.Warn("LoopRun", "Local JSON test snapshot failed.");
+                }
+            });
+            return;
+        }
         var hrConfiguration = intent?.GetStringExtra("loop-heart-rate-configuration");
         intent?.RemoveExtra("loop-heart-rate-configuration");
         // Test setup only. It feeds the same production preferences/start/source path, never a fake BPM callback.

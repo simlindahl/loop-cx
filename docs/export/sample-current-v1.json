@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "units": {
+    "distance": "metres",
+    "coordinates": "decimal-degrees",
+    "heartRate": "beats-per-minute",
+    "utc": "ISO-8601",
+    "gpsUtc": "unix-milliseconds",
+    "observedElapsed": "milliseconds",
+    "gpsBootMonotonic": "nanoseconds",
+    "hrBootReceiptMonotonic": "100-nanosecond-ticks",
+    "checkpointDuration": "TimeSpan-constant-format",
+    "pace": "seconds-per-kilometre"
+  },
+  "run": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "startedUtc": "2026-11-14T10:00:00Z",
+    "lastObservedUtc": "2026-11-14T10:00:11Z",
+    "observedElapsedMilliseconds": 11000,
+    "status": "recording",
+    "originalPlan": [
+      {
+        "Kind": 1,
+        "Duration": "00:00:10",
+        "TargetRpe": 7
+      },
+      {
+        "Kind": 3,
+        "Duration": "00:00:10",
+        "TargetRpe": 2
+      }
+    ],
+    "template": {
+      "TemplateId": "C1",
+      "Source": "Synthetic fixture",
+      "Category": "intervals",
+      "TemplateRevision": 1,
+      "IntendedHeartRateZone": null,
+      "Targets": {
+        "Mode": 2,
+        "Work": 3,
+        "Recovery": null
+      }
+    },
+    "heartRateSetup": {
+      "Configuration": {
+        "Version": 1,
+        "DeviceAddress": null,
+        "Policy": {
+          "Version": 1,
+          "MaximumGap": "00:00:05"
+        },
+        "Zones": [
+          {
+            "Number": 1,
+            "MinimumBpm": 50,
+            "MaximumBpm": 99
+          },
+          {
+            "Number": 2,
+            "MinimumBpm": 100,
+            "MaximumBpm": 119
+          },
+          {
+            "Number": 3,
+            "MinimumBpm": 120,
+            "MaximumBpm": 139
+          },
+          {
+            "Number": 4,
+            "MinimumBpm": 140,
+            "MaximumBpm": 159
+          },
+          {
+            "Number": 5,
+            "MinimumBpm": 160,
+            "MaximumBpm": 220
+          }
+        ]
+      },
+      "ConfigurationError": null
+    },
+    "checkpoint": {
+      "SchemaVersion": 1,
+      "StartContext": {
+        "TimeZoneId": "Europe/Stockholm",
+        "UtcOffsetSeconds": 3600,
+        "BootMonotonicStartMilliseconds": 1000
+      },
+      "PhaseBoundaries": [
+        {
+          "PreviousPhaseIndex": 0,
+          "NextPhaseIndex": 1,
+          "PreviousPhase": 1,
+          "NextPhase": 3,
+          "EffectiveElapsedMilliseconds": 10000,
+          "ObservedElapsedMilliseconds": 10500,
+          "ObservedUtc": "2026-11-14T10:00:10.5\u002B00:00",
+          "StartAnchorDerivedEffectiveUtc": "2026-11-14T10:00:10\u002B00:00",
+          "Synthetic": false
+        }
+      ],
+      "Snapshot": {
+        "Id": "11111111-1111-1111-1111-111111111111",
+        "Phase": "Cooldown",
+        "Paused": false,
+        "ActiveSeconds": 11,
+        "RemainingSeconds": 9,
+        "Statistics": {
+          "Version": 1,
+          "Policy": {
+            "Version": "ordinary-gps-pilot-v1",
+            "MaximumAccuracyMetres": 30,
+            "MaximumGap": "00:00:10",
+            "MaximumAge": "00:00:10",
+            "MaximumSpeedMetresPerSecond": 12,
+            "MinimumMovementMetres": 3
+          },
+          "ObservedElapsed": "00:00:11",
+          "Total": {
+            "ActiveTime": "00:00:11",
+            "MeasuredMetres": 1050,
+            "KnownGpsActiveTime": "00:00:00",
+            "UnknownGpsActiveTime": "00:00:11",
+            "AveragePaceSecondsPerKilometre": null,
+            "AverageHeartRate": 127.27272727272727,
+            "KnownHeartRateActiveTime": "00:00:11",
+            "UnknownHeartRateActiveTime": "00:00:00",
+            "HeartRateZones": [
+              {
+                "Zone": 2,
+                "ActiveTime": "00:00:04"
+              },
+              {
+                "Zone": 3,
+                "ActiveTime": "00:00:05"
+              },
+              {
+                "Zone": 5,
+                "ActiveTime": "00:00:02"
+              }
+            ],
+            "UnclassifiedHeartRateActiveTime": "00:00:00"
+          },
+          "Main": {
+            "ActiveTime": "00:00:10",
+            "MeasuredMetres": 1050,
+            "KnownGpsActiveTime": "00:00:00",
+            "UnknownGpsActiveTime": "00:00:10",
+            "AveragePaceSecondsPerKilometre": null,
+            "AverageHeartRate": 111.11111111111111,
+            "KnownHeartRateActiveTime": "00:00:09",
+            "UnknownHeartRateActiveTime": "00:00:01",
+            "HeartRateZones": [
+              {
+                "Zone": 2,
+                "ActiveTime": "00:00:04"
+              },
+              {
+                "Zone": 3,
+                "ActiveTime": "00:00:05"
+              }
+            ],
+            "UnclassifiedHeartRateActiveTime": "00:00:00"
+          },
+          "CompletedSplits": [
+            {
+              "ActiveTime": "00:00:04",
+              "MeasuredMetres": 1000,
+              "KnownGpsActiveTime": "00:00:00",
+              "UnknownGpsActiveTime": "00:00:04",
+              "AveragePaceSecondsPerKilometre": null,
+              "AverageHeartRate": 100,
+              "KnownHeartRateActiveTime": "00:00:04",
+              "UnknownHeartRateActiveTime": "00:00:00",
+              "HeartRateZones": [
+                {
+                  "Zone": 2,
+                  "ActiveTime": "00:00:04"
+                }
+              ],
+              "UnclassifiedHeartRateActiveTime": "00:00:00"
+            },
+            {
+              "ActiveTime": "00:00:06",
+              "MeasuredMetres": 50,
+              "KnownGpsActiveTime": "00:00:00",
+              "UnknownGpsActiveTime": "00:00:06",
+              "AveragePaceSecondsPerKilometre": null,
+              "AverageHeartRate": 120,
+              "KnownHeartRateActiveTime": "00:00:05",
+              "UnknownHeartRateActiveTime": "00:00:01",
+              "HeartRateZones": [
+                {
+                  "Zone": 3,
+                  "ActiveTime": "00:00:05"
+                }
+              ],
+              "UnclassifiedHeartRateActiveTime": "00:00:00"
+            }
+          ],
+          "CurrentSplit": null,
+          "HasSyntheticTime": false
+        }
+      },
+      "Plan": [
+        {
+          "Kind": 1,
+          "Duration": "00:00:10",
+          "TargetRpe": 7
+        },
+        {
+          "Kind": 3,
+          "Duration": "00:00:10",
+          "TargetRpe": 2
+        }
+      ],
+      "Completed": [
+        {
+          "Plan": {
+            "Kind": 1,
+            "Duration": "00:00:10",
+            "TargetRpe": 7
+          },
+          "ActiveTime": "00:00:10"
+        }
+      ],
+      "PhaseActiveTime": "00:00:01",
+      "TotalActiveTime": "00:00:11",
+      "MainActiveTime": "00:00:10"
+    },
+    "exportStatus": null,
+    "events": [],
+    "locations": [
+      {
+        "snapshotOrder": 1,
+        "utcMilliseconds": 1794650411000,
+        "bootMonotonicNanoseconds": 12000000000,
+        "latitudeDegrees": 59,
+        "longitudeDegrees": 18,
+        "accuracyMetres": 5
+      }
+    ],
+    "heartRate": [
+      {
+        "sequence": 1,
+        "receiptUtc": "2026-11-14T10:00:11Z",
+        "bootReceiptMonotonicTicks": 120000000,
+        "bpm": 220,
+        "quality": "valid"
+      }
+    ]
+  },
+  "snapshotConsistency": "transactional-storage; raw GPS may precede the last derived checkpoint"
+}

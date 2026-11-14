@@ -2,6 +2,7 @@ using Android.Content;
 using Android.Database.Sqlite;
 using System.Text.Json;
 using LoopCx.Features.ActiveRun;
+using LoopCx.Features.ExportRun;
 
 namespace LoopCx;
 
@@ -55,7 +56,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     }
 
     public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
-        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null, AutomaticMotionEvent? automaticEvent = null, string? heartRateMetadata = null, HeartRateObservation? heartRateObservation = null)
+        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null, AutomaticMotionEvent? automaticEvent = null, string? heartRateMetadata = null, HeartRateObservation? heartRateObservation = null, RunStartContext? startContext = null, IReadOnlyList<PhaseBoundaryFact>? phaseBoundaries = null)
     {
         var db = WritableDatabase!;
         db.BeginTransaction();
@@ -76,6 +77,8 @@ public sealed class RunJournal : SQLiteOpenHelper
                 SchemaVersion = 1,
                 Snapshot = snapshot,
                 AutomaticEvent = automaticEvent,
+                StartContext = startContext,
+                PhaseBoundaries = phaseBoundaries,
                 session.Plan,
                 session.Completed,
                 session.PhaseActiveTime,
@@ -123,6 +126,45 @@ public sealed class RunJournal : SQLiteOpenHelper
             db.SetTransactionSuccessful();
         }
         finally { db.EndTransaction(); }
+    }
+
+    public string ExportJson(Guid id)
+    {
+        // All tables are materialized on this transaction's thread before projection or sharing.
+        var db = ReadableDatabase!;
+        ExportJournalSnapshot snapshot;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            using var run = db.RawQuery("SELECT started_utc, observed_utc, elapsed_ms, status, initial_plan, template_metadata, heart_rate_metadata, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
+            if (!run.MoveToFirst()) throw new KeyNotFoundException("The recorded run does not exist.");
+            var events = new List<ExportEvent>();
+            using (var rows = db.RawQuery("SELECT sequence, command, observed_utc, elapsed_ms, checkpoint FROM run_events WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
+                while (rows.MoveToNext()) events.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetString(2)!, rows.GetLong(3), ParseJson(rows.GetString(4)!)));
+            var locations = new List<ExportLocation>();
+            using (var rows = db.RawQuery("SELECT rowid, utc_ms, monotonic_ns, latitude, longitude, accuracy FROM locations WHERE run_id = ? ORDER BY rowid", [id.ToString()])!)
+                while (rows.MoveToNext()) locations.Add(new(rows.GetLong(0), rows.GetLong(1), rows.GetLong(2), rows.GetDouble(3), rows.GetDouble(4), rows.IsNull(5) ? null : rows.GetDouble(5)));
+            var heartRate = new List<ExportHeartRate>();
+            using (var rows = db.RawQuery("SELECT sequence, receipt_utc, receipt_monotonic_ticks, bpm, quality FROM heart_rate WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
+                while (rows.MoveToNext()) heartRate.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetLong(2), rows.IsNull(3) ? null : rows.GetInt(3), rows.GetString(4)!));
+            using var queue = db.RawQuery("SELECT status FROM export_queue WHERE run_id = ?", [id.ToString()])!;
+            var exportStatus = queue.MoveToFirst() ? queue.GetString(0) : null;
+            snapshot = new(id, run.GetString(0)!, run.GetString(1)!, run.GetLong(2), run.GetString(3)!,
+                ParseJson(run.GetString(4)!), run.IsNull(5) ? null : ParseJson(run.GetString(5)!),
+                run.IsNull(6) ? null : ParseJson(run.GetString(6)!), ParseJson(run.GetString(7)!), exportStatus,
+                events, locations, heartRate);
+            db.SetTransactionSuccessful();
+        }
+        finally { db.EndTransaction(); }
+
+        return ExportRunV1.Project(snapshot);
+    }
+
+    private static JsonElement ParseJson(string value)
+    {
+        using var document = JsonDocument.Parse(value);
+
+        return document.RootElement.Clone();
     }
 
     public void Location(Guid id, global::Android.Locations.Location location)
