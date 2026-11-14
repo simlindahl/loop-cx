@@ -106,7 +106,7 @@ The practical rationale is to reduce travel, equipment changes and setup decisio
 
 Progression is broader than adding repetitions indefinitely. Change leverage, assistance, controlled range of motion or unilateral demand, then use weighted variations when useful. These provide a broad scalable repertoire, not literally unlimited progression for every movement or person. Choose a version that supplies sufficient resistance without allowing balance, complexity or an uncontrolled range to replace the intended strength stimulus.
 
-Kikuchi and Nakazato compared adjusted low-load push-ups with bench press at 40 percent of one-repetition maximum in 18 young men over eight weeks, twice weekly. Both groups improved measured muscle thickness and strength with similar outcomes. This supports the usefulness of an appropriately loaded bodyweight pressing exercise; it does not establish universal calisthenics superiority, equal results across every movement or uniquely greater cardiovascular benefit. [28](#ref-28)
+Kikuchi and Nakazato compared adjusted low-load push-ups with bench press at 40 percent of one-repetition maximum in 18 young, untrained men over eight weeks, twice weekly. Both groups improved measured muscle thickness and strength with similar outcomes. This supports the usefulness of an appropriately loaded bodyweight pressing exercise; it does not establish universal calisthenics superiority, equal results across every movement or uniquely greater cardiovascular benefit. [28](#ref-28)
 
 <a id="strength-s1-and-s2"></a>
 ### S1 and S2: stable patterns with different priorities
