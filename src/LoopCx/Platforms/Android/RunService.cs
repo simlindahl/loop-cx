@@ -515,37 +515,38 @@ public sealed class RunService : Service, ILocationListener
         var open = new Intent(this, typeof(MainActivity));
         var pendingOpen = PendingIntent.GetActivity(this, 0, open, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var state = Snapshot!;
+        var pauseReason = !state.Paused ? PauseReason.None
+            : state.Motion?.PauseReason == PauseReason.Automatic ? PauseReason.Automatic : PauseReason.Manual;
+        var text = RunNotificationText.Create(state.Phase, state.RemainingSeconds, pauseReason,
+            state.HeartRate?.CurrentBpm, state.LivePace?.SecondsPerKilometre);
         var builder = new Notification.Builder(this, ChannelId)
             .SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
-            .SetContentTitle(state.Paused
-                ? (session!.PauseReason == PauseReason.Automatic ? "Autopaused" : "Manually paused")
-                : state.Phase)
-            .SetContentText(state.Paused
-                ? (session!.PauseReason == PauseReason.Automatic ? "Move to resume automatically." : "Use Resume to continue.")
-                : $"{state.RemainingSeconds}s remaining · {state.GpsStatus}")
+            .SetContentTitle(text.Title)
+            .SetContentText(text.Text)
+            .SetStyle(new Notification.BigTextStyle().BigText(text.ExpandedText))
             .SetContentIntent(pendingOpen)
             .SetVisibility(NotificationVisibility.Public)
             .SetOngoing(true);
-        if (state.Paused) builder.SetSubText($"{state.Phase} · {state.RemainingSeconds}s remaining");
+        if (state.Paused) builder.SetSubText(text.PhaseCountdown);
 
         var command = state.Paused ? "resume" : "pause";
         builder.AddAction(new Notification.Action.Builder(null, state.Paused ? "Resume" : "Pause",
             PendingIntent.GetService(this, 1, new Intent(this, typeof(RunService)).SetAction(command),
                 PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
-        if (session!.PauseReason == PauseReason.Automatic)
+        if (pauseReason == PauseReason.Automatic)
         {
             builder.AddAction(new Notification.Action.Builder(null, "Pause manually",
                 PendingIntent.GetService(this, 4, new Intent(this, typeof(RunService)).SetAction("pause"),
                     PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
         }
 
-        if (!state.Paused && session!.Current?.Kind is RunPhase.Warmup or RunPhase.Cooldown)
+        if (!state.Paused && state.Phase is "Warmup" or "Cooldown")
         {
             builder.AddAction(new Notification.Action.Builder(null, "+1 min",
                 PendingIntent.GetService(this, 2, new Intent(this, typeof(RunService)).SetAction("extend"),
                     PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
             builder.AddAction(new Notification.Action.Builder(null,
-                session.Current.Kind == RunPhase.Warmup ? "Start main run" : "Finish",
+                state.Phase == "Warmup" ? "Start main run" : "Finish",
                 PendingIntent.GetService(this, 3, new Intent(this, typeof(RunService)).SetAction("skip"),
                     PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
         }
