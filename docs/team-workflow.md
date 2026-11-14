@@ -43,11 +43,39 @@ Exclude **22:00–06:30 Europe/Stockholm** from elapsed Waiting-input time when 
 
 The team lead maintains one clearly labelled current handoff in the existing PR description. Use the [PR template](../.github/pull_request_template.md): exact head and base revisions, bounded diff, owning requirements and acceptance, design status, applicable verification/artifact manifest and remaining gates. Distinguish approved from preliminary design, static references from runtime behavior, and automated evidence from physical acceptance. Select visual evidence relevant to the changed screens; a full-gallery capture is not a universal requirement.
 
+Identify the actual reviewable seam, files or recorded checkpoint available now, with one short affected user-visible state invariant. Include only the current dependency/environment paths needed for the next step, separating executable prerequisites from historical evidence. Internal specialist assignments retain the resolved absolute project/worktree identity and revision; public PRs use repository-relative source paths and the appropriate evidence pointers. Follow [local workspace ownership](local-workspace.md), and preserve historical manifests rather than relabelling their original paths as a new execution.
+
+Before assigning the next step, the lead checks the matching role's current status. Use `followup_task` to activate a completed role when work must resume; `send_message` alone does not start it. Report work as started only after actual activation or other current execution evidence. Keep this coordination in the existing handoff, not another report.
+
 When the head or base changes, update that handoff and reassess affected evidence under the existing merge rules. Keep earlier results as labelled historical evidence rather than presenting them as current. After merge, reconcile the live issue and Project Next step with delivered scope and remaining acceptance; do not let an old candidate description remain the current status.
+
+### Consolidated reporting and readiness
+
+The lead gives the product owner one concise consolidated overview: current milestone/focus, the next useful testable delivery and its remaining blockers, and decisions actually needed from the owner. Keep technical details and individual work-item progress in the existing Project/PRs. Limit new parallel delivery tracks while current slices can finish, preserving safe in-flight work and existing dependencies. This creates no new dashboard, board, automation or M2 expansion.
+
+The lead owns complete readable sentences, clear paragraph structure and accurate scope in issues, PRs and comments. Explain the problem/result and current next action without requiring the reader to reconstruct internal chatter. Preserve paragraph breaks and read back externally edited text. Use neutral related-work references for partial deliveries; closing references require full issue acceptance.
+
+Before readiness, reconcile current decisions, review scope and Waiting/next-actor state with their canonical owners and the live Project. A resolved decision must not remain described as pending. Keep historical cutoffs attributed to their dates, and preserve independent review, required checks and outstanding physical acceptance. Presentation decisions follow the [study handoff](../design/mockups/README.md#present-a-study-for-a-decision).
 
 ## Retrospective record
 
 Record this project's completed retrospectives in this section through the normal documentation workflow. Each concise dated entry states participating roles, evidence, keep/change decisions, one to three concrete actions with owners, the owning file or workflow, state, expected observable benefit and the next relevant follow-up point. Link actions with remaining work to the existing Project rather than creating another board. At follow-up, record the observed effect and whether the team kept, adjusted or reverted the improvement; label unmeasured effects explicitly.
+
+### 2026-11-14 · Integration handoffs and product-owner overview
+
+The fullstack developer, requirements analyst, QA engineer, UX designer, architect and lead supplied direct input and endorsed A1–A3 after the owner's feedback. Simon participated directly and asynchronously: “Det är så mycket som pågår samtidigt, så jag har svårt att få en bra överblick.” Overview is the priority process issue. The lead responded with a consolidated four-row overview; its effect is unmeasured. His input is recorded without implying endorsement of every detailed action.
+
+Evidence: corrected findings in [PR #83](https://github.com/simlindahl/loop-cx/pull/83)/[#84](https://github.com/simlindahl/loop-cx/pull/84), [workspace move #85](https://github.com/simlindahl/loop-cx/pull/85), [portable references #86](https://github.com/simlindahl/loop-cx/pull/86), and withdrawn preliminary reviews followed by corrections for paused HR [#80](https://github.com/simlindahl/loop-cx/pull/80) and main finality [#78](https://github.com/simlindahl/loop-cx/pull/78). Passive messages to completed agents and path rediscovery caused further friction. No productivity gains or individual rankings are inferred.
+
+Keep exact-revision independent review, truthful static/native evidence and the prior single-handoff/ownership approach. The 13 November USB signing action has an [observed follow-up below](#usb-signing-follow-up-2026-11-14). Daily/micro-retro cadence and overnight Waiting-input policy are unchanged; Waiting alerts remain unimplemented. The next two relevant integration/design handoffs are the follow-up points for all three new actions; effects remain unmeasured.
+
+| Action | Owner and canonical destination | State and expected observable benefit | Follow-up |
+|---|---|---|---|
+| A1 · Supply the actual reviewable unit, one user-state invariant and necessary current prerequisites; check/activate role status | Lead; [current handoff](#current-review-handoff), PR template; specialists supply actual inputs | Instructions implemented in this candidate; expected to reduce stale-seam, path-rediscovery and inactive-role waits | Can recipients reach the current unit and begin the assigned work without reconstructing paths or role state? |
+| A2 · Verify the study in its intended presentation environment and bind the version actually seen | Lead and UX; [presentation handoff](../design/mockups/README.md#present-a-study-for-a-decision), cross-linked from spec-change | Instructions implemented in this candidate; expected to make decision material usable and version-identifiable | Did the study open for review, and does the final binding identify that version? |
+| A3 · Consolidate overview, limit new parallel tracks and reconcile readable writing, decisions and Waiting | Lead; [reporting/readiness](#consolidated-reporting-and-readiness), AGENTS.md pointer and existing Project/PRs | First overview delivered; instructions implemented in this candidate; expected to clarify the next testable result and needed decision | Check focus, next actions and decisions against available owner feedback; keep, adjust or revert from observed effects |
+
+Feedback to the product owner is to label a new idea as exploration or a replacement decision and, when practical, group closely related parameter changes. The lead owns consequence analysis, readable comparisons, accessible studies and reconciliation of the resulting decisions. Product evolution remains legitimate; team-owned coordination and writing problems retain team-owned actions. Track remaining follow-up in [#68](https://github.com/simlindahl/loop-cx/issues/68), with the owner's further response recorded accurately rather than invented.
 
 ### 2026-11-13 · First delivery retrospective
 
@@ -61,7 +89,12 @@ Keep bounded changes, separate requirements/QA review of the exact revision and 
 | A2 · Verify installed certificate → existing compatible key → final APK certificate/hash and source | Fullstack; [USB workflow](android.md#usb-phone-installation), existing local artifact manifest; QA reviews the proof | Documentation implemented in this candidate. Expected to avoid repeating the wrong-key/stale-output signing path; no private key material or credentials in Git | Next accepted USB update: record whether the final package matches the installed certificate before installation |
 | A3 · Cross-link canonical role ownership and check stale references for process changes | Fullstack; [delivery governance](../knowledge/delivery-acceptance.md#project-governance). Team lead; [repository instructions](../AGENTS.md#roles-and-decision-making) and scoped process review | Documentation implemented in this candidate. Expected to prevent competing role rosters | Next process PR: inspect affected references for obsolete role counts and pointers; keep, adjust or revert based on the result |
 
-The actions are documented in the delivery PR linked from [#48](https://github.com/simlindahl/loop-cx/issues/48); use that PR for current review and merge state. Their effects remain unmeasured; follow-up has not occurred and is due at the relevant checkpoints above. At that retrospective checkpoint C2 product definition and early sensor feasibility were outstanding. Subsequently PR #50 delivered the approved initial C2 slice and PR #64 delivered bounded early native feasibility; remaining full-product/physical acceptance stays with its owning issues.
+The actions are documented in the delivery PR linked from [#48](https://github.com/simlindahl/loop-cx/issues/48); use that PR for current review and merge state. At that retrospective checkpoint, effects were unmeasured and follow-up was still due; the dated A2 follow-up below records the later installation observation. C2 product definition and early sensor feasibility were also outstanding at that checkpoint. Subsequently PR #50 delivered the approved initial C2 slice and PR #64 delivered bounded early native feasibility; remaining full-product/physical acceptance stays with its owning issues.
+
+<a id="usb-signing-follow-up-2026-11-14"></a>
+#### Follow-up · 14 November 2026
+
+The 13 November A2 signing workflow was observed in the accepted Pixel update from merged `8798e31`. Installed/final APK certificates matched, existing signing material was retained and `install -r` succeeded. Database/sidecar/preferences presence, sizes and hashes were unchanged before launch; startup and icon were checked. Private verification evidence retains the detailed package/data comparison. Keep the existing [USB workflow](android.md#usb-phone-installation). This establishes package/data-preservation follow-up, not physical training or battery acceptance, and measures no productivity gain.
 
 ## Planned baseline review · issue #61
 
