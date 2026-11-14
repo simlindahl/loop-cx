@@ -22,16 +22,23 @@ for path in paths:
     reconstructed = consumer.read_export(path)
     run = document["run"]
     assert reconstructed["originalPlan"] == run["originalPlan"]
-    assert reconstructed["snapshot"] == run["checkpoint"]["Snapshot"]
-    assert len(reconstructed["resolvedPlan"]) == len(run["checkpoint"]["Plan"])
-    assert reconstructed["activeTicks"] >= reconstructed["mainActiveTicks"]
+    known_checkpoint = "SchemaVersion" in run["checkpoint"]
+    if known_checkpoint:
+        assert reconstructed["snapshot"] == run["checkpoint"]["Snapshot"]
+        assert len(reconstructed["resolvedPlan"]) == len(run["checkpoint"]["Plan"])
+        assert reconstructed["activeTicks"] >= reconstructed["mainActiveTicks"]
+    else:
+        for key in ("snapshot", "resolvedPlan", "completedPhases", "statistics", "activeTicks", "mainActiveTicks", "phaseBoundaries", "startContext"):
+            assert reconstructed[key] is None
     assert reconstructed["locations"] == run["locations"]
     assert reconstructed["heartRate"] == run["heartRate"]
-    for mutate in (lambda value: value.update(schemaVersion=2),
-                   lambda value: value["units"].update(distance="miles"),
-                   lambda value: value["run"]["originalPlan"][0].update(Duration="bananas"),
-                   lambda value: value["run"]["checkpoint"].pop("Plan"),
-                   lambda value: value["run"]["checkpoint"].pop("Completed")):
+    invalid_cases = [lambda value: value.update(schemaVersion=2),
+                     lambda value: value["units"].update(distance="miles"),
+                     lambda value: value["run"]["originalPlan"][0].update(Duration="bananas")]
+    if known_checkpoint:
+        invalid_cases.extend([lambda value: value["run"]["checkpoint"].pop("Plan"),
+                              lambda value: value["run"]["checkpoint"].pop("Completed")])
+    for mutate in invalid_cases:
         bad = copy.deepcopy(document)
         mutate(bad)
         assert not validator.is_valid(bad)
@@ -44,7 +51,7 @@ for path in paths:
                 pass
             else:
                 raise AssertionError("Consumer accepted malformed version, units or workout facts")
-    if run["checkpoint"]["Snapshot"].get("Statistics") is not None:
+    if known_checkpoint and run["checkpoint"]["Snapshot"].get("Statistics") is not None:
         for kind in ("missing", "inconsistent"):
             bad = copy.deepcopy(document)
             total = bad["run"]["checkpoint"]["Snapshot"]["Statistics"]["Total"]
