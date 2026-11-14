@@ -8,7 +8,8 @@ namespace LoopCx.Features.History;
 
 public sealed record StoredRunRow(Guid Id, string StartedUtc, string Status, string? Template, string Checkpoint,
     string? ExportStatus, string? AttemptJson);
-public sealed record StoredRunArchive(IReadOnlyList<StoredRunRow> Finished, int InterruptedCount, int UnreadableCount = 0);
+public sealed record StoredRunArchive(IReadOnlyList<StoredRunRow> Finished, int InterruptedCount, int UnreadableCount = 0,
+    IReadOnlyList<InterruptedRun>? Interrupted = null);
 public sealed record StoredRunSummary(Guid Id, DateTimeOffset? StartedUtc, string Name, string Source,
     TimeSpan? TotalActive, MeasuredStatistics? Total, string ExportLabel, bool Synthetic, string? StartZone, int? StartOffset);
 public sealed record StoredRunDetail(StoredRunSummary Summary, MeasuredStatistics? Main, TimeSpan? MainActive,
@@ -35,9 +36,10 @@ public static class StoredRunProjection
         return text + " · intended, not measured";
     }
 
-    public static StoredRunSummary Summary(StoredRunRow row)
+    public static StoredRunSummary Summary(StoredRunRow row, bool interrupted = false)
     {
-        if (row.Status != "finished" || row.Id == Guid.Empty) throw new InvalidDataException("Only committed finished recordings belong in this view.");
+        if (row.Status != (interrupted ? "interrupted" : "finished") || row.Id == Guid.Empty)
+            throw new InvalidDataException("The stored recording status does not match this view.");
         using var document = JsonDocument.Parse(row.Checkpoint);
         var checkpoint = document.RootElement;
         ValidateCheckpoint(checkpoint);
@@ -53,7 +55,7 @@ public static class StoredRunProjection
         return new(row.Id, DateTimeOffset.TryParse(row.StartedUtc, CultureInfo.InvariantCulture, DateTimeStyles.None, out var utc) ? utc : null,
             template?.ShortcutName ?? template?.ProtocolId ?? template?.TemplateId ?? "Recorded run",
             template is null ? "Source unavailable" : $"{template.Source} · {template.ProtocolId ?? template.TemplateId} · revision {template.TemplateRevision}",
-            Duration(checkpoint, "TotalActiveTime"), statistics?.Total, ExportLabel(row), statistics?.HasSyntheticTime == true,
+            Duration(checkpoint, "TotalActiveTime"), statistics?.Total, interrupted ? "Not exported · interrupted" : ExportLabel(row), statistics?.HasSyntheticTime == true,
             start?.TimeZoneId, offset);
     }
 

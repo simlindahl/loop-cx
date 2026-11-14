@@ -72,6 +72,41 @@ internal static class StoredHistoryChecks
             })
         }, null);
         var unacknowledged = StoredRunProjection.Detail(snapshot with { ExportStatus = "exported" }, null);
+        var interruptedRow = new StoredRunRow(id, started.ToString("O"), "interrupted", template.GetRawText(), checkpoint.GetRawText(), null, null);
+        var mixedRows = new[] { interruptedRow, interruptedRow with { Id = Guid.NewGuid(), Checkpoint = /*lang=json,strict*/ "{\"SchemaVersion\":2}" },
+            interruptedRow with { Id = Guid.NewGuid(), Checkpoint = "[]" }, interruptedRow with { Id = Guid.NewGuid(), Template = "{}" } };
+        var originalRows = JsonSerializer.Serialize(mixedRows);
+        var readableRows = new List<InterruptedRun>();
+        var unreadableRows = 0;
+        foreach (var row in mixedRows)
+        {
+            try { readableRows.Add(InterruptedRunProjection.Read(row, started.ToString("O"), null)); }
+            catch (Exception issue) when (InterruptedRunProjection.IsUnreadableRow(issue)) { unreadableRows++; }
+        }
+        if (readableRows.Count != 1 || readableRows[0].Summary.Id != id || unreadableRows != 3
+            || JsonSerializer.Serialize(mixedRows) != originalRows)
+        {
+            throw new InvalidOperationException("An unreadable interrupted row must not hide valid archive entries or mutate stored facts.");
+        }
+
+        var prefix = InterruptedRunProjection.Read(interruptedRow, started.AddMinutes(40).ToString("O"), null);
+        var savedPrefix = InterruptedRunProjection.Read(interruptedRow, started.AddMinutes(40).ToString("O"), started.AddDays(1).ToString("O"));
+        var unknownPrefix = InterruptedRunProjection.Read(interruptedRow with { Checkpoint = /*lang=json,strict*/ "{\"legacy\":true}", Template = null }, "unknown", null);
+        if (prefix.SavedLocally is not null || savedPrefix.SavedLocally != started.AddDays(1)
+            || prefix.Summary.TotalActive != result.Summary.TotalActive || JsonSerializer.Serialize(savedPrefix.Summary) != JsonSerializer.Serialize(prefix.Summary)
+            || prefix.Summary.ExportLabel != "Not exported · interrupted" || unknownPrefix.Summary.Total is not null
+            || unknownPrefix.LastCommittedObservation is not null)
+        {
+            throw new InvalidOperationException("Recovery acknowledgement must not rewrite committed facts or manufacture an end/export.");
+        }
+
+        try { _ = InterruptedRunProjection.Read(interruptedRow, "unknown", "bad-marker"); throw new InvalidOperationException("Malformed marker accepted."); }
+        catch (RunSaveReadException) { }
+        InterruptedRunProjection.EnsureNoActiveOwner(id, Guid.NewGuid());
+        try { InterruptedRunProjection.EnsureNoActiveOwner(id, id); throw new InvalidOperationException("Active owner accepted for recovery."); }
+        catch (RunSaveReadException) { }
+        if (LoopCx.Features.HealthConnectExport.HCWritePlanner.Create(snapshot with { Status = "interrupted", ExportStatus = null }, false).Plan is not null)
+            throw new InvalidOperationException("A saved partial must remain ineligible for normal provider export.");
         var unknownOffset = StoredRunProjection.Detail(snapshot with
         {
             Checkpoint = JsonSerializer.SerializeToElement(new { StartContext = new { TimeZoneId = "Unknown" } })

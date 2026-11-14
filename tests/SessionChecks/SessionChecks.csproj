@@ -19,6 +19,7 @@
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreSelections.cs" Link="CoreSelections.cs" />
     <Compile Include="../../src/LoopCx/Features/ExportRun/*.cs" Link="ExportRun/%(Filename)%(Extension)" />
     <Compile Include="../../src/LoopCx/Features/History/StoredRun.cs" Link="History/StoredRun.cs" />
+    <Compile Include="../../src/LoopCx/Features/History/InterruptedRun.cs" Link="History/InterruptedRun.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunNotificationEntry.cs" Link="RunNotificationEntry.cs" />
     <Compile Include="../../src/LoopCx/Features/HealthConnectExport/*.cs" Link="HealthConnectExport/%(Filename)%(Extension)" />
   </ItemGroup>

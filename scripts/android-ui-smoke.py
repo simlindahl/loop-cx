@@ -369,18 +369,18 @@ try:
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 5
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 6
             assert db.execute("SELECT initial_plan, checkpoint, template_metadata FROM runs WHERE id='v2'").fetchone() == ('[]', '{"legacy":true}', None)
             assert db.execute("SELECT checkpoint FROM run_events WHERE run_id='v2'").fetchall() == [('{"event":true}',)]
-            assert db.execute("SELECT heart_rate_metadata FROM runs WHERE id='v2'").fetchone() == (None,)
+            assert db.execute("SELECT heart_rate_metadata, recovery_saved_utc FROM runs WHERE id='v2'").fetchone() == (None, None)
             assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
         adb("shell", "run-as", PACKAGE, "rm", "databases/runs-debug.db")
         open_app()
-        capture("fresh-schema5-idle", "Start C2")
+        capture("fresh-schema6-idle", "Start C2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 5
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 6
             assert "heart_rate_metadata" in [row[1] for row in db.execute("PRAGMA table_info(runs)")]
             assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
             assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
@@ -414,11 +414,13 @@ try:
                              2280000 if finished else 120000, status, legacy_plan_json, checkpoint, metadata))
         with closing(sqlite3.connect(db_path)) as db, db:
             # Turn the fresh DB into the actual previous schema before journal migration.
+            db.execute("ALTER TABLE runs DROP COLUMN recovery_saved_utc")
             db.execute("ALTER TABLE runs DROP COLUMN heart_rate_metadata")
             db.execute("DROP TABLE heart_rate")
             db.execute("ALTER TABLE export_queue DROP COLUMN attempt_json")
             db.execute("ALTER TABLE export_queue DROP COLUMN last_error")
             assert [row[1] for row in db.execute("PRAGMA table_info(export_queue)")] == ["run_id", "status"]
+            assert [row[1] for row in db.execute("PRAGMA table_info(runs)")] == ["id", "started_utc", "observed_utc", "elapsed_ms", "status", "initial_plan", "checkpoint", "template_metadata"]
             db.execute("PRAGMA user_version=3")
             db.executemany("INSERT INTO runs VALUES (?,?,?,?,?,?,?,?)", old_rows)
             db.executemany("INSERT INTO export_queue (run_id, status) VALUES (?, 'disabled_synthetic')",
@@ -435,13 +437,13 @@ try:
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 5
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 6
             assert [row[1] for row in db.execute("PRAGMA table_info(export_queue)")] == ["run_id", "status", "attempt_json", "last_error"]
             for row in old_rows:
                 if row[4] == "finished":
                     assert db.execute("SELECT status, attempt_json, last_error FROM export_queue WHERE run_id=?", (row[0],)).fetchone() == ("disabled_synthetic", None, None)
             for row in old_rows:
-                expected = list(row) + [None]
+                expected = list(row) + [None, None]
                 if expected[4] == "recording":
                     expected[4] = "interrupted"
                 assert db.execute("SELECT * FROM runs WHERE id=?", (row[0],)).fetchone() == tuple(expected)
@@ -452,7 +454,7 @@ try:
         report["legacyC1"] = "PASS: journal reopen only interrupts old recording; frozen 10/5 plan/checkpoint/v1 or NULL metadata unchanged; separate new start uses 4/3 revision 3"
         adb("push", str(backup), "/data/local/tmp/loop-ui-results.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-ui-results.db", "databases/runs-debug.db")
-        report["schemaMigration"] = "PASS: fresh 5 and seeded 2-to-5/3-to-5, existing phase/checkpoint/event payload unchanged, legacy HR metadata and new attempt fields NULL; 1-to-5 covered by stronger smoke"
+        report["schemaMigration"] = "PASS: fresh 6 and seeded 2-to-6/3-to-6, existing phase/checkpoint/event payload unchanged, legacy HR metadata and new attempt fields NULL; 1-to-6 covered by stronger smoke"
     print("PASS: real C1/C2 Start/Pause/Resume, 48dp actions, actual large-text growth, same sessions and frozen C2 metadata")
 finally:
     adb("shell", "cmd", "location", "set-location-enabled", original_location)
