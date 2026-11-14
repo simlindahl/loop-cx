@@ -80,6 +80,37 @@ def capture_diagnostics(name, reason):
             report["captureFailures"].append({"state": name, "diagnosticError": str(diagnostic_error)})
 
 
+
+def location_notice_close(root):
+    nodes = list(root.iter("node"))
+    package = "com.google.android.gms"
+    title = any(node.get("package") == package and node.get("resource-id") == package + ":id/alertTitle"
+                and node.get("text") == "No location access" for node in nodes)
+    if not title:
+        return None
+    return next((node for node in nodes if node.get("package") == package
+                 and node.get("resource-id") == "android:id/button2" and node.get("text") == "Close"
+                 and node.get("clickable") == "true" and node.get("enabled") == "true"), None)
+
+
+def dismiss_location_notice(root, name, xml):
+    close = location_notice_close(root)
+    if close is None:
+        return False
+    assert not report.get("systemDialogs"), "Repeated location-disabled notice; refusing a general dialog-dismiss loop"
+    evidence = name + "-location-disabled-notice"
+    (OUT / (evidence + ".xml")).write_text(xml + "\n", encoding="utf-8")
+    (OUT / (evidence + ".png")).write_bytes(adb("exec-out", "screencap", "-p", binary=True))
+    x1, y1, x2, y2 = map(int, re.findall(r"\d+", close.get("bounds")))
+    assert x2 > x1 and y2 > y1, "The known system Close action is not visible"
+    adb("shell", "input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
+    location_after = adb("shell", "cmd", "location", "is-location-enabled")
+    assert location_after == "false", "Closing the known notice must not enable location"
+    report["systemDialogs"] = [{"package": "com.google.android.gms", "title": "No location access",
+                                "action": "Close", "locationEnabledAfter": location_after, "evidence": evidence}]
+    return True
+
+
 def capture(name, expected, heading_min_height=0):
     xml = ""
     capture_errors = 0
@@ -95,6 +126,8 @@ def capture(name, expected, heading_min_height=0):
             if capture_errors >= 3:
                 raise AssertionError("UI capture failed three times: " + name) from error
             time.sleep(1)
+            continue
+        if dismiss_location_notice(root, name, xml):
             continue
         if any(expected in (n.get("text", "") + n.get("content-desc", "")) for n in root.iter("node")) and heading_height(root, "Manually paused") >= heading_min_height:
             (OUT / (name + ".xml")).write_text(xml + "\n", encoding="utf-8")
@@ -304,18 +337,21 @@ try:
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 3
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 4
             assert db.execute("SELECT initial_plan, checkpoint, template_metadata FROM runs WHERE id='v2'").fetchone() == ('[]', '{"legacy":true}', None)
             assert db.execute("SELECT checkpoint FROM run_events WHERE run_id='v2'").fetchall() == [('{"event":true}',)]
+            assert db.execute("SELECT heart_rate_metadata FROM runs WHERE id='v2'").fetchone() == (None,)
+            assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
         adb("shell", "run-as", PACKAGE, "rm", "databases/runs-debug.db")
         open_app()
-        capture("fresh-schema3-idle", "Start C2")
+        capture("fresh-schema4-idle", "Start C2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 3
-            assert "template_metadata" in [row[1] for row in db.execute("PRAGMA table_info(runs)")]
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 4
+            assert "heart_rate_metadata" in [row[1] for row in db.execute("PRAGMA table_info(runs)")]
             assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+            assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
         # Real schema-3 legacy rows: opening the journal interrupts recording only;
         # it does not rehydrate or replace frozen plans with the current factory.
         legacy_plan = [dict(phase) for phase in c1_plan]
@@ -345,6 +381,10 @@ try:
                              "2026-11-13T08:38:00Z" if finished else "2026-11-13T08:02:00Z",
                              2280000 if finished else 120000, status, legacy_plan_json, checkpoint, metadata))
         with closing(sqlite3.connect(db_path)) as db, db:
+            # Turn the fresh DB into the actual previous schema before journal migration.
+            db.execute("ALTER TABLE runs DROP COLUMN heart_rate_metadata")
+            db.execute("DROP TABLE heart_rate")
+            db.execute("PRAGMA user_version=3")
             db.executemany("INSERT INTO runs VALUES (?,?,?,?,?,?,?,?)", old_rows)
             db.executemany("INSERT INTO export_queue VALUES (?, 'disabled_synthetic')",
                            [(row[0],) for row in old_rows if row[4] == "finished"])
@@ -361,7 +401,7 @@ try:
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
             for row in old_rows:
-                expected = list(row)
+                expected = list(row) + [None]
                 if expected[4] == "recording":
                     expected[4] = "interrupted"
                 assert db.execute("SELECT * FROM runs WHERE id=?", (row[0],)).fetchone() == tuple(expected)
@@ -372,7 +412,7 @@ try:
         report["legacyC1"] = "PASS: journal reopen only interrupts old recording; frozen 10/5 plan/checkpoint/v1 or NULL metadata unchanged; separate new start uses 4/3 revision 3"
         adb("push", str(backup), "/data/local/tmp/loop-ui-results.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-ui-results.db", "databases/runs-debug.db")
-        report["schemaMigration"] = "PASS: fresh 3 and seeded 2-to-3, existing phase/checkpoint/event payload unchanged and legacy metadata NULL; 1-to-3 covered by stronger smoke"
+        report["schemaMigration"] = "PASS: fresh 4 and seeded 2-to-4/3-to-4, existing phase/checkpoint/event payload unchanged and legacy HR metadata NULL; 1-to-4 covered by stronger smoke"
     print("PASS: real C1/C2 Start/Pause/Resume, 48dp actions, actual large-text growth, same sessions and frozen C2 metadata")
 finally:
     adb("shell", "cmd", "location", "set-location-enabled", original_location)

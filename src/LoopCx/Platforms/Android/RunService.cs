@@ -9,7 +9,7 @@ namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
     long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null, MotionState? Motion = null, RunStatisticsState? Statistics = null, CoreTemplate? FrozenTemplate = null,
-    int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null);
+    int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null, HeartRateState? HeartRate = null);
 
 [Property("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE", Value = "User-started ongoing timed workout phases and visible controls while screen is locked, when GPS is unavailable or declined.")]
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice | ForegroundService.TypeSpecialUse)]
@@ -47,6 +47,10 @@ public sealed class RunService : Service, ILocationListener
     private TimedSession? session;
     private RunDistance? distance;
     private RunMotion? motion;
+    private RunHeartRate? heartRate;
+    private AndroidHeartRateSource? heartRateSource;
+    private HeartRateConfiguration heartRateConfiguration = HeartRateConfiguration.Empty;
+    private string? heartRateMetadata;
     private readonly RunStatistics statistics = new();
     private RunDistance.CandidateDistance? candidateDistance;
     private Guid id;
@@ -150,6 +154,10 @@ public sealed class RunService : Service, ILocationListener
                 }
 
                 var resolved = CoreTemplate.Resolve(request, preferences.WarmupCooldown);
+                var savedHeartRate = HeartRatePreferences.Load();
+                heartRateConfiguration = savedHeartRate.Configuration with { Zones = Array.AsReadOnly(savedHeartRate.Configuration.Zones.ToArray()) };
+                heartRate = new RunHeartRate(heartRateConfiguration, savedHeartRate.ConfigurationError);
+                heartRateMetadata = System.Text.Json.JsonSerializer.Serialize(savedHeartRate with { Configuration = heartRateConfiguration });
                 session = resolved.Session;
                 template = resolved.Template;
                 templateMetadata = System.Text.Json.JsonSerializer.Serialize(template);
@@ -197,10 +205,45 @@ public sealed class RunService : Service, ILocationListener
             handler = new Handler(Looper.MainLooper!);
             tick = Tick;
             handler.PostDelayed(tick, 1000);
+            StartHeartRateSource();
         }
-        if (command == "refresh-sensors") RefreshLocationSubscription();
-
         AdvanceClock();
+#if DEBUG
+        if (command == "hr-source-failure" && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64" && !session.IsFinished)
+        {
+            // Isolated lifecycle fault setup: exercise the same owner cleanup used after native/FGS failures.
+            StopHeartRateSource();
+            ReceiveHeartRate(id, new(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100), DateTimeOffset.UtcNow, null, "synthetic-source-failure"));
+
+            return StartCommandResult.NotSticky;
+        }
+#endif
+        if (command == "refresh-sensors" && !session.IsFinished)
+        {
+            RefreshLocationSubscription();
+            if (heartRateConfiguration.DeviceAddress is { } sourceAddress)
+            {
+                try
+                {
+                    if (heartRateSource is null)
+                    {
+                        StartHeartRateSource();
+                    }
+                    else
+                    {
+                        if (!OperatingSystem.IsAndroidVersionAtLeast(31) || CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
+                            StartEligibleForeground(connectedDevice: true);
+                        heartRateSource.Refresh(sourceAddress);
+                    }
+                }
+                catch (Java.Lang.RuntimeException)
+                {
+                    StopHeartRateSource();
+                    ReceiveHeartRate(id, new(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100), DateTimeOffset.UtcNow, null, "foreground-or-permission-unavailable"));
+                }
+            }
+        }
+
         var phaseBeforeCommand = session.Current?.Kind;
         var effective = command switch
         {
@@ -216,21 +259,25 @@ public sealed class RunService : Service, ILocationListener
             session.Resume();
             var simulatedCursor = TimeSpan.FromMilliseconds(lastTick);
             var simulatedPhase = session.Current?.Kind;
-            session.Advance(TimeSpan.FromHours(1), (next, consumed) =>
+            // Use the actual remaining finite plan, including runtime extensions, rather than a fixed cap.
+            // Reaching every remaining boundary (including finish) marks all artificial pieces synthetic.
+            var remainingPlan = session.Plan.Skip(session.PhaseIndex + 1)
+                .Aggregate(session.Remaining, static (remaining, phase) => remaining + phase.Duration);
+            session.Advance(remainingPlan, (next, consumed) =>
             {
                 var simulatedAt = TimeSpan.FromMilliseconds(lastTick) + consumed;
                 statistics.Advance(simulatedCursor, simulatedAt, simulatedPhase, false, synthetic: true);
                 simulatedCursor = simulatedAt;
-                simulatedPhase = next;
                 distance!.UpdateFreshness(simulatedAt);
-                distance.Boundary(next, simulatedAt, session.MainActiveTime);
+                RecordPhaseBoundary(simulatedPhase, next, simulatedAt);
+                simulatedPhase = next;
             });
             effective = true;
         }
 #endif
         if (session.Current?.Kind != phaseBeforeCommand)
         {
-            distance!.Boundary(session.Current?.Kind, TimeSpan.FromMilliseconds(lastTick), session.MainActiveTime);
+            RecordPhaseBoundary(phaseBeforeCommand, session.Current?.Kind, TimeSpan.FromMilliseconds(lastTick));
             motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
             candidateDistance = null;
         }
@@ -260,13 +307,23 @@ public sealed class RunService : Service, ILocationListener
             var boundaryAt = TimeSpan.FromMilliseconds(lastTick) + consumed;
             statistics.Advance(cursor, boundaryAt, phase, paused);
             cursor = boundaryAt;
+            RecordPhaseBoundary(phase, next, boundaryAt);
             phase = next;
-            distance!.Boundary(next, boundaryAt, session.MainActiveTime);
             motion.Boundary(boundaryAt);
             candidateDistance = null;
         });
         statistics.Advance(cursor, TimeSpan.FromMilliseconds(now), phase, paused);
         lastTick = now;
+    }
+
+    private void RecordPhaseBoundary(RunPhase? previous, RunPhase? next, TimeSpan at)
+    {
+        distance!.Boundary(next, at, session!.MainActiveTime);
+
+        if (previous is RunPhase.Work or RunPhase.Recovery && next is not (RunPhase.Work or RunPhase.Recovery))
+        {
+            statistics.FinalizeMain(distance.Snapshot);
+        }
     }
 
     private void Tick()
@@ -277,13 +334,14 @@ public sealed class RunService : Service, ILocationListener
         else handler!.PostDelayed(tick!, 1000);
     }
 
-    private void Publish(string? command = null, AutomaticMotionEvent? automaticEvent = null)
+    private void Publish(string? command = null, AutomaticMotionEvent? automaticEvent = null, HeartRateObservation? heartRateObservation = null)
     {
         if (session!.IsFinished && !finishLogged) command ??= "finish";
         Snapshot = CreateSnapshot();
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
+        if (session.IsFinished) StopHeartRateSource();
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
-            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent);
+            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent, heartRateMetadata, heartRateObservation);
 #if DEBUG
         if (session.IsFinished && OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif
@@ -300,7 +358,44 @@ public sealed class RunService : Service, ILocationListener
         motion?.Snapshot(session.PauseReason), statistics.Snapshot(TimeSpan.FromMilliseconds(lastTick - startedMonotonic),
             distance!.Snapshot, session.Current?.Kind is RunPhase.Work or RunPhase.Recovery), template,
         session.Current?.TargetRpe, session.Completed.Count(static phase => phase.Plan.Kind == RunPhase.Work)
-            + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work));
+            + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work), heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)));
+
+    private void StopHeartRateSource()
+    {
+        heartRateSource?.Stop();
+        heartRateSource = null;
+    }
+
+    private void StartHeartRateSource()
+    {
+        if (session is null || session.IsFinished || heartRateConfiguration.DeviceAddress is not { } address) return;
+
+        var expectedRunId = id;
+
+        try
+        {
+            if (!OperatingSystem.IsAndroidVersionAtLeast(31) || CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
+                StartEligibleForeground(connectedDevice: true);
+
+            heartRateSource = new AndroidHeartRateSource(this, handler!, heartRateConfiguration,
+                observation => ReceiveHeartRate(expectedRunId, observation));
+            heartRateSource.Connect(address);
+        }
+        catch (Java.Lang.RuntimeException)
+        {
+            StopHeartRateSource();
+            ReceiveHeartRate(expectedRunId, new(TimeSpan.FromMilliseconds(SystemClock.ElapsedRealtime()), DateTimeOffset.UtcNow, null, "foreground-or-permission-unavailable"));
+        }
+    }
+
+    private void ReceiveHeartRate(Guid expectedRunId, HeartRateObservation observation)
+    {
+        if (session is null || session.IsFinished || expectedRunId != id) return;
+
+        AdvanceClock();
+        statistics.ObserveHeartRate(heartRate!.Observe(observation));
+        Publish(heartRateObservation: observation);
+    }
 
     private bool HasLocationPermission() =>
         CheckSelfPermission(global::Android.Manifest.Permission.AccessFineLocation) == Permission.Granted ||
@@ -508,6 +603,7 @@ public sealed class RunService : Service, ILocationListener
 #if DEBUG
         if (OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif
+        StopHeartRateSource();
         if (tick is not null) handler?.RemoveCallbacks(tick);
         try { locationManager?.RemoveUpdates(this); }
         catch (Java.Lang.SecurityException) { }
