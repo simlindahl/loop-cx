@@ -1,5 +1,6 @@
 # Local evidence, downloads and toolchains; promote maintained sources explicitly.
 /artifacts/
+/design/mockups/qa/
 /local-build/
 /local-toolchain/
 /publication-preparation/
