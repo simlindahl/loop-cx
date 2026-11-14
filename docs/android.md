@@ -43,7 +43,7 @@ The service-backed scaffold starts the C1 timed interval protocol or the approve
 
 ## Core start and C1 readable flow slice
 
-The Core start and active-run views use approved neutral Basalt tokens and locally bundled Space Grotesk. The build verifies the packaged scoped stylesheet and font license. Core-first controls include the two cards, protocol/count/target dialogs, RPE help, named shortcuts and management, with global warm-up/cool-down Settings. C2 resolves the selected 20–120-minute duration at fixed target RPE 4, without warm-up or cool-down. Existing Start, Pause/Resume, +1 min and skip commands continue to use the same service. Timed starts can proceed with unknown GPS through the approved eligible foreground-service selection described below; denial is not fabricated as standstill or zero distance. Native Core flows, large text, focus and same-session recovery remain acceptance checks. Detailed Training/History statistics layouts and production HR remain separate from the persisted statistics pipeline.
+The Core start and active-run views use approved neutral Basalt tokens and locally bundled Space Grotesk. The build verifies the packaged scoped stylesheet and font license. Core-first controls include the two cards, protocol/count/target dialogs, RPE help, named shortcuts and management, with global warm-up/cool-down Settings. C2 resolves the selected 20–120-minute duration at fixed target RPE 4, without warm-up or cool-down. Existing Start, Pause/Resume, +1 min and skip commands continue to use the same service. Timed starts can proceed with unknown GPS through the approved eligible foreground-service selection described below; denial is not fabricated as standstill or zero distance. Native Core flows, large text, focus and same-session recovery remain acceptance checks. The full Training/History statistics and quality display, production pairing and personal-zone Settings remain separate UI work. The service-owned HR backend and frozen personal zones are described below.
 
 The MAUI ContentPage explicitly applies container safe-area insets for system bars and cutouts ([MAUI safe areas](https://learn.microsoft.com/dotnet/maui/user-interface/safe-area?view=net-maui-10.0)); CSS does not guess a status-bar height. The Android WebView text zoom follows the current system font scale when its handler is created; activity recreation retains the service-owned recording. This is a bounded readability slice, not completion of issue #3 or approval of a full runtime design.
 
@@ -68,9 +68,11 @@ the database through run-as and compares the checkpoint byte for byte after rest
 It also checks preserved GPS rows and atomic finalization with export disabled.
 The debug command `complete` accelerates the session to completion and is absent from release.
 
-Outstanding: history/recovery view, frozen heart-rate zones, heart-rate data, favourites, sensor quality,
-storage errors in the UI and Health Connect retries. Physical Pixel/WHOOP tests
-remain separate physical acceptance; Windows foundation build/startup and strong synthetic checks passed at the revision recorded above.
+Remaining product acceptance in this area includes history/recovery views, production pairing and
+personal-zone Settings, the full statistics/quality display, storage-error presentation and Health Connect retries.
+Core shortcuts/management and service-owned raw HR with frozen zones are delivered; they do not establish
+those remaining UI/integration flows. Physical Pixel/WHOOP tests remain separate physical acceptance;
+Windows foundation build/startup and strong synthetic checks passed at the revision recorded above.
 
 <a id="tidsstämplade-manuella-ändringar-schema-2"></a>
 ## Timestamped manual changes (schema 2)
