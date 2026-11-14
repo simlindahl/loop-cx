@@ -1052,3 +1052,5 @@ if (args.Length == 2 && args[0] == "--export-json-sample")
 Console.WriteLine("PASS: export retains frozen main, later raw observations and distinct start-zone/boundary provenance.");
 NotificationChecks.Run();
 Console.WriteLine("PASS: notification phase/countdown, actual measurements, pause guidance and unknown values.");
+
+HCWritePlanChecks.Run(args);
