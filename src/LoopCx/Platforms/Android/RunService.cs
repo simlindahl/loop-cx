@@ -463,7 +463,7 @@ public sealed class RunService : Service, ILocationListener
 
         if (!available)
         {
-            gpsStatus = "GPS unavailable · timer continues; allow location in Android settings";
+            gpsStatus = "GPS unavailable · allow location in Android settings";
 
             if (locationAvailable)
             {
