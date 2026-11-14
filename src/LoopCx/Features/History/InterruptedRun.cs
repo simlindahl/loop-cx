@@ -8,6 +8,12 @@ public sealed record InterruptedRun(StoredRunSummary Summary, DateTimeOffset? La
 
 public static class InterruptedRunProjection
 {
+    public static bool IsUnreadableRow(Exception error)
+    {
+        return error is System.Text.Json.JsonException or IOException
+        or InvalidDataException or InvalidOperationException or ArgumentException;
+    }
+
     public static void EnsureNoActiveOwner(Guid recordedId, Guid? ownerId)
     {
         if (recordedId == ownerId) throw new RunSaveReadException("A current service-owned recording cannot be recovered.");

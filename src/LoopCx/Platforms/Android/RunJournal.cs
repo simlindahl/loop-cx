@@ -254,7 +254,7 @@ public sealed class RunJournal : SQLiteOpenHelper
             {
                 interruptedCount++;
                 try { partials.Add(ReadInterrupted(interrupted)); }
-                catch (Exception issue) when (issue is System.Text.Json.JsonException or IOException or InvalidOperationException or ArgumentException)
+                catch (Exception issue) when (InterruptedRunProjection.IsUnreadableRow(issue))
                 { unreadable++; }
             }
             var result = new StoredRunArchive(rows, interruptedCount, unreadable, partials);
