@@ -202,13 +202,13 @@
                 @if (targetMode != CoreTargetMode.None)
                 {
                     <label for="target-work">@(draftRequest.ProtocolId == "C2" ? "Continuous target" : "Work target") @(targetMode == CoreTargetMode.Pace ? "(min/km)" : "")</label>
-                    @if (targetMode == CoreTargetMode.Pace) { <input id="target-work" placeholder="5:30" inputmode="numeric" @bind="draftWork" /> }
+                    @if (targetMode == CoreTargetMode.Pace) { <input id="target-work" placeholder="5:30" inputmode="text" @bind="draftWork" /> }
                     else { <select id="target-work" @bind="draftWork">
 <option value="">Not set</option>@for (var zone = 1; zone <= 5; zone++) { <option value="@zone">Zone @zone</option> }</select> }
                     @if (draftRequest.ProtocolId != "C2")
                     {
                         <label for="target-recovery">Recovery target (optional) @(targetMode == CoreTargetMode.Pace ? "(min/km)" : "")</label>
-                        @if (targetMode == CoreTargetMode.Pace) { <input id="target-recovery" placeholder="7:00" inputmode="numeric" @bind="draftRecovery" /> }
+                        @if (targetMode == CoreTargetMode.Pace) { <input id="target-recovery" placeholder="7:00" inputmode="text" @bind="draftRecovery" /> }
                         else { <select id="target-recovery" @bind="draftRecovery">
 <option value="">Not set</option>@for (var zone = 1; zone <= 5; zone++) { <option value="@zone">Zone @zone</option> }</select> }
                     }

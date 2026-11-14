@@ -129,7 +129,10 @@ def scroll_to_top():
 def reachable_button(name, label):
     screen_width, screen_height = map(int, re.findall(r"(\d+)x(\d+)", report["size"])[-1])
     last_error = None
-    for attempt in range(7):
+    # At 200% text the two Core cards require more than five viewport-half swipes.
+    # Keep the search bounded while preserving fresh visible-bounds and 48dp checks.
+    attempts = 12
+    for attempt in range(attempts):
         root = capture(name + "-scroll-" + str(attempt), "")
         try:
             button(root, label)
@@ -139,7 +142,7 @@ def reachable_button(name, label):
             last_error = error
         if attempt == 0:
             scroll_to_top()
-        elif attempt < 6:
+        elif attempt < attempts - 1:
             adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.8)),
                 str(screen_width//2), str(int(screen_height*0.3)), "400")
     raise AssertionError("Button not reachable at 48dp after bounded scrolling: " + label) from last_error
