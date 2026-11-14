@@ -159,6 +159,8 @@ Local equivalent with Node and Playwright installed: `node design/mockups/verify
 
 Before asking the product owner for a decision, the lead ensures the current interactive study is opened and verified through the intended presentation environment/path, including its relevant navigation/actions and local assets. Bind the request and decision to the version actually shown, using its commit or content identity; preserve earlier bindings and identify later transformations rather than silently presenting a different version as the reviewed one. Use focused changed-state checks during iteration, then a current final binding at review, with unchanged evidence reused only within its valid input/scope. Browser/static evidence does not establish native Android behavior and does not waive required CI or runtime acceptance.
 
+The lead opens all owner-review materials directly in Codex, including HTML, PDF and images, and retains the matching reference link/revision. A link or queued open request alone is not evidence that the material was visible. See the [current review handoff](../../docs/team-workflow.md#current-review-handoff) and the follow-up in [#68](https://github.com/simlindahl/loop-cx/issues/68).
+
 <a id="licenser"></a>
 ## Licenses
 

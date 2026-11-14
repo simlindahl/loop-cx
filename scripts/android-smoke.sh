@@ -130,6 +130,35 @@ done
 adb shell cat /sdcard/loop-window.xml | grep -F 'Warm-up'
 command complete
 for attempt in {1..30}; do
+    dump_window saved
+    if adb shell cat /sdcard/loop-window.xml | grep -F 'Run saved locally.'; then break; fi
+    sleep 1
+done
+adb shell cat /sdcard/loop-window.xml > /tmp/loop-saved.xml
+read -r back_x back_y < <(python3 - <<'PY'
+import re
+import xml.etree.ElementTree as ET
+root = ET.parse('/tmp/loop-saved.xml').getroot()
+assert any(node.get('text') == 'Run saved locally.' for node in root.iter('node')), 'A completed transaction must show Saved'
+buttons = [node for node in root.iter('node') if node.get('package') == 'se.loopcx.running'
+           and node.get('text') == 'Back to training' and node.get('class') == 'android.widget.Button'
+           and node.get('enabled') == 'true' and node.get('clickable') == 'true']
+assert len(buttons) == 1, 'Use the real enabled Saved Back button'
+match = re.fullmatch(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', buttons[0].get('bounds', ''))
+assert match, 'Back must have actual UI bounds'
+left, top, right, bottom = map(int, match.groups())
+assert right - left >= 48 and bottom - top >= 48, 'Back must retain a visible 48dp target'
+webview = next(node for node in root.iter('node') if node.get('package') == 'se.loopcx.running'
+               and node.get('class') == 'android.webkit.WebView')
+viewport = re.fullmatch(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', webview.get('bounds', ''))
+assert viewport, 'Require the actual WebView viewport'
+view_left, view_top, view_right, view_bottom = map(int, viewport.groups())
+assert view_left <= left < right <= view_right and view_top <= top < bottom <= view_bottom, 'Back must be fully visible'
+print((left + right) // 2, (top + bottom) // 2)
+PY
+)
+adb shell input tap "$back_x" "$back_y"
+for attempt in {1..30}; do
     dump_window finished
     if adb shell cat /sdcard/loop-window.xml | grep -F 'Start C1'; then break; fi
     sleep 1
