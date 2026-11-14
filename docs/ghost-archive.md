@@ -14,11 +14,11 @@ A source recording may occur at most once per route version. Reference ID, route
 
 C# `GhostReferences` still owns PB/year-best ranking. SQL does not introduce a second production record-selection implementation. Check the stored local start year against the local date, never a later system time zone or UTC year. Ticks are 100 ns under .NET's UTC/TimeSpan contract.
 
-Every database connection must enable `PRAGMA foreign_keys = ON`. Use INSERT, never INSERT OR REPLACE, for archive rows. On retry, the future command layer must read the existing identity: identical evidence returns the same result; conflicting evidence is rejected. Schema uniqueness prevents a duplicate but does not replace the application handling that remains unwritten.
+Every database connection must enable `PRAGMA foreign_keys = ON`. Use INSERT, never INSERT OR REPLACE, for archive rows. On retry, the native adapter reads the existing identity: identical frozen evidence returns AlreadyStored; conflicting evidence is rejected and the entire write rolls back. Uniqueness remains a storage guard rather than a substitute for this comparison.
 
 Write route, source attempt and final result in an explicit transaction. Record selection may read the new result only after a successful commit. Foreign keys and update triggers protect frozen references and archived evidence. Rows used by a historical race reference cannot be deleted without separate, intentional handling of that history.
 
-Store JSON payloads as UTF-8 text without depending on SQLite JSON extensions. The future writer must validate typed data and JSON before INSERT, use canonical stable IDs and preserve raw data. The database's Verified label is not itself evidence of a complete route or a physically approved filter.
+Store JSON payloads as UTF-8 text without depending on SQLite JSON extensions. The native writer validates typed data and JSON before INSERT, use canonical stable IDs and preserve raw data. The database's Verified label is not itself evidence of a complete route or a physically approved filter.
 
 <a id="faktiskt-verifierat"></a>
 ## Actually verified
@@ -26,4 +26,11 @@ Run `python3 tests/GhostStorageChecks/check.py`. The test uses the exact DDL in 
 
 <a id="kvarstående-integration"></a>
 ## Remaining integration
-This is a verified data model with real storage tests, not the app's finished route archive. No production connection, migration or Android binding runs the file yet. A future native migration must run atomically and process complete DDL statements including trigger bodies; naive splitting on semicolons is wrong. The session database, retry command, service GPS during pause and record finalization must be connected later under the approval rules. Android's SQLite version and physical Pixel/WHOOP/Spotify have not been tested here. No UI/integration prototype or health export is enabled.
+The native adapter installs this separate archive namespace lazily in the existing session database. It leaves the app user_version unchanged and uses the dedicated ghost_schema marker; there is no invented earlier app archive schema. Missing archive tables are created atomically from the exact embedded storage/ghost/schema-1.sql resource. An unknown archive marker or partial pre-existing namespace is rejected without rewriting it. Every journal connection enables foreign keys through SQLiteOpenHelper.OnConfigure.
+
+Explicit archive-statement comments delimit complete DDL statements, including entire trigger bodies. Host SQLite tests and native migration consume that single canonical file; no semicolon splitter or duplicate handwritten schema is introduced. Route/version plus source attempt is one transaction. Readers expose the persisted route/version catalogue, attempts and existing domain objects; GhostReferences retains ranking ownership. Raw evidence, quality/reason and frozen start-zone/year are preserved; persistence never promotes an attempt to Verified or invents a local zone for an old run. The adapter accepts explicit typed attempt provenance; it does not automatically convert old session rows with unknown local-zone facts into dated Ghost references.
+
+This adapter is not route-save UI or race-service orchestration. Those remain separate, alongside approved live UI, GPS during training pause and physical verification. No map SDK, billing, health export or permission is enabled. Android migration/rollback/retry/reopen evidence must be recorded against the pinned candidate; existing host tests alone do not establish it.
+
+
+For the dedicated DEBUG ranchu emulator only, loop-ghost-archive-seed accepts a fresh synthetic GUID. The worker uses the production adapter and existing capture/domain rules to exercise atomic route/source-attempt writes, identical retry, route/source conflicts and rollback of a newly inserted version after a conflicting attempt. It saves a private ghost-archive-GUID.json report. Repeating the same seed after actual app/database reopening must return the same archived evidence. The test creates only its own Ghost identities, marks them unverified/interrupted and cannot create a workout, record, health export or user-facing Ghost screen. Production first-use wiring and physical route verification remain separate.

@@ -60,6 +60,13 @@ public sealed class MainActivity : MauiAppCompatActivity
 
     private void HandleDebugCommand(Intent? intent)
     {
+        var archiveSeed = intent?.GetStringExtra("loop-ghost-archive-seed");
+        intent?.RemoveExtra("loop-ghost-archive-seed");
+        if (archiveSeed is not null && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")
+        {
+            if (Guid.TryParse(archiveSeed, out var seed)) _ = Task.Run(() => NativeGhostArchiveProbe.Run(seed));
+            return;
+        }
         var exportRun = intent?.GetStringExtra("loop-export-json-run");
         intent?.RemoveExtra("loop-export-json-run");
         if (exportRun is not null && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")

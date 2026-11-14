@@ -114,3 +114,20 @@ RouteCaptureChecks.Run();
 RaceClockChecks.Run();
 
 RouteMatchChecks.Run();
+
+
+using var archiveSchemaStream = typeof(GhostArchiveSchema).Assembly.GetManifestResourceStream(GhostArchiveSchema.ResourceName)
+    ?? throw new InvalidOperationException("The host must embed the exact native archive resource.");
+using var archiveSchemaReader = new StreamReader(archiveSchemaStream);
+var archiveStatements = GhostArchiveSchema.Statements(archiveSchemaReader.ReadToEnd());
+Require(archiveStatements.Count == 9 && archiveStatements.Count(static statement => statement.StartsWith("CREATE TRIGGER", StringComparison.Ordinal)) == 3
+    && archiveStatements.Where(static statement => statement.StartsWith("CREATE TRIGGER", StringComparison.Ordinal)).All(static statement => statement.Contains("BEGIN SELECT RAISE", StringComparison.Ordinal) && statement.Contains("END;", StringComparison.Ordinal)),
+    "The canonical embedded DDL retains complete trigger bodies rather than splitting their internal semicolons.");
+foreach (var malformed in new[] { "SELECT 1;\n-- archive-statement\nCREATE TABLE x(y);", "-- comment\n-- archive-statement\n" })
+{
+    var rejected = false;
+    try { _ = GhostArchiveSchema.Statements(malformed); }
+    catch (InvalidDataException) { rejected = true; }
+    Require(rejected, "Missing statements and executable unmarked prefixes cannot be silently discarded.");
+}
+Console.WriteLine("PASS: exact native schema resource, intact trigger statements and rejection of malformed statement boundaries.");

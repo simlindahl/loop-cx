@@ -23,6 +23,12 @@ public sealed class RunJournal : SQLiteOpenHelper
         WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
     }
 
+    public override void OnConfigure(SQLiteDatabase? database)
+    {
+        base.OnConfigure(database);
+        database!.SetForeignKeyConstraintsEnabled(true);
+    }
+
     public override void OnCreate(SQLiteDatabase? database)
     {
         var db = database!;
