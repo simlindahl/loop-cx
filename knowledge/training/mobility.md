@@ -1,3 +1,6 @@
+---
+type: Training Reference
+---
 # LOOP mobility resource
 
 **Translated content draft · optional supporting resource**

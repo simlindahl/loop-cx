@@ -1,3 +1,6 @@
+---
+type: Training Reference
+---
 # LOOP health and recovery
 
 **Translated content draft · supporting guidance**

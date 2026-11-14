@@ -1,3 +1,6 @@
+---
+type: Training System Reference
+---
 # LOOP system reference
 
 **Content and ownership migration draft · LOOP by Simon Lindahl**
