@@ -37,6 +37,21 @@ internal static class HCOutboxChecks
         Reject(() => (retry with { Version = 2 }).Validate(true));
         Reject(() => (retry with { FrozenPlan = null! }).Validate(true));
         Reject(() => (retry with { FrozenPlan = plan with { PayloadHash = "altered" } }).Validate(true));
+        // Recalculate the hash: malformed nested data must be rejected independently of hash integrity.
+        var productionGate = new HCSourceGate(true, false, false);
+        var productionPlan = new HCWritePlanV1(1, id, productionGate, records, warnings,
+            HCWritePlanV1.Hash(1, id, productionGate, records, warnings));
+        HCDurableAttempt.Begin(productionPlan, null, false).Validate(false);
+        foreach (var malformed in new[] { records[0] with { Pauses = [null!] }, records[2] with { HeartRateSamples = [null!] } })
+        {
+            HCPlannedRecord[] malformedRecords = malformed.Kind == HCRecordKind.RunningSession
+                ? [malformed, records[1], records[2]] : [records[0], records[1], malformed];
+            var malformedPlan = new HCWritePlanV1(1, id, productionGate, malformedRecords, warnings,
+                HCWritePlanV1.Hash(1, id, productionGate, malformedRecords, warnings));
+            Reject(() => HCDurableAttempt.Begin(malformedPlan, null, false));
+            var stored = new HCDurableAttempt(1, malformedPlan, Guid.NewGuid(), 1, "in_flight", false);
+            Reject(() => JsonSerializer.Deserialize<HCDurableAttempt>(JsonSerializer.Serialize(stored))!.Validate(false));
+        }
         Reject(() => HCDurableAttempt.ValidateReceipts(plan, receipts[..2]));
         Reject(() => HCDurableAttempt.ValidateReceipts(plan, [receipts[1], receipts[0], receipts[2]]));
         Reject(() => HCDurableAttempt.ValidateReceipts(plan, [receipts[0] with { ClientRecordVersion = 2 }, receipts[1], receipts[2]]));

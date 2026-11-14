@@ -26,7 +26,8 @@ public sealed record HCDurableAttempt(int Version, HCWritePlanV1 FrozenPlan, Gui
             throw new InvalidDataException("Attempt origin and source eligibility disagree.");
         if (plan.Records.Any(record => !Enum.IsDefined(record.Kind) || string.IsNullOrWhiteSpace(record.ClientRecordId)
             || record.ClientRecordVersion != plan.MappingVersion || record.EndUtc <= record.StartUtc
-            || record.StartOffsetSeconds is null || record.EndOffsetSeconds is null || record.Pauses is null || record.HeartRateSamples is null))
+            || record.StartOffsetSeconds is null || record.EndOffsetSeconds is null || record.Pauses is null || record.HeartRateSamples is null
+            || record.Pauses.Any(static pause => pause is null) || record.HeartRateSamples.Any(static sample => sample is null)))
         {
             throw new InvalidDataException("The frozen native record contract is incomplete.");
         }
