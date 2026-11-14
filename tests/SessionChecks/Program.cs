@@ -805,3 +805,59 @@ Require(corruptHrPreferences.SequenceEqual(originalHrPreferenceBytes) && absentH
     && absentHr.Configuration.DeviceAddress is null,
     "Reading optional HR settings does not overwrite invalid input; absent configuration remains ordinary unavailable HR.");
 Console.WriteLine("PASS: corrupt optional HR settings preserve input and never block the timed workout.");
+
+// Arrange
+var finalityHr = new RunHeartRate(hrConfiguration);
+var finalityStatistics = new RunStatistics();
+var finalityDistance = hrDistance.Snapshot with
+{
+    TotalMeasuredMetres = 1050,
+    MainMeasuredMetres = 1050,
+    Splits = [new(1, 1000, TimeSpan.FromSeconds(4), false), new(2, 50, TimeSpan.FromSeconds(6), true)]
+};
+
+// Act
+finalityStatistics.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(10), RunPhase.Work, false);
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(0, 100)));
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(4, 120)));
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(9, 200)));
+finalityStatistics.FinalizeMain(finalityDistance);
+var mainAtBoundary = finalityStatistics.Snapshot(TimeSpan.FromSeconds(10), finalityDistance, false);
+var frozenMainJson = System.Text.Json.JsonSerializer.Serialize(new { mainAtBoundary.Main, mainAtBoundary.CompletedSplits, mainAtBoundary.CurrentSplit });
+finalityStatistics.Advance(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(11), RunPhase.Cooldown, false);
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(11, 220)));
+finalityStatistics.FinalizeMain(finalityDistance);
+var duringCooldown = finalityStatistics.Snapshot(TimeSpan.FromSeconds(11), finalityDistance, false);
+finalityStatistics.Advance(TimeSpan.FromSeconds(11), TimeSpan.FromSeconds(16), RunPhase.Cooldown, false);
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(15, 180)));
+finalityStatistics.FinalizeMain(finalityDistance);
+var afterCooldown = finalityStatistics.Snapshot(TimeSpan.FromSeconds(16), finalityDistance, false);
+
+// Assert
+Require(mainAtBoundary.Main.KnownHeartRateActiveTime == TimeSpan.FromSeconds(9)
+    && Math.Abs(mainAtBoundary.Main.AverageHeartRate!.Value - (1000d / 9)) < .000001
+    && mainAtBoundary.Main.HeartRateZones!.All(static zone => zone.Zone is 2 or 3),
+    "Main finalization retains only the nine supported seconds and their actual zones at the real boundary.");
+Require(new[] { duringCooldown, afterCooldown }.All(state =>
+    System.Text.Json.JsonSerializer.Serialize(new { state.Main, state.CompletedSplits, state.CurrentSplit }) == frozenMainJson)
+    && afterCooldown.CurrentSplit is null && afterCooldown.CompletedSplits.Count == 2,
+    "Cooldown receipts, repeated finalization and finish cannot alter final main or its completed/final partial splits.");
+Require(duringCooldown.Total.KnownHeartRateActiveTime == TimeSpan.FromSeconds(11)
+    && duringCooldown.Total.HeartRateZones!.Single(static zone => zone.Zone == 5).ActiveTime == TimeSpan.FromSeconds(2)
+    && afterCooldown.Total.KnownHeartRateActiveTime == TimeSpan.FromSeconds(15)
+    && afterCooldown.Total.UnknownHeartRateActiveTime == TimeSpan.FromSeconds(1),
+    "The cross-boundary HR bracket remains supported for total and cooldown without refining frozen main.");
+
+// Arrange
+var separateRunStatistics = new RunStatistics();
+
+// Act
+separateRunStatistics.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(2), RunPhase.Warmup, false);
+separateRunStatistics.FinalizeMain(hrDistance.Snapshot);
+separateRunStatistics.Advance(TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), RunPhase.Work, false);
+var separateMain = separateRunStatistics.Snapshot(TimeSpan.FromSeconds(5), hrDistance.Snapshot, true);
+
+// Assert
+Require(separateMain.Main.ActiveTime == TimeSpan.FromSeconds(3) && separateMain.CurrentSplit is not null,
+    "A warm-up boundary cannot finalize main, and a new run has no frozen result inherited from a previous instance.");
+Console.WriteLine("PASS: main results and splits freeze at the real boundary while total HR coverage continues through cooldown.");

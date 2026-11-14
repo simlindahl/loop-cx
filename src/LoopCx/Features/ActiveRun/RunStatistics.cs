@@ -22,6 +22,8 @@ public sealed record RunStatisticsState(int Version, DistancePolicy Policy, Time
 public sealed class RunStatistics
 {
     private bool hasSyntheticTime;
+    private MainResults? finalMain;
+    private sealed record MainResults(MeasuredStatistics Main, IReadOnlyList<MeasuredStatistics> Splits, MeasuredStatistics? Current);
     private readonly List<Interval> known = [];
     private readonly List<HeartRateBracket> heartRate = [];
     private readonly List<Interval> excluded = [];
@@ -70,9 +72,26 @@ public sealed class RunStatistics
 
     public void Exclude(TimeSpan from, TimeSpan to) => Union(excluded, from.Ticks, to.Ticks);
 
+    // Called once at the real main boundary, after the distance allocator finalizes its partial split.
+    // Later supported receipts may refine total/cool-down, but never the already final main result.
+    public void FinalizeMain(DistanceState distance)
+    {
+        if (finalMain is null && active.Any(static interval => interval.Main))
+        {
+            finalMain = BuildMain(distance, false);
+        }
+    }
+
     public RunStatisticsState Snapshot(TimeSpan elapsed, DistanceState distance, bool mainRunning)
     {
-        var totalTime = ActiveTicks(false);
+        var main = finalMain ?? BuildMain(distance, mainRunning);
+
+        return new(1, distance.Policy, elapsed, Scope(false, 0, ActiveTicks(false), distance.TotalMeasuredMetres),
+            main.Main, main.Splits, main.Current, hasSyntheticTime);
+    }
+
+    private MainResults BuildMain(DistanceState distance, bool mainRunning)
+    {
         var mainTime = ActiveTicks(true);
         var splits = new List<MeasuredStatistics>();
         long cursor = 0;
@@ -87,8 +106,7 @@ public sealed class RunStatistics
         var remainingMetres = Math.Max(0, distance.MainMeasuredMetres - distance.Splits.Sum(static split => split.MeasuredMetres));
         var current = mainRunning || mainTime > cursor ? Scope(true, cursor, mainTime, remainingMetres) : null;
 
-        return new(1, distance.Policy, elapsed, Scope(false, 0, totalTime, distance.TotalMeasuredMetres),
-            Scope(true, 0, mainTime, distance.MainMeasuredMetres), splits, current, hasSyntheticTime);
+        return new(Scope(true, 0, mainTime, distance.MainMeasuredMetres), splits.AsReadOnly(), current);
     }
 
     private long ActiveTicks(bool mainOnly) => Pieces(mainOnly).Sum(static interval => interval.End - interval.Start);

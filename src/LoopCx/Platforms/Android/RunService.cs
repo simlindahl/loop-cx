@@ -268,16 +268,16 @@ public sealed class RunService : Service, ILocationListener
                 var simulatedAt = TimeSpan.FromMilliseconds(lastTick) + consumed;
                 statistics.Advance(simulatedCursor, simulatedAt, simulatedPhase, false, synthetic: true);
                 simulatedCursor = simulatedAt;
-                simulatedPhase = next;
                 distance!.UpdateFreshness(simulatedAt);
-                distance.Boundary(next, simulatedAt, session.MainActiveTime);
+                RecordPhaseBoundary(simulatedPhase, next, simulatedAt);
+                simulatedPhase = next;
             });
             effective = true;
         }
 #endif
         if (session.Current?.Kind != phaseBeforeCommand)
         {
-            distance!.Boundary(session.Current?.Kind, TimeSpan.FromMilliseconds(lastTick), session.MainActiveTime);
+            RecordPhaseBoundary(phaseBeforeCommand, session.Current?.Kind, TimeSpan.FromMilliseconds(lastTick));
             motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
             candidateDistance = null;
         }
@@ -307,13 +307,23 @@ public sealed class RunService : Service, ILocationListener
             var boundaryAt = TimeSpan.FromMilliseconds(lastTick) + consumed;
             statistics.Advance(cursor, boundaryAt, phase, paused);
             cursor = boundaryAt;
+            RecordPhaseBoundary(phase, next, boundaryAt);
             phase = next;
-            distance!.Boundary(next, boundaryAt, session.MainActiveTime);
             motion.Boundary(boundaryAt);
             candidateDistance = null;
         });
         statistics.Advance(cursor, TimeSpan.FromMilliseconds(now), phase, paused);
         lastTick = now;
+    }
+
+    private void RecordPhaseBoundary(RunPhase? previous, RunPhase? next, TimeSpan at)
+    {
+        distance!.Boundary(next, at, session!.MainActiveTime);
+
+        if (previous is RunPhase.Work or RunPhase.Recovery && next is not (RunPhase.Work or RunPhase.Recovery))
+        {
+            statistics.FinalizeMain(distance.Snapshot);
+        }
     }
 
     private void Tick()
