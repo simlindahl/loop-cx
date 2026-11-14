@@ -207,26 +207,43 @@ public sealed class RunService : Service, ILocationListener
             handler.PostDelayed(tick, 1000);
             StartHeartRateSource();
         }
-        if (command == "refresh-sensors")
+        AdvanceClock();
+#if DEBUG
+        if (command == "hr-source-failure" && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64" && !session.IsFinished)
+        {
+            // Isolated lifecycle fault setup: exercise the same owner cleanup used after native/FGS failures.
+            StopHeartRateSource();
+            ReceiveHeartRate(id, new(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100), DateTimeOffset.UtcNow, null, "synthetic-source-failure"));
+
+            return StartCommandResult.NotSticky;
+        }
+#endif
+        if (command == "refresh-sensors" && !session.IsFinished)
         {
             RefreshLocationSubscription();
             if (heartRateConfiguration.DeviceAddress is { } sourceAddress)
             {
                 try
                 {
-                    if (!OperatingSystem.IsAndroidVersionAtLeast(31) || CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
-                        StartEligibleForeground(connectedDevice: true);
-                    heartRateSource?.Refresh(sourceAddress);
+                    if (heartRateSource is null)
+                    {
+                        StartHeartRateSource();
+                    }
+                    else
+                    {
+                        if (!OperatingSystem.IsAndroidVersionAtLeast(31) || CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
+                            StartEligibleForeground(connectedDevice: true);
+                        heartRateSource.Refresh(sourceAddress);
+                    }
                 }
                 catch (Java.Lang.RuntimeException)
                 {
-                    heartRateSource?.Stop();
+                    StopHeartRateSource();
                     ReceiveHeartRate(id, new(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100), DateTimeOffset.UtcNow, null, "foreground-or-permission-unavailable"));
                 }
             }
         }
 
-        AdvanceClock();
         var phaseBeforeCommand = session.Current?.Kind;
         var effective = command switch
         {
@@ -308,7 +325,7 @@ public sealed class RunService : Service, ILocationListener
         if (session!.IsFinished && !finishLogged) command ??= "finish";
         Snapshot = CreateSnapshot();
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
-        if (session.IsFinished) heartRateSource?.Stop();
+        if (session.IsFinished) StopHeartRateSource();
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
             session, initialPlan, templateMetadata, Snapshot, command, automaticEvent, heartRateMetadata, heartRateObservation);
 #if DEBUG
@@ -329,9 +346,15 @@ public sealed class RunService : Service, ILocationListener
         session.Current?.TargetRpe, session.Completed.Count(static phase => phase.Plan.Kind == RunPhase.Work)
             + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work), heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)));
 
+    private void StopHeartRateSource()
+    {
+        heartRateSource?.Stop();
+        heartRateSource = null;
+    }
+
     private void StartHeartRateSource()
     {
-        if (heartRateConfiguration.DeviceAddress is not { } address) return;
+        if (session is null || session.IsFinished || heartRateConfiguration.DeviceAddress is not { } address) return;
 
         var expectedRunId = id;
 
@@ -346,7 +369,7 @@ public sealed class RunService : Service, ILocationListener
         }
         catch (Java.Lang.RuntimeException)
         {
-            heartRateSource?.Stop();
+            StopHeartRateSource();
             ReceiveHeartRate(expectedRunId, new(TimeSpan.FromMilliseconds(SystemClock.ElapsedRealtime()), DateTimeOffset.UtcNow, null, "foreground-or-permission-unavailable"));
         }
     }
@@ -566,7 +589,7 @@ public sealed class RunService : Service, ILocationListener
 #if DEBUG
         if (OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif
-        heartRateSource?.Stop();
+        StopHeartRateSource();
         if (tick is not null) handler?.RemoveCallbacks(tick);
         try { locationManager?.RemoveUpdates(this); }
         catch (Java.Lang.SecurityException) { }

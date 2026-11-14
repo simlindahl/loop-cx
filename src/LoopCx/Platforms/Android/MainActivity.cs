@@ -98,6 +98,8 @@ public sealed class MainActivity : MauiAppCompatActivity
         }
 
         var command = intent?.GetStringExtra("loop-command");
+        if (command == "hr-source-failure" && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")
+            RunService.Command(command);
         if (command is "start" or "start-c2" or "pause" or "resume" or "extend" or "skip" or "complete")
             RunService.Command(command);
     }
