@@ -82,3 +82,10 @@ Load route and reference data locally before starting; no new server is needed. 
 | Pixel/WHOOP/Spotify with screen on/off | Same race clock, position sequence and session. Report audio, readability, notification actions and battery use with actual evidence. |
 
 Deliver small vertical slices: route storage/record selection, deterministic playback and route matching, session/pause/persistence integration, then approved live UI and physical verification. Mockups are preliminary; the request approves product rules, not detailed layout. Prototypes/integration and app UI follow the design decision gate in AGENTS.md. Overnight work may cover the data model, calculation rules, synthetic verification and technical analysis within approved rules while detailed layout is reviewed. PR review and merge follow the delegated workflow in AGENTS.md.
+
+
+### Native archive adapter boundary
+
+The isolated archive adapter uses the existing local session database and the canonical [archive DDL](../storage/ghost/schema-1.sql), with an independent archive revision marker and no session-schema version change. It installs atomically only when explicitly used. Save a captured route/version and its source attempt together; identical stable identities/evidence are idempotent, conflicting copies roll back without replacing archived rows. Readers return the frozen geometry, rule/quality policy, raw/progress evidence and saved local start/zone for existing domain selection. Successful storage is never proof of Verified quality; unsupported legacy zone provenance is not backfilled. See [the native archive contract](../docs/ghost-archive.md).
+
+Acceptance for this bounded slice is real Android SQLite initialization, route/source-attempt rollback, identical/conflicting retries, reopen and preservation of existing run/raw/outbox data. The session database version remains unchanged; an unknown/partial Ghost namespace is rejected. No route-save screen, race-service integration, preliminary-layout prototype, map provider or health operation is delivered by this adapter.

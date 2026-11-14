@@ -1,11 +1,14 @@
 -- Ghost Run archive schema 1. Enable foreign_keys on every connection.
--- Applied once by a future application migration; does not change app user_version.
+-- Installed lazily by the native adapter; does not change app user_version.
+-- archive-statement
 CREATE TABLE ghost_schema (
     singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
     version INTEGER NOT NULL CHECK (version >= 1)
 );
+-- archive-statement
 INSERT INTO ghost_schema VALUES (1, 1);
 
+-- archive-statement
 CREATE TABLE ghost_routes (
     route_id TEXT NOT NULL CHECK (length(route_id) > 0),
     version_id TEXT NOT NULL CHECK (length(version_id) > 0),
@@ -18,6 +21,7 @@ CREATE TABLE ghost_routes (
     UNIQUE (route_id, version_id, rule_version)
 );
 
+-- archive-statement
 CREATE TABLE ghost_attempts (
     attempt_id TEXT PRIMARY KEY NOT NULL CHECK (length(attempt_id) > 0),
     source_run_id TEXT NOT NULL CHECK (length(source_run_id) > 0),
@@ -40,9 +44,11 @@ CREATE TABLE ghost_attempts (
     FOREIGN KEY (route_id, version_id, rule_version)
         REFERENCES ghost_routes (route_id, version_id, rule_version)
 );
+-- archive-statement
 CREATE INDEX ghost_attempt_records ON ghost_attempts
     (route_id, version_id, rule_version, quality, elapsed_ticks, started_utc_ticks, attempt_id);
 
+-- archive-statement
 CREATE TABLE ghost_race_starts (
     race_id TEXT PRIMARY KEY NOT NULL CHECK (length(race_id) > 0),
     route_id TEXT NOT NULL CHECK (length(route_id) > 0),
@@ -67,9 +73,12 @@ CREATE TABLE ghost_race_starts (
 
 -- Archived identities, evidence and race references are append-only.
 -- The application must use INSERT, never INSERT OR REPLACE, for these tables.
+-- archive-statement
 CREATE TRIGGER ghost_route_frozen BEFORE UPDATE ON ghost_routes
 BEGIN SELECT RAISE(ABORT, 'Archived route version is immutable'); END;
+-- archive-statement
 CREATE TRIGGER ghost_attempt_frozen BEFORE UPDATE ON ghost_attempts
 BEGIN SELECT RAISE(ABORT, 'Archived attempt is immutable'); END;
+-- archive-statement
 CREATE TRIGGER ghost_race_start_frozen BEFORE UPDATE ON ghost_race_starts
 BEGIN SELECT RAISE(ABORT, 'Race reference is frozen'); END;

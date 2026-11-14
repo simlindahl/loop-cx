@@ -60,6 +60,19 @@ with TemporaryDirectory(prefix="loop-ghost-archive-") as temporary:
     db = connect(path)
     db.executescript("BEGIN;\n" + SCHEMA.read_text(encoding="utf-8") + "\nCOMMIT;")
     assert db.execute("SELECT version FROM ghost_schema").fetchone() == (1,)
+    # The exact native statement boundaries execute the same schema, including intact triggers.
+    segmented = connect(Path(temporary) / "segmented.db")
+    with segmented:
+        blocks = SCHEMA.read_text(encoding="utf-8").split("-- archive-statement\n")
+        assert len(blocks) > 1
+        for statement in blocks[1:]:
+            assert statement.strip()
+            segmented.execute(statement)
+    canonical_objects = db.execute("SELECT type,name,sql FROM sqlite_master WHERE name LIKE 'ghost_%' ORDER BY type,name").fetchall()
+    assert segmented.execute("SELECT type,name,sql FROM sqlite_master WHERE name LIKE 'ghost_%' ORDER BY type,name").fetchall() == canonical_objects
+    assert segmented.execute("PRAGMA user_version").fetchone() == (0,)
+    segmented.close()
+
     route(db)
     route(db, version="v2")
     attempt(db)
