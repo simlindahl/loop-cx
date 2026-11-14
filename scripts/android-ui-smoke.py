@@ -384,9 +384,12 @@ try:
             # Turn the fresh DB into the actual previous schema before journal migration.
             db.execute("ALTER TABLE runs DROP COLUMN heart_rate_metadata")
             db.execute("DROP TABLE heart_rate")
+            db.execute("ALTER TABLE export_queue DROP COLUMN attempt_json")
+            db.execute("ALTER TABLE export_queue DROP COLUMN last_error")
+            assert [row[1] for row in db.execute("PRAGMA table_info(export_queue)")] == ["run_id", "status"]
             db.execute("PRAGMA user_version=3")
             db.executemany("INSERT INTO runs VALUES (?,?,?,?,?,?,?,?)", old_rows)
-            db.executemany("INSERT INTO export_queue VALUES (?, 'disabled_synthetic')",
+            db.executemany("INSERT INTO export_queue (run_id, status) VALUES (?, 'disabled_synthetic')",
                            [(row[0],) for row in old_rows if row[4] == "finished"])
         adb("push", str(db_path), "/data/local/tmp/loop-legacy-c1.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-legacy-c1.db", "databases/runs-debug.db")
@@ -400,6 +403,11 @@ try:
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 5
+            assert [row[1] for row in db.execute("PRAGMA table_info(export_queue)")] == ["run_id", "status", "attempt_json", "last_error"]
+            for row in old_rows:
+                if row[4] == "finished":
+                    assert db.execute("SELECT status, attempt_json, last_error FROM export_queue WHERE run_id=?", (row[0],)).fetchone() == ("disabled_synthetic", None, None)
             for row in old_rows:
                 expected = list(row) + [None]
                 if expected[4] == "recording":
@@ -412,7 +420,7 @@ try:
         report["legacyC1"] = "PASS: journal reopen only interrupts old recording; frozen 10/5 plan/checkpoint/v1 or NULL metadata unchanged; separate new start uses 4/3 revision 3"
         adb("push", str(backup), "/data/local/tmp/loop-ui-results.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-ui-results.db", "databases/runs-debug.db")
-        report["schemaMigration"] = "PASS: fresh 4 and seeded 2-to-4/3-to-4, existing phase/checkpoint/event payload unchanged and legacy HR metadata NULL; 1-to-4 covered by stronger smoke"
+        report["schemaMigration"] = "PASS: fresh 5 and seeded 2-to-5/3-to-5, existing phase/checkpoint/event payload unchanged, legacy HR metadata and new attempt fields NULL; 1-to-5 covered by stronger smoke"
     print("PASS: real C1/C2 Start/Pause/Resume, 48dp actions, actual large-text growth, same sessions and frozen C2 metadata")
 finally:
     adb("shell", "cmd", "location", "set-location-enabled", original_location)
