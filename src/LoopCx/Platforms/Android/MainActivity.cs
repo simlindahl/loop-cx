@@ -10,7 +10,7 @@ namespace LoopCx;
     ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation |
         ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize |
         ConfigChanges.Density)]
-public sealed class MainActivity : MauiAppCompatActivity
+public sealed partial class MainActivity : MauiAppCompatActivity
 {
     private AndroidMotionPreference? motionPreference;
 
@@ -34,6 +34,7 @@ public sealed class MainActivity : MauiAppCompatActivity
 
     protected override void OnDestroy()
     {
+        CancelHeartRateSelection();
         motionPreference?.Dispose();
         motionPreference = null;
         base.OnDestroy();

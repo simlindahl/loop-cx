@@ -174,7 +174,7 @@ internal sealed class AndroidHeartRateSource : Java.Lang.Object
 
         public override void OnDescriptorWrite(BluetoothGatt? gatt, BluetoothGattDescriptor? descriptor, GattStatus status) => source.Dispatch(token, () =>
         {
-            if (status == GattStatus.Success && descriptor?.Uuid?.Equals(CccId) == true) { source.subscribed = true; source.retries = 0; }
+            if (status == GattStatus.Success && descriptor?.Uuid?.Equals(CccId) == true) { source.subscribed = true; source.retries = 0; source.Emit(null, "connected-awaiting-reading"); }
             else source.Disconnected();
         });
 
