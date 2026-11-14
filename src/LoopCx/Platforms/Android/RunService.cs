@@ -59,6 +59,7 @@ public sealed class RunService : Service, ILocationListener
     private DateTimeOffset started;
     private long startedMonotonic;
     private RunStartContext? startContext;
+    private RunTerminalContext? terminalContext;
     private readonly List<PhaseBoundaryFact> phaseBoundaries = [];
     private string initialPlan = "";
     private CoreTemplate template = CoreTemplate.C1;
@@ -343,9 +344,18 @@ public sealed class RunService : Service, ILocationListener
         if (previous is not null && (phaseBoundaries.Count == 0 || phaseBoundaries[^1].PreviousPhaseIndex < nextIndex - 1))
         {
             var effectiveElapsed = (long)at.TotalMilliseconds - startedMonotonic;
-            phaseBoundaries.Add(new(nextIndex - 1, next is null ? null : nextIndex, previous.Value, next,
+            var boundary = new PhaseBoundaryFact(nextIndex - 1, next is null ? null : nextIndex, previous.Value, next,
                 effectiveElapsed, SystemClock.ElapsedRealtime() - startedMonotonic, DateTimeOffset.UtcNow,
-                started.AddMilliseconds(effectiveElapsed), synthetic));
+                started.AddMilliseconds(effectiveElapsed), synthetic);
+            phaseBoundaries.Add(boundary);
+            if (next is null)
+            {
+                try { terminalContext = RunTerminalContext.Capture(boundary, TimeZoneInfo.FindSystemTimeZoneById(Java.Util.TimeZone.Default!.ID!)); }
+                catch (Exception problem) when (problem is TimeZoneNotFoundException or InvalidTimeZoneException)
+                {
+                    terminalContext = null; // Unknown remains unknown; never retry using a later delivery-time zone.
+                }
+            }
         }
     }
 
@@ -364,7 +374,7 @@ public sealed class RunService : Service, ILocationListener
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
         if (session.IsFinished) StopHeartRateSource();
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
-            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent, heartRateMetadata, heartRateObservation, startContext, phaseBoundaries);
+            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent, heartRateMetadata, heartRateObservation, startContext, phaseBoundaries, terminalContext);
 #if DEBUG
         if (session.IsFinished && OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif
