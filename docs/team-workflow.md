@@ -45,6 +45,8 @@ The team lead maintains one clearly labelled current handoff in the existing PR 
 
 Identify the actual reviewable seam, files or recorded checkpoint available now, with one short affected user-visible state invariant. Include only the current dependency/environment paths needed for the next step, separating executable prerequisites from historical evidence. Internal specialist assignments retain the resolved absolute project/worktree identity and revision; public PRs use repository-relative source paths and the appropriate evidence pointers. Follow [local workspace ownership](local-workspace.md), and preserve historical manifests rather than relabelling their original paths as a new execution.
 
+For an asynchronous persistence change, state what a missing callback and a native commit failure mean, and provide a focused failure check before packaging. A local timeout does not prove remote cancellation.
+
 Before assigning the next step, the lead checks the matching role's current status. Use `followup_task` to activate a completed role when work must resume; `send_message` alone does not start it. Report work as started only after actual activation or other current execution evidence. Keep this coordination in the existing handoff, not another report.
 
 When the head or base changes, update that handoff and reassess affected evidence under the existing merge rules. Keep earlier results as labelled historical evidence rather than presenting them as current. After merge, reconcile the live issue and Project Next step with delivered scope and remaining acceptance; do not let an old candidate description remain the current status.
@@ -58,6 +60,8 @@ The lead owns complete readable sentences, clear paragraph structure and accurat
 Before readiness, reconcile current decisions, review scope and Waiting/next-actor state with their canonical owners and the live Project. A resolved decision must not remain described as pending. Keep historical cutoffs attributed to their dates, and preserve independent review, required checks and outstanding physical acceptance. Presentation decisions follow the [study handoff](../design/mockups/README.md#present-a-study-for-a-decision).
 
 ## Retrospective record
+
+The 14 November export/CI micro-retrospective follow-up in [#68](https://github.com/simlindahl/loop-cx/issues/68) retains historical table-shape assertions and adds the callback/commit-failure precision to the existing handoff above. The developer and QA own the focused checks; the lead owns the handoff. Effects on owner overview remain unverified.
 
 Record this project's completed retrospectives in this section through the normal documentation workflow. Each concise dated entry states participating roles, evidence, keep/change decisions, one to three concrete actions with owners, the owning file or workflow, state, expected observable benefit and the next relevant follow-up point. Link actions with remaining work to the existing Project rather than creating another board. At follow-up, record the observed effect and whether the team kept, adjusted or reverted the improvement; label unmeasured effects explicitly.
 

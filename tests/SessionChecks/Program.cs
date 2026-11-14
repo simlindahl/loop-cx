@@ -1058,3 +1058,5 @@ HCWritePlanChecks.Run(args);
 HeartRateSettingsChecks.Run();
 
 HCOutboxChecks.Run();
+
+RunSaveChecks.Run();
