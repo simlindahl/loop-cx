@@ -7,7 +7,12 @@ public sealed record DistancePolicy(string Version, double MaximumAccuracyMetres
         TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10), 12, 3);
 }
 
-public sealed record DistanceObservation(bool Valid, TimeSpan? PreviousMonotonicTime, TimeSpan MonotonicTime);
+public sealed record DistanceObservation(bool Valid, TimeSpan? PreviousMonotonicTime, TimeSpan MonotonicTime)
+{
+    public bool Ignored { get; init; }
+}
+
+public sealed record AcceptedDistanceEdge(TimeSpan From, TimeSpan To, double Metres);
 
 public sealed record DistanceFix(TimeSpan MonotonicTime, double Latitude, double Longitude, double? AccuracyMetres);
 public sealed record DistanceSplit(int Number, double MeasuredMetres, TimeSpan ActiveTime, bool HasGaps)
@@ -54,12 +59,15 @@ public sealed class RunDistance
         this.phase = phase;
     }
 
+    public AcceptedDistanceEdge? AcceptedEdge { get; private set; }
+
     public DistanceObservation Observation { get; private set; } = new(false, null, TimeSpan.Zero);
 
     public DistanceState Snapshot => new(policy, totalMetres, mainMetres, mainHasGaps, status, [.. splits]);
 
     public void Boundary(RunPhase? nextPhase, TimeSpan at, TimeSpan mainActiveTime)
     {
+        AcceptedEdge = null;
         if (IsMain(phase) && IsMain(nextPhase))
         {
             phase = nextPhase; // Main-set distance/time is continuous through planned recovery.
@@ -80,6 +88,7 @@ public sealed class RunDistance
 
     public void Interrupt(TimeSpan at, string reason)
     {
+        AcceptedEdge = null;
         boundary = at > boundary ? at : boundary;
         anchor = null;
         previousValid = null;
@@ -106,10 +115,16 @@ public sealed class RunDistance
     {
         ArgumentNullException.ThrowIfNull(fix);
         Observation = new(false, null, fix.MonotonicTime);
+        AcceptedEdge = null;
 
         if (phase is null) return false;
         // Repeated or stale delivery cannot replace newer evidence or destroy a valid anchor.
-        if (lastObserved is { } previous && fix.MonotonicTime <= previous) return false;
+        if (lastObserved is { } previous && fix.MonotonicTime <= previous)
+        {
+            Observation = Observation with { Ignored = true };
+
+            return false;
+        }
         if (fix.MonotonicTime < boundary || fix.MonotonicTime > receivedAt ||
             receivedAt - fix.MonotonicTime > policy.MaximumAge)
         {
@@ -154,6 +169,7 @@ public sealed class RunDistance
         }
         var movementThreshold = Math.Max(policy.MinimumMovementMetres, anchor.AccuracyMetres!.Value + accuracy);
         if (metres < movementThreshold) { status = "GPS tracking"; return false; }
+        AcceptedEdge = new(anchor.MonotonicTime, fix.MonotonicTime, metres);
         totalMetres += metres;
         if (IsMain(phase)) AddMain(metres, anchorMainTime, sampleMainTime);
         anchor = fix;
@@ -186,6 +202,7 @@ public sealed class RunDistance
 
     public void Reanchor(TimeSpan at, string reason)
     {
+        AcceptedEdge = null;
         boundary = at > boundary ? at : boundary;
         anchor = previousValid = null;
         lastObserved = null;
@@ -211,6 +228,7 @@ public sealed class RunDistance
 
     private void Reject(string reason)
     {
+        AcceptedEdge = null;
         Observation = new(false, null, Observation.MonotonicTime);
         anchor = null;
         previousValid = null;
