@@ -42,7 +42,8 @@ internal static class HealthConnectRecordMapper
         var path = Path.Combine(context.FilesDir!.AbsolutePath, "hc-record-mapping-probe.json");
         try
         {
-            var start = new DateTimeOffset(2026, 11, 14, 12, 0, 0, TimeSpan.Zero);
+            // Fixed synthetic past instants keep ordinary SDK validation independent of today's time.
+            var start = new DateTimeOffset(2025, 1, 1, 12, 0, 0, TimeSpan.Zero);
             var end = start.AddMinutes(2);
             var id = Guid.Parse("44444444-4444-4444-4444-444444444444");
             var gate = new HCSourceGate(true, true, true);

@@ -22,13 +22,14 @@ for path in paths:
     reconstructed = consumer.read_export(path)
     run = document["run"]
     assert reconstructed["originalPlan"] == run["originalPlan"]
+    assert reconstructed["terminalContext"] == run["checkpoint"].get("TerminalContext")
     known_checkpoint = "SchemaVersion" in run["checkpoint"]
     if known_checkpoint:
         assert reconstructed["snapshot"] == run["checkpoint"]["Snapshot"]
         assert len(reconstructed["resolvedPlan"]) == len(run["checkpoint"]["Plan"])
         assert reconstructed["activeTicks"] >= reconstructed["mainActiveTicks"]
     else:
-        for key in ("snapshot", "resolvedPlan", "completedPhases", "statistics", "activeTicks", "mainActiveTicks", "phaseBoundaries", "startContext"):
+        for key in ("snapshot", "resolvedPlan", "completedPhases", "statistics", "activeTicks", "mainActiveTicks", "phaseBoundaries", "startContext", "terminalContext"):
             assert reconstructed[key] is None
     assert reconstructed["locations"] == run["locations"]
     assert reconstructed["heartRate"] == run["heartRate"]
@@ -71,6 +72,18 @@ for path in paths:
                     raise AssertionError("Consumer accepted missing or nonconserving statistics")
     print("PASS schema + independent reconstruction:", path.name)
 
+current = json.loads((root / "docs/export/sample-current-v1.json").read_text(encoding="utf-8"))
+terminal = {"TerminalPreviousPhaseIndex": 2, "ObservedTimeZoneId": "Europe/Stockholm",
+            "ObservedUtcOffsetSeconds": 3600, "EffectiveUtcOffsetSeconds": 7200,
+            "Provenance": "terminal-observed-zone-rules-v1"}
+current["run"]["checkpoint"]["TerminalContext"] = terminal
+validator.validate(current)
+with tempfile.TemporaryDirectory() as temporary:
+    target = Path(temporary) / "terminal-context.json"
+    target.write_text(json.dumps(current), encoding="utf-8", newline="\n")
+    assert consumer.read_export(target)["terminalContext"] == terminal
+print("PASS additive terminal-zone provenance reconstructed without current-zone fallback")
+
 legacy = json.loads((root / "docs/export/sample-v1.json").read_text(encoding="utf-8"))
 legacy["run"]["checkpoint"] = {"legacy": "retained exactly"}
 validator.validate(legacy)
@@ -80,4 +93,5 @@ with tempfile.TemporaryDirectory() as temporary:
     reconstructed = consumer.read_export(target)
     assert reconstructed["resolvedPlan"] is None and reconstructed["statistics"] is None
     assert reconstructed["phaseBoundaries"] is None and reconstructed["startContext"] is None
+    assert reconstructed["terminalContext"] is None
 print("PASS explicit unknown legacy checkpoint without fabricated current facts")

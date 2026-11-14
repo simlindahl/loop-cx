@@ -202,6 +202,7 @@ def read_export(path):
             "resolvedPlan": decoded["resolvedPlan"], "completedPhases": decoded["completedPhases"],
             "statistics": decoded["statistics"], "activeTicks": decoded["activeTicks"], "mainActiveTicks": decoded["mainActiveTicks"],
             "snapshot": decoded["snapshot"], "startContext": checkpoint.get("StartContext"),
+            "terminalContext": checkpoint.get("TerminalContext"),
             "phaseBoundaries": checkpoint.get("PhaseBoundaries"), "template": run["template"],
             "interpretedTemplate": interpret_template(run["template"]), "interpretedHeartRateSetup": interpret_hr_setup(run["heartRateSetup"]),
             "heartRateSetup": run["heartRateSetup"], "events": run["events"], "interpretedEvents": interpreted_events,
