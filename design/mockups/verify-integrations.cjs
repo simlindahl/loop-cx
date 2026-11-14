@@ -73,6 +73,12 @@ const { pathToFileURL, fileURLToPath } = require('url');
   await open('health-export');
   check('Only the identified sixteen reference states', await page.locator('article.review-screen').count() === 16);
   check('Explicit approved state scope', await page.locator('.screen-status').evaluateAll(elements => elements.every(element => element.textContent.includes('Approved direction'))));
+  const interruptedEntry = page.locator('#history a.row').filter({ hasText: 'Easy miles' });
+  check('Interrupted history uses current local detail', await interruptedEntry.getAttribute('href') === '#interrupted-detail');
+  const currentDocument = page.url().split('#')[0];
+  await interruptedEntry.click();
+  check('Interrupted history opens the truthful local detail', page.url() === `${currentDocument}#interrupted-detail`
+    && (await page.locator('#interrupted-detail .phone').innerText()).includes('The actual stop time is unknown.'));
   check('Navigation rows retain separate decorative markers', await page.locator('.phone-content a.row').evaluateAll(elements => elements.length === 11
     && elements.every(element => element.lastElementChild.matches('svg.navigation-indicator[aria-hidden="true"][focusable="false"]'))));
   check('Static metric rows remain noninteractive', await page.locator('.phone-content div.row').evaluateAll(elements => elements.every(element => !element.querySelector('.navigation-indicator') && !element.hasAttribute('tabindex') && !element.hasAttribute('role'))));
