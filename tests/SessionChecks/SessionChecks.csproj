@@ -15,5 +15,6 @@
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreStartRequest.cs" Link="CoreStartRequest.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreSelections.cs" Link="CoreSelections.cs" />
     <Compile Include="../../src/LoopCx/Features/ExportRun/*.cs" Link="ExportRun/%(Filename)%(Extension)" />
+    <Compile Include="../../src/LoopCx/Features/HealthConnectExport/*.cs" Link="HealthConnectExport/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
