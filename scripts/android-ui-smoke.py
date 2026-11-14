@@ -80,6 +80,37 @@ def capture_diagnostics(name, reason):
             report["captureFailures"].append({"state": name, "diagnosticError": str(diagnostic_error)})
 
 
+
+def location_notice_close(root):
+    nodes = list(root.iter("node"))
+    package = "com.google.android.gms"
+    title = any(node.get("package") == package and node.get("resource-id") == package + ":id/alertTitle"
+                and node.get("text") == "No location access" for node in nodes)
+    if not title:
+        return None
+    return next((node for node in nodes if node.get("package") == package
+                 and node.get("resource-id") == "android:id/button2" and node.get("text") == "Close"
+                 and node.get("clickable") == "true" and node.get("enabled") == "true"), None)
+
+
+def dismiss_location_notice(root, name, xml):
+    close = location_notice_close(root)
+    if close is None:
+        return False
+    assert not report.get("systemDialogs"), "Repeated location-disabled notice; refusing a general dialog-dismiss loop"
+    evidence = name + "-location-disabled-notice"
+    (OUT / (evidence + ".xml")).write_text(xml + "\n", encoding="utf-8")
+    (OUT / (evidence + ".png")).write_bytes(adb("exec-out", "screencap", "-p", binary=True))
+    x1, y1, x2, y2 = map(int, re.findall(r"\d+", close.get("bounds")))
+    assert x2 > x1 and y2 > y1, "The known system Close action is not visible"
+    adb("shell", "input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
+    location_after = adb("shell", "cmd", "location", "is-location-enabled")
+    assert location_after == "false", "Closing the known notice must not enable location"
+    report["systemDialogs"] = [{"package": "com.google.android.gms", "title": "No location access",
+                                "action": "Close", "locationEnabledAfter": location_after, "evidence": evidence}]
+    return True
+
+
 def capture(name, expected, heading_min_height=0):
     xml = ""
     capture_errors = 0
@@ -95,6 +126,8 @@ def capture(name, expected, heading_min_height=0):
             if capture_errors >= 3:
                 raise AssertionError("UI capture failed three times: " + name) from error
             time.sleep(1)
+            continue
+        if dismiss_location_notice(root, name, xml):
             continue
         if any(expected in (n.get("text", "") + n.get("content-desc", "")) for n in root.iter("node")) and heading_height(root, "Manually paused") >= heading_min_height:
             (OUT / (name + ".xml")).write_text(xml + "\n", encoding="utf-8")
