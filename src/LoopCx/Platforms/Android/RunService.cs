@@ -259,7 +259,11 @@ public sealed class RunService : Service, ILocationListener
             session.Resume();
             var simulatedCursor = TimeSpan.FromMilliseconds(lastTick);
             var simulatedPhase = session.Current?.Kind;
-            session.Advance(TimeSpan.FromHours(1), (next, consumed) =>
+            // Use the actual remaining finite plan, including runtime extensions, rather than a fixed cap.
+            // Reaching every remaining boundary (including finish) marks all artificial pieces synthetic.
+            var remainingPlan = session.Plan.Skip(session.PhaseIndex + 1)
+                .Aggregate(session.Remaining, static (remaining, phase) => remaining + phase.Duration);
+            session.Advance(remainingPlan, (next, consumed) =>
             {
                 var simulatedAt = TimeSpan.FromMilliseconds(lastTick) + consumed;
                 statistics.Advance(simulatedCursor, simulatedAt, simulatedPhase, false, synthetic: true);
