@@ -72,7 +72,7 @@
             {
                 <button id="@($"history-{entry.Summary.Id}")" class="history-row" type="button" @onclick="() => OpenInterrupted(entry)">
                     <span class="history-label">@entry.Summary.Name<small>@Started(entry.Summary) · @(entry.SavedLocally is null ? "Interrupted · Action needed" : "Partial recording · saved locally")</small></span>
-                    <span class="history-value">Last saved @Time(entry.Summary.TotalActive) active</span>
+                    <span class="history-value recovery-value">Last saved @Time(entry.Summary.TotalActive) active</span>
                     <span class="history-chevron" aria-hidden="true">›</span>
                 </button>
             }
