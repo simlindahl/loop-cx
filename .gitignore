@@ -1,0 +1,36 @@
+# Local evidence, downloads and toolchains; promote maintained sources explicitly.
+/artifacts/
+/local-build/
+/local-toolchain/
+/publication-preparation/
+/.worktrees/
+
+# Historical workspace notes and one-off migration helper.
+/loop-guide-approval.txt
+/split-product-specs.py
+
+# Generated .NET/Python and local IDE state.
+**/bin/
+**/obj/
+**/__pycache__/
+*.py[cod]
+.vs/
+*.user
+*.suo
+*.log
+
+# Local packages, recordings and signing material.
+*.apk
+*.aab
+*.apks
+*.db
+*.db-shm
+*.db-wal
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.key
+.env
+.env.*
+!.env.example
