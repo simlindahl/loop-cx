@@ -88,6 +88,29 @@ internal static class HCWritePlanChecks
 
             return JsonSerializer.SerializeToElement(node);
         }
+        var nullBoundary = HCWritePlanner.Create(source with
+        {
+            Checkpoint = ChangedCheckpoint(node => node["PhaseBoundaries"]!.AsArray().Add(null))
+        }, false);
+        Require(nullBoundary.State == "action_required" && nullBoundary.Plan is null,
+            "A null stored boundary must fail closed without leaking an exception or a ready plan.");
+        var noPauseCheckpoint = ChangedCheckpoint(node =>
+        {
+            node["TotalActiveTime"] = "00:00:45";
+            node["Snapshot"]!["Statistics"]!["Total"]!["UnknownGpsActiveTime"] = "00:00:10";
+        });
+        var reversedReceipts = HCWritePlanner.Create(source with
+        {
+            Checkpoint = noPauseCheckpoint,
+            Events = [source.Events[0] with { ObservedElapsedMilliseconds = 5000 }, source.Events[1] with { ObservedElapsedMilliseconds = 3000 }]
+        }, false);
+        Require(reversedReceipts.State == "action_required" && reversedReceipts.Plan is null,
+            "Backward pause/resume receipts must reject even when silently dropping the interval would conserve active time.");
+        Require(HCWritePlanner.Create(source with
+        {
+            Checkpoint = noPauseCheckpoint,
+            Events = [source.Events[0] with { ObservedElapsedMilliseconds = 5000 }, source.Events[1] with { ObservedElapsedMilliseconds = 5000 }]
+        }, false).State == "ready", "Equal receipt instants retain a valid zero-duration manual pause.");
         Require(HCWritePlanner.Create(source with
         {
             Checkpoint = ChangedCheckpoint(node =>

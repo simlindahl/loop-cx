@@ -23,6 +23,8 @@ public static class HCWritePlanner
                 throw new InvalidDataException("The stored statistics version is not supported by mapping v1.");
             var boundaries = checkpoint.GetProperty("PhaseBoundaries").Deserialize<PhaseBoundaryFact[]>()
                 ?? throw new InvalidDataException("Recorded effective phase boundaries are unavailable.");
+            if (boundaries.Any(static fact => fact is null))
+                throw new InvalidDataException("Recorded effective phase boundaries contain a null entry.");
             if ((statistics is { } stats && stats.GetProperty("HasSyntheticTime").GetBoolean()) || boundaries.Any(static fact => fact.Synthetic)
                 || source.Events.Any(static item => item.Command is "complete" or "hr-source-failure")
                 || (source.Template is { ValueKind: JsonValueKind.Object } template && template.TryGetProperty("Source", out var origin) && origin.GetString()?.StartsWith("Synthetic", StringComparison.OrdinalIgnoreCase) == true))
@@ -170,11 +172,15 @@ public static class HCWritePlanner
         DateTimeOffset? pausedAt = null;
         var manual = false;
         long previousSequence = -1;
+        long previousReceipt = -1;
         foreach (var item in events)
         {
             if (item.Sequence <= previousSequence) throw new InvalidDataException("Command sequence is not strictly ordered.");
             previousSequence = item.Sequence;
             if (item.Command is not ("pause" or "resume" or "auto-pause" or "auto-resume")) continue;
+            if (item.ObservedElapsedMilliseconds < previousReceipt)
+                throw new InvalidDataException("Pause command receipt times are not monotonic.");
+            previousReceipt = item.ObservedElapsedMilliseconds;
             var at = start.AddMilliseconds(item.ObservedElapsedMilliseconds);
             if (at < start || at > end) throw new InvalidDataException("A pause command is outside the finished run.");
             if (item.Command == "auto-pause")
