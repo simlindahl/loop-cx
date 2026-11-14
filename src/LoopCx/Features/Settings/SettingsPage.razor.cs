@@ -7,6 +7,7 @@ namespace LoopCx.Features.Settings;
 
 public partial class SettingsPage
 {
+    [Parameter] public bool InitialHealth { get; set; }
     [Parameter] public EventCallback OnTraining { get; set; }
     [Parameter] public EventCallback OnWarmupCooldown { get; set; }
     private HeartRateConfiguration configuration = HeartRateConfiguration.Empty;
@@ -18,9 +19,11 @@ public partial class SettingsPage
     private string? invalidField;
     private string? focusPending = "settings-heading";
     private bool selecting;
+    private bool healthRequest;
+    private HealthConnectAccess health = new(false, false, []);
     private bool disposed;
     private IJSObjectReference? module;
-    private string Title => page switch { "connection" => "Heart-rate connection", "zones" => "Your heart-rate zones", _ => "Settings" };
+    private string Title => page switch { "connection" => "Heart-rate connection", "zones" => "Your heart-rate zones", "health" => "Health Connect", _ => "Settings" };
     private HeartRateState? LiveSource => RunService.Snapshot is { Phase: not "Finished", HeartRate: { } hr }
         && configuration.DeviceAddress is not null && string.Equals(configuration.DeviceAddress, hr.Configuration.DeviceAddress, StringComparison.OrdinalIgnoreCase) ? hr : null;
     private bool DifferentActiveSource => RunService.Snapshot is { Phase: not "Finished", HeartRate: { } hr }
@@ -42,13 +45,16 @@ public partial class SettingsPage
 
     protected override void OnInitialized()
     {
+        if (InitialHealth) page = "health";
         var saved = HeartRatePreferences.Load();
         configuration = saved.Configuration;
         error = saved.ConfigurationError;
         RunService.Changed += Refresh;
+        HealthConnectSettings.Changed += Refresh;
+        health = HealthConnectSettings.Access();
     }
 
-    private void Refresh() => _ = InvokeAsync(StateHasChanged);
+    private void Refresh() => _ = InvokeAsync(() => { health = HealthConnectSettings.Access(); StateHasChanged(); });
     private static string QualityLabel(string quality) => quality switch
     {
         "valid" => "Connected · fresh reading",
@@ -61,6 +67,7 @@ public partial class SettingsPage
     private void Open(string destination)
     {
         page = destination;
+        if (destination == "health") health = HealthConnectSettings.Access();
         message = null;
         invalidField = null;
         focusPending = "settings-heading";
@@ -132,6 +139,55 @@ public partial class SettingsPage
         var updated = HeartRatePreferences.Load().Configuration with { DeviceAddress = null, DeviceName = null };
         if (Save(updated)) message = "Selection removed for new runs. Any current run keeps its original sensor.";
     }
+    public Task ShowHealth()
+    {
+        Open("health");
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task EnableHealthConnect()
+    {
+        if (healthRequest || !HealthConnectSettings.Access().Available) return;
+        healthRequest = true;
+        error = null;
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                if (disposed || page != "health") return;
+                if (!HealthConnectSettings.Load().Enabled) HealthConnectSettings.SetEnabled(true);
+                if (Platform.CurrentActivity is MainActivity activity) await activity.RequestHealthWriteAsync();
+                else throw new InvalidOperationException("Android permission UI is unavailable. Try reopening the app.");
+            });
+            if (disposed) return;
+            health = HealthConnectSettings.Access();
+            message = health.Missing.Count == 0 ? "Write access is available. A run is exported only after acknowledgement."
+                : "Write access needed. Your local recordings remain available.";
+            HealthConnectScheduling.Resume();
+        }
+        catch (Exception problem) when (problem is IOException or InvalidOperationException or Java.Lang.RuntimeException)
+        { if (!disposed) error = "Health Connect access could not be confirmed. Your local recordings are unchanged. Try again."; }
+        finally { healthRequest = false; focusPending = "health-enable"; }
+    }
+
+    private void TurnOffHealthConnect()
+    {
+        try
+        {
+            HealthConnectSettings.SetEnabled(false);
+            health = HealthConnectSettings.Access();
+            message = "Automatic export is off. Existing local and Health Connect records are unchanged.";
+            error = null;
+            focusPending = "health-enable";
+        }
+        catch (IOException) { error = "The change could not be saved. Check the displayed status and try again."; }
+    }
+
+    private static Task ShowHealthPrivacy() => MainThread.InvokeOnMainThreadAsync(() =>
+        (Platform.CurrentActivity ?? global::Android.App.Application.Context).StartActivity(new global::Android.Content.Intent(
+            global::Android.App.Application.Context, typeof(HealthPrivacyActivity)).AddFlags(
+                Platform.CurrentActivity is null ? global::Android.Content.ActivityFlags.NewTask : 0)));
+
     private static Task ReviewAccess() => MainThread.InvokeOnMainThreadAsync(() => AppInfo.Current.ShowSettingsUI());
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -144,6 +200,7 @@ public partial class SettingsPage
     {
         disposed = true;
         RunService.Changed -= Refresh;
+        HealthConnectSettings.Changed -= Refresh;
         if (module is not null) await module.DisposeAsync();
         GC.SuppressFinalize(this);
     }

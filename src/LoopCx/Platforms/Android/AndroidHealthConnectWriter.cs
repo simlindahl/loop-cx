@@ -49,7 +49,8 @@ internal sealed class AndroidHealthConnectWriter(Context context)
         try
         {
             // No assumption that this batch is remotely atomic. Retry preserves every client ID/version.
-            manager.InsertRecords(built.Records.ToList(), context.MainExecutor!, receiver);
+            if (!HealthConnectSettings.SubmitIfEnabled(() => manager.InsertRecords(built.Records.ToList(), context.MainExecutor!, receiver)))
+                return new("disabled", null, "Health Connect integration is off. No new write was submitted.");
             return await receiver.Completion.Task;
         }
         catch (Java.Lang.SecurityException)

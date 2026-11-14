@@ -34,12 +34,15 @@ public sealed partial class MainActivity : MauiAppCompatActivity
     {
         base.OnResume();
         AndroidMotionPreference.Refresh();
+        HealthConnectSettings.Refresh();
+        HealthConnectScheduling.Resume();
         if (RunService.Snapshot is { Phase: not "Finished" }) RunService.Command("refresh-sensors");
     }
 
     protected override void OnDestroy()
     {
         CancelHeartRateSelection();
+        CompleteHealthWrite();
         motionPreference?.Dispose();
         motionPreference = null;
         base.OnDestroy();
@@ -68,6 +71,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
 
     private static void HandleRunEntry(Intent? intent)
     {
+        if (intent?.Action == "android.health.connect.action.SHOW_ONBOARDING")
+        {
+            HealthConnectSettings.RequestOpen(); // Navigation only; existing Android grants never create app opt-in.
+            return;
+        }
         if (intent?.Action != Features.ActiveRun.RunNotificationEntry.Action) return;
         var id = intent.GetStringExtra(Features.ActiveRun.RunNotificationEntry.RunIdExtra);
         intent.RemoveExtra(Features.ActiveRun.RunNotificationEntry.RunIdExtra);

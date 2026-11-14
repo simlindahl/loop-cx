@@ -20,6 +20,8 @@ public partial class StartRunPage
     private Guid? historyInitialRun;
     private LoopCx.Features.History.HistoryPage? historyPage;
     private LoopCx.Features.Settings.SettingsPage? settingsPage;
+    private bool initialHealthSettings;
+    private Guid? healthSettingsReturnRun;
     private bool managePending;
     private Guid? editingShortcutId;
     private string orderFeedback = "";
@@ -83,8 +85,23 @@ public partial class StartRunPage
         RunService.Changed += Refresh;
         AndroidMotionPreference.Changed += RefreshSystemMotion;
         RunNotificationEntry.Changed += OpenNotificationRun;
+        HealthConnectSettings.OpenRequested += OpenHealthSettings;
+        OpenHealthSettings();
         OpenNotificationRun();
     }
+
+    private void OpenHealthSettings() => _ = InvokeAsync(async () =>
+    {
+        if (!HealthConnectSettings.ConsumeOpen()) return;
+        if (settingsPage is not null) { await settingsPage.ShowHealth(); return; }
+        if (dialogMode is not null) await CloseDialog();
+        showHistory = false;
+        historyPage = null;
+        showSettings = false;
+        settingsPage = null;
+        OpenSettingsDestinationCore(true);
+        StateHasChanged();
+    });
 
     private void OpenNotificationRun() => _ = InvokeAsync(async () =>
     {
@@ -254,15 +271,31 @@ public partial class StartRunPage
         Open("shortcut", trigger);
     }
 
-    private void OpenSettingsDestination()
+    private void OpenSettingsDestination() => OpenSettingsDestinationCore(false);
+
+    private void OpenSettingsDestinationCore(bool health)
     {
+        initialHealthSettings = health;
         showHistory = false;
         historyPage = null;
         showSettings = true;
         CoreDialogNavigation.Close = () => _ = InvokeAsync(() => settingsPage?.GoBack() ?? Task.CompletedTask);
     }
-    private void CloseSettingsDestination()
+    private void OpenHistoryHealthSettings(Guid runId)
     {
+        healthSettingsReturnRun = runId;
+        OpenSettingsDestinationCore(true);
+    }
+
+    private async Task CloseSettingsDestination()
+    {
+        initialHealthSettings = false;
+        if (healthSettingsReturnRun is { } runId)
+        {
+            healthSettingsReturnRun = null;
+            await OpenHistory(runId);
+            return;
+        }
         showSettings = false;
         settingsPage = null;
         try { statePreferences = CorePreferences.Load(); }
@@ -518,6 +551,7 @@ public partial class StartRunPage
     {
         RunService.Changed -= Refresh;
         RunNotificationEntry.Changed -= OpenNotificationRun;
+        HealthConnectSettings.OpenRequested -= OpenHealthSettings;
         AndroidMotionPreference.Changed -= RefreshSystemMotion;
         CoreDialogNavigation.Close = null;
         reference?.Dispose();

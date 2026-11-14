@@ -8,11 +8,11 @@
     </header>
     @if (showSettings)
     {
-        <LoopCx.Features.Settings.SettingsPage @ref="settingsPage" OnTraining="CloseSettingsDestination" OnWarmupCooldown="OpenSettings" />
+        <LoopCx.Features.Settings.SettingsPage @ref="settingsPage" InitialHealth="initialHealthSettings" OnTraining="CloseSettingsDestination" OnWarmupCooldown="OpenSettings" />
     }
     else if (showHistory)
     {
-        <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnTraining="ShowTraining" />
+        <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnHealthSettings="OpenHistoryHealthSettings" OnTraining="ShowTraining" />
     }
     else if (RunService.Snapshot is { } state)
     {

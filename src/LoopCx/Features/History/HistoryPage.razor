@@ -62,6 +62,14 @@
             <div><dt>Optional target</dt><dd>@StoredRunProjection.TargetSummary(run.Targets, run.Plan is { Count: 1 } && run.Plan[0].Kind == LoopCx.Features.ActiveRun.RunPhase.Work)</dd></div>
             <div><dt>Health Connect</dt><dd>@run.Summary.ExportLabel</dd></div>
         </dl>
+        @if (run.Summary.ExportLabel is "Pending" or "Action required")
+        {
+            <p>Your run is saved locally. Export is not confirmed; review Health Connect write access in Settings if needed.</p>
+            <button type="button" disabled="@busy" @onclick="RetryHealthConnect">Retry export</button>
+            <button type="button" @onclick="() => OnHealthSettings.InvokeAsync(run.Summary.Id)">Review Health Connect access</button>
+        }
+        @if (run.Summary.ExportLabel == "Exported")
+        { <p>Written to Health Connect. This does not confirm WHOOP import.</p> }
         <p>@Coverage(run.Main)</p>
         <p>@ZoneSummary(run.Zones)</p>
         <button id="history-share" type="button" class="primary" @onclick="ShowShare">Share workout data</button>

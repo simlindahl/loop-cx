@@ -216,6 +216,22 @@ public sealed class RunJournal : SQLiteOpenHelper
         }
         finally { db.EndTransaction(); }
     }
+    internal IReadOnlyList<Guid> ReadPendingHealthConnectRuns()
+    {
+        var result = new List<Guid>();
+        using var rows = ReadableDatabase!.RawQuery("SELECT q.run_id, r.checkpoint FROM export_queue q JOIN runs r ON r.id = q.run_id WHERE r.status = 'finished' AND q.status IN ('pending', 'action_required') ORDER BY r.started_utc, r.id", null)!;
+        while (rows.MoveToNext())
+        {
+            try
+            {
+                using var checkpoint = JsonDocument.Parse(rows.GetString(1)!);
+                if (LoopCx.Features.HealthConnectExport.HCConsent.Eligible(checkpoint.RootElement)) result.Add(Guid.Parse(rows.GetString(0)!));
+            }
+            catch (Exception malformed) when (malformed is JsonException or FormatException) { }
+        }
+        return result;
+    }
+
     public string ExportJson(Guid id)
     {
         // All tables are materialized on this transaction's thread before projection or sharing.

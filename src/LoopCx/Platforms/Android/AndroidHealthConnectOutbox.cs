@@ -54,6 +54,7 @@ internal sealed class AndroidHealthConnectOutbox
             else
             {
                 var snapshot = RunJournal.ReadExportSnapshot(database, runId);
+                if (!HCConsent.Eligible(snapshot.Checkpoint)) return new("local_only", null, "This recording started without Health Connect opt-in.");
                 var projected = HCWritePlanner.Create(snapshot, DebugBuild);
                 if (projected.Plan is null)
                 {

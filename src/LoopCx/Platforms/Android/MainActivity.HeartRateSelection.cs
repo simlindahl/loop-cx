@@ -37,6 +37,7 @@ public sealed partial class MainActivity
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
     {
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == HealthWriteRequest) { CompleteHealthWrite(); return; }
         if (requestCode != HeartRatePermissionRequest || heartRateSelection is null) return;
         if (grantResults.Length > 0 && grantResults.All(static result => result == Permission.Granted)) OpenHeartRateChooser();
         else CompleteHeartRateSelection(new(null, null, "Bluetooth access needed. Runs can continue without heart rate."));

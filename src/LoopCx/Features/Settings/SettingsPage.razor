@@ -10,6 +10,7 @@
         <p>Set once. Keep running.</p>
         <button class="setting-row" type="button" @onclick='() => Open("connection")'>Heart-rate connection <small>@ConnectionStatus</small></button>
         <button class="setting-row" type="button" @onclick="OpenZones">Heart-rate zones <small>@ProfileStatus</small></button>
+        <button id="health-settings" class="setting-row" type="button" @onclick='() => Open("health")'>Health Connect <small>@health.Label</small></button>
         <button id="warmup-cooldown-settings" class="setting-row" type="button" @onclick="OnWarmupCooldown">Warm-up and cool-down <small>Global C1 defaults</small></button>
     }
     else if (page == "connection")
@@ -35,6 +36,29 @@
         <button class="primary" type="button" disabled="@selecting" @onclick="SelectSensor">@(selecting ? "Waiting for Android selection…" : "Select sensor")</button>
         <button type="button" @onclick="ReviewAccess">Review Android access</button>
         <p class="small">You can run without heart rate. Missing readings stay unknown. Settings does not start a background heart-rate connection.</p>
+    }
+    else if (page == "health")
+    {
+        <p>Your run is saved locally whether Health Connect is enabled or not.</p>
+        <section class="card">
+            <h3>@health.Label</h3>
+            @if (!health.Available)
+            { <p>Health Connect is unavailable on this device. Your runs stay local.</p> }
+            else
+            {
+                <p>Enable write access to export running sessions, distance and available heart-rate data to Health Connect. No other apps’ health history is read.</p>
+                <p>Runs you start while this integration is enabled can be exported once the required write access is available. Previously eligible pending runs may resume. Other earlier recordings stay local.</p>
+                @if (health.Enabled && health.Missing.Count > 0)
+                { <p>Write access needed: @string.Join(", ", health.Missing).</p> }
+                <p>Denying access keeps your local run available. Permission alone does not mean a run has been exported.</p>
+                <button id="health-enable" class="primary" type="button" disabled="@healthRequest" aria-busy="@healthRequest" @onclick="EnableHealthConnect">@(healthRequest ? "Waiting for Android permissions…" : health.Enabled ? "Review Android access" : "Enable Health Connect")</button>
+                @if (!health.Enabled) { <button type="button" @onclick='() => Open("settings")'>Keep local only</button> }
+            }
+            @if (health.Enabled) { <button type="button" @onclick="TurnOffHealthConnect">Turn off</button> }
+            <button type="button" @onclick="ShowHealthPrivacy">Privacy and data use</button>
+        </section>
+        @if (HealthConnectSettings.NormalExportDisabled) { <p>Normal Health Connect export is disabled in this debug build. No debug recording is exported.</p> }
+        <p>Other apps' access is controlled in Android Health Connect. Writing a run does not confirm WHOOP import or goal credit.</p>
     }
     else
     {

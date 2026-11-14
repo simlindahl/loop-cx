@@ -3,15 +3,15 @@ using System.Runtime.Versioning;
 
 namespace LoopCx;
 
-// Explicit future integration entry only; no startup, timer, UI or background-worker trigger is installed.
+// Uses the existing frozen durable attempt; caller scheduling never supplies consent or acknowledgement.
 [SupportedOSPlatform("android34.0")]
 internal static class HealthConnectExportDispatch
 {
     private static readonly SemaphoreSlim Gate = new(1, 1);
 
-    internal static async Task<string> DispatchAsync(Guid runId, bool integrationEnabled, Context context)
+    internal static async Task<string> DispatchAsync(Guid runId, Context context)
     {
-        if (!integrationEnabled) return "disabled";
+        if (!HealthConnectSettings.Load().Enabled) return "disabled";
         if (!await Gate.WaitAsync(0)) return "busy";
         try
         {

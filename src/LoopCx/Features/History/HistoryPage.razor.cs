@@ -11,6 +11,7 @@ namespace LoopCx.Features.History;
 public partial class HistoryPage
 {
     [Parameter] public EventCallback OnTraining { get; set; }
+    [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
     private readonly List<StoredRunSummary> runs = [];
     private StoredRunDetail? detail;
@@ -29,9 +30,18 @@ public partial class HistoryPage
 
     protected override async Task OnInitializedAsync()
     {
+        HealthConnectSettings.Changed += RefreshHealthConnect;
         await ShowList();
         if (InitialRun is { } id && !disposed) await Open(id);
     }
+    private void RefreshHealthConnect() => _ = InvokeAsync(async () =>
+    {
+        if (disposed || busy || sharingRun is not null || partial is not null) return;
+        if (detail is { } selected) await Open(selected.Summary.Id);
+        else await ShowList();
+        StateHasChanged();
+    });
+
     public async Task ShowList()
     {
         if (busy) return;
@@ -111,6 +121,27 @@ public partial class HistoryPage
         catch (Exception issue) when (ReadError(issue)) { error = "This stored recording could not be read. No data was changed."; }
         finally { busy = false; }
     }
+    private async Task RetryHealthConnect()
+    {
+        if (busy || detail is not { } run) return;
+        var id = run.Summary.Id;
+        busy = true;
+        error = null;
+        try
+        {
+            var result = await HealthConnectScheduling.RetryAsync(id);
+            if (disposed || detail?.Summary.Id != id) return;
+            detail = await Task.Run(() => RunJournal.Shared.ReadFinishedRun(id));
+            if (disposed) return;
+            if (result is "disabled" or "unavailable") error = "Enable Health Connect and review write access in Settings. Your run remains local.";
+            else if (result == "busy") error = "An export attempt is already running. Retry after it completes.";
+            focusPending = "history-heading";
+        }
+        catch (Exception problem) when (ReadError(problem) || problem is Java.Lang.RuntimeException)
+        { if (!disposed) error = "Export is not confirmed. Your run is stored locally. Try again."; }
+        finally { busy = false; }
+    }
+
     private void ShowShare()
     {
         if (busy || preparingShare) return;
@@ -214,6 +245,7 @@ public partial class HistoryPage
     public async ValueTask DisposeAsync()
     {
         disposed = true;
+        HealthConnectSettings.Changed -= RefreshHealthConnect;
         shareRequest++;
         if (module is not null) await module.DisposeAsync();
         GC.SuppressFinalize(this);
