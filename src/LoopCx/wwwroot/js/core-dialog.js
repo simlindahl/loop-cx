@@ -4,10 +4,29 @@ const nodeEffects = new WeakMap();
 const exitCopies = new Set();
 const motionEase = 'cubic-bezier(.2,0,0,1)';
 let listening = false;
+let systemMotion;
 let lastSurface;
 let lastState;
 let lastDisclosure;
 
+function reducedMotion() {
+    const native = document.documentElement.dataset.systemMotion;
+    if (native === 'pending' || native === 'reduce') return true;
+    if (native === 'full') return false;
+    return motionPreference.matches;
+}
+export function setSystemMotion(value) {
+    const next = typeof value === 'boolean' ? value : null;
+    const attribute = next === null ? undefined : next ? 'reduce' : 'full';
+    if (systemMotion === next && document.documentElement.dataset.systemMotion === attribute) return;
+    systemMotion = next;
+    if (attribute === undefined) delete document.documentElement.dataset.systemMotion;
+    else document.documentElement.dataset.systemMotion = attribute;
+    clearMotion();
+}
+function mediaMotionChanged() {
+    if (systemMotion === undefined || systemMotion === null) clearMotion();
+}
 function clearMotion() {
     motionEffects.forEach(effect => effect.cancel());
     exitCopies.forEach(copy => copy.remove());
@@ -15,11 +34,11 @@ function clearMotion() {
 }
 function listenForMotion() {
     if (listening) return;
-    motionPreference.addEventListener('change', clearMotion);
+    motionPreference.addEventListener('change', mediaMotionChanged);
     listening = true;
 }
 function effect(node, frames, duration, delay = 0) {
-    if (!node || motionPreference.matches || !node.getClientRects().length) return;
+    if (!node || reducedMotion() || !node.getClientRects().length) return;
     listenForMotion();
     nodeEffects.get(node)?.cancel();
     const animation = node.animate(frames, { duration, delay, easing: motionEase });
@@ -36,7 +55,7 @@ function enter(node, duration = 220, delay = 0) {
     return effect(node, [{ opacity: .5, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], duration, delay);
 }
 function leaveVisual(node) {
-    if (!node || motionPreference.matches) return;
+    if (!node || reducedMotion()) return;
     const rect = node.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const copy = node.cloneNode(true);
@@ -94,8 +113,9 @@ export function syncMotion(saved) {
 }
 export function dispose() {
     clearMotion();
-    motionPreference.removeEventListener('change', clearMotion);
+    motionPreference.removeEventListener('change', mediaMotionChanged);
     listening = false;
+    systemMotion = undefined;
     lastSurface = lastState = lastDisclosure = undefined;
 }
 

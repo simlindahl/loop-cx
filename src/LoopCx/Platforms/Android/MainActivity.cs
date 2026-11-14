@@ -12,9 +12,13 @@ namespace LoopCx;
         ConfigChanges.Density)]
 public sealed class MainActivity : MauiAppCompatActivity
 {
+    private AndroidMotionPreference? motionPreference;
+
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        if (global::Android.App.Application.Context.ContentResolver is { } resolver)
+            motionPreference = new AndroidMotionPreference(resolver);
         _ = RunJournal.Shared;
 #if DEBUG
         HandleDebugCommand(Intent);
@@ -24,7 +28,15 @@ public sealed class MainActivity : MauiAppCompatActivity
     protected override void OnResume()
     {
         base.OnResume();
+        AndroidMotionPreference.Refresh();
         if (RunService.Snapshot is { Phase: not "Finished" }) RunService.Command("refresh-sensors");
+    }
+
+    protected override void OnDestroy()
+    {
+        motionPreference?.Dispose();
+        motionPreference = null;
+        base.OnDestroy();
     }
 
     public override bool OnKeyDown(global::Android.Views.Keycode keyCode, global::Android.Views.KeyEvent? e)

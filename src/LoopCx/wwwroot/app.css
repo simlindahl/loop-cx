@@ -80,12 +80,24 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    button::before {
+    :root:not([data-system-motion]) button::before {
         transition: none;
         transform: none;
     }
 
-    button:active:not(:disabled)::before {
+    :root:not([data-system-motion]) button:active:not(:disabled)::before {
         transform: none;
     }
+}
+
+/* Disable press motion until initial native preference arrives; explicit full also overrides cached media. */
+:root[data-system-motion="pending"] button::before,
+:root[data-system-motion="reduce"] button::before {
+    transition: none;
+    transform: none;
+}
+
+:root[data-system-motion="pending"] button:active:not(:disabled)::before,
+:root[data-system-motion="reduce"] button:active:not(:disabled)::before {
+    transform: none;
 }

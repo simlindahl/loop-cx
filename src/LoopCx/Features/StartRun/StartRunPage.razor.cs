@@ -11,6 +11,7 @@ public partial class StartRunPage
     private CorePreferencesState statePreferences = CorePreferencesState.Default;
     private bool loadFailed;
     private bool motionPending = true;
+    private bool systemMotionPending = true;
     private bool resultPending;
     private string? lastMotionKey;
     private bool managing;
@@ -75,9 +76,15 @@ public partial class StartRunPage
         catch (InvalidDataException problem) { error = problem.Message; loadFailed = true; }
 
         RunService.Changed += Refresh;
+        AndroidMotionPreference.Changed += RefreshSystemMotion;
     }
 
     private void Refresh() => _ = InvokeAsync(StateHasChanged);
+    private void RefreshSystemMotion() => _ = InvokeAsync(() =>
+    {
+        systemMotionPending = true;
+        StateHasChanged();
+    });
     private static bool IsAutomatic(RunSnapshot state) => state.Motion?.PauseReason == PauseReason.Automatic;
     private static string Clock(long seconds) => $"{seconds / 60}:{seconds % 60:00}";
     private static string PhaseLabel(string phase) => phase switch { "Warmup" => "Warm-up", "Cooldown" => "Cool-down", _ => phase };
@@ -378,11 +385,16 @@ public partial class StartRunPage
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         motionPending |= lastMotionKey != MotionKey;
-        if (!openPending && focusPending is null && !managePending && !motionPending && !resultPending) return;
+        if (!openPending && focusPending is null && !managePending && !motionPending && !resultPending && !systemMotionPending) return;
         try
         {
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
             reference ??= DotNetObjectReference.Create(this);
+            if (systemMotionPending)
+            {
+                systemMotionPending = false;
+                await module.InvokeVoidAsync("setSystemMotion", AndroidMotionPreference.Current);
+            }
             if (managePending) { managePending = false; await module.InvokeVoidAsync("manage", reference); }
             if (openPending) { openPending = false; await module.InvokeVoidAsync("open", opener, reference); }
             if (focusPending is { } focus) { focusPending = null; await module.InvokeVoidAsync("focus", focus); }
@@ -415,6 +427,7 @@ public partial class StartRunPage
     public async ValueTask DisposeAsync()
     {
         RunService.Changed -= Refresh;
+        AndroidMotionPreference.Changed -= RefreshSystemMotion;
         CoreDialogNavigation.Close = null;
         reference?.Dispose();
         if (module is not null)
