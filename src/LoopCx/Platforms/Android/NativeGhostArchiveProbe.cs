@@ -1,5 +1,6 @@
 #if DEBUG
 using System.Text.Json;
+using Android.Database.Sqlite;
 using LoopCx.Features.GhostRun;
 
 namespace LoopCx;
@@ -71,6 +72,32 @@ internal static class NativeGhostArchiveProbe
                 throw new InvalidOperationException("Frozen archive evidence/year/quality changed while reading.");
             using var foreignKeys = RunJournal.Shared.ReadableDatabase!.RawQuery("PRAGMA foreign_keys", null)!;
             if (!foreignKeys.MoveToFirst() || foreignKeys.GetInt(0) != 1) throw new InvalidOperationException("Foreign keys are not enabled.");
+            // Negative fixtures use separate new files, never altered journal metadata.
+            var unknownPath = Path.Combine(directory, $"ghost-unknown-{Guid.NewGuid()}.db");
+            using var unknownDb = SQLiteDatabase.OpenOrCreateDatabase(unknownPath, null)!;
+            unknownDb.SetForeignKeyConstraintsEnabled(true);
+            var unknownArchive = new AndroidGhostArchive(unknownDb);
+            _ = unknownArchive.ReadRoutes();
+            unknownDb.ExecSQL("UPDATE ghost_schema SET version=4294967297 WHERE singleton=1");
+            var rejectedWideVersion = false;
+            try { _ = unknownArchive.ReadRoutes(); }
+            catch (InvalidDataException problem) { rejectedWideVersion = problem.Message.Contains("revision", StringComparison.Ordinal); }
+            using var savedVersion = unknownDb.RawQuery("SELECT version FROM ghost_schema", null)!;
+            if (!rejectedWideVersion || !savedVersion.MoveToFirst() || savedVersion.GetLong(0) != 4294967297L)
+                throw new InvalidOperationException("An unknown 64-bit archive revision was accepted or changed.");
+            var partialPath = Path.Combine(directory, $"ghost-partial-{Guid.NewGuid()}.db");
+            using var partialDb = SQLiteDatabase.OpenOrCreateDatabase(partialPath, null)!;
+            partialDb.SetForeignKeyConstraintsEnabled(true);
+            partialDb.ExecSQL("CREATE TABLE ghost_routes (own_synthetic_marker TEXT)");
+            partialDb.ExecSQL("INSERT INTO ghost_routes VALUES ('preserve-negative-fixture')");
+            var rejectedPartial = false;
+            try { _ = new AndroidGhostArchive(partialDb).ReadRoutes(); }
+            catch (InvalidDataException) { rejectedPartial = true; }
+            using var partialMarker = partialDb.RawQuery("SELECT own_synthetic_marker FROM ghost_routes", null)!;
+            using var partialTables = partialDb.RawQuery("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name GLOB 'ghost_*'", null)!;
+            if (!rejectedPartial || !partialMarker.MoveToFirst() || partialMarker.GetString(0) != "preserve-negative-fixture"
+                || !partialTables.MoveToFirst() || partialTables.GetInt(0) != 1)
+                throw new InvalidOperationException("A partial archive fixture was repaired or changed instead of rejected.");
             var report = new
             {
                 Success = true,
@@ -83,6 +110,10 @@ internal static class NativeGhostArchiveProbe
                 Attempts = attempts.Count,
                 PreservedLocalYear = 2025,
                 NoAutomaticVerified = true,
+                Unknown64BitRevisionRejected = rejectedWideVersion,
+                PartialNamespaceUnchanged = rejectedPartial,
+                UnknownScratchFile = Path.GetFileName(unknownPath),
+                PartialScratchFile = Path.GetFileName(partialPath),
                 SessionDatabaseVersion = RunJournal.Shared.ReadableDatabase.Version,
                 Scope = "Synthetic native adapter only; no race UI/service/physical verification."
             };
