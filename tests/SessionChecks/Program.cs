@@ -861,3 +861,88 @@ var separateMain = separateRunStatistics.Snapshot(TimeSpan.FromSeconds(5), hrDis
 Require(separateMain.Main.ActiveTime == TimeSpan.FromSeconds(3) && separateMain.CurrentSplit is not null,
     "A warm-up boundary cannot finalize main, and a new run has no frozen result inherited from a previous instance.");
 Console.WriteLine("PASS: main results and splits freeze at the real boundary while total HR coverage continues through cooldown.");
+
+
+// Arrange: legacy and partial data stay frozen; raw clocks retain different units.
+using var exportPlanDocument = System.Text.Json.JsonDocument.Parse("[{\"Kind\":1,\"Duration\":\"00:45:00\",\"TargetRpe\":3}]");
+var exportCheckpoint = System.Text.Json.JsonSerializer.SerializeToElement(new
+{
+    SchemaVersion = 1,
+    Snapshot = new { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Phase = "Work", Paused = false, ActiveSeconds = 4, RemainingSeconds = 2696, Statistics = (RunStatisticsState?)null },
+    Plan = exportPlanDocument.RootElement.Clone(),
+    Completed = Array.Empty<CompletedPhase>(),
+    PhaseActiveTime = TimeSpan.FromSeconds(4),
+    TotalActiveTime = TimeSpan.FromSeconds(4),
+    MainActiveTime = TimeSpan.FromSeconds(4)
+});
+var exportSnapshot = new LoopCx.Features.ExportRun.ExportJournalSnapshot(Guid.Parse("11111111-1111-1111-1111-111111111111"),
+    "2026-11-14T10:00:00Z", "2026-11-14T10:00:04Z", 4000, "interrupted", exportPlanDocument.RootElement.Clone(), null, null,
+    exportCheckpoint, null, [], [new(1, 1794650400000, 1000000000, 59, 18, null)], [new(1, "2026-11-14T10:00:04Z", 10000000, null, "contact-unavailable")]);
+
+// Act
+var exportedJson = LoopCx.Features.ExportRun.ExportRunV1.Project(exportSnapshot);
+var repeatedExport = LoopCx.Features.ExportRun.ExportRunV1.Project(exportSnapshot);
+using var exportedDocument = System.Text.Json.JsonDocument.Parse(exportedJson);
+var exportedRun = exportedDocument.RootElement.GetProperty("run");
+
+// Assert
+Require(exportedJson == repeatedExport && exportedDocument.RootElement.GetProperty("schemaVersion").GetInt32() == 1,
+    "Repeated projection of the same detached snapshot retains semantic identity and deterministic order.");
+Require(exportedRun.GetProperty("template").ValueKind == System.Text.Json.JsonValueKind.Null
+    && exportedRun.GetProperty("heartRateSetup").ValueKind == System.Text.Json.JsonValueKind.Null
+    && !exportedRun.GetProperty("checkpoint").TryGetProperty("StartContext", out _)
+    && exportedRun.GetProperty("status").GetString() == "interrupted",
+    "Unknown legacy metadata remains unknown; projection invents neither a zone nor an interrupted end time.");
+Require(exportedRun.GetProperty("originalPlan")[0].GetProperty("Duration").GetString() == "00:45:00"
+    && exportedRun.GetProperty("heartRate")[0].GetProperty("bpm").ValueKind == System.Text.Json.JsonValueKind.Null
+    && exportedRun.GetProperty("locations")[0].GetProperty("accuracyMetres").ValueKind == System.Text.Json.JsonValueKind.Null,
+    "Original frozen plan, missing HR/contact and missing GPS accuracy survive without fabricated zeros.");
+Console.WriteLine("PASS: deterministic local JSON preserves frozen legacy plans, interrupted state and unknown raw data.");
+
+
+// Arrange: a later raw receipt must not refine the authoritative frozen main checkpoint.
+var modernContext = new LoopCx.Features.ExportRun.RunStartContext("Europe/Stockholm", 3600, 1000);
+var modernBoundaries = new[] { new LoopCx.Features.ExportRun.PhaseBoundaryFact(0, 1, RunPhase.Work, RunPhase.Cooldown,
+    10000, 10500, DateTimeOffset.Parse("2026-11-14T10:00:10.5Z", System.Globalization.CultureInfo.InvariantCulture), DateTimeOffset.Parse("2026-11-14T10:00:10Z", System.Globalization.CultureInfo.InvariantCulture), false) };
+var modernCheckpoint = System.Text.Json.JsonSerializer.SerializeToElement(new
+{
+    SchemaVersion = 1,
+    StartContext = modernContext,
+    PhaseBoundaries = modernBoundaries,
+    Snapshot = new { exportSnapshot.Id, Phase = "Cooldown", Paused = false, ActiveSeconds = 11, RemainingSeconds = 9, Statistics = duringCooldown },
+    Plan = new[] { new TimedPhase(RunPhase.Work, TimeSpan.FromSeconds(10), 7), new TimedPhase(RunPhase.Cooldown, TimeSpan.FromSeconds(10), 2) },
+    Completed = new[] { new CompletedPhase(new(RunPhase.Work, TimeSpan.FromSeconds(10), 7), TimeSpan.FromSeconds(10)) },
+    PhaseActiveTime = TimeSpan.FromSeconds(1),
+    TotalActiveTime = TimeSpan.FromSeconds(11),
+    MainActiveTime = TimeSpan.FromSeconds(10)
+});
+var modernExport = exportSnapshot with
+{
+    Checkpoint = modernCheckpoint,
+    Status = "recording",
+    ObservedElapsedMilliseconds = 11000,
+    OriginalPlan = modernCheckpoint.GetProperty("Plan"),
+    Template = System.Text.Json.JsonSerializer.SerializeToElement(new CoreTemplate("C1", "Synthetic fixture", "intervals", 1, null,
+        Targets: new(CoreTargetMode.HeartRateZone, 3))),
+    HeartRateSetup = System.Text.Json.JsonSerializer.SerializeToElement(new HeartRateSetup(hrConfiguration, null)),
+    LastObservedUtc = "2026-11-14T10:00:11Z",
+    Locations = [new(1, 1794650411000, 12000000000, 59, 18, 5)],
+    HeartRate = [new(1, "2026-11-14T10:00:11Z", 120000000, 220, "valid")]
+};
+
+// Act
+var modernJson = LoopCx.Features.ExportRun.ExportRunV1.Project(modernExport);
+using var modernDocument = System.Text.Json.JsonDocument.Parse(modernJson);
+var projectedCheckpoint = modernDocument.RootElement.GetProperty("run").GetProperty("checkpoint");
+
+// Assert
+Require(System.Text.Json.JsonElement.DeepEquals(projectedCheckpoint.GetProperty("Snapshot").GetProperty("Statistics").GetProperty("Main"),
+    modernCheckpoint.GetProperty("Snapshot").GetProperty("Statistics").GetProperty("Main")),
+    "Raw GPS before the next checkpoint and later cooldown HR cannot recompute frozen main statistics during export.");
+Require(projectedCheckpoint.GetProperty("StartContext").GetProperty("UtcOffsetSeconds").GetInt32() == 3600
+    && projectedCheckpoint.GetProperty("PhaseBoundaries")[0].GetProperty("EffectiveElapsedMilliseconds").GetInt64() == 10000
+    && modernDocument.RootElement.GetProperty("run").GetProperty("locations")[0].GetProperty("utcMilliseconds").GetInt64() == 1794650411000,
+    "Start-zone and observed/effective boundary provenance survive independently of a raw row leading the checkpoint.");
+if (args.Length == 2 && args[0] == "--export-json-sample")
+    File.WriteAllText(args[1], modernJson, new System.Text.UTF8Encoding(false));
+Console.WriteLine("PASS: export retains frozen main, later raw observations and distinct start-zone/boundary provenance.");

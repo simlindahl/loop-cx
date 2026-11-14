@@ -4,6 +4,7 @@ using Android.Content.PM;
 using Android.Locations;
 using Android.OS;
 using LoopCx.Features.ActiveRun;
+using LoopCx.Features.ExportRun;
 
 namespace LoopCx;
 
@@ -56,6 +57,8 @@ public sealed class RunService : Service, ILocationListener
     private Guid id;
     private DateTimeOffset started;
     private long startedMonotonic;
+    private RunStartContext? startContext;
+    private readonly List<PhaseBoundaryFact> phaseBoundaries = [];
     private string initialPlan = "";
     private CoreTemplate template = CoreTemplate.C1;
     private string templateMetadata = "";
@@ -176,6 +179,8 @@ public sealed class RunService : Service, ILocationListener
             id = Guid.NewGuid();
             started = DateTimeOffset.UtcNow;
             startedMonotonic = SystemClock.ElapsedRealtime();
+            var startZone = TimeZoneInfo.Local;
+            startContext = new(startZone.Id, (int)startZone.GetUtcOffset(started).TotalSeconds, startedMonotonic);
             distance = new RunDistance(DistancePolicy.Pilot, TimeSpan.FromMilliseconds(startedMonotonic), session.Current?.Kind);
             motion = new RunMotion(MovementPolicy.Pilot with
             {
@@ -269,7 +274,7 @@ public sealed class RunService : Service, ILocationListener
                 statistics.Advance(simulatedCursor, simulatedAt, simulatedPhase, false, synthetic: true);
                 simulatedCursor = simulatedAt;
                 distance!.UpdateFreshness(simulatedAt);
-                RecordPhaseBoundary(simulatedPhase, next, simulatedAt);
+                RecordPhaseBoundary(simulatedPhase, next, simulatedAt, synthetic: true);
                 simulatedPhase = next;
             });
             effective = true;
@@ -316,13 +321,23 @@ public sealed class RunService : Service, ILocationListener
         lastTick = now;
     }
 
-    private void RecordPhaseBoundary(RunPhase? previous, RunPhase? next, TimeSpan at)
+    private void RecordPhaseBoundary(RunPhase? previous, RunPhase? next, TimeSpan at, bool synthetic = false)
     {
         distance!.Boundary(next, at, session!.MainActiveTime);
 
         if (previous is RunPhase.Work or RunPhase.Recovery && next is not (RunPhase.Work or RunPhase.Recovery))
         {
             statistics.FinalizeMain(distance.Snapshot);
+        }
+
+        // The complete prefix survives failed checkpoints; serializing it again never appends a duplicate.
+        var nextIndex = session.PhaseIndex;
+        if (previous is not null && (phaseBoundaries.Count == 0 || phaseBoundaries[^1].PreviousPhaseIndex < nextIndex - 1))
+        {
+            var effectiveElapsed = (long)at.TotalMilliseconds - startedMonotonic;
+            phaseBoundaries.Add(new(nextIndex - 1, next is null ? null : nextIndex, previous.Value, next,
+                effectiveElapsed, SystemClock.ElapsedRealtime() - startedMonotonic, DateTimeOffset.UtcNow,
+                started.AddMilliseconds(effectiveElapsed), synthetic));
         }
     }
 
@@ -341,7 +356,7 @@ public sealed class RunService : Service, ILocationListener
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
         if (session.IsFinished) StopHeartRateSource();
         journal.Checkpoint(id, started, lastTick - startedMonotonic,
-            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent, heartRateMetadata, heartRateObservation);
+            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent, heartRateMetadata, heartRateObservation, startContext, phaseBoundaries);
 #if DEBUG
         if (session.IsFinished && OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif

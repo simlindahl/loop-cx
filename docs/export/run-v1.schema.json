@@ -1,0 +1,837 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/simlindahl/loop-cx/blob/main/docs/export/run-v1.schema.json",
+  "title": "LOOP Cx local run export version 1",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "units": {
+      "type": "object",
+      "properties": {
+        "distance": {
+          "const": "metres"
+        },
+        "coordinates": {
+          "const": "decimal-degrees"
+        },
+        "heartRate": {
+          "const": "beats-per-minute"
+        },
+        "utc": {
+          "const": "ISO-8601"
+        },
+        "gpsUtc": {
+          "const": "unix-milliseconds"
+        },
+        "observedElapsed": {
+          "const": "milliseconds"
+        },
+        "gpsBootMonotonic": {
+          "const": "nanoseconds"
+        },
+        "hrBootReceiptMonotonic": {
+          "const": "100-nanosecond-ticks"
+        },
+        "checkpointDuration": {
+          "const": "TimeSpan-constant-format"
+        },
+        "pace": {
+          "const": "seconds-per-kilometre"
+        }
+      },
+      "required": [
+        "distance",
+        "coordinates",
+        "heartRate",
+        "utc",
+        "gpsUtc",
+        "observedElapsed",
+        "gpsBootMonotonic",
+        "hrBootReceiptMonotonic",
+        "checkpointDuration",
+        "pace"
+      ],
+      "additionalProperties": false
+    },
+    "run": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "startedUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastObservedUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "observedElapsedMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "enum": [
+            "recording",
+            "finished",
+            "interrupted"
+          ]
+        },
+        "originalPlan": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/phase"
+          }
+        },
+        "template": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "TemplateId": {
+                  "type": "string"
+                },
+                "Source": {
+                  "type": "string"
+                },
+                "Category": {
+                  "type": "string"
+                },
+                "TemplateRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "Targets": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/targets"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "TemplateId",
+                "Source",
+                "Category",
+                "TemplateRevision"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "not": {
+                "required": [
+                  "TemplateRevision"
+                ]
+              }
+            }
+          ]
+        },
+        "heartRateSetup": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/hrSetup"
+            }
+          ]
+        },
+        "checkpoint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/checkpoint"
+            },
+            {
+              "type": "object",
+              "not": {
+                "required": [
+                  "SchemaVersion"
+                ]
+              }
+            }
+          ]
+        },
+        "exportStatus": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "command": {
+                "type": "string"
+              },
+              "observedUtc": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "observedElapsedMilliseconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "checkpoint": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/checkpoint"
+                  },
+                  {
+                    "type": "object",
+                    "not": {
+                      "required": [
+                        "SchemaVersion"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "required": [
+              "sequence",
+              "command",
+              "observedUtc",
+              "observedElapsedMilliseconds",
+              "checkpoint"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "snapshotOrder": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "utcMilliseconds": {
+                "type": "integer"
+              },
+              "bootMonotonicNanoseconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "latitudeDegrees": {
+                "type": "number"
+              },
+              "longitudeDegrees": {
+                "type": "number"
+              },
+              "accuracyMetres": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "snapshotOrder",
+              "utcMilliseconds",
+              "bootMonotonicNanoseconds",
+              "latitudeDegrees",
+              "longitudeDegrees",
+              "accuracyMetres"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "heartRate": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "receiptUtc": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "bootReceiptMonotonicTicks": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "bpm": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "quality": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sequence",
+              "receiptUtc",
+              "bootReceiptMonotonicTicks",
+              "bpm",
+              "quality"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "startedUtc",
+        "lastObservedUtc",
+        "observedElapsedMilliseconds",
+        "status",
+        "originalPlan",
+        "template",
+        "heartRateSetup",
+        "checkpoint",
+        "exportStatus",
+        "events",
+        "locations",
+        "heartRate"
+      ],
+      "additionalProperties": false
+    },
+    "snapshotConsistency": {
+      "const": "transactional-storage; raw GPS may precede the last derived checkpoint"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "units",
+    "run",
+    "snapshotConsistency"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "duration": {
+      "type": "string",
+      "pattern": "^(?:[0-9]+\\.)?[0-2][0-9]:[0-5][0-9]:[0-5][0-9](?:\\.[0-9]{1,7})?$"
+    },
+    "phase": {
+      "type": "object",
+      "properties": {
+        "Kind": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "Duration": {
+          "$ref": "#/$defs/duration"
+        },
+        "TargetRpe": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "Kind",
+        "Duration",
+        "TargetRpe"
+      ],
+      "additionalProperties": true
+    },
+    "completedPhase": {
+      "type": "object",
+      "properties": {
+        "Plan": {
+          "$ref": "#/$defs/phase"
+        },
+        "ActiveTime": {
+          "$ref": "#/$defs/duration"
+        }
+      },
+      "required": [
+        "Plan",
+        "ActiveTime"
+      ],
+      "additionalProperties": true
+    },
+    "targets": {
+      "type": "object",
+      "properties": {
+        "Mode": {
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "Work": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "Recovery": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "Mode"
+      ],
+      "additionalProperties": true
+    },
+    "zoneTime": {
+      "type": "object",
+      "properties": {
+        "Zone": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "ActiveTime": {
+          "$ref": "#/$defs/duration"
+        }
+      },
+      "required": [
+        "Zone",
+        "ActiveTime"
+      ],
+      "additionalProperties": true
+    },
+    "statisticsScope": {
+      "type": "object",
+      "properties": {
+        "ActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "MeasuredMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "KnownGpsActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "UnknownGpsActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "AveragePaceSecondsPerKilometre": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "AverageHeartRate": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "KnownHeartRateActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "UnknownHeartRateActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "HeartRateZones": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/zoneTime"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "UnclassifiedHeartRateActiveTime": {
+          "$ref": "#/$defs/duration"
+        }
+      },
+      "required": [
+        "ActiveTime",
+        "MeasuredMetres",
+        "KnownGpsActiveTime",
+        "UnknownGpsActiveTime",
+        "AveragePaceSecondsPerKilometre"
+      ],
+      "additionalProperties": true
+    },
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "Version": {
+          "const": 1
+        },
+        "Total": {
+          "$ref": "#/$defs/statisticsScope"
+        },
+        "Main": {
+          "$ref": "#/$defs/statisticsScope"
+        },
+        "CompletedSplits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statisticsScope"
+          }
+        },
+        "CurrentSplit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/statisticsScope"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ObservedElapsed": {
+          "$ref": "#/$defs/duration"
+        },
+        "HasSyntheticTime": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "Version",
+        "Total",
+        "Main",
+        "CompletedSplits",
+        "CurrentSplit",
+        "ObservedElapsed",
+        "HasSyntheticTime"
+      ],
+      "additionalProperties": true
+    },
+    "startContext": {
+      "type": "object",
+      "properties": {
+        "TimeZoneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "UtcOffsetSeconds": {
+          "type": "integer",
+          "minimum": -86400,
+          "maximum": 86400
+        },
+        "BootMonotonicStartMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "TimeZoneId",
+        "UtcOffsetSeconds",
+        "BootMonotonicStartMilliseconds"
+      ],
+      "additionalProperties": true
+    },
+    "boundary": {
+      "type": "object",
+      "properties": {
+        "PreviousPhaseIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "NextPhaseIndex": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "PreviousPhase": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "NextPhase": {
+          "anyOf": [
+            {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "EffectiveElapsedMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ObservedElapsedMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ObservedUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "StartAnchorDerivedEffectiveUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Synthetic": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "PreviousPhaseIndex",
+        "NextPhaseIndex",
+        "PreviousPhase",
+        "NextPhase",
+        "EffectiveElapsedMilliseconds",
+        "ObservedElapsedMilliseconds",
+        "ObservedUtc",
+        "StartAnchorDerivedEffectiveUtc",
+        "Synthetic"
+      ],
+      "additionalProperties": true
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "Phase": {
+          "enum": [
+            "Warmup",
+            "Work",
+            "Recovery",
+            "Cooldown",
+            "Finished"
+          ]
+        },
+        "Paused": {
+          "type": "boolean"
+        },
+        "ActiveSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "RemainingSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "Statistics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/statistics"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "Id",
+        "Phase",
+        "Paused",
+        "ActiveSeconds",
+        "RemainingSeconds"
+      ],
+      "additionalProperties": true
+    },
+    "checkpoint": {
+      "type": "object",
+      "properties": {
+        "SchemaVersion": {
+          "const": 1
+        },
+        "Snapshot": {
+          "$ref": "#/$defs/snapshot"
+        },
+        "Plan": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/phase"
+          }
+        },
+        "Completed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/completedPhase"
+          }
+        },
+        "PhaseActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "TotalActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "MainActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "StartContext": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/startContext"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "PhaseBoundaries": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/boundary"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "SchemaVersion",
+        "Snapshot",
+        "Plan",
+        "Completed",
+        "PhaseActiveTime",
+        "TotalActiveTime",
+        "MainActiveTime"
+      ],
+      "additionalProperties": true
+    },
+    "personalZone": {
+      "type": "object",
+      "required": [
+        "Number",
+        "MinimumBpm",
+        "MaximumBpm"
+      ],
+      "properties": {
+        "Number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "MinimumBpm": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "MaximumBpm": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "hrSetup": {
+      "type": "object",
+      "required": [
+        "Configuration",
+        "ConfigurationError"
+      ],
+      "properties": {
+        "ConfigurationError": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Configuration": {
+          "type": "object",
+          "required": [
+            "Version",
+            "DeviceAddress",
+            "Policy",
+            "Zones"
+          ],
+          "properties": {
+            "Version": {
+              "const": 1
+            },
+            "DeviceAddress": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "Policy": {
+              "type": "object",
+              "required": [
+                "Version",
+                "MaximumGap"
+              ],
+              "properties": {
+                "Version": {
+                  "const": 1
+                },
+                "MaximumGap": {
+                  "$ref": "#/$defs/duration"
+                }
+              }
+            },
+            "Zones": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/personalZone"
+              },
+              "minItems": 0,
+              "maxItems": 5
+            }
+          }
+        }
+      }
+    }
+  }
+}

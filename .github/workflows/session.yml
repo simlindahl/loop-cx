@@ -16,6 +16,11 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-      - run: dotnet run --project tests/SessionChecks
+      - run: dotnet run --project tests/SessionChecks -- --export-json-sample "$RUNNER_TEMP/run-export-v1.json"
         env:
           MSBuildEnableWorkloadResolver: false
+      - name: Validate local JSON contract independently
+        run: |
+          python3 -m venv "$RUNNER_TEMP/export-validator"
+          "$RUNNER_TEMP/export-validator/bin/python" -m pip install --disable-pip-version-check -r tests/export-requirements.txt
+          "$RUNNER_TEMP/export-validator/bin/python" scripts/check-run-export.py "$RUNNER_TEMP/run-export-v1.json"

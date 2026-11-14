@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "units": {
+    "distance": "metres",
+    "coordinates": "decimal-degrees",
+    "heartRate": "beats-per-minute",
+    "utc": "ISO-8601",
+    "gpsUtc": "unix-milliseconds",
+    "observedElapsed": "milliseconds",
+    "gpsBootMonotonic": "nanoseconds",
+    "hrBootReceiptMonotonic": "100-nanosecond-ticks",
+    "checkpointDuration": "TimeSpan-constant-format",
+    "pace": "seconds-per-kilometre"
+  },
+  "run": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "startedUtc": "2026-11-14T10:00:00Z",
+    "lastObservedUtc": "2026-11-14T10:00:04Z",
+    "observedElapsedMilliseconds": 4000,
+    "status": "interrupted",
+    "originalPlan": [
+      {
+        "Kind": 1,
+        "Duration": "00:45:00",
+        "TargetRpe": 3
+      }
+    ],
+    "template": null,
+    "heartRateSetup": null,
+    "checkpoint": {
+      "SchemaVersion": 1,
+      "Snapshot": {
+        "Phase": "Work",
+        "Statistics": null,
+        "Id": "11111111-1111-1111-1111-111111111111",
+        "Paused": false,
+        "ActiveSeconds": 4,
+        "RemainingSeconds": 2696
+      },
+      "Plan": [
+        {
+          "Kind": 1,
+          "Duration": "00:45:00",
+          "TargetRpe": 3
+        }
+      ],
+      "Completed": [],
+      "PhaseActiveTime": "00:00:04",
+      "TotalActiveTime": "00:00:04",
+      "MainActiveTime": "00:00:04"
+    },
+    "exportStatus": null,
+    "events": [],
+    "locations": [
+      {
+        "snapshotOrder": 1,
+        "utcMilliseconds": 1794650400000,
+        "bootMonotonicNanoseconds": 1000000000,
+        "latitudeDegrees": 59.0,
+        "longitudeDegrees": 18.0,
+        "accuracyMetres": null
+      }
+    ],
+    "heartRate": [
+      {
+        "sequence": 1,
+        "receiptUtc": "2026-11-14T10:00:04Z",
+        "bootReceiptMonotonicTicks": 10000000,
+        "bpm": null,
+        "quality": "contact-unavailable"
+      }
+    ]
+  },
+  "snapshotConsistency": "transactional-storage; raw GPS may precede the last derived checkpoint"
+}
