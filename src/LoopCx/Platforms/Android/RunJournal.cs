@@ -16,11 +16,27 @@ public sealed class RunJournal : SQLiteOpenHelper
 #endif
     private static RunJournal? shared;
     public static RunJournal Shared => shared ??= new RunJournal();
+    private readonly PreservingCorruptionHandler corruptionHandler;
 
-    private RunJournal() : base(global::Android.App.Application.Context, JournalFileName, null, 5)
+    private RunJournal() : this(JournalFileName, true, new PreservingCorruptionHandler()) { }
+
+    private RunJournal(string fileName, bool markInterrupted, PreservingCorruptionHandler handler)
+        : base(global::Android.App.Application.Context, fileName, null, 5, handler)
     {
+        corruptionHandler = handler;
         // Only runs left by an earlier process are interrupted. Never infer missing time.
-        WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
+        if (markInterrupted) WritableDatabase!.ExecSQL("UPDATE runs SET status = 'interrupted' WHERE status = 'recording'");
+    }
+
+    private sealed class PreservingCorruptionHandler : Java.Lang.Object, global::Android.Database.IDatabaseErrorHandler
+    {
+        internal int Calls { get; private set; }
+        public void OnCorruption(SQLiteDatabase? database)
+        {
+            Calls++;
+            // Do not call DefaultDatabaseErrorHandler, close/delete files or return into openInner retry.
+            throw new SQLiteDatabaseCorruptException("Local database corruption: preserving files; automatic recovery is disabled.");
+        }
     }
 
     public override void OnConfigure(SQLiteDatabase? database)
@@ -63,68 +79,108 @@ public sealed class RunJournal : SQLiteOpenHelper
         }
     }
 
-    public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
-        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null, AutomaticMotionEvent? automaticEvent = null, string? heartRateMetadata = null, HeartRateObservation? heartRateObservation = null, RunStartContext? startContext = null, IReadOnlyList<PhaseBoundaryFact>? phaseBoundaries = null, RunTerminalContext? terminalContext = null)
+    public void Commit(RunSaveBatch batch)
     {
+        try { CommitTransaction(batch); }
+        catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
+    }
+
+    internal static IOException ClassifyNativeFailure(SQLiteException error) => error switch
+    {
+        SQLiteDatabaseCorruptException => new RunSaveReadException("Local database is corrupt. No repair or overwrite was attempted.", error),
+        SQLiteCantOpenDatabaseException => new RunSaveReadException("Local database could not be opened. Saving cannot be retried in this run.", error),
+        _ => new IOException("Recent recording could not be saved.", error)
+    };
+
+#if DEBUG
+    internal static RunJournal OpenCorruptionProbe(string name)
+    {
+        const string prefix = "run-save-corrupt-probe-";
+        if (!name.StartsWith(prefix, StringComparison.Ordinal) || !name.EndsWith(".db", StringComparison.Ordinal)
+            || !Guid.TryParseExact(name[prefix.Length..^3], "N", out _))
+            throw new ArgumentException("Only a uniquely owned scratch database is permitted.");
+        return new(name, false, new PreservingCorruptionHandler());
+    }
+    internal int ProbeCorruptionCallbacks => corruptionHandler.Calls;
+
+    internal void SetSaveFailureForProbe(Guid runId, bool enabled)
+    {
+        var db = WritableDatabase!;
+        db.ExecSQL("DROP TRIGGER IF EXISTS temp.loop_save_probe_failure");
+        if (enabled)
+            db.ExecSQL($"CREATE TEMP TRIGGER loop_save_probe_failure BEFORE INSERT ON runs WHEN NEW.id = '{runId}' BEGIN SELECT RAISE(ABORT, 'isolated save failure'); END");
+    }
+#endif
+
+    private void CommitTransaction(RunSaveBatch batch)
+    {
+        var state = batch.Latest;
         var db = WritableDatabase!;
         db.BeginTransaction();
         try
         {
-            using var values = new ContentValues();
-            values.Put("id", id.ToString());
-            values.Put("started_utc", started.ToString("O"));
-            values.Put("observed_utc", DateTimeOffset.UtcNow.ToString("O"));
-            values.Put("elapsed_ms", elapsedMilliseconds);
-            values.Put("status", session.IsFinished ? "finished" : "recording");
-            values.Put("initial_plan", initialPlan);
-            values.Put("template_metadata", templateMetadata);
-            if (heartRateMetadata is not null) values.Put("heart_rate_metadata", heartRateMetadata);
-            else values.PutNull("heart_rate_metadata");
-            values.Put("checkpoint", JsonSerializer.Serialize(new
+            try
             {
-                SchemaVersion = 1,
-                Snapshot = snapshot,
-                AutomaticEvent = automaticEvent,
-                StartContext = startContext,
-                PhaseBoundaries = phaseBoundaries,
-                TerminalContext = terminalContext,
-                session.Plan,
-                session.Completed,
-                session.PhaseActiveTime,
-                session.TotalActiveTime,
-                session.MainActiveTime
-            }));
+                using var existing = db.RawQuery("SELECT checkpoint FROM runs WHERE id = ?", [state.Id.ToString()])!;
+                if (existing.MoveToFirst())
+                {
+                    var stored = existing.GetString(0)!;
+                    if (RunSaveRevision.AlreadyCommitted(stored, state))
+                    {
+                        // A previous commit may have succeeded before its local return failed.
+                        db.SetTransactionSuccessful();
+                        return;
+                    }
+                }
+            }
+            catch (SQLiteException error) when (error is SQLiteDiskIOException or SQLiteAccessPermException)
+            {
+                throw new RunSaveReadException("Stored checkpoint could not be read. No repair or overwrite was attempted.", error);
+            }
+            using var values = new ContentValues();
+            values.Put("id", state.Id.ToString());
+            values.Put("started_utc", state.StartedUtc.ToString("O"));
+            values.Put("observed_utc", state.ObservedUtc.ToString("O"));
+            values.Put("elapsed_ms", state.ElapsedMilliseconds);
+            values.Put("status", state.Finished ? "finished" : "recording");
+            values.Put("initial_plan", state.OriginalPlan);
+            values.Put("template_metadata", state.TemplateMetadata);
+            if (state.HeartRateMetadata is not null) values.Put("heart_rate_metadata", state.HeartRateMetadata);
+            else values.PutNull("heart_rate_metadata");
+            values.Put("checkpoint", state.Checkpoint);
             if (db.InsertWithOnConflict("runs", null, values, Conflict.Replace) < 0)
                 throw new IOException("The run checkpoint could not be saved.");
-            if (heartRateObservation is { } observation)
+            foreach (var location in batch.Locations)
             {
                 using var raw = new ContentValues();
-                raw.Put("run_id", id.ToString());
+                raw.Put("run_id", state.Id.ToString()); raw.Put("utc_ms", location.UtcMilliseconds);
+                raw.Put("monotonic_ns", location.MonotonicNanoseconds);
+                raw.Put("latitude", location.Latitude); raw.Put("longitude", location.Longitude);
+                if (location.Accuracy is { } accuracy) raw.Put("accuracy", accuracy); else raw.PutNull("accuracy");
+                db.InsertOrThrow("locations", null, raw);
+            }
+            foreach (var observation in batch.HeartRate)
+            {
+                using var raw = new ContentValues();
+                raw.Put("run_id", state.Id.ToString());
                 raw.Put("receipt_utc", observation.ReceiptUtc.ToString("O"));
                 raw.Put("receipt_monotonic_ticks", observation.ReceiptMonotonicTime.Ticks);
-                if (observation.Bpm is { } bpm) raw.Put("bpm", bpm);
-                else raw.PutNull("bpm");
+                if (observation.Bpm is { } bpm) raw.Put("bpm", bpm); else raw.PutNull("bpm");
                 raw.Put("quality", observation.Quality);
                 db.InsertOrThrow("heart_rate", null, raw);
             }
-            // The event and the state it describes must either both survive or both roll back.
-            if (command is not null)
+            foreach (var recordedEvent in batch.Events)
             {
-                using var recorded = new ContentValues(values);
-                recorded.Remove("id");
-                recorded.Remove("started_utc");
-                recorded.Remove("status");
-                recorded.Remove("initial_plan");
-                recorded.Remove("template_metadata");
-                recorded.Remove("heart_rate_metadata");
-                recorded.Put("run_id", id.ToString());
-                recorded.Put("command", command);
+                using var recorded = new ContentValues();
+                recorded.Put("run_id", state.Id.ToString()); recorded.Put("command", recordedEvent.Command);
+                recorded.Put("observed_utc", recordedEvent.ObservedUtc.ToString("O"));
+                recorded.Put("elapsed_ms", recordedEvent.ElapsedMilliseconds); recorded.Put("checkpoint", recordedEvent.Checkpoint);
                 db.InsertOrThrow("run_events", null, recorded);
             }
-            if (session.IsFinished)
+            if (state.Finished)
             {
                 using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)")!;
-                queued.BindString(1, id.ToString());
+                queued.BindString(1, state.Id.ToString());
 #if DEBUG
                 queued.BindString(2, "disabled_synthetic");
 #else
@@ -136,7 +192,6 @@ public sealed class RunJournal : SQLiteOpenHelper
         }
         finally { db.EndTransaction(); }
     }
-
     public string ExportJson(Guid id)
     {
         // All tables are materialized on this transaction's thread before projection or sharing.
@@ -183,16 +238,4 @@ public sealed class RunJournal : SQLiteOpenHelper
         return document.RootElement.Clone();
     }
 
-    public void Location(Guid id, global::Android.Locations.Location location)
-    {
-        using var values = new ContentValues();
-        values.Put("run_id", id.ToString());
-        values.Put("utc_ms", location.Time);
-        values.Put("monotonic_ns", location.ElapsedRealtimeNanos);
-        values.Put("latitude", location.Latitude);
-        values.Put("longitude", location.Longitude);
-        if (location.HasAccuracy) values.Put("accuracy", location.Accuracy);
-        else values.PutNull("accuracy");
-        WritableDatabase!.InsertOrThrow("locations", null, values);
-    }
 }
