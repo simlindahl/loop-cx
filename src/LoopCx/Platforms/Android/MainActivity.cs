@@ -108,6 +108,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
         }
         var probe = intent?.GetStringExtra("loop-native-probe");
         intent?.RemoveExtra("loop-native-probe");
+        if (probe == "health-outbox")
+        {
+            HealthConnectOutboxProbe.Run(this);
+            return;
+        }
         if (probe == "health-records" && OperatingSystem.IsAndroidVersionAtLeast(34))
         {
             HealthConnectRecordMapper.RunIsolatedProbe(this);

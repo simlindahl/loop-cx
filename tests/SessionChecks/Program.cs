@@ -1056,3 +1056,5 @@ Console.WriteLine("PASS: notification phase/countdown, actual measurements, paus
 HCWritePlanChecks.Run(args);
 
 HeartRateSettingsChecks.Run();
+
+HCOutboxChecks.Run();

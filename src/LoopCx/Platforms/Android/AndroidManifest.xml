@@ -12,6 +12,8 @@
   <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
   <uses-feature android:name="android.software.companion_device_setup" android:required="false" />
   <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
+  <uses-permission android:name="android.permission.health.WRITE_DISTANCE" />
+  <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
   <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>
   <application android:allowBackup="false" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
     <activity android:name="se.loopcx.running.HealthRationaleActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />

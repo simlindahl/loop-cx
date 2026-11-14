@@ -337,18 +337,18 @@ try:
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 4
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 5
             assert db.execute("SELECT initial_plan, checkpoint, template_metadata FROM runs WHERE id='v2'").fetchone() == ('[]', '{"legacy":true}', None)
             assert db.execute("SELECT checkpoint FROM run_events WHERE run_id='v2'").fetchall() == [('{"event":true}',)]
             assert db.execute("SELECT heart_rate_metadata FROM runs WHERE id='v2'").fetchone() == (None,)
             assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
         adb("shell", "run-as", PACKAGE, "rm", "databases/runs-debug.db")
         open_app()
-        capture("fresh-schema4-idle", "Start C2")
+        capture("fresh-schema5-idle", "Start C2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 4
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 5
             assert "heart_rate_metadata" in [row[1] for row in db.execute("PRAGMA table_info(runs)")]
             assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
             assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
