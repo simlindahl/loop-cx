@@ -9,6 +9,16 @@ internal static class StoredHistoryChecks
     {
         // Arrange: frozen v1 is deliberately different from today's Core and Settings.
         var id = Guid.NewGuid();
+        RunNotificationEntry.Request(id, id);
+        if (!RunNotificationEntry.Consume(id) || RunNotificationEntry.Consume(id))
+            throw new InvalidOperationException("Notification entry must be consumed once for the same recording.");
+        RunNotificationEntry.Request(id, id);
+        if (RunNotificationEntry.Consume(Guid.NewGuid()))
+            throw new InvalidOperationException("A queued old notification cannot redirect a replacement recording.");
+        RunNotificationEntry.Request(Guid.NewGuid(), id);
+        RunNotificationEntry.Request(id, null);
+        if (RunNotificationEntry.Consume(id))
+            throw new InvalidOperationException("Stale or absent recording entry must not be retained.");
         var started = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var legacy = TimedSession.Intervals(5, TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(2),
             8, 2, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));

@@ -572,9 +572,11 @@ public sealed class RunService : Service, ILocationListener
 
     private Notification BuildNotification()
     {
-        var open = new Intent(this, typeof(MainActivity));
-        var pendingOpen = PendingIntent.GetActivity(this, 0, open, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var state = Snapshot!;
+        var open = new Intent(this, typeof(MainActivity)).SetAction(RunNotificationEntry.Action)
+            .SetData(global::Android.Net.Uri.Parse($"loopcx://run/{state.Id}"))
+            .PutExtra(RunNotificationEntry.RunIdExtra, state.Id.ToString());
+        var pendingOpen = PendingIntent.GetActivity(this, 0, open, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var pauseReason = !state.Paused ? PauseReason.None
             : state.Motion?.PauseReason == PauseReason.Automatic ? PauseReason.Automatic : PauseReason.Manual;
         var text = RunNotificationText.Create(state.Phase, state.RemainingSeconds, pauseReason,

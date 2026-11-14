@@ -82,7 +82,23 @@ public partial class StartRunPage
 
         RunService.Changed += Refresh;
         AndroidMotionPreference.Changed += RefreshSystemMotion;
+        RunNotificationEntry.Changed += OpenNotificationRun;
+        OpenNotificationRun();
     }
+
+    private void OpenNotificationRun() => _ = InvokeAsync(async () =>
+    {
+        if (!RunNotificationEntry.Consume(RunService.Snapshot?.Id)) return;
+        if (dialogMode is not null) await CloseDialog();
+        showHistory = false;
+        historyPage = null;
+        showSettings = false;
+        settingsPage = null;
+        managing = false;
+        CoreDialogNavigation.Close = null;
+        focusPending = "phase-heading";
+        StateHasChanged();
+    });
 
     private void Refresh() => _ = InvokeAsync(StateHasChanged);
     private void RefreshSystemMotion() => _ = InvokeAsync(() =>
@@ -501,6 +517,7 @@ public partial class StartRunPage
     public async ValueTask DisposeAsync()
     {
         RunService.Changed -= Refresh;
+        RunNotificationEntry.Changed -= OpenNotificationRun;
         AndroidMotionPreference.Changed -= RefreshSystemMotion;
         CoreDialogNavigation.Close = null;
         reference?.Dispose();

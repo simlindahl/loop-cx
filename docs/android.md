@@ -39,7 +39,7 @@ Immediately before installation, check this package's own RunService, including 
 
 ## Android session scaffold
 
-The service-backed scaffold starts the C1 timed interval protocol or the approved C2 continuous protocol, records GPS updates and supports pause/resume and warm-up and cool-down commands. The emulator smoke test verifies one session through duplicate starts, screen lock and reopening, then completion and a second workout in the same process. Completion retires the service and restores the start action. The debug-only completion command accelerates this regression; release builds do not expose it. This is a functional scaffold, not the approved final UI or a physically verified GPS/BLE/audio/Health Connect delivery.
+The service-backed scaffold starts the C1 timed interval protocol or the approved C2 continuous protocol, records GPS updates and supports pause/resume and warm-up and cool-down commands. The emulator smoke test verifies one session through duplicate starts, screen lock and reopening, then completion and a second workout in the same process. After the final transaction commits, completion retires the service and shows Saved. The user can open the stored run or use Back to training before starting another workout. The debug-only completion command accelerates this regression; release builds do not expose it. This is a functional scaffold, not the approved final UI or a physically verified GPS/BLE/audio/Health Connect delivery.
 
 ## Core start and C1 readable flow slice
 
