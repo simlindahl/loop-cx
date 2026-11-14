@@ -1064,3 +1064,5 @@ HCProviderVerificationChecks.Run();
 RunSaveChecks.Run();
 
 StoredHistoryChecks.Run();
+
+RunJsonSharingChecks.Run(modernExport, args);

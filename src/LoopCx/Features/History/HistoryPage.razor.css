@@ -96,3 +96,11 @@ dt, dd, p, span {
 dd {
     margin: 0;
 }
+
+.share-notice {
+    margin-block: 24px;
+    padding: 16px;
+    border: 1px solid var(--cx-line);
+    border-radius: 12px;
+    background: var(--cx-surface);
+}
