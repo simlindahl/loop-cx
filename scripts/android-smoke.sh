@@ -228,7 +228,7 @@ assert states[1]['Snapshot']['Paused'] and not states[2]['Snapshot']['Paused']
 assert states[1]['TotalActiveTime'] == states[2]['TotalActiveTime'], 'Pause adds elapsed time but no active time'
 assert rows[2][1] - rows[1][1] >= 4000
 assert states[5]['Snapshot']['Phase'] == 'Work'
-assert states[5]['Completed'][0]['Plan']['Duration'] == '00:10:00', 'Official 8-minute warm-up retains both effective one-minute extensions'
+assert states[5]['Completed'][0]['Plan']['Duration'] == '00:06:00', 'Global four-minute warm-up retains both effective one-minute extensions'
 assert before.execute('SELECT * FROM run_events WHERE run_id=? ORDER BY sequence', (old_id,)).fetchall() == after.execute('SELECT * FROM run_events WHERE run_id=? ORDER BY sequence', (old_id,)).fetchall()
 print('PASS: SQLite survives process death, interrupted checkpoint unchanged, raw GPS retained, atomic finish and synthetic export disabled')
 print('PASS: v1 migration preserves existing data; effective commands retain ordered timestamps and pause duration without duplicate events')

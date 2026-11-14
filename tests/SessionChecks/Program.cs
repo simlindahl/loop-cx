@@ -584,3 +584,96 @@ Require(honestGaps.Main.KnownGpsActiveTime == TimeSpan.FromSeconds(5)
     && honestGaps.Main.UnknownGpsActiveTime == TimeSpan.FromSeconds(15)
     && honestGaps.Main.MeasuredMetres == 0 && honestGaps.Main.AveragePaceSecondsPerKilometre is null,
     "Only valid2-6 and8-9 brackets count: initial/final tails, poor quality and excessive gap never extrapolate; old packets do not break newer evidence.");
+
+// Arrange
+var coreDefaults = CorePreferencesState.Default;
+var coreExpected = new[] { ("C1.1", 1290, 1710, 10, 2), ("C1.2", 1380, 1800, 7, 3), ("C1.3", 1440, 1860, 6, 3) };
+
+// Act
+var coreResults = coreExpected.Select(expected =>
+{
+    var resolved = CoreTemplate.Resolve(new(expected.Item1), coreDefaults.WarmupCooldown);
+    resolved.Session.Advance(TimeSpan.FromHours(2));
+    return (Expected: expected, Resolved: resolved);
+}).ToArray();
+
+// Assert
+foreach (var (expected, resolved) in coreResults)
+{
+    var (id, mainSeconds, totalSeconds, workRpe, recoveryRpe) = expected;
+    Require(resolved.Session.MainActiveTime == TimeSpan.FromSeconds(mainSeconds)
+        && resolved.Session.TotalActiveTime == TimeSpan.FromSeconds(totalSeconds)
+        && resolved.Session.Completed.Where(static phase => phase.Plan.Kind == RunPhase.Work).All(phase => phase.Plan.TargetRpe == workRpe)
+        && resolved.Session.Completed.Where(static phase => phase.Plan.Kind == RunPhase.Recovery).All(phase => phase.Plan.TargetRpe == recoveryRpe),
+        "Each official protocol retains its approved dose, N−1 recoveries and fixed RPE.");
+    Require(resolved.Template.TemplateRevision == 3 && resolved.Template.ProtocolId == id && resolved.Template.ProtocolRevision == 1,
+        "The new C1 family cannot relabel frozen C1 revisions 1/2.");
+}
+
+// Arrange
+var shortcutRequest = new CoreStartRequest("C1.1", 9, Targets: new(CoreTargetMode.Pace, 330, 420));
+var savedShortcut = new CoreShortcut(Guid.NewGuid(), "My sprints", shortcutRequest);
+var selectedState = coreDefaults with { SelectedProtocol = "C1.1", Shortcuts = [savedShortcut] };
+
+// Act
+selectedState.Validate();
+var frozenFirst = CoreTemplate.Resolve(savedShortcut.Request, new(4, 3));
+var originalFirst = System.Text.Json.JsonSerializer.Serialize(frozenFirst.Session.Plan);
+var laterStart = CoreTemplate.Resolve(savedShortcut.Request, new(0, 15));
+var noWarmupCooldown = CoreTemplate.Resolve(new("C1.2"), new(0, 0));
+var c2New = CoreTemplate.Resolve(new("C2", ContinuousMinutes: 20), new(15, 15));
+var preferencesRoundtrip = System.Text.Json.JsonSerializer.Deserialize<CorePreferencesState>(System.Text.Json.JsonSerializer.Serialize(selectedState))!;
+preferencesRoundtrip.Validate();
+
+// Assert
+Require(preferencesRoundtrip.SelectedProtocol == "C1.1" && preferencesRoundtrip.Shortcuts.Single() == savedShortcut,
+    "Versioned preference JSON preserves selection and named shortcut identity/count/target.");
+Require(laterStart.Session.Plan[0].Kind == RunPhase.Work && laterStart.Session.Plan[^1].Duration == Minutes(15)
+    && laterStart.Template.Targets == shortcutRequest.Targets && originalFirst == System.Text.Json.JsonSerializer.Serialize(frozenFirst.Session.Plan),
+    "Shortcut count/target stays saved, current global warm-up/cool-down resolves at each start and earlier plans remain frozen.");
+Require(noWarmupCooldown.Session.Plan.All(static phase => phase.Kind is RunPhase.Work or RunPhase.Recovery),
+    "Off omits actual warm-up/cool-down phases rather than inserting zero-duration phases.");
+Require(c2New.Session.Plan.Single() == new TimedPhase(RunPhase.Work, Minutes(20), 4)
+    && c2New.Template.TemplateRevision == 2 && c2New.Template.ResolvedWarmupCooldown is null,
+    "C2 uses the selected duration and revision2 RPE4 without inheriting global warm-up/cool-down.");
+
+// Arrange
+var invalidCoreRequests = CoreProtocols.All.SelectMany(static protocol => new[]
+{
+    new CoreStartRequest(protocol.Id, protocol.MinimumCount - 1), new CoreStartRequest(protocol.Id, protocol.MaximumCount + 1)
+}).Concat([ new CoreStartRequest("C2", ContinuousMinutes: 19), new CoreStartRequest("C2", ContinuousMinutes: 21),
+    new CoreStartRequest("C2", ContinuousMinutes: 121), new CoreStartRequest("custom"),
+    new CoreStartRequest("C2", Repetitions: 5), new CoreStartRequest("C1.2", ContinuousMinutes: 45),
+    new CoreStartRequest("C1.2", Targets: new(CoreTargetMode.Pace, 0)),
+    new CoreStartRequest("C1.2", Targets: new(CoreTargetMode.HeartRateZone, 6)) ]).ToArray();
+
+// Act
+var coreRejected = invalidCoreRequests.Select(request =>
+{
+    try { _ = CoreTemplate.Resolve(request, new()); return false; }
+    catch (ArgumentException) { return true; }
+}).ToArray();
+var boundaryCorePlans = CoreProtocols.All.SelectMany(static protocol => new[] { protocol.MinimumCount, protocol.MaximumCount }
+    .Select(count => (Count: count, CoreTemplate.Resolve(new(protocol.Id, count), new()).Session.Plan))).ToArray();
+var invalidSettingsRejected = new[] { new C1WarmupCooldownSettings(-1, 3), new C1WarmupCooldownSettings(16, 3),
+    new C1WarmupCooldownSettings(4, -1), new C1WarmupCooldownSettings(4, 16) }.Select(settings =>
+{
+    try { _ = CoreTemplate.Resolve(new("C1.2"), settings); return false; }
+    catch (ArgumentException) { return true; }
+}).ToArray();
+var fractionalRejected = false;
+try { _ = System.Text.Json.JsonSerializer.Deserialize<CoreStartRequest>("{\"ProtocolId\":\"C1.2\",\"Repetitions\":4.5}"); }
+catch (System.Text.Json.JsonException) { fractionalRejected = true; }
+var singleCooldownOff = CoreTemplate.Resolve(new("C1.2"), new(1, 0));
+var maximumSettings = CoreTemplate.Resolve(new("C1.2"), new(15, 15));
+var c2Maximum = CoreTemplate.Resolve(new("C2", ContinuousMinutes: 120), new());
+
+// Assert
+Require(coreRejected.All(static rejected => rejected) && invalidSettingsRejected.All(static rejected => rejected) && fractionalRejected,
+    "Unknown protocols, forbidden fields, bad targets, fractional reps, range neighbours and invalid Settings are rejected.");
+Require(boundaryCorePlans.All(static result => result.Plan.Count(static phase => phase.Kind == RunPhase.Recovery) == result.Count - 1),
+    "Both permitted repetition boundaries retain exactly N−1 recoveries.");
+Require(singleCooldownOff.Session.Plan[0].Duration == Minutes(1) && singleCooldownOff.Session.Plan[^1].Kind == RunPhase.Work
+    && maximumSettings.Session.Plan[0].Duration == Minutes(15) && maximumSettings.Session.Plan[^1].Duration == Minutes(15)
+    && c2Maximum.Session.Plan.Single().Duration == Minutes(120), "Independent phase opt-outs and both upper bounds remain valid.");
+Console.WriteLine("PASS: Core-first protocols, guarded repetitions/C2 duration, Settings opt-out, frozen shortcuts/targets and legacy identities.");

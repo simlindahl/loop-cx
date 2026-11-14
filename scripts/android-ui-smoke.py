@@ -129,7 +129,10 @@ def scroll_to_top():
 def reachable_button(name, label):
     screen_width, screen_height = map(int, re.findall(r"(\d+)x(\d+)", report["size"])[-1])
     last_error = None
-    for attempt in range(7):
+    # At 200% text the two Core cards require more than five viewport-half swipes.
+    # Keep the search bounded while preserving fresh visible-bounds and 48dp checks.
+    attempts = 12
+    for attempt in range(attempts):
         root = capture(name + "-scroll-" + str(attempt), "")
         try:
             button(root, label)
@@ -139,7 +142,7 @@ def reachable_button(name, label):
             last_error = error
         if attempt == 0:
             scroll_to_top()
-        elif attempt < 6:
+        elif attempt < attempts - 1:
             adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.8)),
                 str(screen_width//2), str(int(screen_height*0.3)), "400")
     raise AssertionError("Button not reachable at 48dp after bounded scrolling: " + label) from last_error
@@ -182,11 +185,11 @@ try:
     adb("shell", "svc", "data", "disable")
     adb("shell", "settings", "put", "system", "font_scale", "1.0")
     open_app()
-    idle = capture("idle-offline", "Start C1 · Intervals")
-    button(reachable_button("idle-start-c1", "Start C1 · Intervals"), "Start C1 · Intervals", tap=True)
+    idle = capture("idle-offline", "Start C1.2")
+    button(reachable_button("idle-start-c1", "Start C1.2"), "Start C1.2", tap=True)
     running = capture("running", "Pause")
     c1_start = wait_snapshot(lambda s: s.get("TemplateId") == "C1" and not s["Paused"])
-    assert c1_start["Phase"] == "Warmup" and c1_start["ActiveSeconds"] + c1_start["RemainingSeconds"] == 480
+    assert c1_start["Phase"] == "Warmup" and c1_start["ActiveSeconds"] + c1_start["RemainingSeconds"] == 240
     run_id = c1_start["Id"]
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "start-c2")
     assert wait_snapshot(lambda s: s["Id"] == run_id)["TemplateId"] == "C1", "C2 duplicate must not replace C1"
@@ -219,16 +222,16 @@ try:
         reachable_button("resumed-large-" + label.replace(" ", "-"), label)
     wait_snapshot(lambda s: s["Id"] == run_id and not s["Paused"])
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
-    large_idle = capture("idle-large-text", "Start C1 · Intervals")
-    reachable_button("idle-large-c1", "Start C1 · Intervals")
-    reachable_button("idle-large-c2", "Start C2 · Zone 2")
+    large_idle = capture("idle-large-text", "Start C1.2")
+    reachable_button("idle-large-c1", "Start C1.2")
+    reachable_button("idle-large-c2", "Start C2")
     # Return to normal scale before selecting the second Core card.
     adb("shell", "settings", "put", "system", "font_scale", "1.0")
     open_app()
-    c2_idle = capture("c2-idle", "Start C2 · Zone 2")
-    c2_start = reachable_button("idle-start-c2", "Start C2 · Zone 2")
+    c2_idle = capture("c2-idle", "Start C2")
+    c2_start = reachable_button("idle-start-c2", "Start C2")
     c2_tapped_at = time.monotonic()
-    button(c2_start, "Start C2 · Zone 2", tap=True)
+    button(c2_start, "Start C2", tap=True)
     c2_running = capture("c2-running", "Pause")
     c2 = wait_snapshot(lambda s: s.get("TemplateId") == "C2" and not s["Paused"])
     capture_elapsed = math.ceil(time.monotonic() - c2_tapped_at)
@@ -246,7 +249,7 @@ try:
     button(reachable_button("c2-reopened-resume", "Resume"), "Resume", tap=True)
     capture("c2-resumed", "Pause")
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
-    capture("c2-finished", "Start C2 · Zone 2")
+    capture("c2-finished", "Start C2")
     adb("shell", "am", "force-stop", PACKAGE)
     with tempfile.TemporaryDirectory() as temporary:
         db_path = Path(temporary) / "synthetic.db"
@@ -255,8 +258,9 @@ try:
             status, plan_json, metadata_json = db.execute("SELECT status, initial_plan, template_metadata FROM runs WHERE id=?", (c2["Id"],)).fetchone()
             assert status == "finished"
             plan, metadata = json.loads(plan_json), json.loads(metadata_json)
-            assert len(plan) == 1 and plan[0]["TargetRpe"] == 3 and plan[0]["Duration"] == "00:45:00"
-            assert metadata == {"TemplateId":"C2", "Source":"LOOP Core", "Category":"continuous", "TemplateRevision":1, "IntendedHeartRateZone":2}
+            assert len(plan) == 1 and plan[0]["TargetRpe"] == 4 and plan[0]["Duration"] == "00:45:00"
+            assert metadata["TemplateId"] == "C2" and metadata["TemplateRevision"] == 2 and metadata["ProtocolId"] == "C2" and metadata["IntendedHeartRateZone"] == 2
+            assert metadata["Targets"]["Mode"] == 0 and metadata["IsPersonalised"] is False
             assert db.execute("SELECT COUNT(*) FROM export_queue WHERE run_id=?", (c2["Id"],)).fetchone()[0] == 1
             report["c2FrozenMetadata"] = metadata
             assert db.execute("SELECT COUNT(*) FROM run_events WHERE run_id=? AND command='start'", (c2["Id"],)).fetchone()[0] == 1
@@ -276,9 +280,9 @@ try:
             report["persistedStatistics"] = "PASS: actual service/checkpoint active scopes conserved, Unknown GPS/HR remain unknown, final split not duplicated; accelerated debug completion labelled synthetic"
             c1_metadata = json.loads(db.execute("SELECT template_metadata FROM runs WHERE id=?", (run_id,)).fetchone()[0])
             assert c1_metadata["TemplateId"] == "C1" and c1_metadata["IntendedHeartRateZone"] is None
-            assert c1_metadata["TemplateRevision"] == 2
+            assert c1_metadata["TemplateRevision"] == 3 and c1_metadata["ProtocolId"] == "C1.2"
             c1_plan = json.loads(db.execute("SELECT initial_plan FROM runs WHERE id=?", (run_id,)).fetchone()[0])
-            assert len(c1_plan) == 11 and c1_plan[0]["Duration"] == "00:08:00" and c1_plan[-1]["Duration"] == "00:04:00"
+            assert len(c1_plan) == 11 and c1_plan[0]["Duration"] == "00:04:00" and c1_plan[-1]["Duration"] == "00:03:00"
             assert db.execute("SELECT COUNT(*) FROM run_events WHERE run_id=? AND command='start'", (run_id,)).fetchone()[0] == 1
         backup = Path(temporary) / "ui-results.db"
         backup.write_bytes(db_path.read_bytes())
@@ -296,7 +300,7 @@ try:
         adb("push", str(fixture), "/data/local/tmp/loop-schema2.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-schema2.db", "databases/runs-debug.db")
         open_app()
-        capture("schema2-upgraded-idle", "Start C2 · Zone 2")
+        capture("schema2-upgraded-idle", "Start C2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
@@ -305,7 +309,7 @@ try:
             assert db.execute("SELECT checkpoint FROM run_events WHERE run_id='v2'").fetchall() == [('{"event":true}',)]
         adb("shell", "run-as", PACKAGE, "rm", "databases/runs-debug.db")
         open_app()
-        capture("fresh-schema3-idle", "Start C2 · Zone 2")
+        capture("fresh-schema3-idle", "Start C2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
@@ -316,7 +320,9 @@ try:
         # it does not rehydrate or replace frozen plans with the current factory.
         legacy_plan = [dict(phase) for phase in c1_plan]
         legacy_plan[0]["Duration"], legacy_plan[-1]["Duration"] = "00:10:00", "00:05:00"
-        legacy_metadata = dict(c1_metadata, TemplateRevision=1)
+        legacy_metadata = {"TemplateId":"C1", "Source":"LOOP Core", "Category":"intervals", "TemplateRevision":1, "IntendedHeartRateZone":None}
+        for phase in legacy_plan:
+            if phase["Kind"] in [0, 2, 3]: phase["TargetRpe"] = 2
         legacy_plan_json = json.dumps(legacy_plan, separators=(",", ":"))
         legacy_metadata_json = json.dumps(legacy_metadata, separators=(",", ":"))
         old_rows = []
@@ -345,10 +351,10 @@ try:
         adb("push", str(db_path), "/data/local/tmp/loop-legacy-c1.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-legacy-c1.db", "databases/runs-debug.db")
         open_app()
-        capture("legacy-c1-opened-idle", "Start C1 · Intervals")
+        capture("legacy-c1-opened-idle", "Start C1.2")
         adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "start")
         new_c1 = wait_snapshot(lambda state: state.get("TemplateId") == "C1" and state["Id"] != run_id)
-        assert new_c1["ActiveSeconds"] + new_c1["RemainingSeconds"] == 480
+        assert new_c1["ActiveSeconds"] + new_c1["RemainingSeconds"] == 240
         adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
         wait_snapshot(lambda state: state["Id"] == new_c1["Id"] and state["Phase"] == "Finished")
         adb("shell", "am", "force-stop", PACKAGE)
@@ -361,9 +367,9 @@ try:
                 assert db.execute("SELECT * FROM runs WHERE id=?", (row[0],)).fetchone() == tuple(expected)
             assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 4
             new_plan, new_metadata = db.execute("SELECT initial_plan, template_metadata FROM runs WHERE id=?", (new_c1["Id"],)).fetchone()
-            assert json.loads(new_plan) == c1_plan and json.loads(new_metadata)["TemplateRevision"] == 2
+            assert json.loads(new_plan) == c1_plan and json.loads(new_metadata)["TemplateRevision"] == 3
             assert db.execute("SELECT COUNT(*) FROM export_queue WHERE status!='disabled_synthetic'").fetchone()[0] == 0
-        report["legacyC1"] = "PASS: journal reopen only interrupts old recording; frozen 10/5 plan/checkpoint/v1 or NULL metadata unchanged; separate new start uses 8/4 revision 2"
+        report["legacyC1"] = "PASS: journal reopen only interrupts old recording; frozen 10/5 plan/checkpoint/v1 or NULL metadata unchanged; separate new start uses 4/3 revision 3"
         adb("push", str(backup), "/data/local/tmp/loop-ui-results.db")
         adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/loop-ui-results.db", "databases/runs-debug.db")
         report["schemaMigration"] = "PASS: fresh 3 and seeded 2-to-3, existing phase/checkpoint/event payload unchanged and legacy metadata NULL; 1-to-3 covered by stronger smoke"
