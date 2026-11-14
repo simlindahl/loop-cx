@@ -585,16 +585,22 @@ Require(honestGaps.Main.KnownGpsActiveTime == TimeSpan.FromSeconds(5)
     && honestGaps.Main.MeasuredMetres == 0 && honestGaps.Main.AveragePaceSecondsPerKilometre is null,
     "Only valid2-6 and8-9 brackets count: initial/final tails, poor quality and excessive gap never extrapolate; old packets do not break newer evidence.");
 
-
 // Arrange
 var coreDefaults = CorePreferencesState.Default;
 var coreExpected = new[] { ("C1.1", 1290, 1710, 10, 2), ("C1.2", 1380, 1800, 7, 3), ("C1.3", 1440, 1860, 6, 3) };
 
-// Act / Assert
-foreach (var (id, mainSeconds, totalSeconds, workRpe, recoveryRpe) in coreExpected)
+// Act
+var coreResults = coreExpected.Select(expected =>
 {
-    var resolved = CoreTemplate.Resolve(new(id), coreDefaults.WarmupCooldown);
+    var resolved = CoreTemplate.Resolve(new(expected.Item1), coreDefaults.WarmupCooldown);
     resolved.Session.Advance(TimeSpan.FromHours(2));
+    return (Expected: expected, Resolved: resolved);
+}).ToArray();
+
+// Assert
+foreach (var (expected, resolved) in coreResults)
+{
+    var (id, mainSeconds, totalSeconds, workRpe, recoveryRpe) = expected;
     Require(resolved.Session.MainActiveTime == TimeSpan.FromSeconds(mainSeconds)
         && resolved.Session.TotalActiveTime == TimeSpan.FromSeconds(totalSeconds)
         && resolved.Session.Completed.Where(static phase => phase.Plan.Kind == RunPhase.Work).All(phase => phase.Plan.TargetRpe == workRpe)
@@ -631,32 +637,43 @@ Require(c2New.Session.Plan.Single() == new TimedPhase(RunPhase.Work, Minutes(20)
     && c2New.Template.TemplateRevision == 2 && c2New.Template.ResolvedWarmupCooldown is null,
     "C2 uses the selected duration and revision2 RPE4 without inheriting global warm-up/cool-down.");
 
-// Arrange / Act / Assert
-foreach (var protocol in CoreProtocols.All)
+// Arrange
+var invalidCoreRequests = CoreProtocols.All.SelectMany(static protocol => new[]
 {
-    foreach (var count in new[] { protocol.MinimumCount - 1, protocol.MaximumCount + 1 })
-    {
-        var rejected = false;
-        try { CoreTemplate.Resolve(new(protocol.Id, count), new()); }
-        catch (ArgumentException) { rejected = true; }
-        Require(rejected, "Core repetition neighbours outside approved bounds are rejected.");
-    }
-    foreach (var count in new[] { protocol.MinimumCount, protocol.MaximumCount })
-        Require(CoreTemplate.Resolve(new(protocol.Id, count), new()).Session.Plan.Count(static phase => phase.Kind == RunPhase.Recovery) == count - 1,
-            "Both permitted boundaries retain exactly N−1 recoveries.");
-}
-foreach (var minutes in new[] { 19, 21, 121 })
+    new CoreStartRequest(protocol.Id, protocol.MinimumCount - 1), new CoreStartRequest(protocol.Id, protocol.MaximumCount + 1)
+}).Concat([ new CoreStartRequest("C2", ContinuousMinutes: 19), new CoreStartRequest("C2", ContinuousMinutes: 21),
+    new CoreStartRequest("C2", ContinuousMinutes: 121), new CoreStartRequest("custom"),
+    new CoreStartRequest("C2", Repetitions: 5), new CoreStartRequest("C1.2", ContinuousMinutes: 45),
+    new CoreStartRequest("C1.2", Targets: new(CoreTargetMode.Pace, 0)),
+    new CoreStartRequest("C1.2", Targets: new(CoreTargetMode.HeartRateZone, 6)) ]).ToArray();
+
+// Act
+var coreRejected = invalidCoreRequests.Select(request =>
 {
-    var rejected = false;
-    try { CoreTemplate.Resolve(new("C2", ContinuousMinutes: minutes), new()); }
-    catch (ArgumentException) { rejected = true; }
-    Require(rejected, "C2 rejects out-of-range/off-step durations.");
-}
-foreach (var minutes in new[] { -1, 16 })
+    try { _ = CoreTemplate.Resolve(request, new()); return false; }
+    catch (ArgumentException) { return true; }
+}).ToArray();
+var boundaryCorePlans = CoreProtocols.All.SelectMany(static protocol => new[] { protocol.MinimumCount, protocol.MaximumCount }
+    .Select(count => (Count: count, CoreTemplate.Resolve(new(protocol.Id, count), new()).Session.Plan))).ToArray();
+var invalidSettingsRejected = new[] { new C1WarmupCooldownSettings(-1, 3), new C1WarmupCooldownSettings(16, 3),
+    new C1WarmupCooldownSettings(4, -1), new C1WarmupCooldownSettings(4, 16) }.Select(settings =>
 {
-    var rejected = false;
-    try { CoreTemplate.Resolve(new("C1.2"), new(minutes, 3)); }
-    catch (ArgumentException) { rejected = true; }
-    Require(rejected, "Global warm-up/cool-down reject negative and over-limit values.");
-}
+    try { _ = CoreTemplate.Resolve(new("C1.2"), settings); return false; }
+    catch (ArgumentException) { return true; }
+}).ToArray();
+var fractionalRejected = false;
+try { _ = System.Text.Json.JsonSerializer.Deserialize<CoreStartRequest>("{\"ProtocolId\":\"C1.2\",\"Repetitions\":4.5}"); }
+catch (System.Text.Json.JsonException) { fractionalRejected = true; }
+var singleCooldownOff = CoreTemplate.Resolve(new("C1.2"), new(1, 0));
+var maximumSettings = CoreTemplate.Resolve(new("C1.2"), new(15, 15));
+var c2Maximum = CoreTemplate.Resolve(new("C2", ContinuousMinutes: 120), new());
+
+// Assert
+Require(coreRejected.All(static rejected => rejected) && invalidSettingsRejected.All(static rejected => rejected) && fractionalRejected,
+    "Unknown protocols, forbidden fields, bad targets, fractional reps, range neighbours and invalid Settings are rejected.");
+Require(boundaryCorePlans.All(static result => result.Plan.Count(static phase => phase.Kind == RunPhase.Recovery) == result.Count - 1),
+    "Both permitted repetition boundaries retain exactly N−1 recoveries.");
+Require(singleCooldownOff.Session.Plan[0].Duration == Minutes(1) && singleCooldownOff.Session.Plan[^1].Kind == RunPhase.Work
+    && maximumSettings.Session.Plan[0].Duration == Minutes(15) && maximumSettings.Session.Plan[^1].Duration == Minutes(15)
+    && c2Maximum.Session.Plan.Single().Duration == Minutes(120), "Independent phase opt-outs and both upper bounds remain valid.");
 Console.WriteLine("PASS: Core-first protocols, guarded repetitions/C2 duration, Settings opt-out, frozen shortcuts/targets and legacy identities.");

@@ -120,7 +120,7 @@ dialog input[type="radio"], dialog input[type="checkbox"] {
     accent-color: var(--cx-accent);
 }
 .choice {
-    display: flex !important;
+    display: flex;
     align-items: start;
     gap: 16px;
 }
@@ -137,4 +137,30 @@ fieldset {
     border: 1px solid var(--cx-muted);
     min-width: 0;
     padding: 16px;
+}
+
+
+.order-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+.drag-handle {
+    touch-action: none;
+    cursor: grab;
+}
+[data-dragging] {
+    opacity: .65;
+}
+[data-drop="before"] {
+    box-shadow: 0 -4px 0 var(--cx-accent);
+}
+[data-drop="after"] {
+    box-shadow: 0 4px 0 var(--cx-accent);
+}
+
+
+.order-controls button:disabled {
+    opacity: .45;
+    cursor: default;
 }

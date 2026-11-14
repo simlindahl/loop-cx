@@ -69,6 +69,9 @@ public sealed class RunService : Service, ILocationListener
     private bool finishLogged;
     private string gpsStatus = "Waiting for GPS";
     private LocationManager? locationManager;
+    private bool locationSubscribed;
+    private bool locationAvailable;
+    private bool connectedDeviceRequested;
     private const int NotificationId = 1;
     private const string ChannelId = "running";
 
@@ -154,7 +157,8 @@ public sealed class RunService : Service, ILocationListener
             }
             catch (Exception error) when (error is ArgumentException or System.Text.Json.JsonException or InvalidDataException)
             {
-                StartError = error.Message;
+                StartError = error is System.Text.Json.JsonException
+                    ? "The selected Core workout could not be read. Choose an official protocol and try again." : error.Message;
                 Changed?.Invoke();
                 StopSelf();
 
@@ -189,18 +193,13 @@ public sealed class RunService : Service, ILocationListener
             }
 
             Publish("start");
-            locationManager = (LocationManager)GetSystemService(LocationService)!;
-            try
-            {
-                if (CanUseLocation()) locationManager.RequestLocationUpdates(LocationManager.GpsProvider, 1000, 0, this, Looper.MainLooper!);
-                else gpsStatus = "GPS unavailable · timer continues; allow location in Android settings";
-            }
-            catch (Java.Lang.SecurityException) { gpsStatus = "Location permission required"; }
-            catch (Java.Lang.IllegalArgumentException) { gpsStatus = "GPS unavailable"; }
+            RefreshLocationSubscription();
             handler = new Handler(Looper.MainLooper!);
             tick = Tick;
             handler.PostDelayed(tick, 1000);
         }
+        if (command == "refresh-sensors") RefreshLocationSubscription();
+
         AdvanceClock();
         var phaseBeforeCommand = session.Current?.Kind;
         var effective = command switch
@@ -303,17 +302,21 @@ public sealed class RunService : Service, ILocationListener
         session.Current?.TargetRpe, session.Completed.Count(static phase => phase.Plan.Kind == RunPhase.Work)
             + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work));
 
+    private bool HasLocationPermission() =>
+        CheckSelfPermission(global::Android.Manifest.Permission.AccessFineLocation) == Permission.Granted ||
+        CheckSelfPermission(global::Android.Manifest.Permission.AccessCoarseLocation) == Permission.Granted;
+
     private bool CanUseLocation()
     {
         var granted = CheckSelfPermission(global::Android.Manifest.Permission.AccessFineLocation) == Permission.Granted ||
             CheckSelfPermission(global::Android.Manifest.Permission.AccessCoarseLocation) == Permission.Granted;
         var manager = (LocationManager?)GetSystemService(LocationService);
 
-        return granted && manager is not null && (OperatingSystem.IsAndroidVersionAtLeast(28)
-            ? manager.IsLocationEnabled : manager.IsProviderEnabled(LocationManager.GpsProvider));
+        return granted && manager is not null && manager.IsProviderEnabled(LocationManager.GpsProvider) &&
+            (!OperatingSystem.IsAndroidVersionAtLeast(28) || manager.IsLocationEnabled);
     }
 
-    private void StartEligibleForeground(bool connectedDevice = false)
+    private void StartEligibleForeground(bool connectedDevice = false, bool timerOnly = false)
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(29))
         {
@@ -322,13 +325,68 @@ public sealed class RunService : Service, ILocationListener
             return;
         }
 
-        var type = CanUseLocation() ? ForegroundService.TypeLocation : OperatingSystem.IsAndroidVersionAtLeast(34)
+        connectedDeviceRequested |= connectedDevice;
+        var type = !timerOnly && CanUseLocation() ? ForegroundService.TypeLocation : OperatingSystem.IsAndroidVersionAtLeast(34)
             ? ForegroundService.TypeSpecialUse : ForegroundService.TypeNone;
 
-        if (connectedDevice && OperatingSystem.IsAndroidVersionAtLeast(31) && CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
+        if (connectedDeviceRequested && OperatingSystem.IsAndroidVersionAtLeast(31) && CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
             type |= ForegroundService.TypeConnectedDevice;
 
         StartForeground(NotificationId, BuildNotification(), type);
+    }
+
+    private void RefreshLocationSubscription()
+    {
+        var available = false;
+        locationManager ??= (LocationManager?)GetSystemService(LocationService);
+
+        try
+        {
+            StartEligibleForeground();
+            available = CanUseLocation();
+
+            if (!HasLocationPermission() && locationSubscribed)
+            {
+                try { locationManager?.RemoveUpdates(this); }
+                catch (Java.Lang.SecurityException) { }
+                locationSubscribed = false;
+            }
+
+            // A granted listener also receives provider enable/disable callbacks while GPS is off.
+            if (HasLocationPermission() && !locationSubscribed && locationManager is not null)
+            {
+                locationManager.RequestLocationUpdates(LocationManager.GpsProvider, 1000, 0, this, Looper.MainLooper!);
+                locationSubscribed = true;
+            }
+        }
+        catch (Java.Lang.RuntimeException)
+        {
+            available = false;
+            try { StartEligibleForeground(timerOnly: true); }
+            catch (Java.Lang.RuntimeException) { }
+        }
+
+        if (!available)
+        {
+            gpsStatus = "GPS unavailable · timer continues; allow location in Android settings";
+
+            if (locationAvailable)
+            {
+                distance?.Unavailable("GPS unavailable");
+                motion?.Unavailable();
+                candidateDistance = null;
+            }
+        }
+        else if (!locationAvailable)
+        {
+            var restoredAt = TimeSpan.FromMilliseconds(SystemClock.ElapsedRealtime());
+            distance?.Reanchor(restoredAt, "GPS restored");
+            motion?.Boundary(restoredAt);
+            candidateDistance = null;
+            gpsStatus = "Waiting for GPS";
+        }
+
+        locationAvailable = available;
     }
 
     private Notification BuildNotification()
@@ -379,6 +437,14 @@ public sealed class RunService : Service, ILocationListener
 
         journal.Location(id, location);
         AdvanceClock();
+        if (!locationAvailable)
+        {
+            locations++;
+            Publish();
+
+            return;
+        }
+
         var receivedAt = TimeSpan.FromMilliseconds(lastTick);
         var fix = new DistanceFix(TimeSpan.FromMilliseconds(location.ElapsedRealtimeNanos / 1_000_000),
             location.Latitude, location.Longitude, location.HasAccuracy ? location.Accuracy : null);
@@ -423,17 +489,18 @@ public sealed class RunService : Service, ILocationListener
     {
         if (session is null || session.IsFinished) return;
 
-        gpsStatus = "GPS disabled · timer continues";
-        distance?.Unavailable("GPS disabled");
-        motion?.Unavailable();
-        candidateDistance = null;
-
-        try { StartEligibleForeground(); }
-        catch (Java.Lang.RuntimeException) { gpsStatus = "GPS unavailable · timer continues"; }
-
+        RefreshLocationSubscription();
         Publish();
     }
-    public void OnProviderEnabled(string provider) { gpsStatus = "Waiting for GPS"; Publish(); }
+
+    public void OnProviderEnabled(string provider)
+    {
+        if (session is null || session.IsFinished) return;
+
+        RefreshLocationSubscription();
+        Publish();
+    }
+
     public void OnStatusChanged(string? provider, Availability status, Bundle? extras) { }
 
     public override void OnDestroy()
@@ -442,7 +509,8 @@ public sealed class RunService : Service, ILocationListener
         if (OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif
         if (tick is not null) handler?.RemoveCallbacks(tick);
-        locationManager?.RemoveUpdates(this);
+        try { locationManager?.RemoveUpdates(this); }
+        catch (Java.Lang.SecurityException) { }
         StopForeground(StopForegroundFlags.Remove);
 
         Snapshot = null;

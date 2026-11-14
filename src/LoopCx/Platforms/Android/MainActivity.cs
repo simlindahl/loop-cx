@@ -21,6 +21,12 @@ public sealed class MainActivity : MauiAppCompatActivity
 #endif
     }
 
+    protected override void OnResume()
+    {
+        base.OnResume();
+        if (RunService.Snapshot is { Phase: not "Finished" }) RunService.Command("refresh-sensors");
+    }
+
 #if DEBUG
     protected override void OnNewIntent(Intent? intent)
     {
