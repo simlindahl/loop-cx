@@ -78,6 +78,22 @@ public sealed partial class MainActivity : MauiAppCompatActivity
 #if DEBUG
     private void HandleDebugCommand(Intent? intent)
     {
+        var recoveryFailure = intent?.GetStringExtra("loop-recovery-failure");
+        var recoveryEnabled = intent?.GetBooleanExtra("loop-recovery-failure-enabled", false) == true;
+        intent?.RemoveExtra("loop-recovery-failure");
+        intent?.RemoveExtra("loop-recovery-failure-enabled");
+        if (recoveryFailure is not null && Build.VERSION.SdkInt == BuildVersionCodes.VanillaIceCream
+            && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64" && Guid.TryParse(recoveryFailure, out var recoveryId))
+        {
+            try
+            {
+                RunJournal.Shared.SetRecoveryFailureForProbe(recoveryId, recoveryEnabled);
+                global::Android.Util.Log.Info("LoopRun", "Isolated recovery UPDATE failure hook configured.");
+            }
+            catch (Exception error) when (error is IOException or ArgumentException or System.Text.Json.JsonException or global::Android.Database.Sqlite.SQLiteException)
+            { global::Android.Util.Log.Warn("LoopRun", "Isolated recovery failure hook was not configured."); }
+            return;
+        }
         var archiveSeed = intent?.GetStringExtra("loop-ghost-archive-seed");
         intent?.RemoveExtra("loop-ghost-archive-seed");
         if (archiveSeed is not null && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")
