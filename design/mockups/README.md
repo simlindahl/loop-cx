@@ -151,6 +151,10 @@ In the large index.html gallery, the index and captions are review tools, not ap
 
 Local equivalent with Node and Playwright installed: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` can select a separate installation; `PLAYWRIGHT_CHANNEL` can select an installed browser such as `chrome` instead of Playwright's bundled browser. Screenshots and the report are written to `design/mockups/qa/` and must not be committed. Record actual local and Actions results in the PR; browser availability depends on the environment. The verifier also follows Ghost route entry, return to session details, and the pause action in each live reference mode. The same CI job also runs `verify-integrations.cjs` and `verify-ghost.cjs` for the approved portable references.
 
+### Present a study for a decision
+
+Before asking the product owner for a decision, the lead ensures the current interactive study is opened and verified through the intended presentation environment/path, including its relevant navigation/actions and local assets. Bind the request and decision to the version actually shown, using its commit or content identity; preserve earlier bindings and identify later transformations rather than silently presenting a different version as the reviewed one. Use focused changed-state checks during iteration, then a current final binding at review, with unchanged evidence reused only within its valid input/scope. Browser/static evidence does not establish native Android behavior and does not waive required CI or runtime acceptance.
+
 <a id="licenser"></a>
 ## Licenses
 

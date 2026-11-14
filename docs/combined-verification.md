@@ -10,7 +10,7 @@ Requirements: [product specification](../knowledge/product.md), issues #1 and #1
 | Ghost Run | #19 → #20 → #21 → #22 → #23 → #24 | Requirements/mockups, frozen references, main-phase evidence, race clock, ordered matching and SQLite data model |
 | Combined check | Merged #25 after #24 | Actual combined source revision and shared build/acceptance tests |
 
-Review and merge follow the delegated workflow in [AGENTS.md](../AGENTS.md#work-tracking-and-status). Each predecessor must be delivered before its dependent PR merges. Detailed Ghost layouts remain preliminary; standalone rule verification does not approve UI integration.
+Review and merge follow the delegated workflow in [AGENTS.md](../AGENTS.md#work-tracking-and-status). Each predecessor must be delivered before its dependent PR merges. The concrete Ghost layout has its [separate recorded approval](../design/decision.md#ghost-layout-approval); standalone rule verification does not establish runtime UI integration.
 
 <a id="vad-kontrollen-gör"></a>
 ## What the check does

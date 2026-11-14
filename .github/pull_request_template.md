@@ -1,4 +1,4 @@
-Closes #
+Related work: <!-- Link issues. Use a closing reference only for fully accepted work. -->
 
 <a id="ändring"></a>
 ## Change
@@ -7,6 +7,8 @@ Describe the behavior and link its requirement section. For a design change, lin
 ## Current review handoff
 
 - Exact head and base revisions; bounded diff and linked issue/owning specification/acceptance criteria.
+- Actual reviewable seam/files/checkpoint and one short affected user-visible state invariant.
+- Necessary current execution prerequisites or dependency paths; distinguish them from historical evidence locations.
 - Design status: approved or preliminary; static reference or runtime change; applicable decision and holds.
 - Applicable verification and artifact manifest links, tested revision/environment, evidence limits and pending gates.
 
