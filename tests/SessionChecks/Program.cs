@@ -863,6 +863,110 @@ Require(separateMain.Main.ActiveTime == TimeSpan.FromSeconds(3) && separateMain.
 Console.WriteLine("PASS: main results and splits freeze at the real boundary while total HR coverage continues through cooldown.");
 
 
+static void FeedLiveFix(RunDistance distance, RunLivePace pace, DistanceFix fix)
+{
+    _ = distance.Observe(fix, fix.MonotonicTime, fix.MonotonicTime);
+    pace.Observe(distance.Observation, distance.AcceptedEdge, fix.MonotonicTime);
+}
+
+// Arrange
+var liveDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+var livePace = new RunLivePace(LivePacePolicy.Pilot);
+
+// Act
+FeedLiveFix(liveDistance, livePace, Fix(0, 0));
+FeedLiveFix(liveDistance, livePace, Fix(1, 10));
+var liveAcquiring = livePace.Snapshot(TimeSpan.FromSeconds(1));
+FeedLiveFix(liveDistance, livePace, Fix(5, 30));
+var liveWeighted = livePace.Snapshot(TimeSpan.FromSeconds(5));
+FeedLiveFix(liveDistance, livePace, Fix(5, 30));
+FeedLiveFix(liveDistance, livePace, Fix(3, 20));
+var liveAfterDuplicates = livePace.Snapshot(TimeSpan.FromSeconds(5));
+
+// Assert
+Require(liveAcquiring.SecondsPerKilometre is null && liveAcquiring.Quality == "acquiring"
+    && Math.Abs(liveWeighted.SecondsPerKilometre!.Value - (5000d / 30)) < .000001
+    && liveWeighted.SupportedTime == TimeSpan.FromSeconds(5),
+    "Live pace acquires supported trusted-edge time and weights duration/metres rather than averaging paces.");
+Require(liveAfterDuplicates == liveWeighted && liveDistance.Observation.Ignored,
+    "Duplicate/out-of-order packets add no live evidence and do not destroy newer accepted movement.");
+
+// Arrange
+var clippingDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+var clippingPace = new RunLivePace(LivePacePolicy.Pilot);
+
+// Act
+foreach (var fix in new[] { Fix(0, 0), Fix(4, 40), Fix(10, 70), Fix(12, 90) }) FeedLiveFix(clippingDistance, clippingPace, fix);
+var clippedLive = clippingPace.Snapshot(TimeSpan.FromSeconds(12));
+FeedLiveFix(clippingDistance, clippingPace, Fix(14, 90));
+FeedLiveFix(clippingDistance, clippingPace, Fix(16, 90));
+var stationaryLive = clippingPace.Snapshot(TimeSpan.FromSeconds(16));
+var expiredLive = clippingPace.Snapshot(TimeSpan.FromSeconds(30));
+
+// Assert
+Require(Math.Abs(clippedLive.SecondsPerKilometre!.Value - (10000d / 70)) < .000001
+    && clippedLive.WindowFrom == TimeSpan.FromSeconds(2) && clippedLive.WindowTo == TimeSpan.FromSeconds(12)
+    && clippedLive.SupportedTime == TimeSpan.FromSeconds(10),
+    "The trailing window clips only the supported portion of an accepted continuous edge.");
+Require(clippingDistance.Observation.Valid && stationaryLive.SecondsPerKilometre is null
+    && stationaryLive.Quality == "stale" && expiredLive.Quality == "stale",
+    "Fresh stationary GPS coverage does not refresh old movement pace or invent a zero speed.");
+
+// Arrange
+var longAnchorDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+var longAnchorPace = new RunLivePace(LivePacePolicy.Pilot);
+
+// Act
+for (var second = 0; second <= 60; second++) FeedLiveFix(longAnchorDistance, longAnchorPace, Fix(second, 0));
+FeedLiveFix(longAnchorDistance, longAnchorPace, Fix(61, 4));
+var longAnchorLive = longAnchorPace.Snapshot(TimeSpan.FromSeconds(61));
+var acceptedLongMetres = longAnchorDistance.Snapshot.MainMeasuredMetres;
+for (var second = 62; second <= 64; second++) FeedLiveFix(longAnchorDistance, longAnchorPace, Fix(second, (second - 60) * 4));
+var reacquiredLive = longAnchorPace.Snapshot(TimeSpan.FromSeconds(64));
+var pausedLive = longAnchorPace.Snapshot(TimeSpan.FromSeconds(64), paused: true);
+var resumedLive = longAnchorPace.Snapshot(TimeSpan.FromSeconds(65));
+
+// Assert
+Require(acceptedLongMetres > 3.999 && longAnchorLive.SecondsPerKilometre is null
+    && Math.Abs(reacquiredLive.SecondsPerKilometre!.Value - 250) < .000001,
+    "An ordinary long-anchor edge still counts distance but cannot fake recent pace; short trusted edges reacquire.");
+Require(pausedLive.SecondsPerKilometre is null && resumedLive.SecondsPerKilometre is null
+    && resumedLive.LastAcceptedAt is null,
+    "Pause clears live movement evidence rather than carrying running pace across relocation or resume.");
+Console.WriteLine("PASS: trusted-edge live pace weighting, acquisition, clipping, stale stationary data and long-anchor safeguards.");
+
+
+// Arrange
+var liveRecoveryDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+var liveRecovery = new RunLivePace(LivePacePolicy.Pilot);
+
+// Act
+FeedLiveFix(liveRecoveryDistance, liveRecovery, Fix(0, 0));
+FeedLiveFix(liveRecoveryDistance, liveRecovery, Fix(2, 20));
+liveRecoveryDistance.Boundary(RunPhase.Recovery, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+liveRecovery.Boundary(RunPhase.Work, RunPhase.Recovery);
+FeedLiveFix(liveRecoveryDistance, liveRecovery, Fix(4, 40));
+var acrossRecovery = liveRecovery.Snapshot(TimeSpan.FromSeconds(4));
+FeedLiveFix(liveRecoveryDistance, liveRecovery, Fix(5, 1000));
+var afterJump = liveRecovery.Snapshot(TimeSpan.FromSeconds(5));
+FeedLiveFix(liveRecoveryDistance, liveRecovery, Fix(6, 42));
+FeedLiveFix(liveRecoveryDistance, liveRecovery, Fix(9, 54));
+var afterQualityRecovery = liveRecovery.Snapshot(TimeSpan.FromSeconds(9));
+liveRecovery.Boundary(RunPhase.Recovery, RunPhase.Cooldown);
+var acrossCooldown = liveRecovery.Snapshot(TimeSpan.FromSeconds(9));
+
+// Assert
+Require(Math.Abs(acrossRecovery.SecondsPerKilometre!.Value - 100) < .000001
+    && acrossRecovery.SupportedTime == TimeSpan.FromSeconds(4),
+    "Planned Recovery preserves the continuous accepted main chain and live pace.");
+Require(afterJump.SecondsPerKilometre is null && afterJump.LastAcceptedAt is null
+    && Math.Abs(afterQualityRecovery.SecondsPerKilometre!.Value - 250) < .000001
+    && afterQualityRecovery.WindowFrom == TimeSpan.FromSeconds(6),
+    "The original GPS jump rejection breaks live evidence, then new trusted edges reacquire without bridging the gap.");
+Require(acrossCooldown.SecondsPerKilometre is null && acrossCooldown.LastAcceptedAt is null,
+    "Main-to-cooldown reanchoring clears only live pace; separately finalized aggregate results are not rewritten.");
+Console.WriteLine("PASS: live pace obeys actual quality outcomes, continuous main recovery and real reanchor barriers.");
+
 // Arrange: legacy and partial data stay frozen; raw clocks retain different units.
 using var exportPlanDocument = System.Text.Json.JsonDocument.Parse("[{\"Kind\":1,\"Duration\":\"00:45:00\",\"TargetRpe\":3}]");
 var exportCheckpoint = System.Text.Json.JsonSerializer.SerializeToElement(new

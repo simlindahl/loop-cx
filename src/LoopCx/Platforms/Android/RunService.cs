@@ -10,7 +10,7 @@ namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
     long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null, MotionState? Motion = null, RunStatisticsState? Statistics = null, CoreTemplate? FrozenTemplate = null,
-    int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null, HeartRateState? HeartRate = null);
+    int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null, HeartRateState? HeartRate = null, LivePaceState? LivePace = null);
 
 [Property("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE", Value = "User-started ongoing timed workout phases and visible controls while screen is locked, when GPS is unavailable or declined.")]
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice | ForegroundService.TypeSpecialUse)]
@@ -53,6 +53,7 @@ public sealed class RunService : Service, ILocationListener
     private HeartRateConfiguration heartRateConfiguration = HeartRateConfiguration.Empty;
     private string? heartRateMetadata;
     private readonly RunStatistics statistics = new();
+    private readonly RunLivePace livePace = new(LivePacePolicy.Pilot);
     private RunDistance.CandidateDistance? candidateDistance;
     private Guid id;
     private DateTimeOffset started;
@@ -288,6 +289,7 @@ public sealed class RunService : Service, ILocationListener
         }
         else if (effective && command is "pause" or "resume")
         {
+            livePace.Reset(session.IsPaused ? "paused" : "acquiring");
             distance!.Interrupt(TimeSpan.FromMilliseconds(lastTick), "Manual pause boundary");
             motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
             candidateDistance = null;
@@ -299,7 +301,11 @@ public sealed class RunService : Service, ILocationListener
     private void AdvanceClock()
     {
         var now = SystemClock.ElapsedRealtime();
-        if (!session!.IsPaused) distance!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
+        if (!session!.IsPaused)
+        {
+            distance!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
+            if (!distance.Observation.Valid && !distance.Observation.Ignored) livePace.Reset();
+        }
         motion!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
 
         if (motion.Candidate is null) candidateDistance = null;
@@ -324,6 +330,8 @@ public sealed class RunService : Service, ILocationListener
     private void RecordPhaseBoundary(RunPhase? previous, RunPhase? next, TimeSpan at, bool synthetic = false)
     {
         distance!.Boundary(next, at, session!.MainActiveTime);
+
+        livePace.Boundary(previous, next);
 
         if (previous is RunPhase.Work or RunPhase.Recovery && next is not (RunPhase.Work or RunPhase.Recovery))
         {
@@ -373,7 +381,8 @@ public sealed class RunService : Service, ILocationListener
         motion?.Snapshot(session.PauseReason), statistics.Snapshot(TimeSpan.FromMilliseconds(lastTick - startedMonotonic),
             distance!.Snapshot, session.Current?.Kind is RunPhase.Work or RunPhase.Recovery), template,
         session.Current?.TargetRpe, session.Completed.Count(static phase => phase.Plan.Kind == RunPhase.Work)
-            + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work), heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)));
+            + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work), heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)),
+        livePace.Snapshot(TimeSpan.FromMilliseconds(lastTick), session.IsPaused, session.IsFinished));
 
     private void StopHeartRateSource()
     {
@@ -479,6 +488,7 @@ public sealed class RunService : Service, ILocationListener
         if (!available)
         {
             gpsStatus = "GPS unavailable · allow location in Android settings";
+            livePace.Reset();
 
             if (locationAvailable)
             {
@@ -490,6 +500,7 @@ public sealed class RunService : Service, ILocationListener
         else if (!locationAvailable)
         {
             var restoredAt = TimeSpan.FromMilliseconds(SystemClock.ElapsedRealtime());
+            livePace.Reset("acquiring");
             distance?.Reanchor(restoredAt, "GPS restored");
             motion?.Boundary(restoredAt);
             candidateDistance = null;
@@ -559,7 +570,12 @@ public sealed class RunService : Service, ILocationListener
         var fix = new DistanceFix(TimeSpan.FromMilliseconds(location.ElapsedRealtimeNanos / 1_000_000),
             location.Latitude, location.Longitude, location.HasAccuracy ? location.Accuracy : null);
         var moved = !session.IsPaused && distance!.Observe(fix, receivedAt, session.MainActiveTime);
-        if (!session.IsPaused) statistics.Observe(distance!.Observation);
+        if (!session.IsPaused)
+        {
+            statistics.Observe(distance!.Observation);
+
+            livePace.Observe(distance.Observation, distance.AcceptedEdge, receivedAt);
+        }
 
         var decision = motion!.Observe(fix, receivedAt, session.PhaseIndex, session.Current?.Kind, session.PauseReason, moved);
         AutomaticMotionEvent? automaticEvent = null;
@@ -573,6 +589,7 @@ public sealed class RunService : Service, ILocationListener
             session.PauseAutomatically(TimeSpan.FromSeconds(10), motion.Event!.PhaseIndex))
         {
             automaticEvent = motion.Event;
+            livePace.Reset("paused");
             statistics.Exclude(automaticEvent!.OnsetMonotonicTime!.Value, automaticEvent.ExcludedThroughMonotonicTime!.Value);
             distance!.ConfirmStandstill(candidate, receivedAt,
                 receivedAt > automaticEvent!.ExcludedThroughMonotonicTime);
@@ -581,6 +598,7 @@ public sealed class RunService : Service, ILocationListener
         else if (decision == MotionDecision.Resume && session.ResumeAutomatically())
         {
             automaticEvent = motion.Event;
+            livePace.Reset("acquiring");
             distance!.Reanchor(receivedAt, "Automatic resume boundary");
             motion.Boundary(receivedAt);
             candidateDistance = null;
