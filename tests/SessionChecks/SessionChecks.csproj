@@ -7,6 +7,7 @@
     <Compile Include="../../src/LoopCx/Features/ActiveRun/TimedSession.cs" Link="TimedSession.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/HeartRateMeasurement.cs" Link="HeartRateMeasurement.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunLivePace.cs" Link="RunLivePace.cs" />
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/RunNotificationText.cs" Link="RunNotificationText.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunDistance.cs" Link="RunDistance.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunMotion.cs" Link="RunMotion.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreTemplate.cs" Link="CoreTemplate.cs" />
