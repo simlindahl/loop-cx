@@ -285,7 +285,7 @@ public partial class StartRunPage
     {
         managing = false;
         CoreDialogNavigation.Close = null;
-        focusPending = "manage-shortcuts";
+        focusPending = statePreferences.Shortcuts.Count > 0 ? "manage-shortcuts" : "start-heading";
         await InvokeAsync(StateHasChanged);
     }
 

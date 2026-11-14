@@ -27,6 +27,18 @@ public sealed class MainActivity : MauiAppCompatActivity
         if (RunService.Snapshot is { Phase: not "Finished" }) RunService.Command("refresh-sensors");
     }
 
+    public override bool OnKeyDown(global::Android.Views.Keycode keyCode, global::Android.Views.KeyEvent? e)
+    {
+        if (keyCode == global::Android.Views.Keycode.VolumeUp && RunService.Snapshot?.Phase is "Warmup" or "Cooldown")
+        {
+            if (e?.RepeatCount == 0) RunService.Command("extend");
+
+            return true;
+        }
+
+        return base.OnKeyDown(keyCode, e);
+    }
+
 #if DEBUG
     protected override void OnNewIntent(Intent? intent)
     {
@@ -73,18 +85,6 @@ public sealed class MainActivity : MauiAppCompatActivity
         if (command is "start" or "start-c2" or "pause" or "resume" or "extend" or "skip" or "complete")
             RunService.Command(command);
     }
-    public override bool OnKeyDown(global::Android.Views.Keycode keyCode, global::Android.Views.KeyEvent? e)
-    {
-        if (keyCode == global::Android.Views.Keycode.VolumeUp && RunService.Snapshot?.Phase is "Warmup" or "Cooldown")
-        {
-            if (e?.RepeatCount == 0) RunService.Command("extend");
-
-            return true;
-        }
-
-        return base.OnKeyDown(keyCode, e);
-    }
-
     [System.Runtime.Versioning.SupportedOSPlatform("android33.0")]
     private void SelectHeartRateDevice()
     {
