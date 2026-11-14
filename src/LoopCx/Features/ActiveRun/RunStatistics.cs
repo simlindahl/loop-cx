@@ -5,10 +5,14 @@ public sealed record MeasuredStatistics(TimeSpan ActiveTime, double MeasuredMetr
 {
     public double? AveragePaceSecondsPerKilometre => UnknownGpsActiveTime == TimeSpan.Zero && MeasuredMetres > 0
         ? ActiveTime.TotalSeconds * 1000 / MeasuredMetres : null;
-    public double? AverageHeartRate { get; }
-    public TimeSpan KnownHeartRateActiveTime { get; }
-    public TimeSpan UnknownHeartRateActiveTime => ActiveTime;
+    public double? AverageHeartRate { get; init; }
+    public TimeSpan KnownHeartRateActiveTime { get; init; }
+    public TimeSpan UnknownHeartRateActiveTime => ActiveTime - KnownHeartRateActiveTime;
+    public IReadOnlyList<HeartRateZoneTime>? HeartRateZones { get; init; }
+    public TimeSpan UnclassifiedHeartRateActiveTime { get; init; }
 }
+
+public sealed record HeartRateZoneTime(int Zone, TimeSpan ActiveTime);
 
 public sealed record RunStatisticsState(int Version, DistancePolicy Policy, TimeSpan ObservedElapsed,
     MeasuredStatistics Total, MeasuredStatistics Main, IReadOnlyList<MeasuredStatistics> CompletedSplits,
@@ -19,6 +23,7 @@ public sealed class RunStatistics
 {
     private bool hasSyntheticTime;
     private readonly List<Interval> known = [];
+    private readonly List<HeartRateBracket> heartRate = [];
     private readonly List<Interval> excluded = [];
     private readonly List<ActiveInterval> active = [];
 
@@ -52,6 +57,17 @@ public sealed class RunStatistics
         }
     }
 
+    public void ObserveHeartRate(HeartRateBracket? bracket)
+    {
+        if (bracket is null || bracket.To <= bracket.From) return;
+
+        // The service classifier supplies chronological disjoint brackets, including across invalid breaks.
+        if (heartRate.Count > 0 && bracket.From < heartRate[^1].To)
+            throw new ArgumentException("Heart-rate brackets must not overlap.");
+
+        heartRate.Add(bracket);
+    }
+
     public void Exclude(TimeSpan from, TimeSpan to) => Union(excluded, from.Ticks, to.Ticks);
 
     public RunStatisticsState Snapshot(TimeSpan elapsed, DistanceState distance, bool mainRunning)
@@ -81,6 +97,9 @@ public sealed class RunStatistics
     {
         long cursor = 0;
         long covered = 0;
+        long hrCovered = 0;
+        double weightedBpmTicks = 0;
+        var zoneTicks = new Dictionary<int, long>();
 
         foreach (var piece in Pieces(mainOnly))
         {
@@ -93,6 +112,15 @@ public sealed class RunStatistics
                 var from = piece.Start + lower - cursor;
                 var to = piece.Start + upper - cursor;
 
+                foreach (var bracket in heartRate)
+                {
+                    var overlap = Math.Max(0, Math.Min(to, bracket.To.Ticks) - Math.Max(from, bracket.From.Ticks));
+                    hrCovered += overlap;
+                    weightedBpmTicks += overlap * (double)bracket.Bpm;
+
+                    if (overlap > 0 && bracket.Zone is { } zone) zoneTicks[zone] = zoneTicks.GetValueOrDefault(zone) + overlap;
+                }
+
                 foreach (var bracket in known)
                 {
                     covered += Math.Max(0, Math.Min(to, bracket.End) - Math.Max(from, bracket.Start));
@@ -104,7 +132,13 @@ public sealed class RunStatistics
 
         var ticks = end - start;
 
-        return new(TimeSpan.FromTicks(ticks), metres, TimeSpan.FromTicks(covered), TimeSpan.FromTicks(ticks - covered));
+        return new(TimeSpan.FromTicks(ticks), metres, TimeSpan.FromTicks(covered), TimeSpan.FromTicks(ticks - covered))
+        {
+            AverageHeartRate = hrCovered > 0 ? weightedBpmTicks / hrCovered : null,
+            KnownHeartRateActiveTime = TimeSpan.FromTicks(hrCovered),
+            HeartRateZones = zoneTicks.OrderBy(static item => item.Key).Select(static item => new HeartRateZoneTime(item.Key, TimeSpan.FromTicks(item.Value))).ToArray(),
+            UnclassifiedHeartRateActiveTime = TimeSpan.FromTicks(hrCovered - zoneTicks.Values.Sum())
+        };
     }
 
     private IEnumerable<Interval> Pieces(bool mainOnly)

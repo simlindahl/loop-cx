@@ -164,3 +164,9 @@ A user-started timed workout can continue with unknown GPS. The approved Android
 
 
 The approved shared motion families are not delivered by this Core-first slice. Their implementation remains tracked in [#62](https://github.com/simlindahl/loop-cx/issues/62) and required before M1 acceptance. Core commands/content update immediately, with no fake progress or sensor-number animation; functional dialog and shortcut checks are not motion-performance evidence.
+
+### Local HR pipeline verification
+
+The production HR backend is independently testable without adding a Settings layout. In a DEBUG build on the dedicated account-free ranchu QA emulator only, `loop-heart-rate-configuration` accepts the versioned configuration JSON while no run is active. It saves the same validated preferences consumed by normal Core start. It does not inject BPM: the selected virtual HR source must advertise, connect and notify through actual Android GATT. No Health Connect probe or write is involved. Never send this diagnostic to a physical phone. Native BLE/SQLite/reopen acceptance for this slice remains pending until recorded against a pinned candidate.
+
+The HR fields are available in `RunSnapshot.HeartRate` (frozen setup, live BPM-or-null and quality/error) and `RunSnapshot.Statistics` (total/main/completed/current split weighted mean, known/unknown HR time and configured-zone time). The journal checkpoint contains those fields; schema 4 also persists raw HR and frozen HR setup. This backend slice does not render a full HR statistics/training view, add first-use pairing or expose a zone editor. Seeding the dedicated emulator configuration verifies the real backend path, not a finished user connection flow.

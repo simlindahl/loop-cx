@@ -48,6 +48,22 @@ public sealed class MainActivity : MauiAppCompatActivity
 
     private void HandleDebugCommand(Intent? intent)
     {
+        var hrConfiguration = intent?.GetStringExtra("loop-heart-rate-configuration");
+        intent?.RemoveExtra("loop-heart-rate-configuration");
+        // Test setup only. It feeds the same production preferences/start/source path, never a fake BPM callback.
+        if (hrConfiguration is not null && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64" &&
+            RunService.Snapshot is null)
+        {
+            try
+            {
+                HeartRatePreferences.Save(System.Text.Json.JsonSerializer.Deserialize<LoopCx.Features.ActiveRun.HeartRateConfiguration>(hrConfiguration)
+                    ?? throw new ArgumentException("Missing heart-rate configuration."));
+            }
+            catch (Exception error) when (error is ArgumentException or System.Text.Json.JsonException)
+            {
+                global::Android.Util.Log.Warn("LoopRun", "Heart-rate test configuration rejected.");
+            }
+        }
         var probe = intent?.GetStringExtra("loop-native-probe");
         intent?.RemoveExtra("loop-native-probe");
         if (probe == "health-rationale" && OperatingSystem.IsAndroidVersionAtLeast(35))
