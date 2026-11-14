@@ -6,4 +6,6 @@ The [decision record](../../decision.md#m1-integration-approval) identifies the 
 
 The script is copied unchanged from the latest identified presentation. The stylesheet uses the existing repository font asset, and outside-phone review captions link to current canonical owners. Earlier manual-boundary, neutral-bar and table-style screenshots are historical. Other destinations shown as context, Ghost detailed layouts and the reader runtime hold do not gain approval from this reference.
 
+The in-memory Connected example is a synthetic review state, not proof that selecting a device opens GATT. Runtime selection versus actual active-source status follows the [service-owned connection contract](../../../knowledge/integrations-data.md#service-owned-ble-heart-rate-storage); the reference creates no service or measurement.
+
 Run `node design/mockups/verify-integrations.cjs` from the repository root with Playwright installed. `PLAYWRIGHT_MODULE` may select an existing installation; `PLAYWRIGHT_CHANNEL` may select an installed browser. Output goes to `design/mockups/qa/integrations/` and must not be committed. Browser checks do not establish Android text scaling, TalkBack, actual sensors or physical WHOOP compatibility.
