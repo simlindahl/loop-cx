@@ -63,68 +63,86 @@ public sealed class RunJournal : SQLiteOpenHelper
         }
     }
 
-    public void Checkpoint(Guid id, DateTimeOffset started, long elapsedMilliseconds,
-        TimedSession session, string initialPlan, string templateMetadata, RunSnapshot snapshot, string? command = null, AutomaticMotionEvent? automaticEvent = null, string? heartRateMetadata = null, HeartRateObservation? heartRateObservation = null, RunStartContext? startContext = null, IReadOnlyList<PhaseBoundaryFact>? phaseBoundaries = null, RunTerminalContext? terminalContext = null)
+    public void Commit(RunSaveBatch batch)
     {
+        try { CommitTransaction(batch); }
+        catch (SQLiteException error) { throw new IOException("Recent recording could not be saved.", error); }
+    }
+
+#if DEBUG
+    internal void SetSaveFailureForProbe(Guid runId, bool enabled)
+    {
+        var db = WritableDatabase!;
+        db.ExecSQL("DROP TRIGGER IF EXISTS temp.loop_save_probe_failure");
+        if (enabled)
+            db.ExecSQL($"CREATE TEMP TRIGGER loop_save_probe_failure BEFORE INSERT ON runs WHEN NEW.id = '{runId}' BEGIN SELECT RAISE(ABORT, 'isolated save failure'); END");
+    }
+#endif
+
+    private void CommitTransaction(RunSaveBatch batch)
+    {
+        var state = batch.Latest;
         var db = WritableDatabase!;
         db.BeginTransaction();
         try
         {
-            using var values = new ContentValues();
-            values.Put("id", id.ToString());
-            values.Put("started_utc", started.ToString("O"));
-            values.Put("observed_utc", DateTimeOffset.UtcNow.ToString("O"));
-            values.Put("elapsed_ms", elapsedMilliseconds);
-            values.Put("status", session.IsFinished ? "finished" : "recording");
-            values.Put("initial_plan", initialPlan);
-            values.Put("template_metadata", templateMetadata);
-            if (heartRateMetadata is not null) values.Put("heart_rate_metadata", heartRateMetadata);
-            else values.PutNull("heart_rate_metadata");
-            values.Put("checkpoint", JsonSerializer.Serialize(new
+            using (var existing = db.RawQuery("SELECT checkpoint FROM runs WHERE id = ?", [state.Id.ToString()])!)
             {
-                SchemaVersion = 1,
-                Snapshot = snapshot,
-                AutomaticEvent = automaticEvent,
-                StartContext = startContext,
-                PhaseBoundaries = phaseBoundaries,
-                TerminalContext = terminalContext,
-                session.Plan,
-                session.Completed,
-                session.PhaseActiveTime,
-                session.TotalActiveTime,
-                session.MainActiveTime
-            }));
+                if (existing.MoveToFirst())
+                {
+                    var stored = existing.GetString(0)!;
+                    if (RunSaveRevision.AlreadyCommitted(stored, state))
+                    {
+                        // A previous commit may have succeeded before its local return failed.
+                        db.SetTransactionSuccessful();
+                        return;
+                    }
+                }
+            }
+            using var values = new ContentValues();
+            values.Put("id", state.Id.ToString());
+            values.Put("started_utc", state.StartedUtc.ToString("O"));
+            values.Put("observed_utc", state.ObservedUtc.ToString("O"));
+            values.Put("elapsed_ms", state.ElapsedMilliseconds);
+            values.Put("status", state.Finished ? "finished" : "recording");
+            values.Put("initial_plan", state.OriginalPlan);
+            values.Put("template_metadata", state.TemplateMetadata);
+            if (state.HeartRateMetadata is not null) values.Put("heart_rate_metadata", state.HeartRateMetadata);
+            else values.PutNull("heart_rate_metadata");
+            values.Put("checkpoint", state.Checkpoint);
             if (db.InsertWithOnConflict("runs", null, values, Conflict.Replace) < 0)
                 throw new IOException("The run checkpoint could not be saved.");
-            if (heartRateObservation is { } observation)
+            foreach (var location in batch.Locations)
             {
                 using var raw = new ContentValues();
-                raw.Put("run_id", id.ToString());
+                raw.Put("run_id", state.Id.ToString()); raw.Put("utc_ms", location.UtcMilliseconds);
+                raw.Put("monotonic_ns", location.MonotonicNanoseconds);
+                raw.Put("latitude", location.Latitude); raw.Put("longitude", location.Longitude);
+                if (location.Accuracy is { } accuracy) raw.Put("accuracy", accuracy); else raw.PutNull("accuracy");
+                db.InsertOrThrow("locations", null, raw);
+            }
+            foreach (var observation in batch.HeartRate)
+            {
+                using var raw = new ContentValues();
+                raw.Put("run_id", state.Id.ToString());
                 raw.Put("receipt_utc", observation.ReceiptUtc.ToString("O"));
                 raw.Put("receipt_monotonic_ticks", observation.ReceiptMonotonicTime.Ticks);
-                if (observation.Bpm is { } bpm) raw.Put("bpm", bpm);
-                else raw.PutNull("bpm");
+                if (observation.Bpm is { } bpm) raw.Put("bpm", bpm); else raw.PutNull("bpm");
                 raw.Put("quality", observation.Quality);
                 db.InsertOrThrow("heart_rate", null, raw);
             }
-            // The event and the state it describes must either both survive or both roll back.
-            if (command is not null)
+            foreach (var recordedEvent in batch.Events)
             {
-                using var recorded = new ContentValues(values);
-                recorded.Remove("id");
-                recorded.Remove("started_utc");
-                recorded.Remove("status");
-                recorded.Remove("initial_plan");
-                recorded.Remove("template_metadata");
-                recorded.Remove("heart_rate_metadata");
-                recorded.Put("run_id", id.ToString());
-                recorded.Put("command", command);
+                using var recorded = new ContentValues();
+                recorded.Put("run_id", state.Id.ToString()); recorded.Put("command", recordedEvent.Command);
+                recorded.Put("observed_utc", recordedEvent.ObservedUtc.ToString("O"));
+                recorded.Put("elapsed_ms", recordedEvent.ElapsedMilliseconds); recorded.Put("checkpoint", recordedEvent.Checkpoint);
                 db.InsertOrThrow("run_events", null, recorded);
             }
-            if (session.IsFinished)
+            if (state.Finished)
             {
                 using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)")!;
-                queued.BindString(1, id.ToString());
+                queued.BindString(1, state.Id.ToString());
 #if DEBUG
                 queued.BindString(2, "disabled_synthetic");
 #else
@@ -136,7 +154,6 @@ public sealed class RunJournal : SQLiteOpenHelper
         }
         finally { db.EndTransaction(); }
     }
-
     public string ExportJson(Guid id)
     {
         // All tables are materialized on this transaction's thread before projection or sharing.
@@ -183,16 +200,4 @@ public sealed class RunJournal : SQLiteOpenHelper
         return document.RootElement.Clone();
     }
 
-    public void Location(Guid id, global::Android.Locations.Location location)
-    {
-        using var values = new ContentValues();
-        values.Put("run_id", id.ToString());
-        values.Put("utc_ms", location.Time);
-        values.Put("monotonic_ns", location.ElapsedRealtimeNanos);
-        values.Put("latitude", location.Latitude);
-        values.Put("longitude", location.Longitude);
-        if (location.HasAccuracy) values.Put("accuracy", location.Accuracy);
-        else values.PutNull("accuracy");
-        WritableDatabase!.InsertOrThrow("locations", null, values);
-    }
 }

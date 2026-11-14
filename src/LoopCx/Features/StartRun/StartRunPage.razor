@@ -12,6 +12,24 @@
     }
     else if (RunService.Snapshot is { } state)
     {
+        @if (state.Storage?.Error is not null)
+        {
+            <aside role="alert" aria-labelledby="live-save-error">
+                <strong id="live-save-error">Recent recording could not be saved.</strong>
+                <p>Recent data may be lost if the app closes.</p>
+                @if (state.Storage.CanRetry)
+                {
+                    <p>@(state.Phase == "Finished" ? "The run has ended, but its final save is not confirmed." : state.Paused ? "Training is paused." : "Training is still running.")</p>
+                    <button type="button" @onclick='() => RunService.Command("retry-saving")'>Retry saving</button>
+                }
+                else { <p>Local storage could not be read. Saving cannot be retried in this run.</p> }
+            </aside>
+        }
+        @if (state.Storage?.State == "saved")
+        {
+            <p role="status">Run saved locally.</p>
+            <button type="button" @onclick="BackToTraining">Back to training</button>
+        }
         <section aria-labelledby="phase-heading">
             <p class="eyebrow">@(state.FrozenTemplate?.ProtocolId ?? state.TemplateId) · @(state.FrozenTemplate?.ShortcutName ?? (state.TemplateId == "C2" ? "Zone 2" : "Intervals"))</p>
             <h2 id="phase-heading" data-motion-state="@MotionKey">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))</h2>

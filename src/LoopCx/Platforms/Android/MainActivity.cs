@@ -19,7 +19,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
         base.OnCreate(savedInstanceState);
         if (global::Android.App.Application.Context.ContentResolver is { } resolver)
             motionPreference = new AndroidMotionPreference(resolver);
-        _ = RunJournal.Shared;
+        try { _ = RunJournal.Shared; }
+        catch (Exception error) when (error is IOException or global::Android.Database.Sqlite.SQLiteException)
+        {
+            RunService.ReportStorageOpenFailure();
+        }
 #if DEBUG
         HandleDebugCommand(Intent);
 #endif

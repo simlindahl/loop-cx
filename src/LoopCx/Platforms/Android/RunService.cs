@@ -10,7 +10,8 @@ namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
     long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null, MotionState? Motion = null, RunStatisticsState? Statistics = null, CoreTemplate? FrozenTemplate = null,
-    int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null, HeartRateState? HeartRate = null, LivePaceState? LivePace = null);
+    int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null, HeartRateState? HeartRate = null, LivePaceState? LivePace = null,
+    RunSaveStatus? Storage = null);
 
 [Property("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE", Value = "User-started ongoing timed workout phases and visible controls while screen is locked, when GPS is unavailable or declined.")]
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice | ForegroundService.TypeSpecialUse)]
@@ -35,6 +36,11 @@ public sealed class RunService : Service, ILocationListener
     }
 #endif
     public static string? StartError { get; private set; }
+    internal static void ReportStorageOpenFailure()
+    {
+        StartError = "Local storage could not be opened. Training has not started.";
+        Changed?.Invoke();
+    }
 
     public static void Start(CoreStartRequest request)
     {
@@ -45,6 +51,12 @@ public sealed class RunService : Service, ILocationListener
 
     public static RunSnapshot? Snapshot { get; private set; }
     public static event Action? Changed;
+    public static void DismissSaved()
+    {
+        if (Snapshot?.Storage?.State != "saved") return;
+        Snapshot = null;
+        Changed?.Invoke();
+    }
     private TimedSession? session;
     private RunDistance? distance;
     private RunMotion? motion;
@@ -65,11 +77,19 @@ public sealed class RunService : Service, ILocationListener
     private CoreTemplate template = CoreTemplate.C1;
     private string templateMetadata = "";
     private RunJournal journal = null!;
+    private readonly RunSaveBuffer saveBuffer = new();
+    private long saveRevision;
+    private bool terminalSaveCaptured;
+    private bool journalAvailable;
 
     public override void OnCreate()
     {
         base.OnCreate();
-        journal = RunJournal.Shared;
+        try { journal = RunJournal.Shared; journalAvailable = true; }
+        catch (Exception error) when (error is IOException or global::Android.Database.Sqlite.SQLiteException)
+        {
+            ReportStorageOpenFailure();
+        }
     }
     private Handler? handler;
     private Action? tick;
@@ -96,6 +116,12 @@ public sealed class RunService : Service, ILocationListener
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
+        if (!journalAvailable)
+        {
+            Changed?.Invoke();
+            StopSelf();
+            return StartCommandResult.NotSticky;
+        }
         var command = intent?.Action;
 #if DEBUG
         if (command == "native-probe" && OperatingSystem.IsAndroidVersionAtLeast(33))
@@ -214,8 +240,10 @@ public sealed class RunService : Service, ILocationListener
             handler.PostDelayed(tick, 1000);
             StartHeartRateSource();
         }
-        AdvanceClock();
+        if (!session.IsFinished) AdvanceClock();
 #if DEBUG
+        if (command is "storage-failure-on" or "storage-failure-off" && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")
+            journal.SetSaveFailureForProbe(id, command == "storage-failure-on");
         if (command == "hr-source-failure" && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64" && !session.IsFinished)
         {
             // Isolated lifecycle fault setup: exercise the same owner cleanup used after native/FGS failures.
@@ -295,7 +323,7 @@ public sealed class RunService : Service, ILocationListener
             motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
             candidateDistance = null;
         }
-        Publish(effective ? command : null);
+        Publish(effective ? command : null, explicitRetry: command == "retry-saving");
         return StartCommandResult.NotSticky;
     }
 
@@ -361,28 +389,50 @@ public sealed class RunService : Service, ILocationListener
 
     private void Tick()
     {
-        AdvanceClock();
+        if (!session!.IsFinished) AdvanceClock();
         Publish();
-        if (session!.IsFinished) StopSelf();
-        else handler!.PostDelayed(tick!, 1000);
+        if (!session.IsFinished) handler!.PostDelayed(tick!, 1000);
     }
 
-    private void Publish(string? command = null, AutomaticMotionEvent? automaticEvent = null, HeartRateObservation? heartRateObservation = null)
+    private void Publish(string? command = null, AutomaticMotionEvent? automaticEvent = null, HeartRateObservation? heartRateObservation = null, bool explicitRetry = false)
     {
         if (session!.IsFinished && !finishLogged) command ??= "finish";
-        Snapshot = CreateSnapshot();
-        ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
         if (session.IsFinished) StopHeartRateSource();
-        journal.Checkpoint(id, started, lastTick - startedMonotonic,
-            session, initialPlan, templateMetadata, Snapshot, command, automaticEvent, heartRateMetadata, heartRateObservation, startContext, phaseBoundaries, terminalContext);
+        if (!terminalSaveCaptured)
+        {
+            var snapshot = CreateSnapshot();
+            var revision = ++saveRevision;
+            var checkpoint = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                SchemaVersion = 1,
+                SaveRevision = revision,
+                Snapshot = snapshot,
+                AutomaticEvent = automaticEvent,
+                StartContext = startContext,
+                PhaseBoundaries = phaseBoundaries,
+                TerminalContext = terminalContext,
+                session.Plan,
+                session.Completed,
+                session.PhaseActiveTime,
+                session.TotalActiveTime,
+                session.MainActiveTime
+            });
+            saveBuffer.Capture(new(id, revision, started, DateTimeOffset.UtcNow, lastTick - startedMonotonic,
+                session.IsFinished, initialPlan, templateMetadata, heartRateMetadata, checkpoint), command, heartRateObservation);
+            terminalSaveCaptured = session.IsFinished;
+        }
+        saveBuffer.Save(journal.Commit, explicitRetry);
+        Snapshot = CreateSnapshot() with { Storage = saveBuffer.Status };
+        ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
 #if DEBUG
         if (session.IsFinished && OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
 #endif
-        finishLogged |= session.IsFinished;
+        finishLogged |= session.IsFinished && saveBuffer.Status.State == "saved";
         Changed?.Invoke();
 #if DEBUG
         global::Android.Util.Log.Info("LoopRun", System.Text.Json.JsonSerializer.Serialize(Snapshot));
 #endif
+        if (session.IsFinished && saveBuffer.Status.State == "saved") StopSelf();
     }
 
     private RunSnapshot CreateSnapshot() => new(id, session!.Current?.Kind.ToString() ?? "Finished",
@@ -537,6 +587,10 @@ public sealed class RunService : Service, ILocationListener
             .SetContentIntent(pendingOpen)
             .SetVisibility(NotificationVisibility.Public)
             .SetOngoing(true);
+        if (state.Storage?.Error is not null)
+            builder.SetContentText(state.Storage.CanRetry ? "Recording not saved · open LOOP Cx to retry" : "Local storage unavailable · recording not saved")
+                .SetStyle(new Notification.BigTextStyle().BigText("Recent recording could not be saved. Recent data may be lost if the app closes."));
+        if (state.Phase == "Finished") return builder.Build();
         if (state.Paused) builder.SetSubText(text.PhaseCountdown);
 
         var command = state.Paused ? "resume" : "pause";
@@ -567,7 +621,8 @@ public sealed class RunService : Service, ILocationListener
     {
         if (session is null || session.IsFinished || session.PauseReason == PauseReason.Manual) return;
 
-        journal.Location(id, location);
+        saveBuffer.Add(new(location.Time, location.ElapsedRealtimeNanos, location.Latitude, location.Longitude,
+            location.HasAccuracy ? location.Accuracy : null));
         AdvanceClock();
         if (!locationAvailable)
         {
@@ -646,6 +701,11 @@ public sealed class RunService : Service, ILocationListener
     {
 #if DEBUG
         if (OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
+        if (journalAvailable)
+        {
+            try { journal.SetSaveFailureForProbe(id, false); }
+            catch (global::Android.Database.Sqlite.SQLiteException) { }
+        }
 #endif
         StopHeartRateSource();
         if (tick is not null) handler?.RemoveCallbacks(tick);
@@ -653,7 +713,7 @@ public sealed class RunService : Service, ILocationListener
         catch (Java.Lang.SecurityException) { }
         StopForeground(StopForegroundFlags.Remove);
 
-        Snapshot = null;
+        if (Snapshot?.Id == id && saveBuffer.Status.State != "saved") Snapshot = null;
         Changed?.Invoke();
 
         base.OnDestroy();

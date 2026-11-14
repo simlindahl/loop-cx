@@ -255,6 +255,8 @@ try:
         reachable_button("resumed-large-" + label.replace(" ", "-"), label)
     wait_snapshot(lambda s: s["Id"] == run_id and not s["Paused"])
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
+    capture("c1-saved", "Run saved locally.")
+    button(reachable_button("c1-saved-back", "Back to training"), "Back to training", tap=True)
     large_idle = capture("idle-large-text", "Start C1.2")
     reachable_button("idle-large-c1", "Start C1.2")
     reachable_button("idle-large-c2", "Start C2")
@@ -282,6 +284,8 @@ try:
     button(reachable_button("c2-reopened-resume", "Resume"), "Resume", tap=True)
     capture("c2-resumed", "Pause")
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
+    capture("c2-saved", "Run saved locally.")
+    button(reachable_button("c2-saved-back", "Back to training"), "Back to training", tap=True)
     capture("c2-finished", "Start C2")
     adb("shell", "am", "force-stop", PACKAGE)
     with tempfile.TemporaryDirectory() as temporary:

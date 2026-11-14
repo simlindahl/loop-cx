@@ -139,6 +139,12 @@ public partial class StartRunPage
 
     private static void TogglePause() => RunService.Command(RunService.Snapshot?.Paused == true ? "resume" : "pause");
 
+    private void BackToTraining()
+    {
+        focusPending = "start-heading";
+        RunService.DismissSaved();
+    }
+
     private async Task Start(CoreStartRequest request)
     {
         try
