@@ -227,3 +227,22 @@ th, td {
 dialog input[type="range"] {
     accent-color: var(--cx-accent);
 }
+
+.destination-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-block: 24px;
+    border-top: 1px solid var(--cx-line);
+}
+
+.destination-nav button {
+    flex: 1;
+}
+
+.destination-nav button[aria-current="page"] {
+    color: var(--cx-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+}

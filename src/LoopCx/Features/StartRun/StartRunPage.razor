@@ -10,6 +10,10 @@
     {
         <LoopCx.Features.Settings.SettingsPage @ref="settingsPage" OnTraining="CloseSettingsDestination" OnWarmupCooldown="OpenSettings" />
     }
+    else if (showHistory)
+    {
+        <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnTraining="ShowTraining" />
+    }
     else if (RunService.Snapshot is { } state)
     {
         @if (state.Storage?.Error is not null)
@@ -28,11 +32,12 @@
         @if (state.Storage?.State == "saved")
         {
             <p role="status">Run saved locally.</p>
+            <button type="button" class="primary" @onclick="() => OpenHistory(state.Id)">View run</button>
             <button type="button" @onclick="BackToTraining">Back to training</button>
         }
         <section aria-labelledby="phase-heading">
             <p class="eyebrow">@(state.FrozenTemplate?.ProtocolId ?? state.TemplateId) · @(state.FrozenTemplate?.ShortcutName ?? (state.TemplateId == "C2" ? "Zone 2" : "Intervals"))</p>
-            <h2 id="phase-heading" data-motion-state="@MotionKey">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))</h2>
+            <h2 id="phase-heading" tabindex="-1" data-motion-state="@MotionKey">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))</h2>
             @if (state.Paused)
             {
                 <p>@(IsAutomatic(state) ? "Move to resume automatically." : "Use Resume to continue.") · @PhaseLabel(state.Phase)</p>
@@ -207,6 +212,11 @@
     {
         <p role="alert">@(error ?? RunService.StartError)</p>
     }
+    <nav class="destination-nav" aria-label="App">
+        <button id="nav-training" type="button" aria-current="@(!showSettings && !showHistory ? "page" : null)" @onclick="ShowTraining">Training</button>
+        <button id="nav-history" type="button" aria-current="@(showHistory ? "page" : null)" @onclick="() => OpenHistory(null)">History</button>
+        <button id="nav-settings" type="button" aria-current="@(showSettings ? "page" : null)" @onclick="OpenSettingsDestination">Settings</button>
+    </nav>
 </main>
 
 @if (dialogMode is not null)

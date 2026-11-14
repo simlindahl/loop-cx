@@ -24,6 +24,7 @@ public sealed partial class MainActivity : MauiAppCompatActivity
         {
             RunService.ReportStorageOpenFailure();
         }
+        HandleRunEntry(Intent);
 #if DEBUG
         HandleDebugCommand(Intent);
 #endif
@@ -56,13 +57,25 @@ public sealed partial class MainActivity : MauiAppCompatActivity
         return base.OnKeyDown(keyCode, e);
     }
 
-#if DEBUG
     protected override void OnNewIntent(Intent? intent)
     {
         base.OnNewIntent(intent);
+        HandleRunEntry(intent);
+#if DEBUG
         HandleDebugCommand(intent);
+#endif
     }
 
+    private static void HandleRunEntry(Intent? intent)
+    {
+        if (intent?.Action != Features.ActiveRun.RunNotificationEntry.Action) return;
+        var id = intent.GetStringExtra(Features.ActiveRun.RunNotificationEntry.RunIdExtra);
+        intent.RemoveExtra(Features.ActiveRun.RunNotificationEntry.RunIdExtra);
+        if (Guid.TryParse(id, out var requested))
+            Features.ActiveRun.RunNotificationEntry.Request(requested, RunService.Snapshot?.Id);
+    }
+
+#if DEBUG
     private void HandleDebugCommand(Intent? intent)
     {
         var archiveSeed = intent?.GetStringExtra("loop-ghost-archive-seed");

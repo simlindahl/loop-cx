@@ -1,0 +1,50 @@
+@implements IAsyncDisposable
+@inject Microsoft.JSInterop.IJSRuntime JS
+<section aria-labelledby="history-heading">
+    <button type="button" @onclick="GoBack">← @(detail is null ? "Training" : "History")</button>
+    <h2 id="history-heading" tabindex="-1">@(detail is null ? "History" : detail.Summary.Name)</h2>
+    @if (error is not null) { <p role="alert">@error</p> }
+    @if (busy) { <p role="status">Loading stored recording…</p> }
+    else if (detail is { } run)
+    {
+        var totalDistance = Distance(run.Summary.Total);
+        var mainDistance = Distance(run.Main);
+        var averageHeartRate = Number(run.Main?.AverageHeartRate);
+        <p>@Started(run.Summary)</p>
+        <p class="big-result">@totalDistance<small>@(totalDistance == "Unavailable" ? "Total distance" : "km total · accepted measurement")</small></p>
+        @if (run.Summary.Synthetic) { <p>Synthetic test recording · not a physical workout.</p> }
+        <dl>
+            <div><dt>Total active / elapsed</dt><dd>@Time(run.Summary.TotalActive) / @Time(run.TotalElapsed)</dd></div>
+            <div><dt>Main active / elapsed</dt><dd>@Time(run.MainActive) / @Time(run.MainElapsed)</dd></div>
+            <div><dt>Main distance / avg pace</dt><dd>@(mainDistance == "Unavailable" ? mainDistance : mainDistance + " km") / @Pace(run.Main?.AveragePaceSecondsPerKilometre)</dd></div>
+            <div><dt>Main average heart rate</dt><dd>@(averageHeartRate == "Unavailable" ? averageHeartRate : averageHeartRate + " bpm")</dd></div>
+            <div><dt>Warm-up / cool-down</dt><dd>@Time(run.Warmup) / @Time(run.Cooldown)</dd></div>
+            <div><dt>Workout source</dt><dd>@run.Summary.Source</dd></div>
+            <div><dt>Target effort</dt><dd>@Effort(run.Plan)</dd></div>
+            <div><dt>Planned main set</dt><dd>@Dose(run.Plan)</dd></div>
+            <div><dt>Optional target</dt><dd>@StoredRunProjection.TargetSummary(run.Targets, run.Plan is { Count: 1 } && run.Plan[0].Kind == LoopCx.Features.ActiveRun.RunPhase.Work)</dd></div>
+            <div><dt>Health Connect</dt><dd>@run.Summary.ExportLabel</dd></div>
+        </dl>
+        <p>@Coverage(run.Main)</p>
+        <p>@ZoneSummary(run.Zones)</p>
+    }
+    else
+    {
+        <p>Your work, kept local.</p>
+        @foreach (var item in runs)
+        {
+            var distance = Distance(item.Total);
+            <button id="@($"history-{item.Id}")" class="history-row" type="button" @onclick="() => Open(item.Id)">
+                <span class="history-label">@item.Name<small>@Started(item) · @Time(item.TotalActive) total active · @item.ExportLabel</small></span>
+                <span class="history-value">@(distance == "Unavailable" ? distance : distance + " km")</span>
+                <span class="history-chevron" aria-hidden="true">›</span>
+            </button>
+        }
+        @if (runs.Count == 0 && error is null && unreadable == 0)
+        {
+            <p>@(interrupted > 0 ? "No completed runs are available here. Interrupted recordings are stored separately." : "No completed runs yet.")</p>
+        }
+        else if (interrupted > 0) { <p>Interrupted recordings stored separately: @interrupted.</p> }
+        @if (unreadable > 0) { <p role="alert">Some stored recordings could not be read. No data was changed.</p> }
+    }
+</section>

@@ -1062,3 +1062,5 @@ HCOutboxChecks.Run();
 HCProviderVerificationChecks.Run();
 
 RunSaveChecks.Run();
+
+StoredHistoryChecks.Run();

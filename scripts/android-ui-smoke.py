@@ -252,6 +252,12 @@ try:
     assert normal_heading_height > 0, "Manually paused heading must have accessible bounds"
     normal_height = button(reachable_button("paused-resume", "Resume"), "Resume")
     wait_snapshot(lambda s: s["Id"] == run_id and s["Paused"])
+    button(reachable_button("active-history-nav", "History"), "History", tap=True)
+    capture("active-history", "Your work, kept local.")
+    assert snapshot()["Id"] == run_id and snapshot()["Paused"], "History must preserve the active paused service"
+    button(reachable_button("history-training-nav", "Training"), "Training", tap=True)
+    capture("active-history-return", "Resume")
+    assert snapshot()["Id"] == run_id and snapshot()["Paused"], "Returning to Training must keep the same active run"
     adb("shell", "settings", "put", "system", "font_scale", "2.0")
     open_app()
     scroll_to_top()
@@ -273,7 +279,12 @@ try:
     wait_snapshot(lambda s: s["Id"] == run_id and not s["Paused"])
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
     capture("c1-saved", "Run saved locally.")
-    button(reachable_button("c1-saved-back", "Back to training"), "Back to training", tap=True)
+    button(reachable_button("saved-view-run", "View run"), "View run", tap=True)
+    capture("stored-c1-detail", "Workout source")
+    assert snapshot()["Id"] == run_id, "Stored detail navigation must not create another session"
+    button(reachable_button("stored-detail-back", "← History"), "← History", tap=True)
+    capture("finished-history-list", "Your work, kept local.")
+    button(reachable_button("saved-history-training", "Training"), "Training", tap=True)
     large_idle = capture("idle-large-text", "Start C1.2")
     reachable_button("idle-large-c1", "Start C1.2")
     reachable_button("idle-large-c2", "Start C2")
