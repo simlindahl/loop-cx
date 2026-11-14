@@ -1,11 +1,31 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
 <section aria-labelledby="history-heading">
-    <button type="button" @onclick="GoBack">← @(detail is null ? "Training" : "History")</button>
-    <h2 id="history-heading" tabindex="-1">@(detail is null ? "History" : detail.Summary.Name)</h2>
+    <button type="button" @onclick="GoBack">← @(detail is null && partial is null ? "Training" : "History")</button>
+    <h2 id="history-heading" tabindex="-1">@(partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
-    @if (busy) { <p role="status">Loading stored recording…</p> }
-    else if (detail is { } run)
+    @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
+    @if (partial is { } recorded)
+    {
+        var recordedDistance = Distance(recorded.Summary.Total);
+        <p>@(recorded.SavedLocally is null ? "Your run was interrupted." : "Partial recording · saved locally")</p>
+        <p>Only the last saved recording can be recovered. No time or distance is added after the last saved checkpoint. The actual stop time is unknown.</p>
+        <dl>
+            <div><dt>Last saved active time</dt><dd>@Time(recorded.Summary.TotalActive)</dd></div>
+            <div><dt>Last saved distance</dt><dd>@(recordedDistance == "Unavailable" ? recordedDistance : recordedDistance + " km")</dd></div>
+            <div><dt>Actual stop time</dt><dd>Unknown</dd></div>
+        </dl>
+        @if (recorded.SavedLocally is null && !recoveryUnavailable)
+        {
+            <button id="recovery-save" type="button" class="primary" disabled="@busy" aria-busy="@busy" @onclick="SaveRecordedPart">@(recoveryFailed ? "Retry save" : "Save recorded part")</button>
+        }
+        else if (recorded.SavedLocally is not null)
+        {
+            <p role="status">Partial recording saved locally.</p>
+            <p>Not exported to Health Connect. A supported recorded end time is required for export.</p>
+        }
+    }
+    else if (!busy && detail is { } run)
     {
         var totalDistance = Distance(run.Summary.Total);
         var mainDistance = Distance(run.Main);
@@ -28,7 +48,7 @@
         <p>@Coverage(run.Main)</p>
         <p>@ZoneSummary(run.Zones)</p>
     }
-    else
+    else if (!busy)
     {
         <p>Your work, kept local.</p>
         @foreach (var item in runs)
@@ -45,6 +65,18 @@
             <p>@(interrupted > 0 ? "No completed runs are available here. Interrupted recordings are stored separately." : "No completed runs yet.")</p>
         }
         else if (interrupted > 0) { <p>Interrupted recordings stored separately: @interrupted.</p> }
+        @if (partials.Count > 0)
+        {
+            <h3>Interrupted recordings</h3>
+            @foreach (var entry in partials)
+            {
+                <button id="@($"history-{entry.Summary.Id}")" class="history-row" type="button" @onclick="() => OpenInterrupted(entry)">
+                    <span class="history-label">@entry.Summary.Name<small>@Started(entry.Summary) · @(entry.SavedLocally is null ? "Interrupted · Action needed" : "Partial recording · saved locally")</small></span>
+                    <span class="history-value recovery-value">Last saved @Time(entry.Summary.TotalActive) active</span>
+                    <span class="history-chevron" aria-hidden="true">›</span>
+                </button>
+            }
+        }
         @if (unreadable > 0) { <p role="alert">Some stored recordings could not be read. No data was changed.</p> }
     }
 </section>

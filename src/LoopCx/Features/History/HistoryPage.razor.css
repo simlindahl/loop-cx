@@ -34,6 +34,11 @@ h2 {
     overflow-wrap: normal;
 }
 
+.recovery-value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 .history-chevron {
     width: 24px;
     text-align: center;

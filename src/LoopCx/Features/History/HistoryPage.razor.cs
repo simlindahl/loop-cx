@@ -12,6 +12,9 @@ public partial class HistoryPage
     [Parameter] public Guid? InitialRun { get; set; }
     private readonly List<StoredRunSummary> runs = [];
     private StoredRunDetail? detail;
+    private readonly List<InterruptedRun> partials = [];
+    private InterruptedRun? partial;
+    private bool recoveryFailed, recoveryUnavailable;
     private bool busy, disposed;
     private int interrupted, unreadable;
     private string? error;
@@ -29,13 +32,17 @@ public partial class HistoryPage
         busy = true;
         error = null;
         detail = null;
+        partial = null;
+        recoveryFailed = recoveryUnavailable = false;
         runs.Clear();
+        partials.Clear();
         try
         {
             var archive = await Task.Run(() => RunJournal.Shared.ReadFinishedRuns());
             if (disposed) return;
             interrupted = archive.InterruptedCount;
             unreadable = archive.UnreadableCount;
+            partials.AddRange(archive.Interrupted ?? []);
             foreach (var row in archive.Finished)
             {
                 try { runs.Add(StoredRunProjection.Summary(row)); }
@@ -46,6 +53,38 @@ public partial class HistoryPage
         finally { busy = false; }
         focusPending = "history-heading";
         await InvokeAsync(StateHasChanged);
+    }
+    private void OpenInterrupted(InterruptedRun selected)
+    {
+        if (busy) return;
+        partial = selected;
+        error = null;
+        recoveryFailed = recoveryUnavailable = false;
+        focusPending = "history-heading";
+    }
+
+    private async Task SaveRecordedPart()
+    {
+        if (busy || partial is not { SavedLocally: null } selected || recoveryUnavailable) return;
+        busy = true;
+        error = null;
+        try
+        {
+            var saved = await Task.Run(() => RunJournal.Shared.SaveInterruptedPart(selected.Summary.Id));
+            if (disposed || partial?.Summary.Id != selected.Summary.Id) return;
+            partial = saved;
+            recoveryFailed = false;
+            focusPending = "history-heading";
+        }
+        catch (Exception issue) when (ReadError(issue))
+        {
+            recoveryFailed = true;
+            recoveryUnavailable = issue is not IOException || issue is RunSaveReadException;
+            error = recoveryUnavailable ? "This recording is unavailable. No data was repaired or overwritten."
+                : "Could not save the recorded part. Save is not confirmed. Try again.";
+            focusPending = recoveryUnavailable ? "history-heading" : "recovery-save";
+        }
+        finally { busy = false; }
     }
     private async Task Open(Guid id)
     {
@@ -64,10 +103,11 @@ public partial class HistoryPage
     }
     public async Task GoBack()
     {
-        if (detail is { } selected)
+        var selectedId = partial?.Summary.Id ?? detail?.Summary.Id;
+        if (selectedId is { } id)
         {
             await ShowList();
-            focusPending = runs.Any(run => run.Id == selected.Summary.Id) ? "history-" + selected.Summary.Id : "history-heading";
+            focusPending = runs.Any(run => run.Id == id) || partials.Any(run => run.Summary.Id == id) ? "history-" + id : "history-heading";
         }
         else await OnTraining.InvokeAsync();
     }

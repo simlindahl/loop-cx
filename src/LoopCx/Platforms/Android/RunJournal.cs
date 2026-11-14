@@ -26,7 +26,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     private RunJournal() : this(JournalFileName, true, new PreservingCorruptionHandler()) { }
 
     private RunJournal(string fileName, bool markInterrupted, PreservingCorruptionHandler handler)
-        : base(global::Android.App.Application.Context, fileName, null, 5, handler)
+        : base(global::Android.App.Application.Context, fileName, null, 6, handler)
     {
         corruptionHandler = handler;
         // Only runs left by an earlier process are interrupted. Never infer missing time.
@@ -58,6 +58,7 @@ public sealed class RunJournal : SQLiteOpenHelper
         CreateExportQueue(db);
         CreateEvents(db);
         CreateHeartRate(db);
+        db.ExecSQL("ALTER TABLE runs ADD COLUMN recovery_saved_utc TEXT");
     }
 
     internal static void CreateExportQueue(SQLiteDatabase db) =>
@@ -82,6 +83,7 @@ public sealed class RunJournal : SQLiteOpenHelper
             db!.ExecSQL("ALTER TABLE export_queue ADD COLUMN attempt_json TEXT");
             db.ExecSQL("ALTER TABLE export_queue ADD COLUMN last_error TEXT");
         }
+        if (oldVersion < 6) db!.ExecSQL("ALTER TABLE runs ADD COLUMN recovery_saved_utc TEXT");
     }
 
     public void Commit(RunSaveBatch batch)
@@ -107,6 +109,23 @@ public sealed class RunJournal : SQLiteOpenHelper
         return new(name, false, new PreservingCorruptionHandler());
     }
     internal int ProbeCorruptionCallbacks => corruptionHandler.Calls;
+
+    internal void SetRecoveryFailureForProbe(Guid id, bool enabled)
+    {
+        InterruptedRunProjection.EnsureNoActiveOwner(id, RunService.Snapshot?.Id);
+        var db = WritableDatabase!;
+        using var row = db.RawQuery("SELECT status, template_metadata FROM runs WHERE id = ?", [id.ToString()])!;
+        if (!row.MoveToFirst() || row.GetString(0) != "interrupted" || row.IsNull(1))
+            throw new ArgumentException("Only an existing interrupted synthetic probe recording is permitted.");
+        using var metadata = JsonDocument.Parse(row.GetString(1)!);
+        if (metadata.RootElement.ValueKind != JsonValueKind.Object
+            || !metadata.RootElement.TryGetProperty("Source", out var origin) || origin.ValueKind != JsonValueKind.String
+            || origin.GetString() != "Synthetic recovery probe")
+            throw new ArgumentException("Recovery failure injection requires explicit synthetic probe provenance.");
+        db.ExecSQL("DROP TRIGGER IF EXISTS temp.loop_recovery_probe_failure");
+        if (enabled)
+            db.ExecSQL($"CREATE TEMP TRIGGER loop_recovery_probe_failure BEFORE UPDATE OF recovery_saved_utc ON runs WHEN OLD.id = '{id}' BEGIN SELECT RAISE(ABORT, 'isolated recovery save failure'); END");
+    }
 
     internal void SetSaveFailureForProbe(Guid runId, bool enabled)
     {
@@ -228,13 +247,67 @@ public sealed class RunJournal : SQLiteOpenHelper
                 rows.Add(new(id, cursor.GetString(1)!, cursor.GetString(2)!, cursor.IsNull(3) ? null : cursor.GetString(3),
                     cursor.GetString(4)!, cursor.IsNull(5) ? null : cursor.GetString(5), cursor.IsNull(6) ? null : cursor.GetString(6)));
             }
-            using var interrupted = db.RawQuery("SELECT COUNT(*) FROM runs WHERE status = 'interrupted'", null)!;
-            interrupted.MoveToFirst();
-            var result = new StoredRunArchive(rows, interrupted.GetInt(0), unreadable);
+            var partials = new List<InterruptedRun>();
+            using var interrupted = db.RawQuery("SELECT id, started_utc, status, template_metadata, checkpoint, observed_utc, recovery_saved_utc FROM runs WHERE status = 'interrupted' ORDER BY julianday(started_utc) DESC, id", null)!;
+            var interruptedCount = 0;
+            while (interrupted.MoveToNext())
+            {
+                interruptedCount++;
+                try { partials.Add(ReadInterrupted(interrupted)); }
+                catch (Exception issue) when (InterruptedRunProjection.IsUnreadableRow(issue))
+                { unreadable++; }
+            }
+            var result = new StoredRunArchive(rows, interruptedCount, unreadable, partials);
             db.SetTransactionSuccessful();
             return result;
         }
         finally { db.EndTransaction(); }
+    }
+
+    private static InterruptedRun ReadInterrupted(global::Android.Database.ICursor cursor)
+    {
+        if (!Guid.TryParse(cursor.GetString(0), out var id)) throw new RunSaveReadException("Stored identity is unreadable.");
+        return InterruptedRunProjection.Read(new(id, cursor.GetString(1)!, cursor.GetString(2)!,
+            cursor.IsNull(3) ? null : cursor.GetString(3), cursor.GetString(4)!, null, null),
+            cursor.GetString(5)!, cursor.IsNull(6) ? null : cursor.GetString(6));
+    }
+
+    public InterruptedRun SaveInterruptedPart(Guid id)
+    {
+        InterruptedRunProjection.EnsureNoActiveOwner(id, RunService.Snapshot?.Id);
+        try
+        {
+            var db = WritableDatabase!;
+            db.BeginTransaction();
+            try
+            {
+                InterruptedRun prefix;
+                try
+                {
+                    using var row = db.RawQuery("SELECT id, started_utc, status, template_metadata, checkpoint, observed_utc, recovery_saved_utc FROM runs WHERE id = ?", [id.ToString()])!;
+                    if (!row.MoveToFirst()) throw new RunSaveReadException("The interrupted recording no longer exists.");
+                    prefix = ReadInterrupted(row);
+                }
+                catch (SQLiteException error) when (error is SQLiteDiskIOException or SQLiteAccessPermException)
+                { throw new RunSaveReadException("The recorded prefix could not be read. No repair was attempted.", error); }
+                catch (Exception error) when (error is System.Text.Json.JsonException or InvalidDataException or InvalidOperationException or ArgumentException)
+                { throw new RunSaveReadException("The recorded prefix is unreadable. No data was changed.", error); }
+
+                if (prefix.SavedLocally is null)
+                {
+                    var acknowledged = DateTimeOffset.UtcNow;
+                    using var marker = db.CompileStatement("UPDATE runs SET recovery_saved_utc = ? WHERE id = ? AND status = 'interrupted' AND recovery_saved_utc IS NULL")!;
+                    marker.BindString(1, acknowledged.ToString("O"));
+                    marker.BindString(2, id.ToString());
+                    if (marker.ExecuteUpdateDelete() != 1) throw new RunSaveReadException("The recording changed. No data was overwritten.");
+                    prefix = prefix with { SavedLocally = acknowledged };
+                }
+                db.SetTransactionSuccessful();
+                return prefix; // Returned only after EndTransaction succeeds, including idempotent retry.
+            }
+            finally { db.EndTransaction(); }
+        }
+        catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
     }
 
     public StoredRunDetail ReadFinishedRun(Guid id)
