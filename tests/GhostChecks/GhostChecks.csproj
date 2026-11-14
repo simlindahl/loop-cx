@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../../storage/ghost/schema-1.sql" LogicalName="LoopCx.GhostRun.Schema1.sql" />
     <Compile Include="../../src/LoopCx/Features/GhostRun/*.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
