@@ -17,13 +17,20 @@ public sealed class AndroidGhostArchive
         db = journal.WritableDatabase!;
     }
 
+    // Isolated native storage tests may supply their own private scratch connection.
+    internal AndroidGhostArchive(SQLiteDatabase database)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        db = database;
+    }
+
     private void EnsureSchema()
     {
         using var existing = db.RawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='ghost_schema'", null)!;
         if (existing.MoveToFirst())
         {
             using var version = db.RawQuery("SELECT version FROM ghost_schema WHERE singleton=1 AND typeof(version)='integer'", null)!;
-            if (!version.MoveToFirst() || version.GetInt(0) != 1)
+            if (!version.MoveToFirst() || version.GetLong(0) != 1)
                 throw new InvalidDataException("The local Ghost archive revision is unsupported.");
             var expected = new HashSet<string>(StringComparer.Ordinal)
             {
