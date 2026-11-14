@@ -64,14 +64,27 @@ public static class HCWritePlanner
             var pauses = Pauses(source.Events, started, ended, bootStart);
             if (ended - started - pauses.Aggregate(TimeSpan.Zero, static (sum, pause) => sum + (pause.EndUtc - pause.StartUtc)) != totalActive)
                 throw new InvalidDataException("Recorded pauses and total active time do not conserve the elapsed window.");
+            var terminalContext = checkpoint.TryGetProperty("TerminalContext", out var recordedTerminal) && recordedTerminal.ValueKind == JsonValueKind.Object
+                ? recordedTerminal.Deserialize<RunTerminalContext>() : null;
+            if (terminalContext is not null && (terminalContext.TerminalPreviousPhaseIndex != finish.PreviousPhaseIndex
+                || string.IsNullOrWhiteSpace(terminalContext.ObservedTimeZoneId)
+                || terminalContext.Provenance != RunTerminalContext.ObservedZoneRulesV1
+                || terminalContext.ObservedUtcOffsetSeconds is < -64800 or > 64800
+                || terminalContext.EffectiveUtcOffsetSeconds is < -64800 or > 64800))
+            {
+                throw new InvalidDataException("Stored terminal zone provenance is contradictory or unsupported.");
+            }
+
+            var endOffset = terminalContext?.EffectiveUtcOffsetSeconds;
             var offset = context?.UtcOffsetSeconds;
             if (offset is < -64800 or > 64800) throw new InvalidDataException("Recorded start offset is outside the platform range.");
             var warnings = new List<string>();
             if (context is null) warnings.Add("Local start zone/offset is unknown; UTC remains authoritative.");
-            warnings.Add("End local offset was not recorded; no current system zone is substituted.");
+            if (terminalContext is null) warnings.Add("End local offset was not recorded; no current system zone is substituted.");
+            else warnings.Add("Terminal zone was observed at the linked boundary callback; effective offset uses that frozen zone's rules at the start-anchor-derived end instant.");
             var records = new List<HCPlannedRecord>
             {
-                new(Id(source.Id, "session"), 1, HCRecordKind.RunningSession, started, ended, offset, null,
+                new(Id(source.Id, "session"), 1, HCRecordKind.RunningSession, started, ended, offset, endOffset,
                     pauses, null, [], "Whole elapsed run including warm-up/cool-down; recorded pause exclusions retained.")
             };
             if (statistics is { } totals)
@@ -86,7 +99,7 @@ public static class HCWritePlanner
                     throw new InvalidDataException("Positive accepted distance has no supported GPS interval.");
                 if (metres > 0 && known > TimeSpan.Zero)
                 {
-                    records.Add(new(Id(source.Id, "distance"), 1, HCRecordKind.Distance, started, ended, offset, null, [], metres, [],
+                    records.Add(new(Id(source.Id, "distance"), 1, HCRecordKind.Distance, started, ended, offset, endOffset, [], metres, [],
                         unknown > TimeSpan.Zero ? "Accepted partial measured distance; no gap-fill or continuous coverage guarantee." : "Accepted measured distance; no extrapolation."));
                 }
                 else
@@ -128,7 +141,7 @@ public static class HCWritePlanner
             }
             if (samples.Count > 0)
             {
-                records.Add(new(Id(source.Id, "heart-rate"), 1, HCRecordKind.HeartRate, started, ended, offset, null, [], null,
+                records.Add(new(Id(source.Id, "heart-rate"), 1, HCRecordKind.HeartRate, started, ended, offset, endOffset, [], null,
                     Array.AsReadOnly(samples.OrderBy(static sample => sample.ReceiptUtc).ThenBy(static sample => sample.SourceSequence).ToArray()),
                     "Actual local GATT receipt instants retained; platform projection uses epoch milliseconds. Identical BPM within one millisecond retains the first source sequence. API 34 range is 1–300 BPM; clock agreement guard is 1000 ms. No acquisition-time claim or extrapolation."));
             }

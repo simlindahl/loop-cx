@@ -113,6 +113,29 @@ internal static class HCWritePlanChecks
 
             return JsonSerializer.SerializeToElement(node);
         }
+        var terminalBoundary = source.Checkpoint.GetProperty("PhaseBoundaries").Deserialize<PhaseBoundaryFact[]>()!.Single();
+        var terminalZone = RunTerminalContext.Capture(terminalBoundary, TimeZoneInfo.Utc);
+        var withTerminal = HCWritePlanner.Create(source with
+        {
+            Checkpoint = ChangedCheckpoint(node => node["TerminalContext"] = JsonSerializer.SerializeToNode(terminalZone))
+        }, false);
+        Require(withTerminal.Plan!.Records.All(record => record.EndOffsetSeconds == 0)
+            && terminalZone.TerminalPreviousPhaseIndex == terminalBoundary.PreviousPhaseIndex,
+            "Frozen terminal zone facts provide end offsets without delivery-time zone lookup or changing source boundary times.");
+        Require(HCWritePlanner.Create(source with
+        {
+            Checkpoint = ChangedCheckpoint(node => node["TerminalContext"] = JsonSerializer.SerializeToNode(terminalZone with { TerminalPreviousPhaseIndex = 99 }))
+        }, false).State == "action_required", "A terminal zone cannot be attributed to a different phase boundary.");
+        var daylightBoundary = terminalBoundary with
+        {
+            ObservedUtc = new DateTimeOffset(2026, 10, 25, 2, 0, 0, TimeSpan.Zero),
+            StartAnchorDerivedEffectiveUtc = new DateTimeOffset(2026, 10, 25, 0, 0, 0, TimeSpan.Zero)
+        };
+        var daylightContext = RunTerminalContext.Capture(daylightBoundary, TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm"));
+        Require(daylightContext.ObservedUtcOffsetSeconds == 3600 && daylightContext.EffectiveUtcOffsetSeconds == 7200,
+            "A delayed callback across DST derives effective offset from the captured zone rules rather than copying the observed offset.");
+        Require(HCWritePlanner.Create(source, false).Plan!.Records.All(record => record.EndOffsetSeconds is null),
+            "Legacy missing terminal context stays unknown instead of consulting the current system zone.");
         var nullBoundary = HCWritePlanner.Create(source with
         {
             Checkpoint = ChangedCheckpoint(node => node["PhaseBoundaries"]!.AsArray().Add(null))
