@@ -40,7 +40,7 @@ Observable acceptance examples for later detailed design:
 - Is rotation tracking wanted, and which activities count? Automatic advancement is not authorized by the milestone request.
 - What detailed screens, accessibility and acceptance evidence are needed for these flows? New/material layouts require Simon's approval.
 
-Resolve these with concrete proposals in the bounded M2 issues before implementation. Do not invent research, measured value, dates or ROI. The approved LOOP reader remains held for runtime implementation and Ghost detailed layouts remain preliminary; creating M2 does not lift either condition.
+Resolve these with concrete proposals in the bounded M2 issues before implementation. Do not invent research, measured value, dates or ROI. The approved LOOP reader remains held for runtime implementation; creating M2 does not lift that condition. Ghost's concrete detailed layout has its [separate recorded approval](../design/decision.md#ghost-layout-approval), without establishing runtime or physical acceptance.
 
 ## Tracked delivery
 
