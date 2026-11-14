@@ -40,3 +40,24 @@ public static class HCProviderVerification
 
 public sealed record HCProviderApproval(int Version, string Scope, string Target, string FixtureHash,
     string OwnerDecisionReference, Guid Nonce, DateTimeOffset IssuedUtc, DateTimeOffset ExpiresUtc);
+
+public sealed record HCVerificationOwnership(int Version, string FixtureHash, string[] ClientIds,
+    int Operation, string? State, DateTimeOffset? CallbackObservedUtc)
+{
+    public void RequireSettled(HCWritePlanV1 plan)
+    {
+        if (Version != 2 || FixtureHash != plan.PayloadHash || ClientIds is null
+            || !ClientIds.SequenceEqual(plan.Records.Select(static record => record.ClientRecordId))
+            || Operation is < 1 or > 2 || State is not ("sdk_result" or "sdk_error") || CallbackObservedUtc is null)
+        {
+            throw new InvalidDataException("Unknown or unresolved insert: retain ownership marker and escalate; no cleanup or new insert is safe.");
+        }
+    }
+
+    public HCVerificationOwnership ObserveCallback(int operation, bool success, DateTimeOffset observedUtc)
+    {
+        // A late/duplicate callback from the earlier replay must never settle the newer insert.
+        return Version == 2 && Operation == operation && State == "insert_pending"
+            ? this with { State = success ? "sdk_result" : "sdk_error", CallbackObservedUtc = observedUtc } : this;
+    }
+}

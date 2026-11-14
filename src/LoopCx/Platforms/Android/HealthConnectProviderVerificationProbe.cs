@@ -52,35 +52,35 @@ internal static class HealthConnectProviderVerificationProbe
             if (Permissions.Any(permission => context.CheckSelfPermission(permission) != Permission.Granted))
                 throw new InvalidDataException("The complete three-record WRITE grant set is required; no child is omitted.");
 
+            // Refuse unresolved/old markers before obtaining the manager, even with fresh approval.
+            if (File.Exists(marker)) ReadOwned(marker).RequireSettled(plan);
             // All environment/consent/grant gates precede even obtaining the manager.
             var manager = (HealthConnectManager?)context.GetSystemService(Context.HealthconnectService)
                 ?? throw new InvalidOperationException("Health Connect unavailable.");
             if (File.Exists(marker))
             {
-                var previous = JsonSerializer.Deserialize<Owned>(await File.ReadAllTextAsync(marker));
-                ValidateOwned(previous, plan);
+                ReadOwned(marker).RequireSettled(plan);
                 await DeleteAndVerify(context, manager, plan);
                 File.Delete(marker);
                 Report("reconciled-own-records-invoke-again", new { plan.PayloadHash });
                 return;
             }
 
-            // Persist exact ownership before InsertRecords, including when remote acceptance precedes a crash.
-            using (var file = new FileStream(marker, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                var bytes = JsonSerializer.SerializeToUtf8Bytes(new Owned(1, plan.PayloadHash,
-                    plan.Records.Select(static item => item.ClientRecordId).ToArray()));
-                file.Write(bytes);
-                file.Flush(true);
-            }
             try
             {
                 var built = HealthConnectRecordMapper.BuildIsolatedProviderFixture(plan);
                 // Simulate lost local ACK by replaying the same fixture; never write production outbox ACK.
                 for (var attempt = 0; attempt < 2; attempt++)
                 {
+                    var operation = attempt + 1;
+                    WriteOwned(marker, new(2, plan.PayloadHash, plan.Records.Select(static item => item.ClientRecordId).ToArray(),
+                        operation, "insert_pending", null));
                     var response = await Invoke<InsertRecordsResponse>(receiver =>
-                        manager.InsertRecords(built.Records.ToList(), context.MainExecutor!, receiver));
+                        manager.InsertRecords(built.Records.ToList(), context.MainExecutor!, receiver), success =>
+                        {
+                            var current = ReadOwned(marker);
+                            WriteOwned(marker, current.ObserveCallback(operation, success, DateTimeOffset.UtcNow));
+                        });
                     var accepted = AndroidHealthConnectWriter.AcceptedBatch.FromSdkResponse(plan, response);
                     HCDurableAttempt.ValidateReceipts(plan, accepted.Receipts);
                     await ReadOwn(context, manager, plan, true);
@@ -88,7 +88,8 @@ internal static class HealthConnectProviderVerificationProbe
             }
             finally
             {
-                // Wait for the actual insert callback above; never race timeout cleanup with an active insert.
+                // A locally faulted task or process restart is not terminal provider evidence.
+                ReadOwned(marker).RequireSettled(plan);
                 await DeleteAndVerify(context, manager, plan);
                 File.Delete(marker);
             }
@@ -105,12 +106,16 @@ internal static class HealthConnectProviderVerificationProbe
             JsonSerializer.Serialize(new { State = state, Details = details }), new System.Text.UTF8Encoding(false));
     }
 
-    private sealed record Owned(int Version, string FixtureHash, string[] ClientIds);
-    private static void ValidateOwned(Owned? owned, HCWritePlanV1 plan)
+    private static HCVerificationOwnership ReadOwned(string path) =>
+        JsonSerializer.Deserialize<HCVerificationOwnership>(File.ReadAllText(path))
+        ?? throw new InvalidDataException("Missing ownership evidence.");
+
+    private static void WriteOwned(string path, HCVerificationOwnership owned)
     {
-        if (owned is null || owned.Version != 1 || owned.FixtureHash != plan.PayloadHash || owned.ClientIds is null
-            || !owned.ClientIds.SequenceEqual(plan.Records.Select(static item => item.ClientRecordId)))
-            throw new InvalidDataException("Unknown ownership marker: refuse read or mutation.");
+        // A torn write fails JSON/state validation on re-entry; it must never become a cleanup pass.
+        using var file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+        file.Write(JsonSerializer.SerializeToUtf8Bytes(owned));
+        file.Flush(true);
     }
 
     private static Java.Lang.Class Type(HCRecordKind kind) => Java.Lang.Class.FromType(kind switch
@@ -142,23 +147,36 @@ internal static class HealthConnectProviderVerificationProbe
         await ReadOwn(context, manager, plan, false);
     }
 
-    private static async Task<T> Invoke<T>(Action<IOutcomeReceiver> operation) where T : Java.Lang.Object
+    private static async Task<T> Invoke<T>(Action<IOutcomeReceiver> operation, Action<bool>? terminalCallback = null) where T : Java.Lang.Object
     {
-        var receiver = new Receiver<T>();
+        var receiver = new Receiver<T>(terminalCallback);
         operation(receiver);
         return await receiver.Completion.Task;
     }
 
-    private sealed class Receiver<T> : Java.Lang.Object, IOutcomeReceiver where T : Java.Lang.Object
+    private sealed class Receiver<T>(Action<bool>? terminalCallback) : Java.Lang.Object, IOutcomeReceiver where T : Java.Lang.Object
     {
         internal TaskCompletionSource<T> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public void OnResult(Java.Lang.Object? result)
         {
+            if (!Observe(true)) return;
             if (result is T value) Completion.TrySetResult(value);
             else if (result is null && typeof(T) == typeof(Java.Lang.Object)) Completion.TrySetResult(null!);
             else Completion.TrySetException(new InvalidOperationException("Unexpected provider callback shape."));
         }
-        public void OnError(Java.Lang.Object? error) => Completion.TrySetException(new InvalidOperationException("Provider rejected the isolated operation."));
+        public void OnError(Java.Lang.Object? error)
+        {
+            if (Observe(false)) Completion.TrySetException(new InvalidOperationException("Provider rejected the isolated operation."));
+        }
+        private bool Observe(bool success)
+        {
+            try { terminalCallback?.Invoke(success); return true; }
+            catch (Exception error) when (error is IOException or JsonException or InvalidDataException)
+            {
+                Completion.TrySetException(error);
+                return false;
+            }
+        }
     }
 }
 #endif

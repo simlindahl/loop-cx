@@ -28,7 +28,26 @@ internal static class HCProviderVerificationChecks
         var writerCalls = 0;
         var fake = HCFakeReplay.Run(plan, null, true, () => true, _ => { writerCalls++; return HCFakeWriteResult.Accepted; });
         if (writerCalls != 0 || fake.State != "disabled_synthetic") throw new InvalidOperationException("Normal production gates must still reject the fixture.");
+        var pending = new HCVerificationOwnership(2, plan.PayloadHash,
+            [.. plan.Records.Select(static record => record.ClientRecordId)], 1, "insert_pending", null);
+        HCVerificationOwnership[] unsafeMarkers = [pending, pending with { Version = 1 }, pending with { State = null },
+            pending with { State = "unknown" }, pending with { State = "sdk_result" },
+            pending with { State = "sdk_result", CallbackObservedUtc = now, Operation = 0 }];
+        foreach (var marker in unsafeMarkers)
+        {
+            try { marker.RequireSettled(plan); }
+            catch (InvalidDataException) { continue; }
+            throw new InvalidOperationException("Unresolved/legacy markers must not permit cleanup or a new insert.");
+        }
+        // Callback evidence permits owned cleanup even if subsequent response validation fails.
+        pending.ObserveCallback(1, true, now).RequireSettled(plan);
+        pending.ObserveCallback(1, false, now).RequireSettled(plan);
+        var replayPending = pending with { Operation = 2 };
+        if (replayPending.ObserveCallback(1, true, now) != replayPending)
+            throw new InvalidOperationException("A late earlier callback cannot settle the replay operation.");
+        replayPending.ObserveCallback(2, true, now).RequireSettled(plan);
         Console.WriteLine("PASS: fixed synthetic provider fixture and fresh exact-scope consent negatives; normal writer remains blocked.");
+        Console.WriteLine("PASS: pending/legacy insert ownership blocks reconciliation; only matching actual SDK callback evidence permits cleanup.");
         Console.WriteLine("HC provider fixture SHA256: " + plan.PayloadHash);
     }
 }
