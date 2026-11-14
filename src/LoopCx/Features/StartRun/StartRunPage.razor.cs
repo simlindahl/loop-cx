@@ -10,6 +10,9 @@ public partial class StartRunPage
 {
     private CorePreferencesState statePreferences = CorePreferencesState.Default;
     private bool loadFailed;
+    private bool motionPending = true;
+    private bool resultPending;
+    private string? lastMotionKey;
     private bool managing;
     private bool managePending;
     private Guid? editingShortcutId;
@@ -34,6 +37,9 @@ public partial class StartRunPage
     private string draftCooldown = "3";
     private bool warmupEnabled;
     private bool cooldownEnabled;
+
+    private string MotionSurface => managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
+    private string MotionKey => $"{MotionSurface}:{RunService.Snapshot?.Id}:{RunService.Snapshot?.Phase}:{RunService.Snapshot?.Motion?.PauseReason}";
 
     private CoreStartRequest SelectedC1 => statePreferences.SelectedC1;
     private CoreProtocol SelectedProtocol => CoreProtocols.Find(statePreferences.SelectedProtocol);
@@ -183,8 +189,10 @@ public partial class StartRunPage
     private static string TargetValue(int? value, CoreTargetMode mode) => value is null ? ""
         : mode == CoreTargetMode.Pace ? Clock(value.Value) : value.Value.ToString(CultureInfo.InvariantCulture);
     private void ChangeCount(int delta) => draftCount = (CountValue + delta).ToString(CultureInfo.InvariantCulture);
-    private void ChangeTargetMode(ChangeEventArgs change)
+    private async Task ChangeTargetMode(ChangeEventArgs change)
     {
+        if (module is not null) await module.InvokeVoidAsync("leaveDisclosure");
+        motionPending = true;
         targetMode = Enum.Parse<CoreTargetMode>(change.Value!.ToString()!);
         draftWork = draftRecovery = "";
     }
@@ -195,6 +203,7 @@ public partial class StartRunPage
         {
             CorePreferences.Save(state);
             statePreferences = state;
+            resultPending = true;
 
             return true;
         }
@@ -273,8 +282,9 @@ public partial class StartRunPage
         if (Persist(statePreferences with { Shortcuts = statePreferences.Shortcuts.Append(shortcut).ToArray() })) await CloseDialog();
     }
 
-    private void OpenManage()
+    private async Task OpenManage()
     {
+        if (module is not null) await module.InvokeVoidAsync("leaveSurface");
         managing = true;
         managePending = true;
         focusPending = "manage-heading";
@@ -283,6 +293,7 @@ public partial class StartRunPage
 
     private async Task CloseManage()
     {
+        if (module is not null) await module.InvokeVoidAsync("leaveSurface");
         managing = false;
         CoreDialogNavigation.Close = null;
         focusPending = statePreferences.Shortcuts.Count > 0 ? "manage-shortcuts" : "start-heading";
@@ -366,7 +377,8 @@ public partial class StartRunPage
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!openPending && focusPending is null && !managePending) return;
+        motionPending |= lastMotionKey != MotionKey;
+        if (!openPending && focusPending is null && !managePending && !motionPending && !resultPending) return;
         try
         {
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
@@ -374,6 +386,14 @@ public partial class StartRunPage
             if (managePending) { managePending = false; await module.InvokeVoidAsync("manage", reference); }
             if (openPending) { openPending = false; await module.InvokeVoidAsync("open", opener, reference); }
             if (focusPending is { } focus) { focusPending = null; await module.InvokeVoidAsync("focus", focus); }
+            if (motionPending || resultPending)
+            {
+                motionPending = false;
+                lastMotionKey = MotionKey;
+                var saved = resultPending;
+                resultPending = false;
+                await module.InvokeVoidAsync("syncMotion", saved);
+            }
         }
         catch (JSException)
         {
@@ -399,7 +419,11 @@ public partial class StartRunPage
         reference?.Dispose();
         if (module is not null)
         {
-            try { await module.DisposeAsync(); }
+            try
+            {
+                await module.InvokeVoidAsync("dispose");
+                await module.DisposeAsync();
+            }
             catch (JSDisconnectedException) { }
         }
 

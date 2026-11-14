@@ -79,8 +79,8 @@ small {
     padding: 8px;
 }
 .text {
+    --cx-button-bg: transparent;
     margin-top: 16px;
-    background: transparent;
 }
 dialog {
     width: min(40rem, calc(100% - 32px));
@@ -163,4 +163,15 @@ fieldset {
 .order-controls button:disabled {
     opacity: .45;
     cursor: default;
+}
+
+.order-controls button {
+    --cx-button-bg: transparent;
+    --cx-button-border: transparent;
+    color: var(--cx-muted);
+    padding: 8px;
+}
+
+dialog input[type="range"] {
+    accent-color: var(--cx-accent);
 }

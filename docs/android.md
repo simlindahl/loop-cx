@@ -164,3 +164,9 @@ A user-started timed workout can continue with unknown GPS. The approved Android
 
 
 The approved shared motion families are not delivered by this Core-first slice. Their implementation remains tracked in [#62](https://github.com/simlindahl/loop-cx/issues/62) and required before M1 acceptance. Core commands/content update immediately, with no fake progress or sensor-number animation; functional dialog and shortcut checks are not motion-performance evidence.
+
+### Core motion verification boundary
+
+Core/Manage motion uses the existing local CSS and dialog module, without an animation dependency. Commands, accessible values and focus never wait for an effect to finish. Verify actual WebView press feedback with fixed hit boxes, one state transition effect rather than per-tick replay, modal/Manage focus and exit cleanup, real-save-only feedback, 200% scrolling and system reduced motion. Browser-only emulation of reduced motion is not Android system-setting evidence. Full navigation, truthful progress and physical frame/battery checks remain open under issue #62.
+
+Do not install a pre-HR schema-3 build over a QA installation already using schema 4. Compose the merged HR baseline before the final candidate and coordinate the exclusive emulator lease; no database downgrade or wipe is part of motion verification.

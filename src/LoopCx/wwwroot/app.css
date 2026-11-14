@@ -7,6 +7,11 @@
 
 :root {
     color-scheme: dark;
+    --cx-motion-press: 80ms;
+    --cx-motion-quick: 160ms;
+    --cx-motion-standard: 220ms;
+    --cx-motion-exit: 120ms;
+    --cx-motion-ease: cubic-bezier(.2, 0, 0, 1);
     --cx-bg: #111111;
     --cx-surface: #1C1C1C;
     --cx-text: #F2F2F2;
@@ -34,22 +39,53 @@ button {
     min-width: 48px;
     min-height: 48px;
     padding: 12px 20px;
-    border: 1px solid var(--cx-muted);
+    position: relative;
+    isolation: isolate;
+    border: 1px solid transparent;
     border-radius: 12px;
-    background: var(--cx-surface);
+    background: transparent;
     color: var(--cx-text);
     font: inherit;
     cursor: pointer;
     overflow-wrap: anywhere;
 }
 
+/* Only the visual backplate scales; the button box, text, focus ring and hit area stay fixed. */
+button::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border: 1px solid var(--cx-button-border, var(--cx-muted));
+    border-radius: inherit;
+    background: var(--cx-button-bg, var(--cx-surface));
+    pointer-events: none;
+    transition: transform var(--cx-motion-quick) var(--cx-motion-ease);
+}
+
+button:active:not(:disabled)::before {
+    transform: scale(.98);
+    transition-duration: var(--cx-motion-press);
+}
+
 button.primary {
-    border-color: var(--cx-accent);
-    background: var(--cx-accent);
+    --cx-button-border: var(--cx-accent);
+    --cx-button-bg: var(--cx-accent);
     color: var(--cx-on-accent);
 }
 
 button:focus-visible {
     outline: 3px solid var(--cx-accent);
     outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button::before {
+        transition: none;
+        transform: none;
+    }
+
+    button:active:not(:disabled)::before {
+        transform: none;
+    }
 }
