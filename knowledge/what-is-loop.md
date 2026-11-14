@@ -31,22 +31,22 @@ There is no compulsory Monday start or fixed rest-day schedule. Write down the n
 
 ### 2. Choose familiar movements and a safe load
 
-Use exercises you already control. Keep versions stable enough to judge progress. A gym is convenient, not compulsory; a home setup still needs safe resistance and pulling anchors.
+Calisthenics is LOOP's primary strength method: use bodyweight variations you control and keep them stable enough to judge progress. It prioritizes body control and relative strength while aiming to reduce travel, weight changes, setup time and cost. Scale leverage, assistance, controlled range or unilateral demand, then add weight when useful. This gives many practical progressions, not a promise of free training anywhere or unlimited progression without equipment. Safe pulling needs a suitable anchor; loaded RDL deliberately complements bodyweight work because enough scalable hinge resistance can be harder to obtain through bodyweight alone, especially when trained.
 
-| Pattern | Gym example | Home option |
+| Pattern | Primary calisthenics route / RDL exception | Equipment alternative or practical limit |
 |---|---|---|
-| Hip hinge | Barbell/dumbbell Romanian deadlift | Suitable backpack/dumbbell RDL; load may become limiting |
-| Horizontal pull | Cable or supported row | Rated suspension or securely anchored band row |
-| Single-leg squat | Assisted/loaded pistol progression | Supported pistol to a stable box |
-| Horizontal push | Dumbbell bench press | Suitable push-up progression |
-| Vertical pull | Assisted pull-up or pulldown | Secure rated bar or appropriate high-anchor band |
-| Vertical push | Dumbbell overhead press | Suitable dumbbell or pike-push-up progression |
+| Hip hinge | Loaded Romanian deadlift: deliberate complement | Suitable weights and space; available load may limit progression |
+| Horizontal pull | Bodyweight row on rated suspension or suitable bar | Safe anchor required; cable/band row can be an alternative |
+| Single-leg squat | Supported pistol progression, then less assistance or added load | Stable support/box where needed |
+| Horizontal push | Suitable push-up progression | Dumbbell bench press can be an alternative |
+| Vertical pull | Suitable assisted/bodyweight/weighted pull-up | Secure rated bar; pulldown can be an alternative |
+| Vertical push | Suitable pike-push-up progression | Dumbbell press can be an alternative |
 
 Do not improvise hanging anchors from furniture or door handles. If a pattern cannot be performed safely, acknowledge a temporary compromise rather than treating every substitute as identical.
 
 Core uses **two working sets per exercise**, with the next complete repetition no longer possible at the intended range, posture and control: technical failure. End at the last clean repetition. Do not attempt an unsafe failed lift, force pain or continue after losing position. Practice unfamiliar movements before hard sets; reduce load/dose or leave clean repetitions available when needed. Stop for concerning symptoms such as chest pain, faintness or unusual severe breathlessness and seek appropriate help.
 
-**Why this small dose?** Two hard sets keep the session simple. It is LOOP's compromise, not proof that failure is necessary or the smallest dose is optimal. More specialized goals can require another approach. Equipment and progression examples are expanded in the [strength reference](training/system.md#strength-s1-and-s2).
+**Why this small dose and stopping rule?** Two high-effort sets keep the session simple. Technical failure lets the repetition count respond to the day without estimating repetitions in reserve or forcing a preset daily total. You still judge readiness, rest and safe execution, and use the simple load/variation progression. Recent single-set research suggests modest muscle-growth advantages can occur with failure, without a clear strength advantage; it does not prove technical failure is universally best or validate this exact routine. The [white paper](training/system.md#strength-s1-and-s2) explains the low-volume evidence and its limits.
 
 ### 3. Complete the next suitable session
 

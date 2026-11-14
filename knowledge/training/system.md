@@ -7,7 +7,7 @@ type: Training System White Paper
 
 ## Abstract
 
-LOOP combines interval conditioning, steady aerobic work, resistance training and a short mixed-modal finish in a repeating sequence. Its central premise is that an experienced adult's training will be interrupted by work, family, travel and recovery needs. Rather than prescribe a perfect calendar, it provides a stable order, a small set of movement patterns and explicit rules for adjusting effort and load. The intended outcome is broad, usable physical capacity sustained over time, not the largest possible adaptation in one discipline.
+LOOP combines interval conditioning, steady aerobic work, calisthenics-led strength with a deliberately loaded hip hinge, and a short mixed-modal finish in a repeating sequence. Its central premise is that an experienced adult's training will be interrupted by work, family, travel and recovery needs. Rather than prescribe a perfect calendar, it provides a stable order, a small set of movement patterns and explicit rules for adjusting effort and load. The intended outcome is broad, usable physical capacity sustained over time, not the largest possible adaptation in one discipline.
 
 This paper explains the physiological rationale, practical prescriptions and deliberate compromises. It distinguishes findings from training studies, indirect transfer to LOOP and choices made for simplicity. Component methods have scientific support; the complete sequence and its exact doses have not been tested together. Low decision cost is an intended advantage, not an established adherence outcome. A rotation does not guarantee sufficient weekly exposure, technical failure is not proved superior to other stopping rules, and voluntary self-competition is not necessary for health. These boundaries are central to the system rather than reasons to present it as universally optimal.
 
@@ -98,6 +98,16 @@ LOOP uses Zone 2 to describe C2's easy intention, not a universally measured thr
 
 ## 4. Strength: selection, dose and progression
 
+### Calisthenics as the primary method
+
+LOOP prioritizes calisthenics: progressively challenging movement using bodyweight as the main resistance. This is the primary strength method, not merely an equipment-neutral alternative to machines or free weights. It fits the system's emphasis on body control, relative strength and training that remains practical when time and circumstances change.
+
+The practical rationale is to reduce travel, equipment changes and setup decisions where possible. Many variations need little or no purchased equipment, and a simple setup can be portable. These are intended advantages, not measured time savings or a promise that every exercise is free or possible anywhere. Safe pulling still requires an appropriate anchor or apparatus; some movements, spaces and progressions have real costs and access constraints.
+
+Progression is broader than adding repetitions indefinitely. Change leverage, assistance, controlled range of motion or unilateral demand, then use weighted variations when useful. These provide a broad scalable repertoire, not literally unlimited progression for every movement or person. Choose a version that supplies sufficient resistance without allowing balance, complexity or an uncontrolled range to replace the intended strength stimulus.
+
+Kikuchi and Nakazato compared adjusted low-load push-ups with bench press at 40 percent of one-repetition maximum in 18 young men over eight weeks, twice weekly. Both groups improved measured muscle thickness and strength with similar outcomes. This supports the usefulness of an appropriately loaded bodyweight pressing exercise; it does not establish universal calisthenics superiority, equal results across every movement or uniquely greater cardiovascular benefit. [28](#ref-28)
+
 <a id="strength-s1-and-s2"></a>
 ### S1 and S2: stable patterns with different priorities
 
@@ -113,9 +123,9 @@ One working set of each exercise per round gives **two working sets per exercise
 <a id="exercise-order-and-exposure"></a>
 **Pistol squat is a multi-objective choice.** It combines unilateral knee-dominant work with balance, control and substantial usable range. These demands can limit loading before the leg muscles' force capacity is exhausted. LOOP accepts that compromise; it does not claim superiority to heavy bilateral squatting for maximal knee-dominant strength. Use support, a stable box or an easier progression through a controlled pain-free range. Added difficulty is useful only with stable quality.
 
-**RDL supplies a clear hip hinge.** It permits progressively loaded posterior-chain work without requiring a conventional deadlift from the floor. Floor deadlifting is a useful skill rather than a mandatory standard. Mechanics give a rationale for the pairing, but no direct long-term comparison identified here validates this exact pistol/RDL selection as the best general solution.
+**Loaded RDL is a deliberate complement and exception.** Providing enough progressively adjustable lower-body and hip-hinge resistance through bodyweight alone becomes practically harder for a trained person. External load makes this stimulus more straightforward to scale without requiring increasingly elaborate balance or leverage tasks. RDL therefore supplies a loadable posterior-chain movement alongside the calisthenics emphasis; it does require suitable weights and space. Conventional deadlifting remains a useful skill rather than a mandatory standard. This is a practical loading and movement-selection rationale, not proof that bodyweight cannot train the posterior chain or that this exact pairing is superior in long-term comparisons.
 
-Equipment serves the movement. Gym examples include rows, presses, pulldowns and assisted pull-ups. Home versions can use suitable dumbbells, push-up progressions, rated suspension equipment or bands with appropriate secure anchors. Available load or a safe vertical-pull setup can become a genuine limitation. Do not improvise a hanging anchor or describe a horizontal row as identical to a vertical pull.
+Use scalable bodyweight rows, push-ups, pull-ups and suitable pressing/squat progressions as the first route through the patterns. Assistance, rated suspension equipment, bands or added weights can make the selected version workable; gym machines or free-weight alternatives remain useful when circumstances require them. Available load or a safe vertical-pull setup can become a genuine limitation. Do not improvise a hanging anchor or describe a horizontal row as identical to a vertical pull.
 
 ### Why two sets, and what does failure mean?
 
@@ -123,7 +133,13 @@ Two demanding working sets keep the session small and repeatable. They are not a
 
 The stopping rule is **technical failure**: another complete repetition would no longer meet intended range, posture and stability. End at the last clean repetition; do not provoke an unsafe failed lift or continue after losing position. Balance or technique may limit a pistol or RDL before strict muscular failure. That distinction is intentional.
 
-Failure-versus-non-failure research does not establish technical-form stopping as superior. Grgic and colleagues synthesized fifteen studies in young adults and found no significant overall advantage of failure for strength or hypertrophy, with subgroup qualifications. Their failure definitions are not automatically LOOP's technique-based boundary. Hard sets supply stimulus; they are not tests to pass despite risk. Practice unfamiliar work first; reduce load/dose, leave clean repetitions available or rest when needed. [11](#ref-11)
+The reason for choosing this endpoint is a simple high-effort rule for a small number of sets. Repetitions can respond to that day's capacity without requiring a precise repetitions-in-reserve estimate or a predetermined repetition total for every session. This does not eliminate judgement: exercise variation/load, readiness, rest and safe technique still matter. The progression ranges below guide future load/variation decisions rather than compelling completion of a fixed daily count.
+
+Evidence depends on the outcome and prescription. Grgic and colleagues' broad failure-versus-non-failure synthesis found no significant overall advantage for strength or hypertrophy, with subgroup qualifications; that average alone does not settle the value of effort in a very low-volume routine. [11](#ref-11) In Hermann and colleagues' 2025 *Without Fail* trial, 42 resistance-trained men and women were assigned to failure or two repetitions in reserve for one set of nine exercises, twice weekly for eight weeks. Both conditions improved most outcomes; several hypertrophy measures tended to favor failure, with generally modest absolute differences. Strength and local muscular endurance gains were similar, and the jump/power finding remained uncertain. This is relevant single-set evidence, not direct proof for two-set LOOP or for equating technical-form failure with momentary muscular failure. [26](#ref-26)
+
+Robinson and colleagues' exploratory meta-regressions associated closer estimated proximity to failure with greater hypertrophy, but found a negligible relationship with strength gains. Models adjusted for load, volume-equating method, duration and training status; fit was modest and repetitions in reserve were estimated from study descriptions. This supports taking effort seriously while retaining uncertainty about an exact endpoint. It is not a direct experiment establishing a low-volume interaction or universal superiority of failure. [27](#ref-27)
+
+LOOP's endpoint therefore combines a low-decision-cost design choice with evidence that high effort can matter for muscle growth, rather than claiming failure is always necessary or uniquely effective. Practice unfamiliar work first; reduce load/dose, leave clean repetitions available or rest when needed. A set is not a test to pass despite risk.
 
 ### Rest supports the next useful set
 
@@ -224,6 +240,7 @@ Interpret results in context. Weather, surface, fatigue, pacing and measurement 
 |---|---|---|
 | Repeating order rather than weekly scheduling | Easier resumption after interruption | Frequency and sufficient dose are not guaranteed |
 | Three interval options and steady conditioning | Several useful conditioning emphases | Exact combination/doses untested together |
+| Calisthenics as primary strength method | Body control, relative strength and potentially lower setup/travel/cost | Pulling needs safe apparatus; some loading needs external weights; no unique muscular/cardio superiority |
 | Two demanding strength sets and simple progression | Small, repeatable prescription | May undersupply specialized volume; failure adds fatigue and is not uniquely necessary |
 | Pistol progression plus RDL | Unilateral control/range and loadable hinge | Balance/skill can limit stimulus; no superiority claim over other selections |
 | Short M after strength | Combine work without a separate session | Recovery/interference and task-specific transfer remain relevant |
@@ -335,3 +352,15 @@ The complete LOOP intervention remains untested. Future evaluation should examin
 <a id="ref-25"></a>
 
 25. Oxfeldt M, Overgaard K, Hvid LG, Dalgas U. Effects of plyometric training on jumping, sprint performance, and lower body muscle strength in healthy adults: a systematic review and meta-analyses. *Scandinavian Journal of Medicine & Science in Sports*. 2019;29:1453–1465. [doi:10.1111/sms.13487](https://doi.org/10.1111/sms.13487).
+
+<a id="ref-26"></a>
+
+26. Hermann T, Mohan AE, Enes A, et al. Without Fail: Muscular Adaptations in Single-Set Resistance Training Performed to Failure or with Repetitions-in-Reserve. *Medicine & Science in Sports & Exercise*. 2025;57(9):2021–2031. [doi:10.1249/MSS.0000000000003728](https://doi.org/10.1249/MSS.0000000000003728).
+
+<a id="ref-27"></a>
+
+27. Robinson ZP, Pelland JC, Remmert JF, et al. Exploring the dose–response relationship between estimated resistance training proximity to failure, strength gain, and muscle hypertrophy: a series of meta-regressions. *Sports Medicine*. 2024;54:2209–2231. [doi:10.1007/s40279-024-02069-2](https://doi.org/10.1007/s40279-024-02069-2).
+
+<a id="ref-28"></a>
+
+28. Kikuchi N, Nakazato K. Low-load bench press and push-up induce similar muscle hypertrophy and strength gain. *Journal of Exercise Science & Fitness*. 2017;15(1):37–42. [doi:10.1016/j.jesf.2017.06.003](https://doi.org/10.1016/j.jesf.2017.06.003).
