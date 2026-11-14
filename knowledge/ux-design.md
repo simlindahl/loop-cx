@@ -66,6 +66,14 @@ The approved family covers 01 press feedback, 02 phase/state changes, 03 navigat
 
 Respect system reduced motion with immediate equivalent content and function: no movement/animation, no loss of state, actions, focus or reading order. Commands and accessible values update immediately and never wait for an effect. Do not animate timer/sensor numbers, invent progress or saved results, run continuous decorative loops, or queue obsolete transitions. Preserve at least 48 dp targets, 200% text/scrolling, neutral Basalt, local Space Grotesk and icon geometry. Use small CSS transform/opacity effects first, without a new animation framework; actual Android WebView, TalkBack, touch, frame pacing and battery evidence remain implementation acceptance, not established by the browser studies.
 
+### Core/Manage motion delivery boundary
+
+The bounded Core slice applies press feedback to existing buttons through a visual backplate only; the button box, text, focus outline and at-least-48-dp hit area do not scale. Real service phase/pause labels receive state feedback only when their state key changes, not on timer/sensor refresh. Actual Training/Manage navigation and modal/target-field disclosure use the approved standard/exit timings without awaiting animation completion. Focus and saved values update through their existing paths. Reduced motion cancels active visual effects and leaves equivalent immediate content and operation.
+
+Result feedback is a short outline on the existing updated region only after successful preferences persistence. It is not a toast, save queue or fabricated history/export result. Entrance choreography uses at most three existing groups with 24-ms stagger; dose/timer/sensor values never count up or receive an individual number animation. The C1 card keeps the short `C1 · Intervals` header with protocol detail in its dose section, reorder icons remain visually secondary with unchanged hit areas, and the C2 slider uses the approved accent.
+
+All studies 01–07 remain required on their real surfaces. This slice provides only local Training/Manage navigation, not the future full Training/History/Settings destination system. Determinate progress (05) still requires a real approved progress surface with an honest numerator/denominator; no progress bar is added to demonstrate it. Other history/export/reader/Ghost applications retain their feature dependencies and holds. Native reduced-motion, focus, 200% text and touch verification is required; source code and browser checks do not establish TalkBack, frame pacing, outdoor or battery acceptance.
+
 
 ### Work values delivery boundary
 
