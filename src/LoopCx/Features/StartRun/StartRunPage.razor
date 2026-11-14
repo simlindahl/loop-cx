@@ -156,7 +156,7 @@
                 <p>
 <strong>@SelectedC1.ProtocolId · @SelectedProtocol.Title</strong><br />@Dose(SelectedC1)</p>
                 <p>@SelectedProtocol.Purpose</p>
-                <p>Target RPE <strong>@SelectedProtocol.WorkRpe / @SelectedProtocol.RecoveryRpe</strong> · work / recovery <button id="rpe-c1" class="info" type="button" aria-label="Explain C1 RPE" @onclick='() => OpenRpe(SelectedC1.ProtocolId, "rpe-c1")'>i</button>
+                <p>Target RPE <strong>@SelectedProtocol.WorkRpe / @SelectedProtocol.RecoveryRpe</strong> · work / recovery <button id="rpe-c1" class="info" type="button" aria-label="Explain C1 RPE" @onclick='() => OpenRpe(SelectedC1.ProtocolId, "rpe-c1")'><span aria-hidden="true">ⓘ</span></button>
 </p>
                 <p>@Times(SelectedC1)<small>@WarmupCooldown(SelectedC1)</small>
 </p>
@@ -175,7 +175,7 @@
                 <p>Steady, conversational running.<br />
 <strong>@(statePreferences.C2Selection.ContinuousMinutes ?? 45) min main / total</strong>
 </p>
-                <p>Target RPE <strong>4</strong> <button id="rpe-c2" class="info" type="button" aria-label="Explain C2 RPE" @onclick='() => OpenRpe("C2", "rpe-c2")'>i</button>
+                <p>Target RPE <strong>4</strong> <button id="rpe-c2" class="info" type="button" aria-label="Explain C2 RPE" @onclick='() => OpenRpe("C2", "rpe-c2")'><span aria-hidden="true">ⓘ</span></button>
 </p>
                 <p>Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p>
                 <p>@TargetLabel(statePreferences.C2Selection.Targets, true)</p>
