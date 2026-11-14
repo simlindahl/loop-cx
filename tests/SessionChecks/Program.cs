@@ -1051,4 +1051,4 @@ if (args.Length == 2 && args[0] == "--export-json-sample")
     File.WriteAllText(args[1], modernJson, new System.Text.UTF8Encoding(false));
 Console.WriteLine("PASS: export retains frozen main, later raw observations and distinct start-zone/boundary provenance.");
 
-HCWritePlanChecks.Run();
+HCWritePlanChecks.Run(args);

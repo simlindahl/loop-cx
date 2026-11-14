@@ -15,8 +15,12 @@ public static class HCWritePlanner
         try
         {
             var checkpoint = source.Checkpoint;
+            if (checkpoint.GetProperty("SchemaVersion").GetInt32() != 1)
+                throw new InvalidDataException("The checkpoint version is not supported by mapping v1.");
             var snapshot = checkpoint.GetProperty("Snapshot");
             var statistics = snapshot.TryGetProperty("Statistics", out var measured) && measured.ValueKind == JsonValueKind.Object ? measured : (JsonElement?)null;
+            if (statistics is { } versionedStatistics && versionedStatistics.GetProperty("Version").GetInt32() != 1)
+                throw new InvalidDataException("The stored statistics version is not supported by mapping v1.");
             var boundaries = checkpoint.GetProperty("PhaseBoundaries").Deserialize<PhaseBoundaryFact[]>()
                 ?? throw new InvalidDataException("Recorded effective phase boundaries are unavailable.");
             if ((statistics is { } stats && stats.GetProperty("HasSyntheticTime").GetBoolean()) || boundaries.Any(static fact => fact.Synthetic)
@@ -121,7 +125,7 @@ public static class HCWritePlanner
             {
                 records.Add(new(Id(source.Id, "heart-rate"), 1, HCRecordKind.HeartRate, started, ended, offset, null, [], null,
                     Array.AsReadOnly(samples.OrderBy(static sample => sample.ReceiptUtc).ThenBy(static sample => sample.SourceSequence).ToArray()),
-                    "Actual local GATT receipt instants only; v1 cross-checks stored boot/UTC clocks within 1000ms where possible; no acquisition-time claim or extrapolation."));
+                    "Actual local GATT receipt instants only; v1 cross-checks stored boot/UTC clocks within 1000 ms where possible; no acquisition-time claim or extrapolation."));
             }
             else
             {
@@ -183,6 +187,7 @@ public static class HCWritePlanner
                 var from = start + (Duration(automatic.GetProperty("OnsetMonotonicTime")) - bootStart.Value);
                 var to = start + (Duration(automatic.GetProperty("ExcludedThroughMonotonicTime")) - bootStart.Value);
                 if (from < start || to <= from || to > at) throw new InvalidDataException("Automatic exclusion is outside its recorded window.");
+                if (to - from != TimeSpan.FromSeconds(10)) throw new InvalidDataException("Mapping v1 requires the recorded ten-second automatic exclusion.");
                 intervals.Add(new(from, to));
                 pausedAt ??= at;
             }

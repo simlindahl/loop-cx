@@ -11,7 +11,7 @@ internal static class HCWritePlanChecks
         if (!value) throw new InvalidOperationException(message);
     }
 
-    internal static void Run()
+    internal static void Run(string[] arguments)
     {
         var started = new DateTimeOffset(2026, 11, 14, 10, 0, 0, TimeSpan.Zero);
         var runId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -22,7 +22,7 @@ internal static class HCWritePlanChecks
             var checkpoint = JsonSerializer.SerializeToElement(new
             {
                 SchemaVersion = 1,
-                Snapshot = new { Phase = "Finished", Statistics = new { HasSyntheticTime = synthetic, Total = new { MeasuredMetres = 123.5, KnownGpsActiveTime = TimeSpan.FromSeconds(35), UnknownGpsActiveTime = TimeSpan.FromSeconds(5) } } },
+                Snapshot = new { Phase = "Finished", Statistics = new { Version = 1, HasSyntheticTime = synthetic, Total = new { MeasuredMetres = 123.5, KnownGpsActiveTime = TimeSpan.FromSeconds(35), UnknownGpsActiveTime = TimeSpan.FromSeconds(5) } } },
                 Plan = plan,
                 Completed = plan.Select(phase => new CompletedPhase(phase, phase.Duration)).ToArray(),
                 TotalActiveTime = TimeSpan.FromSeconds(40),
@@ -107,12 +107,12 @@ internal static class HCWritePlanChecks
         Require(HCWritePlanner.Create(source with { HeartRate = [source.HeartRate[0] with { BootReceiptMonotonicTicks = 120000000 }] }, false).State == "action_required",
             "Contradictory HR clocks inside the same window require action rather than a fabricated corrected timestamp.");
 
-        // New synthetic host fixture with the ACTUAL journal field shape: boot start1, onset1,
-        // confirming sample11.5, detected13 (elapsed12). Exclude elapsed0..10 only, then pause12..20.
+        // New synthetic host fixture with the ACTUAL journal field shape: boot start 1 s, onset 1 s,
+        // confirming sample 11.5 s, detection 13 s (elapsed 12 s). Exclude elapsed 0..10, then pause 12..20.
         var autoCheckpoint = JsonSerializer.SerializeToElement(new
         {
             SchemaVersion = 1,
-            Snapshot = new { Phase = "Finished", Motion = new { StartedMonotonicTime = TimeSpan.FromSeconds(1) }, Statistics = new { HasSyntheticTime = false, Total = new { MeasuredMetres = 123.5, KnownGpsActiveTime = TimeSpan.FromSeconds(35), UnknownGpsActiveTime = TimeSpan.FromSeconds(5) } } },
+            Snapshot = new { Phase = "Finished", Motion = new { StartedMonotonicTime = TimeSpan.FromSeconds(1) }, Statistics = new { Version = 1, HasSyntheticTime = false, Total = new { MeasuredMetres = 123.5, KnownGpsActiveTime = TimeSpan.FromSeconds(35), UnknownGpsActiveTime = TimeSpan.FromSeconds(5) } } },
             Plan = new[] { new TimedPhase(RunPhase.Work, TimeSpan.FromSeconds(40), 4) },
             Completed = new[] { new CompletedPhase(new(RunPhase.Work, TimeSpan.FromSeconds(40), 4), TimeSpan.FromSeconds(40)) },
             TotalActiveTime = TimeSpan.FromSeconds(40),
@@ -129,7 +129,25 @@ internal static class HCWritePlanChecks
         var autoSource = source with { Checkpoint = autoCheckpoint, Events = autoEvents, ObservedElapsedMilliseconds = 58200, LastObservedUtc = started.AddSeconds(58.2).ToString("O", CultureInfo.InvariantCulture) };
         var autoPlan = HCWritePlanner.Create(autoSource, false);
         Require(autoPlan.Plan is not null && autoPlan.Plan.Records[0].Pauses.SequenceEqual([new HCPause(started, started.AddSeconds(10)), new HCPause(started.AddSeconds(12), started.AddSeconds(20))]),
-            "Actual auto-event shape preserves exact ten-second exclusion and the still-active10..12 receipt tail, with later pause separate.");
+            "Actual auto-event shape preserves exact ten-second exclusion and the still-active 10..12-second receipt tail, with later pause separate.");
+
+        foreach (var seconds in new[] { 9, 11 })
+        {
+            var activeSeconds = 50 - seconds;
+            var alteredCheckpoint = System.Text.Json.Nodes.JsonNode.Parse(autoCheckpoint.GetRawText())!.AsObject();
+            alteredCheckpoint["TotalActiveTime"] = TimeSpan.FromSeconds(activeSeconds).ToString("c", CultureInfo.InvariantCulture);
+            alteredCheckpoint["Snapshot"]!["Statistics"]!["Total"]!["UnknownGpsActiveTime"] = TimeSpan.FromSeconds(activeSeconds - 35).ToString("c", CultureInfo.InvariantCulture);
+            var alteredAuto = System.Text.Json.Nodes.JsonNode.Parse(autoEvents[0].Checkpoint.GetRawText())!.AsObject();
+            alteredAuto["AutomaticEvent"]!["ExcludedThroughMonotonicTime"] = TimeSpan.FromSeconds(1 + seconds).ToString("c", CultureInfo.InvariantCulture);
+            var altered = autoSource with { Checkpoint = JsonSerializer.SerializeToElement(alteredCheckpoint), Events = [autoEvents[0] with { Checkpoint = JsonSerializer.SerializeToElement(alteredAuto) }, autoEvents[1]] };
+            var rejectedWindow = HCWritePlanner.Create(altered, false);
+            Require(rejectedWindow.State == "action_required" && rejectedWindow.Reason!.Contains("ten-second", StringComparison.Ordinal),
+                "A corrupted 9- or 11-second exclusion must reject even when adjusted active totals otherwise conserve the elapsed window.");
+        }
+        Require(HCWritePlanner.Create(source with { Checkpoint = ChangedCheckpoint(node => node["SchemaVersion"] = 2) }, false).State == "action_required",
+            "Unknown future checkpoint versions cannot be silently interpreted as v1 with a similar shape.");
+        Require(HCWritePlanner.Create(source with { Checkpoint = ChangedCheckpoint(node => node["Snapshot"]!["Statistics"]!["Version"] = 2) }, false).State == "action_required",
+            "Unknown statistics versions cannot be silently read as accepted current measurement facts.");
 
         var remote = new Dictionary<string, HCPlannedRecord>(StringComparer.Ordinal);
         var calls = 0;
@@ -158,6 +176,14 @@ internal static class HCWritePlanChecks
         _ = HCFakeReplay.Run(frozen, retry with { FrozenPlan = frozen with { PayloadHash = "corrupt persisted attempt" } }, false, () => true,
             record => { blockedCalls++; return HCFakeWriteResult.Accepted; });
         Require(blockedCalls == 0, "The replay boundary independently rejects debug/synthetic/tampered plans before all writer calls.");
+        if (arguments.Length == 2 && arguments[0] == "--hc-source-fixture")
+        {
+            var actual = JsonSerializer.Deserialize<ExportRunV1>(File.ReadAllText(arguments[1]), ExportRunV1.JsonOptions)
+                ?? throw new InvalidDataException("Missing stored export fixture.");
+            Require(HCWritePlanner.Create(actual.Run, false).Plan is null,
+                "Actual stored debug/legacy exports remain blocked; fixtures are never relabelled as provider acceptance.");
+            Console.WriteLine("PASS: read-only stored-source eligibility regression: " + Path.GetFileName(arguments[1]));
+        }
         Console.WriteLine("PASS: detached HC plan, whole elapsed/pauses, partial measurements, stable IDs/hash and fake crash/permission replay without provider calls.");
     }
 }
