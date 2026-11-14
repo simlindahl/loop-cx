@@ -1050,3 +1050,5 @@ Require(projectedCheckpoint.GetProperty("StartContext").GetProperty("UtcOffsetSe
 if (args.Length == 2 && args[0] == "--export-json-sample")
     File.WriteAllText(args[1], modernJson, new System.Text.UTF8Encoding(false));
 Console.WriteLine("PASS: export retains frozen main, later raw observations and distinct start-zone/boundary provenance.");
+NotificationChecks.Run();
+Console.WriteLine("PASS: notification phase/countdown, actual measurements, pause guidance and unknown values.");
