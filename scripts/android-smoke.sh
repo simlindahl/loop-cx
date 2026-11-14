@@ -102,6 +102,20 @@ start, duplicate, locked, pause, still, resume = map(read, [
 assert len({s['Id'] for s in [start, duplicate, locked, pause, still, resume]}) == 1
 assert locked['ActiveSeconds'] >= duplicate['ActiveSeconds'] + 8
 assert locked['Locations'] > duplicate['Locations'], 'GPS must arrive with screen off'
+
+from decimal import Decimal
+def seconds(value):
+    hours, minutes, sec = value.split(':')
+    return Decimal(hours)*3600 + Decimal(minutes)*60 + Decimal(sec)
+stats = locked['Statistics']
+assert stats['Version'] == 1 and not stats['HasSyntheticTime']
+assert seconds(stats['Total']['KnownGpsActiveTime']) > 0, 'Actual GPS brackets must reach service statistics'
+for scope in [stats['Total'], stats['Main']]:
+    assert seconds(scope['KnownGpsActiveTime']) + seconds(scope['UnknownGpsActiveTime']) == seconds(scope['ActiveTime'])
+    assert scope['AverageHeartRate'] is None and scope['KnownHeartRateActiveTime'] == '00:00:00'
+    assert scope['UnknownHeartRateActiveTime'] == scope['ActiveTime']
+assert int(seconds(stats['Total']['ActiveTime'])) == locked['ActiveSeconds']
+
 assert pause['Paused'] and still['Paused']
 assert still['ActiveSeconds'] == pause['ActiveSeconds']
 assert not resume['Paused'] and resume['ActiveSeconds'] > still['ActiveSeconds']

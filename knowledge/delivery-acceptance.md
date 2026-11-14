@@ -55,3 +55,8 @@ Physical-phone testing remains outstanding. Particularly important measurements 
 ### Timed autopause evidence boundary
 
 Follow the exact measurement-window and receipt-time [autopause contract](running-workouts.md#autopause-technical-pilot-and-acceptance). Native synthetic evidence must distinguish ten excluded measurement seconds from later active/unknown receipt lag, preserve real extension/manual-command order, retain immutable raw fixes and atomically commit automatic-event timing with corrected state. Physical movement/false-pause calibration remains outstanding until measured on the approved equipment; emulator success does not establish it.
+
+
+### Measured statistics coverage
+
+Use the [sample-bracketed statistics contract](running-workouts.md#measured-statistics-coverage-contract) for the next timed C1/C2 service/journal slice: known plus unknown equals active time in total/main/current/final splits, no edge/end extrapolation, exact autopause exclusion and honest null pace/heart rate. Actual native GPS/SQLite/reopen evidence is mandatory; a pure accumulator test alone is insufficient. Production BLE/HR, personal zones, coaching, a new statistics layout and physical calibration are not established by this slice.
