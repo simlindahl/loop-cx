@@ -1,11 +1,27 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
 <section aria-labelledby="history-heading">
-    <button type="button" @onclick="GoBack">← @(detail is null && partial is null ? "Training" : "History")</button>
-    <h2 id="history-heading" tabindex="-1">@(partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
+    <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detail is null && partial is null ? "Training" : "History")</button>
+    <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
     @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
-    @if (partial is { } recorded)
+    @if (sharingRun is not null)
+    {
+        <p>A UTF-8 JSON file.</p>
+        <p>Includes the frozen plan and targets, phases, splits, heart rate, route coordinates, pauses and data gaps.</p>
+        <dl>
+            <div><dt>Filename</dt><dd>@LoopCx.Features.ExportRun.RunJsonSharing.FileName</dd></div>
+            <div><dt>Schema</dt><dd>Version 1 · units explicit</dd></div>
+        </dl>
+        <aside class="share-notice">
+            <strong>Contains your route</strong>
+            <p>Full export includes precise coordinates and UTC timestamps, along with recorded heart rate. Choose who receives this sensitive data.</p>
+        </aside>
+        @if (preparingShare) { <p role="status">Preparing JSON file…</p> }
+        @if (shareMessage is not null) { <p role="status">@shareMessage</p> }
+        <button id="share-open" type="button" class="primary" disabled="@preparingShare" aria-busy="@preparingShare" @onclick="OpenShareSheet">Open Android share sheet</button>
+    }
+    else if (partial is { } recorded)
     {
         var recordedDistance = Distance(recorded.Summary.Total);
         <p>@(recorded.SavedLocally is null ? "Your run was interrupted." : "Partial recording · saved locally")</p>
@@ -23,6 +39,7 @@
         {
             <p role="status">Partial recording saved locally.</p>
             <p>Not exported to Health Connect. A supported recorded end time is required for export.</p>
+            <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>
         }
     }
     else if (!busy && detail is { } run)
@@ -47,6 +64,7 @@
         </dl>
         <p>@Coverage(run.Main)</p>
         <p>@ZoneSummary(run.Zones)</p>
+        <button id="history-share" type="button" class="primary" @onclick="ShowShare">Share workout data</button>
     }
     else if (!busy)
     {

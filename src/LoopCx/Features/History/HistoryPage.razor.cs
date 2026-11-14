@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using LoopCx.Features.ActiveRun;
+using LoopCx.Features.ExportRun;
+using Microsoft.Maui.Storage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -20,6 +22,10 @@ public partial class HistoryPage
     private string? error;
     private string? focusPending = "history-heading";
     private IJSObjectReference? module;
+    private Guid? sharingRun;
+    private bool preparingShare;
+    private long shareRequest;
+    private string? shareMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -33,6 +39,10 @@ public partial class HistoryPage
         error = null;
         detail = null;
         partial = null;
+        sharingRun = null;
+        shareRequest++;
+        preparingShare = false;
+        shareMessage = null;
         recoveryFailed = recoveryUnavailable = false;
         runs.Clear();
         partials.Clear();
@@ -101,8 +111,71 @@ public partial class HistoryPage
         catch (Exception issue) when (ReadError(issue)) { error = "This stored recording could not be read. No data was changed."; }
         finally { busy = false; }
     }
+    private void ShowShare()
+    {
+        if (busy || preparingShare) return;
+        var selected = partial is { SavedLocally: not null } recovered ? recovered.Summary.Id : detail?.Summary.Id;
+        if (selected is null) return;
+
+        sharingRun = selected;
+        shareMessage = null;
+        error = null;
+        focusPending = "history-heading";
+    }
+
+    private bool CurrentShare(Guid id, long request) => !disposed && sharingRun == id && shareRequest == request;
+
+    private async Task OpenShareSheet()
+    {
+        if (preparingShare || sharingRun is not { } id) return;
+        var request = ++shareRequest;
+        preparingShare = true;
+        shareMessage = null;
+        error = null;
+        var opening = false;
+        try
+        {
+            var json = await Task.Run(() => RunJournal.Shared.ReadShareJson(id));
+            if (!CurrentShare(id, request)) return;
+            var cache = FileSystem.CacheDirectory;
+            var path = await Task.Run(() => RunJsonSharing.PrepareFile(cache, json));
+            if (!CurrentShare(id, request)) return;
+
+            opening = true;
+            await RunJsonShareSheet.OpenAsync(path, () => CurrentShare(id, request));
+            if (!CurrentShare(id, request)) return;
+            shareMessage = "Android controls sharing. No recipient delivery is confirmed.";
+        }
+        catch (Exception issue) when (ReadError(issue) || issue is UnauthorizedAccessException or NotSupportedException or Java.Lang.RuntimeException)
+        {
+            if (!CurrentShare(id, request)) return;
+            error = opening ? "Could not confirm the share sheet opened. No delivery is confirmed. Try again."
+                : "The JSON file could not be prepared. Your stored recording was not changed. Try again.";
+        }
+        finally
+        {
+            if (CurrentShare(id, request))
+            {
+                preparingShare = false;
+                focusPending = "share-open";
+            }
+        }
+    }
+
     public async Task GoBack()
     {
+        if (sharingRun is not null)
+        {
+            sharingRun = null;
+            shareRequest++; // A late file read/preparation must never open Android after Back.
+            preparingShare = false;
+            shareMessage = null;
+            error = null;
+            focusPending = "history-share";
+            await InvokeAsync(StateHasChanged);
+
+            return;
+        }
         var selectedId = partial?.Summary.Id ?? detail?.Summary.Id;
         if (selectedId is { } id)
         {
@@ -141,6 +214,7 @@ public partial class HistoryPage
     public async ValueTask DisposeAsync()
     {
         disposed = true;
+        shareRequest++;
         if (module is not null) await module.DisposeAsync();
         GC.SuppressFinalize(this);
     }
