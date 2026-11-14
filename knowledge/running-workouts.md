@@ -144,7 +144,6 @@ Compute supported seconds divided by accepted metres, times 1000. A continuous a
 
 Use the existing filter's quality outcome: invalid/jump/gap/provider loss resets the live chain; duplicate/out-of-order delivery adds nothing and does not destroy newer evidence. Manual/automatic pause and resume, warm-up/main/cool-down reanchors and finish reset the estimate. Planned Work/Recovery can keep a continuous main chain; a real +1-minute extension does not discard trusted movement. Confirmed exact-ten-second Auto correction clears/reacquires live pace without changing raw observations, receipt-tail active time or real commands. Strict aggregate pace and finalized main/split values keep their existing rules. Native GPS/service/snapshot/journal and physical calibration remain acceptance work; no new sensor source, permissions, framework or server is introduced.
 
-
 <a id="pace-trend-direction"></a>
 ### Pace trend direction
 

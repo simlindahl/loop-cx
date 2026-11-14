@@ -70,7 +70,6 @@ New C1 plans use template revision 2; existing active/saved revision 1 plans rem
 
 The latest Core-first direction allows bounded C1/C2 personalizations rather than an arbitrary workout builder. Earlier generic builder/flow/numbering approvals and unmerged Time/Distance/Open prototypes are held pending the Core-first redesign; preserved work is not shipping authority. This supersedes the earlier 3/2 request and the subsequent keep 10/5 decision for current official C1 only, without rewriting historical runs. Reader runtime/design holds, identity/signing and physical acceptance remain in force; no phone update is authorized by this decision alone.
 
-
 <a id="core-first-approved-variants"></a>
 ## C1 official variants and Core-first design · 13–14 November 2026
 
@@ -139,7 +138,6 @@ After opening the concrete study, Simon replied “Ghost-förslaget ser bra ut!�
 Use the [portable Ghost reference](mockups/ghost-run/index.html#ghost-routes) and its scope notes. This approval resolves the prior detailed-layout gate for these states only. It does not approve every gallery destination or any later material redesign. Race identity remains separate from Core/Cx, without RPE or optional pace/HR-zone targets; measured pace/HR remain measurements. Completed-continuous main-route eligibility and immutable source history are unchanged.
 
 Original browser evidence comprises eighteen focused checks and eight visually inspected previews. Portable resource, DOM and CSS verification supports the reference transfer, not app/native/physical acceptance. Static maps/results are synthetic illustrations, not working Maps/GPS, actual Verified records or personal bests. Runtime service integration, real command/navigation behavior, quality thresholds, storage/retry, accessibility, locked-screen and physical acceptance remain required. No account, health permission/write, provider setup or reader-runtime release is implied; the reader hold remains unchanged; live-measurement motion has its separate subsequent approval below.
-
 
 <a id="live-measurement-motion-approval"></a>
 ## Live measurements · visual direction approved 14 November 2026
