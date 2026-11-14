@@ -59,6 +59,55 @@ command() {
 snapshot() {
     adb logcat -d -s LoopRun:I '*:S' -v raw | sed 's/^[[:space:]]*//' | sed -n '/^{/p' | tail -n 1
 }
+capture_stopped_database() {
+    local stage=$1 destination=$2
+    local evidence="verification/c1-ui/strong-smoke/database-$stage"
+    mkdir -p "$evidence/raw"
+    # No writer may run while the complete main/journal/WAL tuple is copied.
+    for attempt in {1..10}; do
+        adb shell 'command -v pidof >/dev/null || exit 1; if pidof se.loopcx.running >/dev/null; then echo running; else echo absent; fi' | tr -d '\r' >"$evidence/pid.txt"
+        if [[ $(cat "$evidence/pid.txt") == absent ]]; then break; fi
+        sleep 1
+    done
+    [[ $(cat "$evidence/pid.txt") == absent ]]
+    adb shell run-as se.loopcx.running ls databases | tr -d '\r' >"$evidence/files.txt"
+    for name in runs-debug.db runs-debug.db-journal runs-debug.db-wal runs-debug.db-shm; do
+        if grep -Fxq "$name" "$evidence/files.txt"; then
+            adb exec-out run-as se.loopcx.running cat "databases/$name" >"$evidence/raw/$name"
+        fi
+    done
+    [[ -s "$evidence/raw/runs-debug.db" ]]
+    adb shell 'command -v pidof >/dev/null || exit 1; if pidof se.loopcx.running >/dev/null; then echo running; else echo absent; fi' | tr -d '\r' >"$evidence/pid-after.txt"
+    [[ $(cat "$evidence/pid-after.txt") == absent ]]
+    git rev-parse HEAD 'HEAD^{tree}' >"$evidence/source.txt"
+    python3 - "$evidence" "$destination" <<'PY'
+import hashlib, json, shutil, sqlite3, sys
+from contextlib import closing
+from pathlib import Path
+evidence, destination = Path(sys.argv[1]), Path(sys.argv[2])
+raw, working = evidence / 'raw', evidence / 'working'
+names = ['runs-debug.db', 'runs-debug.db-journal', 'runs-debug.db-wal', 'runs-debug.db-shm']
+def inventory():
+    return {name: {'bytes': (raw/name).stat().st_size, 'sha256': hashlib.sha256((raw/name).read_bytes()).hexdigest()}
+            if (raw/name).exists() else None for name in names}
+before = inventory()
+(evidence/'raw-inventory.json').write_text(json.dumps(before, indent=2)+'\n', encoding='utf-8')
+working.mkdir(exist_ok=False)
+for name in names:
+    if (raw/name).exists(): shutil.copyfile(raw/name, working/name)
+# Opening only the working tuple allows SQLite's normal hot-journal/WAL recovery.
+with closing(sqlite3.connect(working/'runs-debug.db')) as recovered:
+    integrity = [row[0] for row in recovered.execute('PRAGMA integrity_check')]
+    assert integrity == ['ok'], integrity
+    mode = recovered.execute('PRAGMA journal_mode').fetchone()[0]
+    assert not destination.exists(), 'Never overwrite previous capture evidence'
+    with closing(sqlite3.connect(destination)) as normalized:
+        recovered.backup(normalized)
+assert inventory() == before, 'Raw crash tuple must remain unchanged'
+(evidence/'recovery.json').write_text(json.dumps({'integrity': integrity, 'journalMode': mode,
+    'normalizedBackup': str(destination), 'rawUnchanged': True}, indent=2)+'\n', encoding='utf-8')
+PY
+}
 command start
 for attempt in {1..60}; do
     snapshot > /tmp/run-start.json
@@ -205,7 +254,7 @@ command pause
 sleep 2
 snapshot > /tmp/run-before-death.json
 adb shell am force-stop se.loopcx.running
-adb exec-out run-as se.loopcx.running cat databases/runs-debug.db > /tmp/before-death.db
+capture_stopped_database before /tmp/before-death.db
 sleep 3
 adb logcat -c
 command start
@@ -222,7 +271,7 @@ for attempt in {1..30}; do
 done
 snapshot | grep -F '"Phase":"Finished"'
 adb shell am force-stop se.loopcx.running
-adb exec-out run-as se.loopcx.running cat databases/runs-debug.db > /tmp/after-death.db
+capture_stopped_database after /tmp/after-death.db
 python3 - <<'PY'
 import json, sqlite3
 from pathlib import Path

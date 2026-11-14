@@ -154,9 +154,26 @@ def button(root, label, tap=False):
 
 def scroll_to_top():
     screen_width, screen_height = map(int, re.findall(r"(\d+)x(\d+)", report["size"])[-1])
-    for _ in range(3):
-        adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.3)),
-            str(screen_width//2), str(int(screen_height*0.8)), "400")
+    resets = report.setdefault("scrollResets", [])
+    reset = {"index": len(resets), "topConfirmed": False}
+    resets.append(reset)
+    # A long 200% Work/Saved page can start several screens below its heading.
+    # Confirm the actual own heading inside the viewport, rather than assuming three swipes reach it.
+    for attempt in range(13):
+        root = capture("reset-top-" + str(reset["index"]) + "-" + str(attempt), "")
+        webview = next(n for n in root.iter("node") if n.get("class") == "android.webkit.WebView" and n.get("package") == PACKAGE)
+        vx1, vy1, vx2, vy2 = map(int, re.findall(r"\d+", webview.get("bounds")))
+        for node in root.iter("node"):
+            if node.get("text") != "LOOP Cx" or node.get("class") != "android.widget.TextView" or node.get("package") != PACKAGE:
+                continue
+            x1, y1, x2, y2 = map(int, re.findall(r"\d+", node.get("bounds")))
+            if vx1 <= x1 < x2 <= vx2 and vy1 < y1 < y2 <= vy2:
+                reset.update({"topConfirmed": True, "scanAttempt": attempt})
+                return
+        if attempt < 12:
+            adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.3)),
+                str(screen_width//2), str(int(screen_height*0.8)), "400")
+    raise AssertionError("Could not confirm actual top heading after bounded upward scrolling")
 
 
 def reachable_button(name, label):
