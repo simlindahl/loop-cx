@@ -7,7 +7,7 @@ Revision 5's approved layout with the Basalt palette chosen by Simon on 13 Novem
 
 <a id="statiskt-underlag-för-hela-appen"></a>
 ## Static reference for the whole app
-At Simon's request on 13 November 2026, the [HTML gallery](mockups/index.html) is the ongoing visual reference instead of new PDFs. [Reading guide and requirements mapping](mockups/README.md). The palette, typography and approved revision 5 hierarchy still apply. New screens, states and detailed layouts are preliminary; requesting mockups does not approve their design. Android-owned surfaces are illustrations, not a promise of exact rendering. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
+At Simon's request on 13 November 2026, the [HTML gallery](mockups/index.html) is the ongoing visual reference instead of new PDFs. [Reading guide and requirements mapping](mockups/README.md). The palette, typography and approved revision 5 hierarchy still apply. New screens, states and detailed layouts remain preliminary unless explicitly approved in this record; requesting mockups does not approve their design. Android-owned surfaces are illustrations, not a promise of exact rendering. PDF mockups were removed at Simon's request on 13 November 2026. Earlier revisions remain in Git history.
 
 <a id="historik"></a>
 ## History
@@ -100,3 +100,42 @@ Simon explicitly chose 1–15 whole minutes for each global C1 preparation phase
 ## Timed workout without GPS · 14 November 2026
 
 Simon explicitly approved a user-started ongoing workout timer without GPS. On Android14+, use eligible Location only with granted location access and enabled location; otherwise declare/select Special Use with a truthful subtype for ongoing timed workout phases and visible notification while locked. This adds no health/BLE runtime permission and does not fabricate a device connection. Unknown GPS is not standstill or zero distance. Native denied/disabled checks remain required. Future Google Play Special Use review is an obligation, not guaranteed approval; M4 distribution/payment discovery does not waive it. Human-facing shared labels use **Warm-up and cool-down**, never preparation as the name of cool-down; historical decisions/serialized contracts remain unchanged.
+
+<a id="m1-integration-approval"></a>
+## M1 Settings, audio, sharing and recovery approval · 14 November 2026
+
+Simon explicitly approved all four presented groups: Settings HR connection/zones/audio; History, Health Connect and JSON sharing; Core/shortcut audio policy; and interrupted-recording/storage-error flows. His latest conditions require brand-neutral Heart-rate connection, the two-input HRR calculation/preview and clear actionable-versus-static detail rows. The Settings and History references below preserve the approved phone contents with portable repository-relative resources; review-status text outside the phone frames records approval rather than adding product behavior.
+
+The former manual-zone editor is superseded by entered resting/maximum HR and a read-only calculated preview. The current requested presentation uses a proportional reserve bar and always-visible exact-BPM legend rather than input-like results. At the owner's subsequent explicit request, the bar and small decorative legend swatches use the [local zone-chart color exception](../knowledge/ux-design.md#heart-rate-zone-preview-colors); the preceding neutral-bar presentation is historical. Only the two source values are editable. These visual revisions change no calculation, rounding, saved-input or frozen-history policy. The [integration owner](../knowledge/integrations-data.md#personal-heart-rate-zones) defines those rules; no exact WHOOP calibration/import or medical acceptance is claimed.
+
+The five-minute audio default and previously proposed summary/coaching interpretations are now product decisions. Their single normative owner is [Audio configuration and coaching](../knowledge/running-workouts.md#audio-configuration-and-coaching). Earlier illustration values were not prior authority. Existing Core warm-up/cool-down defaults and historical runs remain unchanged.
+
+Implement the identified existing Settings/History/detail/Work surfaces and behavior without another approval of the same direction. Real permissions, provider acknowledgement, retry/idempotency, persistence, accessibility and physical checks still need verification. No READ permission, server, account integration or automatic WHOOP credit is authorised. External links from a reference provide context and do not approve their destination layouts. Ghost details and the reader runtime hold were not included.
+
+| Reviewed input | SHA-256 |
+|---|---|
+| Original four-group Settings HTML | `25a30a9bc9fe41e8ca04051f5b5048f9bd304aa380e5802619b8b2a762db0568` |
+| Original four-group Settings script | `f3275fa3c8bb6c3ed3f2f1d86ee59fe2ea7781449b01748b58ac641f543101f5` |
+| Latest requested HRR color presentation HTML | `95dc86967a58d8a36f94d9b04bd22bf59297e0a8cb5a8b7f29d71e43293c16e4` |
+| Latest HRR color presentation script | `38552acf6b618f9e6688495a76a3720c50f96fafd2a3c0bd9ada732bd5e12c99` |
+| Latest HRR color presentation stylesheet | `77dccf9c49727d930e61a8a8e5e01d7cf0060a69437079b78608b24d3fa298ee` |
+| History/Health Connect/share/recovery HTML | `7b42aae5e282a8c26188c4f3e9f8b897d2af87d980280b56448644da711112b0` |
+| Core/shortcut audio policy proposal | `d37bad7c4301212aff2a58b39625d3791f86f1f1c5fc0d42f831c7bc10bd5bcf` |
+
+Current portable references: [Settings](mockups/settings-integrations/index.html) and [History/export/recovery](mockups/health-export/index.html), with their scope notes. Original review hashes identify the supplied inputs, not the later portable file bytes. Font bytes are reused from the existing app asset; replacing private absolute resource links, extracting shared-font CSS and updating review captions does not approve a different phone layout. Browser evidence remains static/synthetic, not native or provider acceptance.
+
+<a id="ghost-race-identity-decision"></a>
+## Ghost Run competitive identity · 14 November 2026
+
+Simon clarified: “Ghost Run behöver särskiljas från Cx som en separat tävlingsfeature. RPE behöver i Ghost Run inte definieras/visas, och extra targets som tempo/pulszon är inte heller relevant – det är ju tävling!” The [Ghost owner](../knowledge/ghost-run.md#race-identity-and-applicability) now distinguishes race start/execution/history/export from Core/Cx identity, with no RPE or optional pace/zone targets. Measured HR/pace and race comparisons remain measurements.
+
+This changes race identity and target applicability only. Completed-continuous main-route capture, immutable source C2 history, race-clock/reference/quality/pause rules and physical acceptance are unchanged. It does not broaden source eligibility or authorise a fake C2 template/RPE sentinel. This identity clarification and the four-group approval above did not themselves approve Ghost layouts; the subsequent concrete layout approval below supplies that decision. The reader runtime hold remains separate.
+
+<a id="ghost-layout-approval"></a>
+## Ghost Run detailed layout approval · 14 November 2026
+
+After opening the concrete study, Simon replied “Ghost-förslaget ser bra ut!” to its layout question. This approves the identified twenty-one-state route/reference/start/live/pause/quality/result direction, including the blocked route-save state, uncertainty/off-route Pause training and End attempt actions, and the warning that stops/pauses count in race time. The reviewed HTML SHA-256 is `df9555cc62a38f1208399912a83d5fff2430c031ae8449db1f5bc3d00c3eba92`; the original race-identity binding described a proposal before this later response, not a continuing hold.
+
+Use the [portable Ghost reference](mockups/ghost-run/index.html#ghost-routes) and its scope notes. This approval resolves the prior detailed-layout gate for these states only. It does not approve every gallery destination or any later material redesign. Race identity remains separate from Core/Cx, without RPE or optional pace/HR-zone targets; measured pace/HR remain measurements. Completed-continuous main-route eligibility and immutable source history are unchanged.
+
+Original browser evidence comprises eighteen focused checks and eight visually inspected previews. Portable resource, DOM and CSS verification supports the reference transfer, not app/native/physical acceptance. Static maps/results are synthetic illustrations, not working Maps/GPS, actual Verified records or personal bests. Runtime service integration, real command/navigation behavior, quality thresholds, storage/retry, accessibility, locked-screen and physical acceptance remain required. No account, health permission/write, provider setup or reader-runtime release is implied; the reader hold and separate live-HR exploration remain unchanged.

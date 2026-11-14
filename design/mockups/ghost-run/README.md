@@ -1,0 +1,11 @@
+# Approved Ghost Run reference
+
+Open [index.html](index.html#ghost-routes) locally. The owner approved this concrete twenty-one-state direction after opening the study; the [decision record](../../decision.md#ghost-layout-approval) identifies the original input and scope. It supersedes the matching earlier twenty-state gallery examples and adds the blocked route-save state. Other linked gallery destinations are context, not blanket approval of the whole app.
+
+The states cover route capture/list, record/reference choice, year-best/personal-best/first-time starts, live/paused/uncertain/off-route views, result/unverified/end confirmation, start readiness, blocked save and an Android-owned notification illustration. Stops and training pauses count in race time. Uncertain/off-route states retain Pause training and End attempt. A failed quality check blocks route creation without deleting the original source run.
+
+Ghost is a route race, not Core/Cx conditioning: no RPE or optional pace/HR-zone target is requested or displayed. Measured HR/pace remain measurements. Eligible source capture remains a completed continuous workout's main route only; using a C2-derived route does not rewrite source history or classify the race as C2. The [Ghost specification](../../../knowledge/ghost-run.md) owns clocks, matching, frozen references, quality and actual record eligibility.
+
+Phone contents and CSS preserve the identified reviewed input, with shared repository font bytes, relative context links and insignificant trailing-whitespace normalization. Only outside-phone review captions/status describe the later approval. All route geometry, dates, times, measurements, maps and results are synthetic illustrations. No race clock, GPS, app storage, map provider, health operation or Verified/PB result runs here. Exact Android notification rendering, runtime navigation, accessibility and physical acceptance remain separate. The reader runtime hold and live-HR exploration are unchanged.
+
+Run `node design/mockups/verify-ghost.cjs` from the repository root with Playwright installed. `PLAYWRIGHT_MODULE` may select an existing installation and `PLAYWRIGHT_CHANNEL` an installed browser. Generated evidence goes to the ignored `design/mockups/qa/ghost/` directory. Browser checks support the reference, not app/native/physical acceptance.

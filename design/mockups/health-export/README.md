@@ -1,0 +1,11 @@
+# Approved History, export and recovery reference
+
+Open [index.html](index.html) locally. The sixteen identified states cover saved/history/run details, Health Connect opt-in/status and the Android-owned permission boundary, full JSON sharing disclosure/share-sheet boundary, interrupted recovery, failed save and an inline live storage error. The [decision record](../../decision.md#m1-integration-approval) records the four-group approval and navigation-affordance condition.
+
+Phone contents preserve the identified reviewed input. Private absolute links become repository-relative links, CSS is extracted without changing declarations, and the existing app font replaces an identical embedded font. Outside-phone status captions identify approval and limits. Historical synthetic plan/measurement figures are not current workout defaults. The live storage-error frame approves the error addition in existing Work context, not new workout defaults or a new training layout.
+
+Linked detail rows have a separate decorative chevron and focus/pressed feedback; static values have none. Linked wider-gallery destinations such as maps, zones, splits and Ghost are context only and do not gain detailed-layout approval. Android controls actual permission/share surfaces. Static links illustrating saved/exported outcomes establish no commit, provider acknowledgement or recipient delivery.
+
+The [integration specification](../../../knowledge/integrations-data.md) owns consent, stable record identities, sharing, recovery and truthful failure behavior. Unknown actual stop time remains unknown after local recovery. No real save/retry, health write/read, file creation, share, timer, account or sensor operation runs in this document. The reader runtime hold and Ghost's separate layout approval retain their own scopes.
+
+Run `node design/mockups/verify-integrations.cjs` from the repository root with Playwright installed. `PLAYWRIGHT_MODULE` may select an existing installation; `PLAYWRIGHT_CHANNEL` may select an installed browser. Output goes to `design/mockups/qa/integrations/` and must not be committed. Browser layout/interaction checks do not establish Android text scaling, TalkBack, provider behavior, durability or physical acceptance.

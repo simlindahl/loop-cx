@@ -1054,3 +1054,5 @@ NotificationChecks.Run();
 Console.WriteLine("PASS: notification phase/countdown, actual measurements, pause guidance and unknown values.");
 
 HCWritePlanChecks.Run(args);
+
+HeartRateSettingsChecks.Run();

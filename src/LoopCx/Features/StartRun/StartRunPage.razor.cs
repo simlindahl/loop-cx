@@ -15,6 +15,8 @@ public partial class StartRunPage
     private bool resultPending;
     private string? lastMotionKey;
     private bool managing;
+    private bool showSettings;
+    private LoopCx.Features.Settings.SettingsPage? settingsPage;
     private bool managePending;
     private Guid? editingShortcutId;
     private string orderFeedback = "";
@@ -39,7 +41,7 @@ public partial class StartRunPage
     private bool warmupEnabled;
     private bool cooldownEnabled;
 
-    private string MotionSurface => managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
+    private string MotionSurface => showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
     private string MotionKey => $"{MotionSurface}:{RunService.Snapshot?.Id}:{RunService.Snapshot?.Phase}:{RunService.Snapshot?.Motion?.PauseReason}";
 
     private CoreStartRequest SelectedC1 => statePreferences.SelectedC1;
@@ -201,6 +203,21 @@ public partial class StartRunPage
         Open("shortcut", trigger);
     }
 
+    private void OpenSettingsDestination()
+    {
+        showSettings = true;
+        CoreDialogNavigation.Close = () => _ = InvokeAsync(() => settingsPage?.GoBack() ?? Task.CompletedTask);
+    }
+    private void CloseSettingsDestination()
+    {
+        showSettings = false;
+        settingsPage = null;
+        try { statePreferences = CorePreferences.Load(); }
+        catch (InvalidDataException problem) { error = problem.Message; loadFailed = true; }
+        CoreDialogNavigation.Close = null;
+        focusPending = RunService.Snapshot is null ? "core-settings" : "active-settings";
+    }
+
     private void OpenSettings()
     {
         var settings = statePreferences.WarmupCooldown;
@@ -208,7 +225,7 @@ public partial class StartRunPage
         cooldownEnabled = settings.CooldownMinutes > 0;
         draftWarmup = (warmupEnabled ? settings.WarmupMinutes : 4).ToString(CultureInfo.InvariantCulture);
         draftCooldown = (cooldownEnabled ? settings.CooldownMinutes : 3).ToString(CultureInfo.InvariantCulture);
-        Open("settings", "core-settings");
+        Open("settings", showSettings ? "warmup-cooldown-settings" : "core-settings");
     }
 
     private static string TargetValue(int? value, CoreTargetMode mode) => value is null ? ""
@@ -434,7 +451,8 @@ public partial class StartRunPage
     [JSInvokable]
     public async Task CloseDialog()
     {
-        CoreDialogNavigation.Close = managing ? () => _ = InvokeAsync(CloseManage) : null;
+        CoreDialogNavigation.Close = managing ? () => _ = InvokeAsync(CloseManage)
+            : showSettings ? () => _ = InvokeAsync(() => settingsPage?.GoBack() ?? Task.CompletedTask) : null;
         if (module is not null) await module.InvokeVoidAsync("close");
         dialogMode = null;
         dialogError = null;
