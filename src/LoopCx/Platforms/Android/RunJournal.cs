@@ -66,6 +66,14 @@ public sealed class RunJournal : SQLiteOpenHelper
     public void Commit(RunSaveBatch batch)
     {
         try { CommitTransaction(batch); }
+        catch (SQLiteDatabaseCorruptException error)
+        {
+            throw new RunSaveReadException("Local database is corrupt. No repair or overwrite was attempted.", error);
+        }
+        catch (SQLiteCantOpenDatabaseException error)
+        {
+            throw new RunSaveReadException("Local database could not be opened. Saving cannot be retried in this run.", error);
+        }
         catch (SQLiteException error) { throw new IOException("Recent recording could not be saved.", error); }
     }
 
@@ -86,8 +94,9 @@ public sealed class RunJournal : SQLiteOpenHelper
         db.BeginTransaction();
         try
         {
-            using (var existing = db.RawQuery("SELECT checkpoint FROM runs WHERE id = ?", [state.Id.ToString()])!)
+            try
             {
+                using var existing = db.RawQuery("SELECT checkpoint FROM runs WHERE id = ?", [state.Id.ToString()])!;
                 if (existing.MoveToFirst())
                 {
                     var stored = existing.GetString(0)!;
@@ -98,6 +107,10 @@ public sealed class RunJournal : SQLiteOpenHelper
                         return;
                     }
                 }
+            }
+            catch (SQLiteException error) when (error is SQLiteDiskIOException or SQLiteAccessPermException)
+            {
+                throw new RunSaveReadException("Stored checkpoint could not be read. No repair or overwrite was attempted.", error);
             }
             using var values = new ContentValues();
             values.Put("id", state.Id.ToString());

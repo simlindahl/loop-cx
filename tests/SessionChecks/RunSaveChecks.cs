@@ -78,6 +78,27 @@ internal static class RunSaveChecks
             throw new InvalidOperationException("Known committed revision is idempotent; unreadable stored data is explicitly nonretryable.");
         }
 
+        // Arrange: platform persistence maps known native corruption/read failures to this explicit boundary.
+        IOException[] failures = [new RunSaveReadException("native database corrupt"), new RunSaveReadException("native database cannot open"),
+            new RunSaveReadException("native checkpoint read I/O denied"), new IOException("transaction ABORT"),
+            new IOException("database busy"), new IOException("write full")];
+        foreach (var error in failures)
+        {
+            var failedStore = new RunSaveBuffer();
+            failedStore.Capture(stored, "finish", null);
+            var retryCalls = 0;
+
+            // Act
+            _ = failedStore.Save(_ => throw error);
+            var canRetry = failedStore.Status.CanRetry;
+            _ = failedStore.Save(_ => { retryCalls++; }, true);
+
+            // Assert
+            var retryExpected = error is not RunSaveReadException;
+            if (canRetry != retryExpected || retryCalls != (retryExpected ? 1 : 0))
+                throw new InvalidOperationException("Structural native read failures disable retry; ordinary transaction write failures retain it.");
+        }
+
         Console.WriteLine("PASS: failed/repeated/final saves retain raw events and terminal facts; explicit retry reuses uncertain commit revision.");
     }
 }
