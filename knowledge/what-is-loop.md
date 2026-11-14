@@ -10,7 +10,7 @@ You know how to train. Finding room for it is the harder part now. Work runs lat
 
 LOOP is a repeating sequence of conditioning, strength and mixed movement. Do the next useful session when life allows. It aims at broad, lasting physical capability with fewer decisions, rather than a perfect week or a peak for one event. You can use it with a notebook; the app, a subscription and a wearable are not prerequisites.
 
-This guide explains the [LOOP training-system white paper](training/system.md), an independent account of the system's prescriptions, physiological rationale, evidence and tradeoffs. The guide is a practical way in, not a second programme. The exact combination has not been tested as a complete intervention and does not guarantee health, injury prevention or race readiness.
+This guide explains the [LOOP training reference](training/system.md), an independent account of the system's prescriptions, physiological rationale, evidence and tradeoffs. The guide is a practical way in, not a second programme. The exact combination has not been tested as a complete intervention and does not guarantee health, injury prevention or race readiness.
 
 ## Get started
 
@@ -46,7 +46,7 @@ Do not improvise hanging anchors from furniture or door handles. If a pattern ca
 
 Core uses **two working sets per exercise**, with the next complete repetition no longer possible at the intended range, posture and control: technical failure. End at the last clean repetition. Do not attempt an unsafe failed lift, force pain or continue after losing position. Practice unfamiliar movements before hard sets; reduce load/dose or leave clean repetitions available when needed. Stop for concerning symptoms such as chest pain, faintness or unusual severe breathlessness and seek appropriate help.
 
-**Why this small dose and stopping rule?** Two high-effort sets keep the session simple. Technical failure lets the repetition count respond to the day without estimating repetitions in reserve or forcing a preset daily total. You still judge readiness, rest and safe execution, and use the simple load/variation progression. Recent single-set research suggests modest muscle-growth advantages can occur with failure, without a clear strength advantage; it does not prove technical failure is universally best or validate this exact routine. The [white paper](training/system.md#strength-s1-and-s2) explains the low-volume evidence and its limits.
+**Why this small dose and stopping rule?** Two high-effort sets keep the session simple. Technical failure lets the repetition count respond to the day without estimating repetitions in reserve or forcing a preset daily total. You still judge readiness, rest and safe execution, and use the simple load/variation progression. Recent single-set research suggests modest muscle-growth advantages can occur with failure, without a clear strength advantage; it does not prove technical failure is universally best or validate this exact routine. The [training reference](training/system.md#strength-s1-and-s2) explains the low-volume evidence and its limits.
 
 ### 3. Complete the next suitable session
 
@@ -62,7 +62,7 @@ Returning after a layoff? Rebuild tolerance with familiar work before treating t
 
 Choose one, not all three before moving on. The first emphasizes repeated sprint effort, the second sustained hard aerobic work, the third sustainable threshold-related practice. They overlap; the names do not prove your individual physiological threshold.
 
-The default includes four minutes progressive warm-up and three minutes easy cool-down; readiness can need more. Extend preparation when necessary, particularly before maximal sprinting. No timer establishes that you are safe or ready. SIT is not an automatic next level for someone unfamiliar with sprinting. Counts can be adapted within the [running-workout bounds](running-workouts.md#pass-och-statistik); work/recovery lengths remain fixed and there is no recovery after the final effort. The [white paper's conditioning section](training/system.md#c1-one-interval-option-per-c1-step) explains why these formats and practical doses were chosen without treating the bounds as physiological thresholds.
+The default includes four minutes progressive warm-up and three minutes easy cool-down; readiness can need more. Extend preparation when necessary, particularly before maximal sprinting. No timer establishes that you are safe or ready. SIT is not an automatic next level for someone unfamiliar with sprinting. Counts can be adapted within the [running-workout bounds](running-workouts.md#pass-och-statistik); work/recovery lengths remain fixed and there is no recovery after the final effort. The [reference's conditioning section](training/system.md#c1-one-interval-option-per-c1-step) explains why these formats and practical doses were chosen without treating the bounds as physiological thresholds.
 
 Heart-rate zone intent is not a measured result. Do not accelerate a short effort to chase a lagging pulse, extend a workout to fill high-zone minutes or assume missing data means zero effort. Exact official zone targets are still a product decision; this draft invents none.
 
@@ -120,7 +120,7 @@ Ghost is an optional separate race, not a fifth Core step, an effort target for 
 
 **Why compare with yourself?** Your own route and execution can make progress concrete without a leaderboard ranking people with different histories or opportunities. Ghost can establish a first valid baseline, then use year best or personal best under its route rules; it does not offer arbitrary target ghosts. Practising and choosing the challenge matters more than always winning. This personal-mastery emphasis is a design preference, not proof that self-competition suits everyone. Sustainable participation has value even when no record changes.
 
-Short VR cycling research gives some support for the possibility that self-competition can be enjoyable; a later study in older adults did not detect the same enjoyment advantage. Neither proves outdoor Ghost benefits, lasting adherence or universal superiority over competing with others. LOOP's preference for voluntary personal mastery is a design choice. The [white paper's generic self-competition rationale](training/system.md#voluntary-challenge-and-self-competition) separates evidence from that choice without describing any particular feature.
+Short VR cycling research gives some support for the possibility that self-competition can be enjoyable; a later study in older adults did not detect the same enjoyment advantage. Neither proves outdoor Ghost benefits, lasting adherence or universal superiority over competing with others. LOOP's preference for voluntary personal mastery is a design choice. The [reference's generic self-competition rationale](training/system.md#voluntary-challenge-and-self-competition) separates evidence from that choice without describing any particular feature.
 
 ### Recovery without another score to obey
 
@@ -130,7 +130,7 @@ Eat sufficiently, vary food and protect sleep opportunities. A wearable is conte
 
 All explanatory text is intended for offline bundling. Internal references should be bundled too; external research links require internet and remain optional. This revised draft supersedes neither the existing reader implementation hold nor the need for content/design review.
 
-- [LOOP training-system white paper](training/system.md): independent prescriptions, physiological rationale, near-claim citations and numbered bibliography. Publication/migration details are separate from the paper.
+- [LOOP training reference](training/system.md): independent prescriptions, physiological rationale, near-claim citations and numbered bibliography. Publication/migration details are separate from the reference.
 - [ACSM resistance-training position stand, 2026](https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/): adaptable programming; not proof of exact LOOP defaults.
 - [CDC intensity guidance](https://www.cdc.gov/physical-activity-basics/measuring/index.html): practical talk cues, not commercial-zone equivalence.
 - [Schumann et al., 2022](https://link.springer.com/article/10.1007/s40279-021-01587-7): concurrent-training transfer limits.

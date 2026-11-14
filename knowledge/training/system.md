@@ -1,255 +1,278 @@
 ---
-type: Training System White Paper
+type: Training Reference
 ---
-# LOOP: A practical training system for general physical capacity
+# LOOP: Training principles and practical programming
 
-**LOOP by Simon Lindahl · White paper draft for review**
+**LOOP by Simon Lindahl · Advanced training reference · Draft for review**
 
-## Abstract
+A useful training system has to work on ordinary weeks, not only on the weeks when everything goes to plan. LOOP starts from that constraint. Conditioning, strength and mixed movement have a clear place, but the calendar can change without turning missed sessions into debt.
 
-LOOP combines interval conditioning, steady aerobic work, calisthenics-led strength with a deliberately loaded hip hinge, and a short mixed-modal finish in a repeating sequence. Its central premise is that an experienced adult's training will be interrupted by work, family, travel and recovery needs. Rather than prescribe a perfect calendar, it provides a stable order, a small set of movement patterns and explicit rules for adjusting effort and load. The intended outcome is broad, usable physical capacity sustained over time, not the largest possible adaptation in one discipline.
+The aim is broad physical capacity: enough aerobic endurance to keep working, enough strength to handle meaningful resistance, and enough control to use both when tasks become varied or tiring. Calisthenics is the primary strength method, complemented by a loaded Romanian deadlift. Hard intervals, steady conditioning and a short mixed finish supply different exposures around that strength work.
 
-This paper explains the physiological rationale, practical prescriptions and deliberate compromises. It distinguishes findings from training studies, indirect transfer to LOOP and choices made for simplicity. Component methods have scientific support; the complete sequence and its exact doses have not been tested together. Low decision cost is an intended advantage, not an established adherence outcome. A rotation does not guarantee sufficient weekly exposure, technical failure is not proved superior to other stopping rules, and voluntary self-competition is not necessary for health. These boundaries are central to the system rather than reasons to present it as universally optimal.
+This reference is for experienced trainees, coaches and practitioners who want to understand both the prescription and the reasoning. The central question is what each choice contributes, what it costs in time and recovery, and when it needs adjusting. The doses give a usable starting structure; judgement turns that structure into appropriate training.
 
-## 1. Purpose, intended user and assumptions
+## Build a broad base without trying to maximize everything
 
-### General capability under imperfect conditions
+Strength, endurance and movement skill support each other, but one does not stand in for the others. A strong person may lack running tolerance. A runner with good aerobic capacity may still need to practise carrying, hanging or controlling an unfamiliar movement. Broad preparation means covering these demands deliberately, not assuming one demanding session develops them all equally.
 
-LOOP aims to develop useful strength, aerobic endurance, capacity for harder efforts and the ability to combine movement under manageable fatigue. These capacities overlap but are not interchangeable. A person may be strong without tolerating much running, or aerobically fit without the grip or movement skill needed for an obstacle. General preparation broadens the base; it cannot supply every sport's specific skill.
+LOOP accepts a generalist's tradeoff. It prioritizes repeatable training across a small number of patterns rather than maximizing one lift, muscle group or race result. When a specific performance becomes the main objective, more specific practice or a different allocation of volume may be warranted. That is a reason to adapt the training, not a failure of general preparation.
 
-The intended participant has prior training experience and can select suitable exercises, judge movement quality and respond to recovery. This assumption limits generalization. Experience in one activity does not establish readiness for maximal sprinting, jumping or a new loaded movement. Return after a layoff, pain or uncertainty calls for practice, reduced exposure and individual assessment where appropriate, rather than treating the standard session as an entry test.
+Minimalism helps make those choices. Before adding another exercise or session, ask which important need it meets and whether an existing element could be adapted instead. A small useful addition is different from collecting a separate drill for every possible weakness. Pareto is a prioritization idea here, not a measured claim that a particular fraction of training produces 80 percent of all possible benefit.
 
-The defining practical assumption is **life will interrupt training**. A sequence can be resumed without allocating missed sessions to a calendar. This may reduce planning friction, but it also gives up precise control over frequency. LOOP therefore requires attention to what is actually completed, not merely confidence that its sequence looks balanced.
+The system assumes enough experience to choose a suitable exercise and judge movement quality. Experience is also specific: being comfortable with heavy lifting does not establish sprint readiness, and cycling fitness does not establish running impact tolerance. Learn unfamiliar work and rebuild exposure after a layoff before treating the standard doses as targets.
 
-### Minimalism as a constraint, not an efficacy percentage
-
-The aim is sufficient useful stimulus with few decisions. Add an element for an important unmet need, after considering replacement, simplification or adaptation of existing work. Accept smaller gaps rather than optimizing every attribute separately. This is a Pareto-inspired prioritization choice, not a claim that a measured 20 percent of training produces 80 percent of possible results.
-
-The main tradeoff is breadth and repeatability versus specialization. Maximizing a lift, muscle size, sprint speed or race performance can require more targeted practice, volume or periodization. The system is not a rehabilitation prescription, a promise of injury prevention or a guarantee of readiness for an obstacle course race. Recovery and safe execution take priority over completing a nominal dose.
-
-### How evidence is used
-
-This is a narrative synthesis, not a systematic review of all LOOP-relevant literature. Citations support particular claims, with population, intervention and transfer limits stated where consequential. A trial of a different interval format can support a training principle without validating the exact prescription here. A plausible mechanism can explain a choice without demonstrating that choice produces a superior outcome. The practical defaults remain identifiable as LOOP programming decisions.
-
-## 2. Physiological framework: complementary demands
-
-### Conditioning: oxygen delivery and muscular use
-
-Aerobic performance depends on more than a heart-rate reading. Oxygen uptake reflects delivery through the circulation and extraction/use by working tissue; cardiac output and the arterial–venous oxygen difference describe different parts of this relationship. Improvement in measured maximal oxygen uptake does not by itself identify which part changed.
-
-Macpherson and colleagues compared six weeks of running sprint intervals with continuous endurance training in 20 young adults. Both groups improved maximal oxygen uptake and 2,000 m performance, while maximal cardiac output increased only in the endurance group. Their interpretation of a greater peripheral contribution in the sprint group is not a complete direct measurement of every mechanism. The study shows why similar performance outcomes need not imply identical central adaptation; it was not an equivalence trial. [3](#ref-3)
-
-Burgomaster and colleagues measured specific muscle adaptations after cycling training: several oxidative/metabolic markers improved with both low-volume sprint intervals and substantially more continuous endurance work. Changes included proteins or activity associated with fuel use, alongside altered substrate use during a standardized subsequent ride. This is evidence of shared oxidative adaptation, not a unique mitochondrial effect of one easy-intensity band or proof that short sprints replace all endurance exposure. [5](#ref-5)
-
-The systems supplying energy operate together. A sprint is not purely anaerobic, recovery between sprints has energetic demands, and easy work is not physiologically irrelevant because it feels comfortable. LOOP separates formats to organize the emphasis and tolerable dose, not to assign each session to an isolated energy compartment.
-
-### Strength: force, coordination and repeated loading
-
-Strength is the ability to produce force in a task. Repeated resistance work supplies a stimulus that can improve force performance and muscle size; execution and practice determine how that capacity is expressed. A heavier lift is not a direct assay of every underlying tissue adaptation. Balance-limited repetitions are not equivalent to repetitions limited only by the force capacity of the target muscles.
-
-The 2026 ACSM overview of reviews covers a broad healthy-adult evidence base and supports progressive resistance training across varied prescriptions. It distinguishes goals: arrangements useful for strength are not necessarily those maximizing hypertrophy or power. This supports a stable, progressively challenging strength component, while leaving LOOP's precise exercise selection and two-set organization as practical choices. [2](#ref-2)
-
-### Mixed work: integration, not a separate compartment
-
-Carrying, locomotion and hanging combine local muscular demands with whole-body work and task transitions. They are candidates for practising movement under fatigue. This does not establish an adaptation unavailable elsewhere, or prove transfer to every obstacle or sport. The intended contribution is practice combining capacities while preserving quality, not replacing dedicated strength, aerobic work or technical skill.
-
-## 3. Conditioning prescriptions and their rationale
-
-Choose a familiar, technically simple modality such as running, cycling, rowing or an air bike. A difficult lift or early local muscular failure should not determine the interval stimulus. Modality matters: cycling evidence cannot establish running impact tolerance, and running fitness does not eliminate a need to learn rowing technique.
-
-<a id="c1-one-interval-option-per-c1-step"></a>
-### C1: one interval option per conditioning step
-
-The three options emphasize different kinds of hard work. Choose one for a C1 session; they are not three consecutive sessions to finish before strength.
-
-| Variant | Practical purpose | Default work and recovery | Main set / total with 4 min warm-up and 3 min cool-down |
-|---|---|---|---|
-| C1.1 · Sprint intervals, SIT | Repeated maximal, all-out efforts with substantial easy recovery | 7 × 30 sec work; 6 × 3 min recovery | 21:30 / 28:30 |
-| C1.2 · Aerobic intervals, HIIT | Sustained, controlled hard efforts; repeatable aerobic-power practice | 5 × 3 min work; 4 × 2 min recovery | 23 / 30 min |
-| C1.3 · Threshold intervals | Controlled sustained effort near the individual's threshold; sustainable pacing | 3 × 6 min work; 2 × 3 min recovery | 24 / 31 min |
-
-No recovery follows the final work effort. Counts, recovery ratios and preparation times are pragmatic defaults, not independently validated optimal doses. Adapt exposure to current tolerance; more repetitions or harder effort is not an automatic progression. Maximal SIT is not the next level for somebody unfamiliar with sprinting.
-
-**SIT: short work is not necessarily a small burden.** Macpherson's running trial used 4–6 all-out 30-second efforts with four minutes recovery, three times weekly; not seven efforts with three minutes recovery. Positive aerobic and running-performance findings support the possibility of adaptation from this family, not direct validation of LOOP's dose or suitability for all trainees. [3](#ref-3)
-
-**HIIT: sustained work gives a different exposure.** Hov and colleagues randomized 48 aerobically well-trained men to eight-week interval-training interventions. Four four-minute aerobic intervals improved maximal oxygen uptake more than the tested sprint formats, although 3,000 m performance improved across groups. Lower work time is not necessarily equally effective for the same objective; sprints should not be promoted as universally superior. Their oxygen-pulse measure was a proxy, not direct stroke-volume measurement. Population, doses and formats differ from five three-minute efforts. [4](#ref-4)
-
-Seiler and colleagues compared interval formats in recreational cyclists over seven weeks, combining interval and easy sessions. Their results illustrate interaction between work duration and intensity: the middle-duration format produced the largest combined improvement across selected outcomes. This was not a study isolating recovery ratio, and its composite result must not be relabelled as an identical percentage gain in maximal oxygen uptake. Consider the whole dose rather than choosing the highest intensity alone. [6](#ref-6)
-
-**Threshold work: intention is not an automatically known boundary.** Henritze and colleagues studied cycling at and above a measured lactate threshold in college women over twelve weeks. Threshold-related outcomes changed without a significant within-group rise in maximal oxygen uptake. This supports distinguishing sustainable submaximal capacity from the aerobic ceiling. The older threshold definition, high frequency and cycling modality do not establish three six-minute running efforts as optimal. [7](#ref-7)
-
-The formats overlap in adaptation. Threshold work need not produce the same high-zone minutes as aerobic-power work. Time with a high pulse is not identical to time near maximal oxygen uptake; Hov's representative session data illustrate that difference. High-zone time is not a completion score or a reason to prolong a session beyond its intended dose. [4](#ref-4)
-
-### C2: easy work that remains genuinely easy
-
-The default is **45 minutes of steady conditioning**, ordinarily easy running when tolerated, with cycling, rowing or another suitable modality available. Keep conversation comfortable and choose a sustainable effort. There are no separately prescribed warm-up/cool-down phases for C2; begin sensibly rather than interpreting that absence as a requirement to accelerate abruptly.
-
-The easy emphasis creates room for aerobic exposure without making every conditioning session a hard test. Continuous endurance work can contribute central and muscular adaptation, while interval formats also produce oxidative changes. The rationale is complementary exposure and recoverability, not a unique mitochondrial zone or exclusive fat-use benefit. The cited short studies do not establish 45 minutes as a universal minimum, optimum or sufficient total endurance dose. [3](#ref-3), [5](#ref-5)
-
-An easy label cannot establish how much training has accumulated. One steady session every two weeks supplies a different exposure from one every few days. Interpret duration and frequency alongside prior tolerance and other physical activity.
-
-### Intensity: useful signals, imperfect proxies
-
-Heart-rate zones, breathing, pace, power and subjective effort answer related but different questions. Heart-rate reserve adjusts the available range for resting heart rate; a chosen percentage remains a prescription method, not direct measurement of a personal metabolic threshold. Mann and colleagues explain the physiological and practical limits of relative-intensity methods, including variation remaining after normalization. [9](#ref-9)
-
-Iannetta and colleagues assessed 100 women and men using incremental testing and a sustained exercise assessment. Threshold-related boundaries occurred at widely varying percentages of maximal heart rate. Fixed percentages did not place everybody in the same metabolic domain. This was a physiological comparison, not a long-term trial showing one prescription method causes better outcomes. Its threshold definitions cannot be mapped without qualification onto every five-zone scheme. [8](#ref-8)
-
-LOOP uses Zone 2 to describe C2's easy intention, not a universally measured threshold. Comfortable conversation is a practical cue, not an exact conversion to a commercial zone. Pulse response develops during an effort, so do not accelerate a short sprint solely to chase a reading. Heat, fatigue and conditions affect interpretation. No new fixed zone prescription follows. An absent or unreliable measurement supplies no evidence that the intended intensity was attained; safe familiar effort can still guide participation.
-
-## 4. Strength: selection, dose and progression
-
-### Calisthenics as the primary method
-
-LOOP prioritizes calisthenics: progressively challenging movement using bodyweight as the main resistance. This is the primary strength method, not merely an equipment-neutral alternative to machines or free weights. It fits the system's emphasis on body control, relative strength and training that remains practical when time and circumstances change.
-
-The practical rationale is to reduce travel, equipment changes and setup decisions where possible. Many variations need little or no purchased equipment, and a simple setup can be portable. These are intended advantages, not measured time savings or a promise that every exercise is free or possible anywhere. Safe pulling still requires an appropriate anchor or apparatus; some movements, spaces and progressions have real costs and access constraints.
-
-Progression is broader than adding repetitions indefinitely. Change leverage, assistance, controlled range of motion or unilateral demand, then use weighted variations when useful. These provide a broad scalable repertoire, not literally unlimited progression for every movement or person. Choose a version that supplies sufficient resistance without allowing balance, complexity or an uncontrolled range to replace the intended strength stimulus.
-
-Kikuchi and Nakazato compared adjusted low-load push-ups with bench press at 40 percent of one-repetition maximum in 18 young, untrained men over eight weeks, twice weekly. Both groups improved measured muscle thickness and strength with similar outcomes. This supports the usefulness of an appropriately loaded bodyweight pressing exercise; it does not establish universal calisthenics superiority, equal results across every movement or uniquely greater cardiovascular benefit. [28](#ref-28)
-
-<a id="strength-s1-and-s2"></a>
-### S1 and S2: stable patterns with different priorities
-
-Use two working rounds in the same order each time:
-
-| Session | Exercise order in each round |
-|---|---|
-| S1 · Horizontal emphasis | Romanian deadlift → horizontal pull → pistol-squat progression → horizontal push |
-| S2 · Vertical emphasis | Pistol-squat progression → vertical pull → Romanian deadlift → vertical push |
-
-One working set of each exercise per round gives **two working sets per exercise**, and two per leg for the pistol progression. Warm-up, ramp-up sets and suitable quality jumps precede working rounds and do not count as working sets. Hinge and squat recur in both sessions; pull/push directions complement each other. S1 prioritizes the hinge and S2 the squat by order, without adding sets.
-
-<a id="exercise-order-and-exposure"></a>
-**Pistol squat is a multi-objective choice.** It combines unilateral knee-dominant work with balance, control and substantial usable range. These demands can limit loading before the leg muscles' force capacity is exhausted. LOOP accepts that compromise; it does not claim superiority to heavy bilateral squatting for maximal knee-dominant strength. Use support, a stable box or an easier progression through a controlled pain-free range. Added difficulty is useful only with stable quality.
-
-**Loaded RDL is a deliberate complement and exception.** Providing enough progressively adjustable lower-body and hip-hinge resistance through bodyweight alone becomes practically harder for a trained person. External load makes this stimulus more straightforward to scale without requiring increasingly elaborate balance or leverage tasks. RDL therefore supplies a loadable posterior-chain movement alongside the calisthenics emphasis; it does require suitable weights and space. Conventional deadlifting remains a useful skill rather than a mandatory standard. This is a practical loading and movement-selection rationale, not proof that bodyweight cannot train the posterior chain or that this exact pairing is superior in long-term comparisons.
-
-Use scalable bodyweight rows, push-ups, pull-ups and suitable pressing/squat progressions as the first route through the patterns. Assistance, rated suspension equipment, bands or added weights can make the selected version workable; gym machines or free-weight alternatives remain useful when circumstances require them. Available load or a safe vertical-pull setup can become a genuine limitation. Do not improvise a hanging anchor or describe a horizontal row as identical to a vertical pull.
-
-### Why two sets, and what does failure mean?
-
-Two demanding working sets keep the session small and repeatable. They are not asserted to maximize every adaptation. Schoenfeld and colleagues' meta-analysis found a graded relationship between weekly resistance-training volume and muscle growth. Its weekly groups cannot be equated to sets per irregular LOOP rotation or used to identify two sets as optimal. When hypertrophy becomes the primary aim, deliberately modest volume can be a limitation rather than a virtue. [10](#ref-10)
-
-The stopping rule is **technical failure**: another complete repetition would no longer meet intended range, posture and stability. End at the last clean repetition; do not provoke an unsafe failed lift or continue after losing position. Balance or technique may limit a pistol or RDL before strict muscular failure. That distinction is intentional.
-
-The reason for choosing this endpoint is a simple high-effort rule for a small number of sets. Repetitions can respond to that day's capacity without requiring a precise repetitions-in-reserve estimate or a predetermined repetition total for every session. This does not eliminate judgement: exercise variation/load, readiness, rest and safe technique still matter. The progression ranges below guide future load/variation decisions rather than compelling completion of a fixed daily count.
-
-Evidence depends on the outcome and prescription. Grgic and colleagues' broad failure-versus-non-failure synthesis found no significant overall advantage for strength or hypertrophy, with subgroup qualifications; that average alone does not settle the value of effort in a very low-volume routine. [11](#ref-11) In Hermann and colleagues' 2025 *Without Fail* trial, 42 resistance-trained men and women were assigned to failure or two repetitions in reserve for one set of nine exercises, twice weekly for eight weeks. Both conditions improved most outcomes; several hypertrophy measures tended to favor failure, with generally modest absolute differences. Strength and local muscular endurance gains were similar, and the jump/power finding remained uncertain. This is relevant single-set evidence, not direct proof for two-set LOOP or for equating technical-form failure with momentary muscular failure. [26](#ref-26)
-
-Robinson and colleagues' exploratory meta-regressions associated closer estimated proximity to failure with greater hypertrophy, but found a negligible relationship with strength gains. Models adjusted for load, volume-equating method, duration and training status; fit was modest and repetitions in reserve were estimated from study descriptions. This supports taking effort seriously while retaining uncertainty about an exact endpoint. It is not a direct experiment establishing a low-volume interaction or universal superiority of failure. [27](#ref-27)
-
-LOOP's endpoint therefore combines a low-decision-cost design choice with evidence that high effort can matter for muscle growth, rather than claiming failure is always necessary or uniquely effective. Practice unfamiliar work first; reduce load/dose, leave clean repetitions available or rest when needed. A set is not a test to pass despite risk.
-
-### Rest supports the next useful set
-
-Start with roughly **60 seconds between exercises**, extending it when breathing, grip, attention or local fatigue would impair quality. Allow around 15–30 seconds or longer between sides when useful. Circuit order is not a conditioning target. Time between different exercises is not identical to time before repeating the same muscle task.
-
-A review of 23 studies, mostly in men, suggests longer rest can better support maximal strength gains in trained participants. Sixty seconds is a convenient starting point, not an evidence-based ceiling or best value for all goals. The next set should remain safe and productive, rather than start merely because a stopwatch has run out. [12](#ref-12)
-
-### Slow, quality-led progression
-
-For loaded strength movements, use **6–10 controlled repetitions** as a pragmatic working range. Make a small available load increase when both sets reach roughly **8–10 clean repetitions** at technical failure, with comparable range and control. Repetitions may drop after an increase. For bodyweight work, progress difficulty or add load when both sets reach **20 clean repetitions**. Support and range may need adjustment before extra load in a pistol progression.
-
-These thresholds simplify progression; they are not biological transition points. Improvement means more capacity at comparable execution, not less range or more momentum. Progressive resistance has broad support, while these exact triggers remain LOOP choices. [2](#ref-2)
-
-## 5. M: integrating work without sacrificing the main stimulus
-
-After S1 and S2, normally use **10–15 minutes** of mixed activity. Strength comes first to protect its quality and avoid turning mixed work into another heavy strength round. M's conditioning purpose takes priority: simple locomotion/cyclical work, manageable resistance and controlled transitions rather than difficult lifts or local failure under fatigue.
-
-One OCR-inspired example, repeated in controlled flow within the available time:
-
-1. Running or suitable locomotion for about **1–2 minutes**.
-2. Farmer carry for **40–60 metres** with a controllable load.
-3. Optionally up to **five controlled jump squats**, only while landings remain good; otherwise omit them.
-4. Dead hang for **30–45 seconds**, ending before grip failure; shorten or support the feet as needed.
-
-Not every component needs to fit every session. Adapt to space, equipment and fatigue left after strength. Reduce or omit M when symptoms, strength performance or recovery warrant it. Jumps under fatigue do not replace quality jumps before strength. These amounts illustrate a manageable format, not measured minimum effective or optimal doses.
-
-Combining conditioning and resistance work has tradeoffs rather than a simple prohibition. Schumann and colleagues synthesized 43 studies: maximal-strength and hypertrophy outcomes did not differ significantly overall from strength training alone, while explosive-strength development was attenuated, particularly in same-session comparisons. Non-significance is not equivalence, and the interventions were not LOOP's short mixed finish. Strength-first is a quality-priority decision, not proof that this exact order eliminates interference. [13](#ref-13)
-
-M adds experience of moving, gripping and carrying while tired. Transfer to an obstacle remains partly task-specific: hanging does not establish climbing skill, carrying is not complete obstacle rehearsal, and gym exposure cannot guarantee race readiness. If mixed work repeatedly reduces the quality of important sessions, adjust its dose instead of defending it merely because it appears in the sequence.
-
-## 6. Rotation, interruptions and autoregulation
+## Let the rotation organize order, then judge the actual dose
 
 **C1 → S1 + M → C2 → S2 + M → repeat.**
 
-There are no fixed weekly quotas or scheduled rest days. Rest occurs through circumstances and deliberate recovery choices. M belongs after strength, not as a fifth step. Normally continue with the next session after a break; do not compress missed work to catch up. Restarting at C1 can be practical, but repeated restarts can quietly remove strength or easy conditioning.
+| Step | Main task | What to protect |
+|---|---|---|
+| C1 | One selected interval format | Its intended effort and repeatable execution |
+| S1 + M | Horizontal-emphasis strength, then mixed conditioning | Strength quality before the finish |
+| C2 | Easy, steady conditioning | An effort that remains genuinely easy |
+| S2 + M | Vertical-emphasis strength, then mixed conditioning | The complementary patterns and recovery |
 
-The sequence regulates order, not frequency. Insufficient stimulus can reduce adaptations. Mujika and Padilla's review describes short-term detraining, including cardiovascular and metabolic changes depending on previous training. It does not establish an exact resumption schedule or validate LOOP's no-catch-up rule. That is a practical way to avoid compensatory overload, not a conclusion from a trial of this rotation. [17](#ref-17)
+M follows strength; it is not a fifth rotation step. There are no fixed weekly quotas or scheduled rest days. Life will supply some interruptions, and you should deliberately choose rest when recovery requires it. Normally continue with the next step afterward rather than compressing missed work into the next few days.
 
-Record enough to interpret exposure: session type, exercise/load/repetitions or conditioning duration, and one useful note on execution/recovery. Compare patterns rather than treating one poor day as a trend. Sleep, food, stress, illness, terrain and preceding work affect performance. A reduced session may preserve participation while supplying less stimulus than a full one; both facts can be true.
+The benefit is simple resumption. The cost is that order does not control frequency. A rotation completed over fourteen days supplies less exposure per week than the same rotation completed over seven. Repeatedly restarting at C1 can also quietly remove strength or easy conditioning. Look at completed work, not just the balanced sequence on paper.
 
-Adjust when necessary: rest, reduce load or repetitions, shorten conditioning or omit M. Resume ordinary work as tolerance permits. A missed session alone does not require a deload; sustained fatigue, falling performance or symptoms can justify one. A substantial layoff calls for rebuilding tolerance rather than immediately resuming every former dose.
+This matters because adaptations need an ongoing stimulus. Detraining research describes cardiovascular and metabolic changes when training becomes insufficient, with the response depending on prior training and the interruption. It supports paying attention to lost exposure, not a universal countdown after which all fitness disappears. LOOP's no-catch-up rule is a practical load-management choice: resume useful work without trying to repay the calendar. [17](#ref-17)
 
-For external health context, WHO recommends adults accumulate at least 150 minutes moderate or 75 minutes vigorous aerobic activity weekly, or an equivalent mix, with muscle strengthening on two or more days. Everyday activity contributes. These population recommendations are not personal training targets, but show why an indefinitely slow rotation cannot be assumed to provide sufficient activity. [1](#ref-1)
+For health context, WHO recommends adults accumulate at least 150 minutes moderate or 75 minutes vigorous aerobic activity weekly, or an equivalent mix, alongside muscle strengthening on two or more days. Everyday activity contributes. These are population recommendations rather than a personal programme, but they make an important point: a very slowly completed rotation cannot automatically be assumed to provide enough activity. [1](#ref-1)
 
-## 7. Preparation, explosive exposure and mobility
+## Conditioning: choose the stimulus before chasing intensity
 
-### Readiness rather than a ritual
+### Aerobic development involves delivery and use
 
-Warm up with light movement, rehearse the day's patterns and progressively approach the required load/speed. Fradkin and colleagues found performance benefits across many assessed criteria, with variation among methods and studies. This supports purposeful preparation, not a guarantee that four minutes suffices before maximal efforts or proof of injury prevention. [14](#ref-14)
+Aerobic performance depends on getting oxygen to the working muscles and using it there. Cardiac output and the arterial–venous oxygen difference describe different parts of oxygen uptake. A higher VO₂max does not, by itself, reveal how much each part changed.
 
-C1's **four-minute progressive warm-up and three-minute easy finish** are simple defaults. Extend preparation as needed, especially before maximal SIT; elapsed time does not establish readiness. Before S1/S2, rehearse movements and use lighter ramp-up sets before working sets. Allow more time rather than rushing a demanding load progression.
+Training can improve related outcomes through different routes. In a running comparison, sprint intervals and continuous endurance work both improved VO₂max and performance, but maximal cardiac output increased only after continuous endurance work. That result helps explain why similar performance changes need not mean identical central adaptations. It does not identify every peripheral mechanism. [3](#ref-3)
 
-An easy finish can give a comfortable transition. Van Hooren and Peake explain that active cool-down often changes blood-lactate clearance without consistent evidence of better next-day performance, soreness or injury prevention. Faster lactate decline is not a general recovery certificate. Three minutes is a chosen practical ending, not a universally effective recovery intervention. [15](#ref-15)
+Muscle-level work gives another part of the picture. Burgomaster and colleagues found changes in oxidative/metabolic markers and subsequent fuel use after both low-volume sprint intervals and traditional endurance cycling. Easy work is therefore not a uniquely mitochondrial zone, and short hard work is not purely anaerobic. The methods overlap in adaptation while imposing different work, recovery and practical demands. [5](#ref-5)
 
-### Explosiveness without another training day
+For programming, the implication is to retain complementary exposures. Do not assume the shortest hard session replaces every benefit or tolerable volume of steady work. Equally, do not dismiss comfortable conditioning because it lacks the immediate fatigue of intervals.
 
-When suitable, include **3 × 3 standing long jumps in S1** and **3 × 3 vertical jumps in S2**, after becoming warm and before loaded working sets, with generous rest. Start with easier submaximal versions/lower exposure if unfamiliar. Omit when pain, unusual fatigue, deteriorating landings or an unsuitable environment undermines quality. Separate acceleration work is not a standard Core requirement; specific speed demands may call for temporary specialization.
+Choose a familiar, technically simple modality: running, cycling, rowing or an air bike can all serve the conditioning purpose. Avoid allowing a difficult lift, unfamiliar technique or early local muscle failure to determine the session before its conditioning stimulus has developed.
 
-Plyometric-training studies support improved jumping and other performance outcomes across interventions, but do not establish this exact nine-jump exposure as sufficient for everyone. Oxfeldt and colleagues reviewed healthy adults training for at least four weeks: support for the method family, not direct validation of the integrated dose. [25](#ref-25)
+<a id="c1-one-interval-option-per-c1-step"></a>
+### C1: three options, each with a different job
 
-### Mobility and balance when a limitation matters
+Choose one C1 format. The options are alternatives for that step, not three sessions to complete before strength.
 
-Use controlled, individually suitable range in normal exercises. Add focused mobility for a meaningful limitation rather than a compulsory ritual. If balance needs attention, around **20–30 seconds single-leg balance per side** can fit existing preparation. A gentle optional routine can include cat–cow, hip rotation, a comfortable squat position and shoulder movement, paced by relaxed breathing without forced end ranges.
+| Variant | Default work | Easy recovery between efforts | Main set | Total with 4 min warm-up / 3 min cool-down |
+|---|---|---|---|---|
+| C1.1 · Sprint intervals, SIT | 7 × 30 sec maximal, all-out | 6 × 3 min | 21:30 | 28:30 |
+| C1.2 · Aerobic intervals, HIIT | 5 × 3 min controlled hard work | 4 × 2 min | 23 min | 30 min |
+| C1.3 · Threshold intervals | 3 × 6 min controlled sustained work | 2 × 3 min | 24 min | 31 min |
 
-Feeling less stiff does not establish accelerated recovery. Afonso and colleagues found no clear post-exercise stretching benefit for strength recovery or delayed soreness across a limited, often high-bias evidence base. This does not establish that stretching cannot improve range or be pleasant; it limits a particular recovery claim. [16](#ref-16)
+There is no recovery after the final work effort. Keep the purpose of the selected format intact when adjusting exposure to current tolerance.
 
-## 8. Recovery and everyday support
+**SIT asks for repeated maximal effort, not hurried recovery.** The long easy intervals allow a demanding sprint task to be repeated. It remains a substantial session even though the accumulated work time looks short. Running SIT research supports aerobic and performance adaptations, but a frequently cited protocol used four to six 30-second efforts with four-minute recoveries. LOOP's seven efforts and three-minute recoveries are a practical prescription, not a reproduction of that experiment. [3](#ref-3)
 
-Training is one source of load among work, family, sleep disruption and other stress. Recovery is not a binary state certified by one score. Ordinary fatigue may be compatible with useful training; marked fatigue, illness or symptoms can call for rest or reduced work. Consistency does not by itself prevent injury. Stop for concerning symptoms such as chest pain, faintness or unusual severe breathlessness and seek appropriate help; this framework cannot diagnose the cause.
+Maximal effort is also a skill and a loading demand. Use appropriate conditions and sufficient preparation. SIT is not an automatic progression for someone unfamiliar with sprinting or returning from a layoff. More repetitions are not necessarily a better session if quality or tolerance deteriorates.
 
-Eat sufficiently and with variety. Vegetables, fruit, legumes, whole grains and suitable fat/protein sources support a repeatable pattern without obligatory calorie or macro logging. Consider carbohydrate availability when conditioning demands increase. Persistent under-fuelling deserves attention alongside sleep, stress and load, rather than assuming every difficult session has one nutritional cause.
+**Aerobic HIIT makes room for sustained hard work.** A three-minute effort gives breathing and cardiovascular demand time to develop while asking for a pace or output that can be repeated. Do not turn the first repetition into a sprint that determines the rest of the session.
 
-For strength/muscle priorities, **approximately 1.6–2.2 g protein/kg/day** is a practical reference, not a universal minimum. Morton and colleagues estimated an average resistance-training breakpoint around 1.62 g/kg/day with uncertainty extending to 2.20. This does not imply everyone needs the upper figure or additional protein always produces benefit. Whole foods may supply it; supplementation is not required. [18](#ref-18)
+Research comparing aerobic intervals with sprint formats is a useful counterweight to the idea that harder and shorter always wins. In well-trained men, Hov and colleagues found larger VO₂max improvements with four four-minute aerobic intervals than with the tested sprint protocols, while running performance improved across groups. The lesson is to match the format to the objective, not declare one interval family best for everything. [4](#ref-4) Seiler's cycling comparisons likewise show that intensity and accumulated work interact: the middle-duration format produced the strongest combined improvement across selected outcomes. That is a programming argument for considering the whole session rather than its peak intensity alone. [6](#ref-6)
 
-Protect sufficient, reasonably regular sleep opportunities. The AASM/SRS consensus recommends at least seven hours regularly for healthy adults aged 18–60; not an individual athlete's optimum. LOOP's ordinary 7–9-hour reference is a practical guide with variation, not another compliance test. One poor night need not automatically cancel training; repeated inadequate sleep warrants reviewing circumstances and load. [19](#ref-19)
+**Threshold intervals practise sustainable, controlled effort.** The longer repetitions shift attention toward holding a demanding output without spending the session repeatedly recovering from a maximal burst. Sustainable submaximal capacity is related to the aerobic ceiling but is not the same outcome. Training studies have improved threshold-related measures without a corresponding significant increase in maximal oxygen uptake. [7](#ref-7)
 
-On ordinary days, **7,000 steps** is a habit reference, adapted for illness, injury and circumstances, not a medical threshold or repayment for missed training. Paluch and colleagues' fifteen-cohort analysis found an observational association between more steps and lower mortality, with age differences in the curve. It cannot prove that prescribing exactly 7,000 steps causes a particular individual benefit. [21](#ref-21)
+The word threshold does not tell you exactly where an individual's boundary lies. Use the intended controlled character of the work rather than assuming that six minutes at a certain pace proves a physiological state. This format need not produce the same high-zone minutes as the aerobic-power option.
 
-No supplement is compulsory. Creatine monohydrate is an optional aid for relevant strength/repeated high-intensity aims; **3–5 g/day** is a common maintenance amount in the ISSN position stand, not a requirement to participate. [20](#ref-20) Vitamin D depends on need, dietary sources precede an automatic omega-3 capsule, and caffeine's potential utility must be weighed against sleep/unwanted effects. Medicines, medical conditions or pregnancy require individual consideration. Calm breathing or enjoyable activities may help someone settle without proving a special autonomic reset.
+### C2: accumulate work without making another hard day
+
+The default is **45 minutes of easy, steady conditioning**, ordinarily running when tolerated, with cycling, rowing or another suitable modality available. Keep conversation comfortable and choose an effort you can sustain. There are no separate prescribed warm-up or cool-down phases; begin sensibly rather than accelerating abruptly because the session has one continuous structure.
+
+C2 supplies aerobic exposure at a demand that should leave room for the other work. Its value is not that only easy training produces a particular cellular adaptation. Continuous and interval methods share oxidative adaptations, while their practical volume and recovery costs differ. [3](#ref-3), [5](#ref-5)
+
+Let the day influence the pace. Heat, accumulated fatigue and terrain can make last week's easy speed inappropriate today. The intended effort takes priority over repeating a number. Keep track of duration and frequency too: an easy label does not establish that enough work has accumulated over time.
+
+### Use zones as guidance, not physiological certainty
+
+Heart rate, breathing, pace, power and subjective effort provide different views of the same session. Pace or power describes external output. Heart rate helps describe the response to it. Neither makes the other unnecessary.
+
+Heart-rate reserve accounts for resting heart rate when expressing relative intensity, but a chosen percentage is still a prescription method rather than a measured metabolic threshold. Reviews of intensity prescription explain why substantial individual variation remains. [9](#ref-9) Direct physiological testing has likewise found threshold-related boundaries at widely differing percentages of maximal heart rate. A fixed percentage does not reliably put everyone in the same metabolic domain. [8](#ref-8)
+
+Zone 2 is LOOP's easy intention, not a claim that a universally identical threshold has been measured. Comfortable conversation is a useful practical cue without being an exact conversion to a commercial five-zone scheme. An absent or unreliable measurement cannot establish that an intended zone was attained.
+
+During short efforts, resist the temptation to chase a lagging pulse. Heart-rate and oxygen-uptake exposure are not interchangeable, as the interval comparisons also illustrate. Do not accelerate a sprint merely to raise a reading, or extend a threshold session to collect high-zone minutes. [4](#ref-4)
+
+## Strength: make calisthenics progressively demanding
+
+Strength reflects both the capacity to produce force and the skill of expressing it in a movement. Progressive resistance can develop strength and muscle size, while practice improves execution of the task. Keep those contributions in mind when judging progress: an improved repetition is useful, but a shorter range or a newly learned balance strategy is not the same evidence as handling more resistance with comparable execution. [2](#ref-2)
+
+### Primary method, practical reasons
+
+Calisthenics is LOOP's primary strength method: use bodyweight as the main resistance, then make the movement more demanding in a controlled way. The appeal is both physical and practical. It puts body control and relative strength at the centre while often reducing travel, repeated weight changes and setup decisions. A simple setup can be portable and require little or no purchased equipment.
+
+Those advantages have real boundaries. Pulling needs a safe anchor or apparatus, available space varies, and advanced loading cannot always be solved conveniently with bodyweight alone. The intention is accessible training, not a literal promise of free exercise anywhere or unlimited progression without equipment.
+
+Think in terms of a progression repertoire. Assistance, leverage, controlled range, unilateral demand and added weight can each alter the task. Choose the version that makes the intended pattern sufficiently demanding without letting unnecessary complexity or uncontrolled balance replace the strength stimulus. A more impressive-looking skill is not automatically a more useful exercise for the current purpose.
+
+Bodyweight resistance can produce meaningful strength and muscle adaptation when the loading is appropriate. Adjusted push-ups have produced similar measured muscle-thickness and strength changes to bench pressing at a matched low load of 40% 1RM in young, untrained men. That supports using a well-chosen pressing variation; it does not establish superior results for every calisthenics movement or a unique cardiovascular effect. [28](#ref-28)
+
+<a id="strength-s1-and-s2"></a>
+### S1 and S2: repeat the important patterns
+
+Perform two working rounds, keeping the same order in each round.
+
+| Session | First | Second | Third | Fourth |
+|---|---|---|---|---|
+| S1 · Horizontal emphasis | Romanian deadlift | Horizontal pull | Pistol-squat progression | Horizontal push |
+| S2 · Vertical emphasis | Pistol-squat progression | Vertical pull | Romanian deadlift | Vertical push |
+
+One working set per exercise in each round gives **two working sets per exercise**, and two per leg for the pistol progression. Warm-up, lighter ramp-up sets and suitable quality jumps come first and do not count as working sets.
+
+The hinge and squat recur because both patterns deserve regular exposure. S1 gives the hinge first priority; S2 gives that position to the squat. Pulling and pressing change direction to broaden the work without expanding every session into a larger exercise list.
+
+<a id="exercise-order-and-exposure"></a>
+**The pistol progression combines several aims.** It supplies unilateral knee-dominant work with balance, control and usable range. Support or a stable box can make the task appropriate while those qualities develop. Progress only through a controlled, pain-free range that remains comparable between sessions.
+
+Balance and mobility can limit a pistol before the leg muscles' force capacity is exhausted. That is part of the compromise: LOOP values the combined task rather than claiming it outperforms a heavy bilateral squat for maximal knee-dominant strength. Reduce assistance or add load when useful, without allowing movement quality to become the price of progression.
+
+**Loaded RDL is the deliberate complement.** A trained person can find it practically difficult to obtain enough steadily adjustable hinge resistance through bodyweight alone. External load makes substantial posterior-chain work straightforward to scale without increasingly elaborate leverage or balance tasks. The RDL fills that role alongside the calisthenics emphasis.
+
+This exception needs suitable weights and space. Conventional deadlifting remains a useful skill, but lifting from the floor is not mandatory in the standard selection. The choice is based on practical loading and movement priorities, not a claim that bodyweight cannot train the posterior chain or that this particular pairing has demonstrated long-term superiority.
+
+Use scalable bodyweight rows, push-ups, pull-ups and suitable pressing/squat progressions as the first route through the other patterns. Rated suspension equipment, bands and added weights can make a variation workable; machines or free-weight alternatives remain useful when circumstances require them. Never improvise a hanging anchor or treat a horizontal row as identical to a vertical pull.
+
+### Two hard sets: enough effort to make the small dose useful
+
+A small session still needs a meaningful stimulus. LOOP uses two demanding working sets per exercise to keep the prescription repeatable, with technical failure as a simple endpoint. This is a deliberate balance of effort, volume and decision cost.
+
+Technical failure means another complete repetition would no longer meet the intended range, posture and stability. Stop at the last clean repetition. Do not provoke an unsafe failed lift, continue an RDL after losing position or force a painful range. Balance or technique can bring the set to its endpoint before momentary muscular failure; the two are not interchangeable.
+
+The useful simplicity is that repetitions can respond to the day. You do not have to predict a precise repetitions-in-reserve (RIR) value or force a preset daily count. You still choose an appropriate variation or load, rest sufficiently and judge readiness. Autoregulation removes one estimate, not all judgement.
+
+Recent low-volume evidence gives this choice more context than a simple claim that failure either matters or does not. In *Without Fail*, trained men and women performed one set of nine exercises twice weekly for eight weeks, using failure or two repetitions in reserve. Both approaches improved most outcomes. Some hypertrophy findings modestly favored failure, while strength and local endurance improved similarly and the power finding was uncertain. [26](#ref-26)
+
+Exploratory meta-regressions also associate closer estimated proximity to failure with greater hypertrophy, while showing a negligible relationship with strength gains. The estimates and modest model fit leave uncertainty about the exact relationship. Adjusting for volume in those analyses is not the same as directly testing whether failure has a special advantage in low-volume programmes. [27](#ref-27)
+
+For training, separate the goals. High effort can be useful when only a few sets are performed, particularly when muscle growth matters. That does not make every set to muscular failure necessary for strength, or establish LOOP's technical endpoint as the best universal method. Broader failure-versus-non-failure comparisons have not shown a clear overall advantage across outcomes. [11](#ref-11)
+
+Volume remains relevant. Weekly-volume research associates more resistance-training work with greater muscle growth across the studied ranges. Two sets per exercise in an irregular rotation should not be mistaken for an optimal weekly hypertrophy dose. If maximizing muscle size becomes the priority, review the amount of work rather than expecting effort alone to solve every limitation. [10](#ref-10)
+
+### Rest to preserve the next set
+
+Start with roughly **60 seconds between exercises**. Extend rest when breathing, grip, concentration or local fatigue would compromise the next set. Allow around **15–30 seconds or longer between sides** when useful. The circuit is not a conditioning race.
+
+Sixty seconds is a practical starting point, not a ceiling. Longer rest can better support maximal strength development in trained people. Also remember that moving between different exercises is not identical to repeating the same muscle task after the same interval. Let the quality of the upcoming work govern the decision. [12](#ref-12)
+
+### Progress without changing what a clean repetition means
+
+| Situation | Working reference | Progression trigger |
+|---|---|---|
+| Loaded strength work | 6–10 controlled repetitions | A small load increase when both sets reach roughly 8–10 clean repetitions at technical failure |
+| Bodyweight work | A variation appropriate to current capacity | Increase difficulty or add load when both sets reach 20 clean repetitions |
+| Pistol progression | Comparable control, assistance and range | Adjust support or difficulty before added load when needed |
+| Any progression | Maintain range, posture and stability | Reassess when extra load produces shortcuts rather than comparable work |
+
+Repetitions commonly fall after a load increase. That is compatible with progress. More momentum, a shortened range or a less demanding setup is a different task, so do not compare it as if only capacity changed.
+
+Progressive resistance is well supported across varied arrangements. The exact repetition triggers above are LOOP's practical rules, not biological thresholds. Keep them simple enough to use, then retain the same quality standards long enough to interpret the result. [2](#ref-2)
+
+## M: combine movement after the strength work is done
+
+M is a short mixed finish after S1 and S2, normally **10–15 minutes**. Put strength first so the main working sets receive the attention and quality they need. Then combine simple locomotion and manageable resistance without turning the finish into another heavy strength round.
+
+| Example component | Starting amount | Quality limit |
+|---|---|---|
+| Running or suitable locomotion | About 1–2 minutes | Controlled movement and manageable effort |
+| Farmer carry | 40–60 metres | A load and route you can control |
+| Optional jump squats | Up to five repetitions | Good landings; otherwise omit |
+| Dead hang | 30–45 seconds | Stop before grip failure; shorten or support the feet if needed |
+
+Repeat in a controlled flow within the available time. Not every component has to fit every session. Adapt for space, equipment and fatigue after strength, and shorten or omit M when symptoms or recovery warrant it. The conditioning purpose takes priority over heavy lifting or local failure. Jumps performed while tired do not replace the quality jumps in preparation.
+
+The combination is useful because it asks you to keep moving between tasks while breathing, grip and local fatigue interact. It remains practice in combining capacities, not a substitute for dedicated strength, endurance or obstacle skill. Hanging does not establish climbing ability, and carrying in a clear gym space does not reproduce every terrain or obstacle demand.
+
+Concurrent-training research supports a more useful view than either “conditioning ruins strength” or “the combination has no cost.” Maximal-strength and hypertrophy outcomes have not differed significantly overall from strength-only training, while explosive-strength development can be more sensitive, particularly within the same session. [13](#ref-13)
+
+The practical response is to protect priorities. If M repeatedly leaves the next important work worse, adjust its dose. Strength-first is a quality decision; it does not make interference or recovery demands disappear. Keep the finish short enough to remain a complement.
+
+## Prepare for the work you are about to do
+
+### Warm-up should establish readiness
+
+Use light movement to become warm, rehearse the relevant patterns and ramp toward the required load or speed. Preparation is successful when you are ready for the task, not when a generic ritual is complete. Warm-up research supports performance benefits from suitable preparation, with varied methods and responses. [14](#ref-14)
+
+C1 begins with a **four-minute progressive warm-up** and ends with **three minutes easy**. Extend preparation when needed, especially before maximal SIT. Four minutes is a default, not a guarantee that sprinting is appropriate today. Before S1/S2, use movement rehearsal and lighter ramp-up sets before working rounds. Allow more time rather than rushing the approach to a demanding load.
+
+An easy finish can provide a comfortable transition. It should not be sold as a universal recovery treatment. Faster blood-lactate clearance after an active cool-down has not consistently translated into better next-day performance, less soreness or fewer injuries. [15](#ref-15)
+
+### Keep explosive exposure small and high quality
+
+When appropriate, include the following after becoming warm and before loaded working sets:
+
+| Session | Jump exposure | Execution |
+|---|---|---|
+| S1 | 3 × 3 standing long jumps | Generous rest; controlled landings |
+| S2 | 3 × 3 vertical jumps | Generous rest; controlled landings |
+
+Start with easier submaximal versions or lower exposure if unfamiliar. Omit jumps when pain, unusual fatigue, deteriorating landings or the environment undermines quality. These are not conditioning repetitions to complete at any cost.
+
+Plyometric training can improve jumping, sprint and lower-body strength outcomes. That supports retaining an explosive component, while leaving the exact nine-jump exposure as a practical choice rather than an established minimum dose. [25](#ref-25) Separate acceleration work is not a standard Core addition; sport-specific speed may deserve temporary focused work when it becomes important.
+
+### Use mobility and balance to address a real limitation
+
+Controlled, individually suitable range belongs in the normal exercises. Add focused mobility when a meaningful restriction needs attention, not because every session must include another block. If balance is a limitation, around **20–30 seconds of single-leg balance per side** can fit existing preparation.
+
+An optional gentle routine can use cat–cow, hip rotation, a comfortable squat position and shoulder movement, paced by relaxed breathing. Avoid forcing end ranges. Such work may feel useful without needing a claim that it accelerates physiological recovery. Post-exercise stretching has not shown a clear strength-recovery or delayed-soreness benefit; that does not negate its possible value for range or enjoyment. [16](#ref-16)
+
+## Adjust to recovery without making every day an optimization project
+
+Training load sits alongside work, family, sleep disruption and other stress. Ordinary fatigue can coexist with useful training. Marked fatigue, illness or symptoms can call for less work or rest. A score is context, not a binary verdict on readiness.
+
+Use trends and comparable work to guide decisions. Record the session type, load or variation, clean repetitions or conditioning duration, and perhaps one useful note. One poor day is not a trend. If a reduced session is what fits, it can preserve participation while supplying less stimulus than the full version. Both are worth acknowledging.
+
+A missed session does not automatically require a deload. Sustained fatigue, falling performance or symptoms may. After a substantial layoff, rebuild tolerance instead of treating former doses as obligations. Stop for concerning symptoms such as chest pain, faintness or unusual severe breathlessness and seek appropriate help; training principles cannot diagnose their cause.
+
+Food and sleep support the work without needing another control system. Eat sufficiently and with variety: vegetables, fruit, legumes, whole grains and suitable fat/protein sources can form a repeatable pattern. Consider carbohydrate availability as demanding conditioning increases. When recovery declines, consider food alongside sleep, stress and load rather than assuming a single explanation.
+
+For muscle/strength priorities, **approximately 1.6–2.2 g protein/kg/day** is a practical reference. The upper end is not a universal requirement: resistance-training evidence estimated an average breakpoint around 1.62 g/kg/day with uncertainty extending toward 2.20. More is not automatically better, and whole foods can supply it. [18](#ref-18)
+
+Protect regular opportunities for sufficient sleep. The adult consensus supports at least seven hours regularly, while an individual's needs vary. LOOP's **7–9-hour** reference is a practical guide rather than an athlete-specific optimum or compliance score. One poor night need not cancel training; repeated short sleep warrants reviewing circumstances and load. [19](#ref-19)
+
+Keep moving outside formal sessions too. **7,000 steps on ordinary days** is a habit cue, adapted for illness, injury and circumstances, not a medical threshold or repayment for a missed workout. Observational step-count research supports the relevance of everyday movement but cannot prove a precise personal benefit from prescribing that exact number. [21](#ref-21)
+
+No supplement is required. Creatine monohydrate is an optional aid for relevant strength/repeated high-intensity aims; **3–5 g/day** is a commonly used maintenance amount. [20](#ref-20) Vitamin D depends on need, food sources should precede an automatic omega-3 capsule, and caffeine's possible utility needs balancing against sleep and unwanted effects. Medicines, medical conditions or pregnancy warrant individual consideration. Calm breathing or enjoyable activity can help someone settle without proving a special autonomic reset.
 
 <a id="voluntary-challenge-and-self-competition"></a>
-## 9. Voluntary challenge and self-competition
+## Let challenge support the training, not take it over
 
-Mastery, variety and personally meaningful feedback are legitimate reasons to train alongside capacity and health. Comparing a familiar task with one's earlier execution can make improvement concrete without ranking people with different opportunities and previous training. This personal-reference emphasis is a LOOP design choice, not proof that self-competition works better than other motivational approaches for everyone.
+Capacity and health are not the only reasons to train. Mastery, variety and personally meaningful feedback can make practice engaging. Comparing a familiar task with your own earlier execution gives progress a concrete reference without ranking people with different opportunities or previous training.
 
-Self-determination theory offers a conceptual frame: choice and perceived competence can matter. Teixeira and colleagues' review of 66 studies found positive associations between autonomous motivation and exercise participation, with intrinsic motivation relevant to longer-term participation. Much evidence was descriptive; it does not establish that a particular self-challenge causes durable adherence. [22](#ref-22)
+Keep that challenge voluntary. Autonomous motivation and perceived competence are associated with exercise participation, but a personally meaningful challenge cannot be assumed to create lasting adherence by itself. [22](#ref-22)
 
-Acute experiments also caution against uniform expectations. Palmieri and Deutsch studied 25 young adults in short VR cycling conditions. Competition raised intensity, and self-competition produced greater enjoyment than visual feedback in that setting, not evidence of long-term outdoor running or health benefit. [23](#ref-23) Their later study in adults aged 45–75 found higher acute intensity with competition but no detected advantage in enjoyment or intrinsic motivation over visual feedback. It used a related paradigm from the same group, not broad independent replication. [24](#ref-24)
+Competition can raise effort without improving the experience for everyone. Short laboratory cycling studies found greater enjoyment with self-competition in young adults, but a later study in older adults did not detect the same enjoyment or intrinsic-motivation advantage. Both found increased acute intensity; neither establishes a long-term outdoor training benefit. [23](#ref-23), [24](#ref-24)
 
-A challenge can engage one person and create pressure or needless intensity for another. Keep it voluntary and subordinate to the session's purpose. Easy conditioning should not routinely become a race because an earlier result is available. Opting out, ending a challenge or choosing ordinary practice remains legitimate; no competition frequency or automatic rotation change is prescribed.
+The coaching implication is straightforward: use comparison when it helps the person and the session. Do not turn easy conditioning into a race simply because an earlier result is available. Opting out, ending a challenge or choosing ordinary practice is legitimate. LOOP prescribes no competition frequency or automatic change to the rotation.
 
-Interpret results in context. Weather, surface, fatigue, pacing and measurement uncertainty affect times or distances. A slower result does not automatically mean reduced capacity, and a personal best does not demonstrate better health. Sustainable participation has value when no record changes. Feedback should support judgement, not turn every session into a verdict.
+Interpret results with the same care as training logs. Weather, surface, fatigue, pacing and measurement uncertainty affect a time or distance. A slower result is not automatically lost capacity; a personal best is not a health measurement. Sustainable participation still matters when no record changes.
 
 <a id="evidence-and-limits"></a>
-## 10. Scope, deliberate tradeoffs and unanswered questions
+## Keep the tradeoffs visible
 
-| Choice | Intended benefit | Accepted cost or uncertainty |
+LOOP combines established training methods into a deliberately simple arrangement. The complete combination and its exact doses have not been tested as one intervention. Its programming choices therefore need to be judged by the work they produce, the response over time and the tradeoffs the person is willing to make.
+
+The key compromises are worth keeping visible:
+
+| Choice | What it aims to gain | What to keep watching |
 |---|---|---|
-| Repeating order rather than weekly scheduling | Easier resumption after interruption | Frequency and sufficient dose are not guaranteed |
-| Three interval options and steady conditioning | Several useful conditioning emphases | Exact combination/doses untested together |
-| Calisthenics as primary strength method | Body control, relative strength and potentially lower setup/travel/cost | Pulling needs safe apparatus; some loading needs external weights; no unique muscular/cardio superiority |
-| Two demanding strength sets and simple progression | Small, repeatable prescription | May undersupply specialized volume; failure adds fatigue and is not uniquely necessary |
-| Pistol progression plus RDL | Unilateral control/range and loadable hinge | Balance/skill can limit stimulus; no superiority claim over other selections |
-| Short M after strength | Combine work without a separate session | Recovery/interference and task-specific transfer remain relevant |
-| Small jump/mobility exposure | Address selected gaps within existing work | No validated universal minimum dose |
-| Voluntary self-reference | Meaningful challenge and feedback | Pressure, intensity drift and heterogeneous motivation |
+| Rotation instead of weekly scheduling | Easier resumption with fewer planning decisions | Actual exposure and repeated omissions |
+| Multiple interval options plus steady work | Different conditioning emphases | Whether the selected dose serves the purpose and recovery |
+| Calisthenics as primary strength method | Body control, relative strength and simpler setup | Safe pulling equipment and sufficient resistance |
+| Loaded RDL complement | Straightforward progressive hinge loading | Suitable weights, technique and fatigue |
+| Two demanding sets with technical failure | A small, high-effort prescription without RIR estimates | Quality, fatigue and enough volume for the goal |
+| Short M after strength | Combined-task practice without another session | Recovery and the quality of subsequent work |
+| Small jump/mobility exposure | Attention to selected gaps | Whether the exposure is enough and remains useful |
+| Voluntary self-reference | Meaningful feedback and challenge | Pressure, intensity drift and contextual interpretation |
 
-OCR is a reference for mixed physical demands, not a readiness guarantee. Running impact, terrain and obstacle technique may need specific exposure. An event next week calls for realistic expectations and less accumulated fatigue, not emergency capacity-building. A focused block of roughly 4–8 weeks is one practical planning option for terrain, carrying, grip and obstacle practice, not evidence that this interval makes any participant ready. Temporary sport-specific work should first adapt or replace existing load rather than automatically stack onto everything; content, order and frequency may need to change while maintaining useful strength/aerobic exposure and protecting recovery. Return to ordinary training as recovery permits without compensation.
+General capacity also has a specificity limit. OCR is a useful reference for mixed demands, not a readiness guarantee. Running impact, terrain and obstacle technique can need direct exposure. An event next week calls for realistic expectations and less accumulated fatigue, not emergency capacity-building.
 
-The complete LOOP intervention remains untested. Future evaluation should examine actual participation and dose under interrupted schedules, strength/endurance changes, fatigue and adverse events, rather than only completed sessions or records. Comparisons need comparable starting capacity and exposure. The value of the small jump dose, exercise pairing, mixed finish and voluntary challenge remains open. Physiological plausibility and an appealingly simple structure do not substitute for such evidence.
+With more preparation time, a focused block of roughly **4–8 weeks** is one practical option for terrain, carrying, grip and obstacle practice. It is not a promise of readiness. Adapt or replace existing load before stacking more onto it; content, order and frequency may change while protecting recovery and maintaining useful strength/aerobic work. Return to ordinary training as recovery permits, without compensation.
+
+Evaluate the system by participation, actual dose, changes in useful performance, recovery and symptoms—not only completed sessions or records. The best reason to retain a simple rule is that it continues to support worthwhile training. When it stops doing that, reassess the specific limitation before adding complexity.
 
 ## References
 
