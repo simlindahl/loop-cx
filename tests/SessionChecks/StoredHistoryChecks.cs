@@ -53,6 +53,10 @@ internal static class StoredHistoryChecks
             })
         }, null);
         var unacknowledged = StoredRunProjection.Detail(snapshot with { ExportStatus = "exported" }, null);
+        var unknownOffset = StoredRunProjection.Detail(snapshot with
+        {
+            Checkpoint = JsonSerializer.SerializeToElement(new { StartContext = new { TimeZoneId = "Unknown" } })
+        }, null);
 
         // Assert
         if (result.Summary.TotalActive != TimeSpan.FromMinutes(38) || result.MainActive != TimeSpan.FromMinutes(23)
@@ -62,7 +66,8 @@ internal static class StoredHistoryChecks
             || result.Zones?.Single().MaximumBpm != 119 || !result.Summary.Source.Contains("revision 1", StringComparison.Ordinal)
             || result.Summary.ExportLabel != "Not exported · debug/synthetic" || unacknowledged.Summary.ExportLabel == "Exported"
             || legacyUnknown.Summary.Total is not null || legacyUnknown.TotalElapsed is not null || legacyUnknown.Targets is not null
-            || legacyUnknown.Zones is not null || noFacts.MainElapsed is not null || noFacts.TotalElapsed is not null)
+            || legacyUnknown.Zones is not null || noFacts.MainElapsed is not null || noFacts.TotalElapsed is not null
+            || unknownOffset.Summary.StartOffset is not null || legacyUnknown.Warmup is not null || legacyUnknown.Cooldown is not null)
         {
             throw new InvalidOperationException("Stored detail must preserve frozen values and provenance; absent facts or ACK cannot be invented.");
         }

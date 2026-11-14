@@ -30,11 +30,14 @@ public static class StoredRunProjection
         var statistics = Read<RunStatisticsState>(checkpoint, "Snapshot", "Statistics");
         if (statistics is { Version: not 1 }) throw new InvalidDataException("Stored statistics version is unsupported.");
         var start = Read<RunStartContext>(checkpoint, "StartContext");
+        int? offset = checkpoint.TryGetProperty("StartContext", out var context) && context.ValueKind == JsonValueKind.Object
+            && context.TryGetProperty("UtcOffsetSeconds", out var offsetValue) && offsetValue.ValueKind == JsonValueKind.Number && offsetValue.TryGetInt32(out var seconds)
+            && seconds is >= -50400 and <= 50400 && seconds % 60 == 0 ? seconds : null;
         return new(row.Id, DateTimeOffset.TryParse(row.StartedUtc, CultureInfo.InvariantCulture, DateTimeStyles.None, out var utc) ? utc : null,
             template?.ShortcutName ?? template?.ProtocolId ?? template?.TemplateId ?? "Recorded run",
             template is null ? "Source unavailable" : $"{template.Source} · {template.ProtocolId ?? template.TemplateId} · revision {template.TemplateRevision}",
             Duration(checkpoint, "TotalActiveTime"), statistics?.Total, ExportLabel(row), statistics?.HasSyntheticTime == true,
-            start?.TimeZoneId, start is { UtcOffsetSeconds: >= -50400 and <= 50400 } && start.UtcOffsetSeconds % 60 == 0 ? start.UtcOffsetSeconds : null);
+            start?.TimeZoneId, offset);
     }
 
     public static StoredRunDetail Detail(ExportJournalSnapshot stored, string? attemptJson)
@@ -49,6 +52,8 @@ public static class StoredRunProjection
         var boundaries = Read<PhaseBoundaryFact[]>(checkpoint, "PhaseBoundaries");
         var template = stored.Template is { } metadata ? metadata.Deserialize<CoreTemplate>() : null;
         var setup = stored.HeartRateSetup is { } heartRate ? heartRate.Deserialize<HeartRateSetup>() : null;
+        if (setup?.Configuration?.Zones?.Any(static zone => zone is null) == true)
+            throw new InvalidDataException("Malformed stored heart-rate zones.");
         if (plan?.Any(static phase => phase is null || !Enum.IsDefined(phase.Kind) || phase.Duration <= TimeSpan.Zero) == true
             || completed?.Any(static phase => phase is null || phase.Plan is null || phase.ActiveTime < TimeSpan.Zero) == true)
         {
