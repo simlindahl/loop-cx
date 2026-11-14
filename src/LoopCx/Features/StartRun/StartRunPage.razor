@@ -63,9 +63,9 @@
                 <h3 id="live-values-heading">Live</h3>
                 <dl>
                     <div><dt>Pace <small>min/km</small></dt><dd>@Pace(state.LivePace?.SecondsPerKilometre)</dd></div>
-                    <div><dt>Heart rate <small>bpm</small></dt><dd>@(state.Paused ? "Unavailable" : HeartRate(state.HeartRate?.CurrentBpm))</dd></div>
+                    <div><dt>Heart rate <small>bpm</small></dt><dd>@HeartRate(state.HeartRate?.CurrentBpm)</dd></div>
                 </dl>
-                <p>Pace: @(state.Paused ? "paused" : state.LivePace?.Quality ?? "unavailable"). Heart rate: @(state.Paused ? "paused" : state.HeartRate?.Quality ?? "unavailable").</p>
+                <p>Pace: @(state.Paused ? "paused" : state.LivePace?.Quality ?? "unavailable"). Heart rate: @(state.HeartRate?.Quality ?? "unavailable").</p>
                 @if (state.HeartRate?.ConfigurationError is { } configurationError) { <p>Heart rate unavailable: @configurationError</p> }
             </section>
             @if (state.Phase != "Finished")
