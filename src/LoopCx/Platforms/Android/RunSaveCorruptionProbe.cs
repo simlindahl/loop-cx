@@ -26,8 +26,24 @@ internal static class RunSaveCorruptionProbe
             // Create/close the real helper at its own unique path before replacing ONLY that scratch file.
             using (var seed = RunJournal.OpenCorruptionProbe(name))
             {
-                seed.WritableDatabase!.ExecSQL("CREATE TABLE probe_sentinel (value TEXT NOT NULL)");
-                seed.WritableDatabase.ExecSQL("INSERT INTO probe_sentinel VALUES ('synthetic scratch only')");
+                SQLiteDatabase? seedDatabase = null;
+                var seedClosed = false;
+                try
+                {
+                    seedDatabase = seed.WritableDatabase!;
+                    seedDatabase.ExecSQL("CREATE TABLE probe_sentinel (value TEXT NOT NULL)");
+                    seedDatabase.ExecSQL("INSERT INTO probe_sentinel VALUES ('synthetic scratch only')");
+                }
+                finally
+                {
+                    try
+                    {
+                        seed.Close();
+                        seedClosed = seedDatabase?.IsOpen == false;
+                    }
+                    finally { seedDatabase?.Dispose(); }
+                }
+                if (!seedClosed) throw new InvalidOperationException("Scratch seed must be closed before replacing its bytes.");
             }
             File.WriteAllBytes(path, Enumerable.Repeat((byte)0x58, 4096).ToArray());
             var before = Inventory(path);
@@ -38,6 +54,7 @@ internal static class RunSaveCorruptionProbe
                 IOException? failure = null;
                 try { _ = helper.WritableDatabase; }
                 catch (SQLiteException error) { failure = RunJournal.ClassifyNativeFailure(error); }
+                finally { helper.Close(); }
                 if (failure is not RunSaveReadException || helper.ProbeCorruptionCallbacks == 0)
                     throw new InvalidOperationException("Corrupt helper must fail nonretryably through the actual custom handler, never create a replacement.");
                 callbacks += helper.ProbeCorruptionCallbacks;
