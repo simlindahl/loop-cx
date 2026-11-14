@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <meta content="dark" name="color-scheme"/>
+  <title>Ghost Run · approved detailed reference</title>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
+   <defs>
+    <symbol id="icon-add" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z">
+     </path>
+    </symbol>
+    <symbol id="icon-chevron_right" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z">
+     </path>
+    </symbol>
+    <symbol id="icon-directions_run" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z">
+     </path>
+    </symbol>
+    <symbol id="icon-history" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z">
+     </path>
+    </symbol>
+    <symbol id="icon-pause" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z">
+     </path>
+    </symbol>
+    <symbol id="icon-play_arrow" viewbox="0 0 24 24">
+     <path d="M0 0h24v24H0z" fill="none">
+     </path>
+     <path d="M8 5v14l11-7z">
+     </path>
+    </symbol>
+    <symbol id="icon-settings" viewbox="0 0 24 24">
+     <g>
+      <path d="M0,0h24v24H0V0z" fill="none">
+      </path>
+      <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z">
+      </path>
+     </g>
+    </symbol>
+   </defs>
+  </svg><header class="review-header"><p class="review-kicker">Ghost Run · approved detailed reference · not runtime evidence</p><h1>A separate race.</h1><p>The owner approved this concrete twenty-one-state route/reference/start/live/pause/quality/result direction. See <a href="../../decision.md#ghost-layout-approval">the decision and scope</a>. Race execution has no Core/Cx identity, RPE or optional pace/heart-rate-zone targets; measured pace and HR remain measurements.</p><p>Route capture and racing are distinct. An eligible completed continuous workout supplies the main route without changing its source history. The illustrated uncertainty/off-route controls, pauses-count warnings and insufficient-GPS save rejection are included.</p><p>All routes, dates, distances, times, maps and results are synthetic illustrations. Links move between static examples; no GPS, race clock, recording, permission, map SDK, health write or verification of a real record runs. Android owns exact notification rendering. Other gallery destinations provide context only; the reader runtime hold is unchanged.</p></header><div class="review-layout"><nav class="review-index" aria-label="Ghost review states"><a href="#ghost-routes">Ghost Run</a><a href="#ghost-empty">Your routes</a><a href="#ghost-save">Save route to Ghost Run</a><a href="#ghost-choose">Park loop</a><a href="#ghost-same">One run. Both records.</a><a href="#ghost-no-year">Set your year best</a><a href="#ghost-ready">Race year best</a><a href="#ghost-ready-pb">Race personal best</a><a href="#ghost-ready-first">Set first time</a><a href="#ghost-live">Ghost Run</a><a href="#ghost-live-pb">Ghost Run</a><a href="#ghost-first-live">First time this year</a><a href="#ghost-paused">Training paused</a><a href="#ghost-uncertain">GPS uncertain</a><a href="#ghost-off-route">Return to the route</a><a href="#ghost-result">New year best</a><a href="#ghost-unverified">Attempt saved</a><a href="#ghost-abandon">End this attempt?</a><a href="#ghost-lock">Lock screen · Ghost Run</a><a href="#ghost-not-ready">Move to the start</a><a href="#ghost-save-blocked">Route cannot be saved</a></nav><main class="gallery" id="gallery"><section class="review-group"><h2>Approved Ghost states</h2><div class="screens"><article aria-labelledby="heading-ghost-routes" class="review-screen" id="ghost-routes">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-routes">
+      Ghost Run
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-routes">
+     65
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="../index.html#training">
+       ← Training
+      </a>
+      <h2>
+       Ghost Run
+      </h2>
+     </header>
+     <div class="body">
+      <p>
+       Choose a route. Race your year best or personal best.
+      </p>
+      <div class="row">
+       <span>
+        Park loop
+       </span>
+       <span class="row-value">
+        5.00 km · One direction
+       </span>
+      </div>
+      <a class="action primary" href="#ghost-choose">
+       Park loop
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-empty">Empty library example</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-empty" class="review-screen" id="ghost-empty">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-empty">
+      Your routes
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-empty">
+     66
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Your routes
+      </h2>
+     </header>
+     <div class="body">
+      <aside class="notice">
+       <strong>
+        Your first Ghost Run
+       </strong>
+       <p>
+        After a continuous run, save its route here to race your year best or personal best.
+       </p>
+      </aside>
+      <a class="action primary" href="../index.html#training">
+       Go to training
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-save" class="review-screen" id="ghost-save">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-save">
+      Save route to Ghost Run
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-save">
+     67
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route capture</p>
+      <a class="back" href="../index.html#c2-detail">
+       ← Run details
+      </a>
+      <h2>
+       Save route to Ghost Run
+      </h2>
+     </header>
+     <div class="body">
+      <label class="field">
+       <span>
+        Route name
+       </span>
+       <span class="field-value">
+        <input aria-label="Route name" readonly="" value="Park loop"/>
+       </span>
+      </label>
+      <div class="row">
+       <span>
+        Route
+       </span>
+       <span class="row-value">
+        Completed continuous main set only
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Start / finish
+       </span>
+       <span class="row-value">
+        Fixed · Recorded direction
+       </span>
+      </div>
+      <aside class="notice">
+       <strong>
+        First benchmark
+       </strong>
+       <p>
+        This verified run becomes your first result. Stops and pauses count towards race time.
+       </p>
+      </aside>
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <a class="action primary" href="#ghost-choose">
+       Save route
+      </a>
+      <a class="action secondary" href="../index.html#c2-detail">
+       Cancel
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<p class="screen-note review-links">Review existing-rule failure state: <a href="#ghost-save-blocked">GPS evidence prevents route save</a>.</p>
+<article aria-labelledby="heading-ghost-choose" class="review-screen" id="ghost-choose">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-choose">
+      Park loop
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-choose">
+     68
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Park loop
+      </h2>
+     </header>
+     <div class="body"><h3>Race records</h3>
+      <div class="row">
+       <span>
+        Route
+       </span>
+       <span class="row-value">
+        5.00 km · One direction
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Year best · 2026
+       </span>
+       <span class="row-value">
+        27:30 · 10 Nov
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Personal best
+       </span>
+       <span class="row-value">
+        26:40 · 12 Sep 2025
+       </span>
+      </div>
+      <a class="action primary" href="#ghost-ready">
+       Race year best
+      </a>
+      <a class="action secondary" href="#ghost-ready-pb">
+       Race personal best
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-no-year">No year best example</a> · <a href="#ghost-same">Same benchmark example</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-same" class="review-screen" id="ghost-same">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-same">
+      One run. Both records.
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-same">
+     69
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       One run. Both records.
+      </h2>
+     </header>
+     <div class="body">
+      <aside class="notice">
+       <strong>
+        Year best and personal best
+       </strong>
+       <p>
+        27:30 · 10 Nov 2026. Both options use the same recorded run.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-ready">
+       Race this ghost
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-no-year" class="review-screen" id="ghost-no-year">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-no-year">
+      Set your year best
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-no-year">
+     70
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Set your year best
+      </h2>
+     </header>
+     <div class="body">
+      <aside class="notice">
+       <strong>
+        No result for 2026
+       </strong>
+       <p>
+        Set this year’s first time without a ghost, or race your personal best.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-ready-first">
+       Set first time
+      </a>
+      <a class="action secondary" href="#ghost-ready-pb">
+       Race personal best
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-ready" class="review-screen" id="ghost-ready">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-ready">
+      Race year best
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-ready">
+     71
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Race year best
+      </h2>
+     </header>
+     <div class="body">
+      <div class="row">
+       <span>
+        Ghost
+       </span>
+       <span class="row-value">
+        27:30 · 10 Nov 2026
+       </span>
+      </div>
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <aside class="notice">
+       <strong>
+        At the start · GPS ready
+       </strong>
+       <p>
+        You and your ghost start together. Race time keeps running during stops and pauses.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-live">
+       Start Ghost Run
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-ready-pb" class="review-screen" id="ghost-ready-pb">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-ready-pb">
+      Race personal best
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-ready-pb">
+     72
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Race personal best
+      </h2>
+     </header>
+     <div class="body">
+      <div class="row">
+       <span>
+        Ghost
+       </span>
+       <span class="row-value">
+        26:40 · 12 Sep 2025
+       </span>
+      </div>
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <aside class="notice">
+       <strong>
+        At the start · GPS ready
+       </strong>
+       <p>
+        Race time runs until the finish. Follow the full route in the recorded direction.
+       </p>
+      </aside>
+      <p>Race time keeps running during stops and pauses.</p>
+      <a class="action primary" href="#ghost-live-pb">
+       Start Ghost Run
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-ready-first" class="review-screen" id="ghost-ready-first">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-ready-first">
+      Set first time
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-ready-first">
+     73
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Set first time
+      </h2>
+     </header>
+     <div class="body">
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <aside class="notice">
+       <strong>
+        At the start · GPS ready
+       </strong>
+       <p>
+        No ghost this time. Complete the route to set your first result for 2026.
+       </p>
+      </aside>
+      <p>Race time keeps running during stops and pauses.</p>
+      <a class="action primary" href="#ghost-first-live">
+       Start Ghost Run
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-live" class="review-screen" id="ghost-live">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-live">
+      Ghost Run
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-live">
+     74
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Ghost Run
+      </h2>
+     </header>
+     <div class="body">
+      <div class="row">
+       <span>
+        Opponent
+       </span>
+       <span class="row-value">
+        Year best · 27:30
+       </span>
+      </div>
+      <p class="ghost-gap">
+       12 s ahead
+      </p>
+      <p>
+       ≈ 40 m ahead along route
+      </p>
+      <svg aria-label="Illustrative route. You are ahead of the white ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <circle cx="55" cy="110" fill="white" fill-opacity=".8" r="10" stroke="#111111" stroke-width="3">
+       </circle>
+       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#111111" stroke-width="2">
+       </path>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <div class="ghost-legend">
+       <span>
+        <i class="ghost-key you">
+        </i>
+        You
+       </span>
+       <span>
+        <i class="ghost-key">
+        </i>
+        Ghost
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Race time / route progress
+       </span>
+       <span class="row-value">
+        10:00 / 1.86 km
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Pace / heart rate
+       </span>
+       <span class="row-value">
+        5:20/km / 153 bpm
+       </span>
+      </div>
+      <a class="action primary" href="#ghost-paused">
+       Pause training
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-result">Finish example</a> · <a href="#ghost-uncertain">GPS uncertainty example</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-live-pb" class="review-screen" id="ghost-live-pb">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-live-pb">
+      Ghost Run
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-live-pb">
+     75
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Ghost Run
+      </h2>
+     </header>
+     <div class="body">
+      <div class="row">
+       <span>
+        Opponent
+       </span>
+       <span class="row-value">
+        Personal best · 26:40
+       </span>
+      </div>
+      <p class="ghost-gap">
+       8 s behind
+      </p>
+      <p>
+       ≈ 25 m behind along route
+      </p>
+      <aside class="notice">
+       <strong>
+        Ghost ahead
+       </strong>
+       <p>
+        The map and spoken gap follow your selected personal best.
+       </p>
+      </aside>
+      <div class="row">
+       <span>
+        Race time / route progress</span><span class="row-value">10:00 / 1.86 km
+       </span>
+      </div>
+      <a class="action primary" href="#ghost-paused">
+       Pause training
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-ready-pb">Return to preview</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-first-live" class="review-screen" id="ghost-first-live">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-first-live">
+      First time this year
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-first-live">
+     76
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       First time this year
+      </h2>
+     </header>
+     <div class="body">
+      <svg aria-label="Illustrative route with your position and no ghost. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <path d="M55 70l-11 20h22z" fill="#C4DA73" stroke="#111111" stroke-width="2">
+       </path>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <div class="row">
+       <span>
+        Race time / route progress
+       </span>
+       <span class="row-value">
+        10:00 / 1.86 km
+       </span>
+      </div>
+      <aside class="notice">
+       <strong>
+        No ghost
+       </strong>
+       <p>
+        Follow the complete route to set your first time for 2026.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-paused">
+       Pause training
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-result">Finish example</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-paused" class="review-screen" id="ghost-paused">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-paused">
+      Training paused
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-paused">
+     77
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Training paused
+      </h2>
+     </header>
+     <div class="body">
+      <div class="row">
+       <span>
+        Race time
+       </span>
+       <span class="row-value">
+        10:45 · Still running
+       </span>
+      </div>
+      <aside class="notice">
+       <strong>
+        Your race continues
+       </strong>
+       <p>
+        Training counters and coaching are paused. Your ghost, race clock and route tracking continue. A pause alone does not invalidate your result.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-live">
+       Resume training
+      </a>
+      <a class="action secondary" href="#ghost-abandon">
+       End attempt
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-uncertain" class="review-screen" id="ghost-uncertain">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-uncertain">
+      GPS uncertain
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-uncertain">
+     78
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       GPS uncertain
+      </h2>
+     </header>
+     <div class="body">
+      <p class="ghost-gap">
+       Gap unavailable
+      </p>
+      <aside class="notice">
+       <strong>
+        Race clock continues
+       </strong>
+       <p>
+        Waiting for a reliable route position. No lead or deficit is inferred.
+       </p>
+      </aside>
+      <div class="row">
+       <span>
+        Race time
+       </span>
+       <span class="row-value">
+        10:30
+       </span>
+      </div>
+      <a class="action primary" href="#ghost-paused">Pause training</a>
+      <a class="action secondary" href="#ghost-abandon">End attempt</a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-live">Reliable GPS example</a> · <a href="#ghost-off-route">Off-route example</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-off-route" class="review-screen" id="ghost-off-route">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-off-route">
+      Return to the route
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-off-route">
+     79
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Return to the route
+      </h2>
+     </header>
+     <div class="body">
+      <aside class="notice">
+       <strong>
+        Off route · Gap unavailable
+       </strong>
+       <p>
+        Race time and your ghost continue. Rejoin where you left the route; skipping a section cannot earn a record.
+       </p>
+      </aside>
+      <svg aria-label="Illustrative route. Your position is off the route; comparison is unavailable. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <path d="M18 70l-11 20h22z" fill="#C4DA73" stroke="#111111" stroke-width="2">
+       </path>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <a class="action primary" href="#ghost-paused">Pause training</a>
+      <a class="action secondary" href="#ghost-abandon">End attempt</a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-live">Rejoined route example</a> · <a href="#ghost-unverified">Unverified result example</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-result" class="review-screen" id="ghost-result">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-result">
+      New year best
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-result">
+     80
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       New year best
+      </h2>
+     </header>
+     <div class="body"><p>Park loop · 5.00 km route</p>
+      <div class="row">
+       <span>
+        Race time
+       </span>
+       <span class="row-value">
+        27:18
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Previous year best
+       </span>
+       <span class="row-value">
+        27:30 · 12 s faster
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Personal best
+       </span>
+       <span class="row-value">
+        26:40 · Unchanged
+       </span>
+      </div>
+      <aside class="notice">
+       <strong>
+        Full route verified
+       </strong>
+       <p>
+        Race time includes all stops and pauses. This run becomes the year-best ghost for your next attempt.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-choose">
+       View route
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-unverified" class="review-screen" id="ghost-unverified">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-unverified">
+      Attempt saved
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-unverified">
+     81
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Attempt saved
+      </h2>
+     </header>
+     <div class="body">
+      <div class="row">
+       <span>
+        Race time
+       </span>
+       <span class="row-value">
+        27:18
+       </span>
+      </div>
+      <aside class="notice">
+       <strong>
+        Not eligible for a record
+       </strong>
+       <p>
+        A route section could not be verified. Your recording is saved; year best and personal best are unchanged.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-routes">
+       Back to Ghost Run
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-abandon" class="review-screen" id="ghost-abandon">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-abandon">
+      End this attempt?
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-abandon">
+     82
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       End this attempt?
+      </h2>
+     </header>
+     <div class="body">
+      <aside class="notice">
+       <strong>
+        Incomplete route
+       </strong>
+       <p>
+        Your recording will be saved as incomplete. It cannot become a route record.
+       </p>
+      </aside>
+      <a class="action primary" href="#ghost-unverified">
+       End and save
+      </a>
+      <a class="action secondary" href="#ghost-paused">
+       Keep racing
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-lock" class="review-screen" id="ghost-lock">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-lock">
+      Lock screen · Ghost Run
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-lock">
+     83
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Lock screen · Ghost Run
+      </h2>
+     </header>
+     <div class="body">
+      <aside class="notice">
+       <strong>
+        Android notification illustration
+       </strong>
+       <p>
+        Exact system layout varies. Gap and race time remain available with the screen locked.
+       </p>
+      </aside>
+      <div class="row">
+       <span>
+        Ghost Run · Year best
+       </span>
+       <span class="row-value">
+        12 s ahead
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Race time
+       </span>
+       <span class="row-value">
+        10:00
+       </span>
+      </div>
+      <a class="action secondary" href="#ghost-paused">
+       Pause training
+      </a>
+      <a class="action secondary" href="#ghost-live">
+       Open current run
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-not-ready" class="review-screen" id="ghost-not-ready">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-not-ready">
+      Move to the start
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-not-ready">
+     84
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route race</p>
+      <a class="back" href="#ghost-routes">
+       ← Ghost Run
+      </a>
+      <h2>
+       Move to the start
+      </h2>
+     </header>
+     <div class="body">
+      <svg aria-label="Illustrative route with direction, start and finish. No live positions are shown. Not a navigation map." class="ghost-map" role="img" viewbox="0 0 320 260">
+       <path d="M0 70H320M0 180H320M90 0V260M240 0V260" stroke="#3D3D3D" stroke-width="18">
+       </path>
+       <path d="M55 210 L55 70 Q55 40 90 40 L240 40 Q275 40 275 75 L275 185 Q275 210 240 210 Z" fill="none" stroke="#C4DA73" stroke-width="5">
+       </path>
+       <path d="M55 155l-7 13h14zM180 40l-13-7v14zM275 130l7-13h-14z" fill="#C4DA73">
+       </path>
+       <circle cx="55" cy="210" fill="#111111" r="9" stroke="#F2F2F2" stroke-width="3">
+       </circle>
+       <text fill="#F2F2F2" font-size="13" x="70" y="239">
+        Start / Finish
+       </text>
+       <text fill="#F2F2F2" font-size="12" x="12" y="22">
+        Illustrative route
+       </text>
+      </svg>
+      <aside class="notice">
+       <strong>
+        Start unavailable
+       </strong>
+       <p>
+        You are away from the start or GPS is not reliable enough. Recording an ordinary run remains available.
+       </p>
+      </aside>
+      <a class="action text" href="../index.html#training">
+       Back to training
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="screen-note review-links">
+    Review alternate states: <a href="#ghost-ready">At start example</a>.
+   </p>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article>
+<article aria-labelledby="heading-ghost-save-blocked" class="review-screen" id="ghost-save-blocked">
+   <header class="screen-heading">
+    <div>
+     <h3 id="heading-ghost-save-blocked">
+      Route cannot be saved
+     </h3>
+     <span class="screen-status">
+          Approved direction
+         </span>
+    </div>
+    <a class="screen-index" href="#ghost-save-blocked">
+     67b
+    </a>
+   </header>
+   <div class="phone">
+    <div aria-hidden="true" class="statusbar">
+     <span>
+      07:18
+     </span>
+     <span>
+      GPS · 92%
+     </span>
+    </div>
+    <div class="phone-content">
+     <header class="page-header"><p class="eyebrow">Ghost Run · Route capture</p>
+      <a class="back" href="../index.html#c2-detail">
+       ← Run details
+      </a>
+      <h2>
+       Route cannot be saved
+      </h2>
+     </header>
+     <div class="body">
+      <label class="field">
+       <span>
+        Route name
+       </span>
+       <span class="field-value">
+        <input aria-label="Route name" readonly="" value="Park loop"/>
+       </span>
+      </label>
+      <div class="row">
+       <span>
+        Route
+       </span>
+       <span class="row-value">
+        Completed continuous main set only
+       </span>
+      </div>
+      <div class="row">
+       <span>
+        Start / finish
+       </span>
+       <span class="row-value">
+        Fixed · Recorded direction
+       </span>
+      </div>
+      <aside class="notice">
+       <strong>
+        Recorded GPS gap
+       </strong>
+       <p>
+        A section of the recorded route cannot be verified. A gap cannot become an invented continuous route. Your original run remains saved.
+       </p>
+      </aside>
+      <p class="small">Route preview unavailable across the GPS gap.</p>
+      <button type="button" class="action primary" disabled>Save route unavailable</button>
+      <a class="action secondary" href="../index.html#c2-detail">
+       Back to run details
+      </a>
+     </div>
+    </div>
+   </div>
+   <p class="requirement">
+    Spec: Ghost Run · synthetic example
+   </p>
+  </article></div></section></main></div></body></html>
