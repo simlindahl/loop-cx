@@ -100,10 +100,10 @@ public static class HCWritePlanner
             }
 
             var samples = new List<HCRawSample>();
-            var byReceipt = new Dictionary<DateTimeOffset, HCRawSample>();
+            var byReceipt = new Dictionary<long, HCRawSample>();
             foreach (var row in source.HeartRate.OrderBy(static row => row.Sequence))
             {
-                if (row.Quality != "valid" || row.Bpm is not > 0) continue;
+                if (row.Quality != "valid" || row.Bpm is null) continue;
                 var received = Utc(row.ReceiptUtc);
                 var outsideUtc = received < started || received > ended;
                 if (bootStart is { } anchor)
@@ -114,20 +114,23 @@ public static class HCWritePlanner
                         throw new InvalidDataException("Raw HR UTC and boot receipt clocks contradict the frozen window.");
                 }
                 if (outsideUtc) continue;
-                if (byReceipt.TryGetValue(received, out var same))
+                if (row.Bpm is < 1 or > 300)
+                    throw new InvalidDataException("Valid HR is outside the API 34 representable range of 1–300 BPM.");
+                var epochMilliseconds = received.ToUnixTimeMilliseconds();
+                if (byReceipt.TryGetValue(epochMilliseconds, out var same))
                 {
-                    if (same.Bpm != row.Bpm) throw new InvalidDataException("Conflicting BPM at one raw HR receipt instant.");
+                    if (same.Bpm != row.Bpm) throw new InvalidDataException("Conflicting BPM at one platform millisecond receipt instant.");
                     continue;
                 }
                 var sample = new HCRawSample(row.Sequence, received, row.Bpm.Value);
-                byReceipt.Add(received, sample);
+                byReceipt.Add(epochMilliseconds, sample);
                 samples.Add(sample);
             }
             if (samples.Count > 0)
             {
                 records.Add(new(Id(source.Id, "heart-rate"), 1, HCRecordKind.HeartRate, started, ended, offset, null, [], null,
                     Array.AsReadOnly(samples.OrderBy(static sample => sample.ReceiptUtc).ThenBy(static sample => sample.SourceSequence).ToArray()),
-                    "Actual local GATT receipt instants only; v1 cross-checks stored boot/UTC clocks within 1000 ms where possible; no acquisition-time claim or extrapolation."));
+                    "Actual local GATT receipt instants retained; platform projection uses epoch milliseconds. Identical BPM within one millisecond retains the first source sequence. API 34 range is 1–300 BPM; clock agreement guard is 1000 ms. No acquisition-time claim or extrapolation."));
             }
             else
             {

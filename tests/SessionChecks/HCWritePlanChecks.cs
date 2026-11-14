@@ -80,6 +80,31 @@ internal static class HCWritePlanChecks
             "Identical same-instant readings are deduplicated deterministically before a platform could choose.");
         Require(HCWritePlanner.Create(source with { HeartRate = [.. duplicate.Select(row => row.Sequence == 4 ? row with { Bpm = 101 } : row)] }, false).State == "action_required",
             "Conflicting BPM at one receipt instant is not silently chosen.");
+        foreach (var bpm in new[] { 1, 300 })
+        {
+            var bounded = HCWritePlanner.Create(source with { HeartRate = [source.HeartRate[0] with { Bpm = bpm }] }, false);
+            Require(bounded.Plan!.Records.Single(record => record.Kind == HCRecordKind.HeartRate).HeartRateSamples.Single().Bpm == bpm,
+                "API 34 endpoint values are preserved, not interpreted as physiological zone rules.");
+        }
+        foreach (var bpm in new[] { 0, 301 })
+        {
+            Require(HCWritePlanner.Create(source with { HeartRate = [source.HeartRate[0] with { Bpm = bpm }] }, false).State == "action_required",
+                "A valid in-window receipt outside the platform BPM range fails closed without clamping.");
+        }
+
+        var subMillisecond = source.HeartRate[0] with
+        {
+            Sequence = 4,
+            ReceiptUtc = started.AddSeconds(2).AddTicks(1).ToString("O", CultureInfo.InvariantCulture),
+            BootReceiptMonotonicTicks = source.HeartRate[0].BootReceiptMonotonicTicks + 1
+        };
+        var sameMillisecond = HCWritePlanner.Create(source with { HeartRate = [source.HeartRate[0], subMillisecond] }, false).Plan!;
+        var retainedSample = sameMillisecond.Records.Single(record => record.Kind == HCRecordKind.HeartRate).HeartRateSamples.Single();
+        Require(retainedSample.SourceSequence == 1 && retainedSample.ReceiptUtc == started.AddSeconds(2)
+            && subMillisecond.ReceiptUtc != source.HeartRate[0].ReceiptUtc,
+            "Identical BPM in one platform millisecond retains the first source receipt exactly without changing original facts.");
+        Require(HCWritePlanner.Create(source with { HeartRate = [source.HeartRate[0], subMillisecond with { Bpm = 101 }] }, false).State == "action_required",
+            "Different BPM at distinct source ticks that project to the same millisecond cannot be silently chosen.");
 
         JsonElement ChangedCheckpoint(Action<System.Text.Json.Nodes.JsonObject> change)
         {
