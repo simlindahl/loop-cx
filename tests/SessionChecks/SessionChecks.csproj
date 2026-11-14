@@ -9,6 +9,7 @@
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunDistance.cs" Link="RunDistance.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunMotion.cs" Link="RunMotion.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreTemplate.cs" Link="CoreTemplate.cs" />
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/RunHeartRate.cs" Link="RunHeartRate.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunStatistics.cs" Link="RunStatistics.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreStartRequest.cs" Link="CoreStartRequest.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreSelections.cs" Link="CoreSelections.cs" />

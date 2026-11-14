@@ -677,3 +677,187 @@ Require(singleCooldownOff.Session.Plan[0].Duration == Minutes(1) && singleCooldo
     && maximumSettings.Session.Plan[0].Duration == Minutes(15) && maximumSettings.Session.Plan[^1].Duration == Minutes(15)
     && c2Maximum.Session.Plan.Single().Duration == Minutes(120), "Independent phase opt-outs and both upper bounds remain valid.");
 Console.WriteLine("PASS: Core-first protocols, guarded repetitions/C2 duration, Settings opt-out, frozen shortcuts/targets and legacy identities.");
+
+// Arrange
+var hrConfiguration = new HeartRateConfiguration(1, null, HeartRatePolicy.Pilot,
+    [new(1, 50, 99), new(2, 100, 119), new(3, 120, 139), new(4, 140, 159), new(5, 160, 220)]);
+var hr = new RunHeartRate(hrConfiguration);
+var hrStatistics = new RunStatistics();
+var hrUtc = DateTimeOffset.Parse("2026-11-14T00:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+HeartRateObservation Reading(double seconds, int? bpm, string quality = "valid")
+{
+    return new(TimeSpan.FromSeconds(seconds), hrUtc.AddSeconds(seconds), bpm, quality);
+}
+
+var hrDistance = new RunDistance(DistancePolicy.Pilot, TimeSpan.Zero, RunPhase.Work);
+
+// Act
+hrStatistics.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(12), RunPhase.Work, false);
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(0, 100)));
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(2, 140)));
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(2, 200)));
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(1, 200)));
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(4, 120)));
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(5, null, "contact-or-payload-invalid")));
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(6, 160)));
+hrStatistics.ObserveHeartRate(hr.Observe(Reading(10.5, 180)));
+hrStatistics.Exclude(TimeSpan.Zero, TimeSpan.FromSeconds(10));
+var hrTail = hrStatistics.Snapshot(TimeSpan.FromSeconds(12), hrDistance.Snapshot, true);
+
+// Assert
+Require(hrTail.Total.ActiveTime == TimeSpan.FromSeconds(2) && hrTail.Total.KnownHeartRateActiveTime == TimeSpan.FromSeconds(.5)
+    && hrTail.Total.UnknownHeartRateActiveTime == TimeSpan.FromSeconds(1.5) && hrTail.Total.AverageHeartRate == 160,
+    "Exact automatic-pause excision retains supported HR tail and leaves receipt tail unknown; valid average does not require complete coverage.");
+Require(hrTail.Total.HeartRateZones!.Single().Zone == 5 && hrTail.Total.HeartRateZones!.Single().ActiveTime == TimeSpan.FromSeconds(.5)
+    && hr.Snapshot(TimeSpan.FromSeconds(16)).CurrentBpm is null,
+    "Frozen personal zones classify valid time; stale live HR is null without extrapolating the last reading.");
+
+// Arrange
+var weightedHr = new RunHeartRate(HeartRateConfiguration.Empty);
+var weightedStatistics = new RunStatistics();
+
+// Act
+weightedStatistics.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(10), RunPhase.Warmup, false);
+weightedStatistics.ObserveHeartRate(weightedHr.Observe(Reading(0, 100)));
+weightedStatistics.ObserveHeartRate(weightedHr.Observe(Reading(2, 140)));
+weightedStatistics.ObserveHeartRate(weightedHr.Observe(Reading(6, 180)));
+weightedStatistics.ObserveHeartRate(weightedHr.Observe(Reading(20, 200)));
+var weightedState = weightedStatistics.Snapshot(TimeSpan.FromSeconds(10), hrDistance.Snapshot, false);
+
+// Assert
+Require(Math.Abs(weightedState.Total.AverageHeartRate!.Value - (((100 * 2) + (140 * 4)) / 6d)) < .000001
+    && weightedState.Total.KnownHeartRateActiveTime == TimeSpan.FromSeconds(6)
+    && weightedState.Total.UnknownHeartRateActiveTime == TimeSpan.FromSeconds(4)
+    && weightedState.Main.KnownHeartRateActiveTime == TimeSpan.Zero
+    && weightedState.Total.UnclassifiedHeartRateActiveTime == TimeSpan.FromSeconds(6),
+    "Time weighting uses supported valid brackets only; warm-up is total-only and missing zones remain unclassified.");
+Console.WriteLine("PASS: HR bracket coverage, time weighting, nulls, duplicates, frozen zones and exact automatic-pause exclusions.");
+
+
+// Arrange
+var scopedHr = new RunHeartRate(HeartRateConfiguration.Empty);
+var scopedStatistics = new RunStatistics();
+var splitDistance = hrDistance.Snapshot with
+{
+    TotalMeasuredMetres = 1500,
+    MainMeasuredMetres = 1500,
+    Splits = [new(1, 1000, TimeSpan.FromSeconds(4), false)]
+};
+
+// Act
+scopedStatistics.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(2), RunPhase.Warmup, false);
+scopedStatistics.Advance(TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(6), RunPhase.Work, false);
+scopedStatistics.Advance(TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(8), RunPhase.Work, true);
+scopedStatistics.Advance(TimeSpan.FromSeconds(8), TimeSpan.FromSeconds(12), RunPhase.Recovery, false);
+scopedStatistics.ObserveHeartRate(scopedHr.Observe(Reading(0, 100)));
+scopedStatistics.ObserveHeartRate(scopedHr.Observe(Reading(5, 200)));
+scopedStatistics.ObserveHeartRate(scopedHr.Observe(Reading(10, 180)));
+var scopedHrState = scopedStatistics.Snapshot(TimeSpan.FromSeconds(12), splitDistance, true);
+var finalHrState = scopedStatistics.Snapshot(TimeSpan.FromSeconds(12), splitDistance with
+{
+    Splits = [new(1, 1000, TimeSpan.FromSeconds(4), false), new(2, 500, TimeSpan.FromSeconds(4), true)]
+}, false);
+
+// Assert
+Require(scopedHrState.Total.ActiveTime == TimeSpan.FromSeconds(10) && scopedHrState.Main.ActiveTime == TimeSpan.FromSeconds(8)
+    && scopedHrState.Total.KnownHeartRateActiveTime == TimeSpan.FromSeconds(8)
+    && scopedHrState.Main.KnownHeartRateActiveTime == TimeSpan.FromSeconds(6)
+    && scopedHrState.CompletedSplits.Single().AverageHeartRate == 125
+    && scopedHrState.CurrentSplit!.AverageHeartRate == 200,
+    "Supported HR brackets intersect real active scopes and split boundaries; manual pause contributes no counted HR time.");
+Require(finalHrState.CurrentSplit is null && finalHrState.CompletedSplits.Sum(static split => split.KnownHeartRateActiveTime.Ticks) == finalHrState.Main.KnownHeartRateActiveTime.Ticks
+    && finalHrState.CompletedSplits.Sum(static split => split.UnknownHeartRateActiveTime.Ticks) == finalHrState.Main.UnknownHeartRateActiveTime.Ticks,
+    "Final partial HR coverage is attributed once and completed splits conserve main known/unknown time.");
+Console.WriteLine("PASS: HR pause/scope intersections, split weighting and final partial conservation.");
+
+
+// Arrange
+var corruptHrPreferences = new[] { "{", "null", "{}",
+    /*lang=json,strict*/
+                         "{\"Version\":99,\"Policy\":{\"Version\":1,\"MaximumGap\":\"00:00:05\"},\"Zones\":[]}",
+    /*lang=json,strict*/
+                         "{\"Version\":1,\"Policy\":null,\"Zones\":[]}",
+    /*lang=json,strict*/
+                         "{\"Version\":1,\"Policy\":{\"Version\":1,\"MaximumGap\":\"00:00:05\"},\"Zones\":null}",
+    /*lang=json,strict*/
+                         "{\"Version\":1,\"Policy\":{\"Version\":1,\"MaximumGap\":\"00:00:05\"},\"Zones\":[null]}" };
+var originalHrPreferenceBytes = corruptHrPreferences.ToArray();
+
+// Act
+var optionalHrStarts = corruptHrPreferences.Select(json =>
+{
+    var setup = HeartRateConfiguration.ReadOptional(json);
+    var timed = CoreTemplate.Resolve(new("C2", ContinuousMinutes: 45), new()).Session;
+    var unknownHr = new RunHeartRate(setup.Configuration, setup.ConfigurationError);
+    timed.Advance(TimeSpan.FromSeconds(2));
+
+    return (Session: timed, HeartRate: unknownHr.Snapshot(TimeSpan.FromSeconds(2)));
+}).ToArray();
+var absentHr = HeartRateConfiguration.ReadOptional(null);
+
+// Assert
+Require(optionalHrStarts.All(static start => start.Session.TotalActiveTime == TimeSpan.FromSeconds(2)
+    && start.HeartRate.ConfigurationError is not null && start.HeartRate.Quality == "configuration-invalid"
+    && start.HeartRate.CurrentBpm is null && start.HeartRate.Configuration.DeviceAddress is null
+    && start.HeartRate.Configuration.Zones.Count == 0),
+    "Corrupt, unsupported and null-nested optional HR configurations disable HR with a truthful error while the valid timed workout advances.");
+Require(corruptHrPreferences.SequenceEqual(originalHrPreferenceBytes) && absentHr.ConfigurationError is null
+    && absentHr.Configuration.DeviceAddress is null,
+    "Reading optional HR settings does not overwrite invalid input; absent configuration remains ordinary unavailable HR.");
+Console.WriteLine("PASS: corrupt optional HR settings preserve input and never block the timed workout.");
+
+// Arrange
+var finalityHr = new RunHeartRate(hrConfiguration);
+var finalityStatistics = new RunStatistics();
+var finalityDistance = hrDistance.Snapshot with
+{
+    TotalMeasuredMetres = 1050,
+    MainMeasuredMetres = 1050,
+    Splits = [new(1, 1000, TimeSpan.FromSeconds(4), false), new(2, 50, TimeSpan.FromSeconds(6), true)]
+};
+
+// Act
+finalityStatistics.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(10), RunPhase.Work, false);
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(0, 100)));
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(4, 120)));
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(9, 200)));
+finalityStatistics.FinalizeMain(finalityDistance);
+var mainAtBoundary = finalityStatistics.Snapshot(TimeSpan.FromSeconds(10), finalityDistance, false);
+var frozenMainJson = System.Text.Json.JsonSerializer.Serialize(new { mainAtBoundary.Main, mainAtBoundary.CompletedSplits, mainAtBoundary.CurrentSplit });
+finalityStatistics.Advance(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(11), RunPhase.Cooldown, false);
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(11, 220)));
+finalityStatistics.FinalizeMain(finalityDistance);
+var duringCooldown = finalityStatistics.Snapshot(TimeSpan.FromSeconds(11), finalityDistance, false);
+finalityStatistics.Advance(TimeSpan.FromSeconds(11), TimeSpan.FromSeconds(16), RunPhase.Cooldown, false);
+finalityStatistics.ObserveHeartRate(finalityHr.Observe(Reading(15, 180)));
+finalityStatistics.FinalizeMain(finalityDistance);
+var afterCooldown = finalityStatistics.Snapshot(TimeSpan.FromSeconds(16), finalityDistance, false);
+
+// Assert
+Require(mainAtBoundary.Main.KnownHeartRateActiveTime == TimeSpan.FromSeconds(9)
+    && Math.Abs(mainAtBoundary.Main.AverageHeartRate!.Value - (1000d / 9)) < .000001
+    && mainAtBoundary.Main.HeartRateZones!.All(static zone => zone.Zone is 2 or 3),
+    "Main finalization retains only the nine supported seconds and their actual zones at the real boundary.");
+Require(new[] { duringCooldown, afterCooldown }.All(state =>
+    System.Text.Json.JsonSerializer.Serialize(new { state.Main, state.CompletedSplits, state.CurrentSplit }) == frozenMainJson)
+    && afterCooldown.CurrentSplit is null && afterCooldown.CompletedSplits.Count == 2,
+    "Cooldown receipts, repeated finalization and finish cannot alter final main or its completed/final partial splits.");
+Require(duringCooldown.Total.KnownHeartRateActiveTime == TimeSpan.FromSeconds(11)
+    && duringCooldown.Total.HeartRateZones!.Single(static zone => zone.Zone == 5).ActiveTime == TimeSpan.FromSeconds(2)
+    && afterCooldown.Total.KnownHeartRateActiveTime == TimeSpan.FromSeconds(15)
+    && afterCooldown.Total.UnknownHeartRateActiveTime == TimeSpan.FromSeconds(1),
+    "The cross-boundary HR bracket remains supported for total and cooldown without refining frozen main.");
+
+// Arrange
+var separateRunStatistics = new RunStatistics();
+
+// Act
+separateRunStatistics.Advance(TimeSpan.Zero, TimeSpan.FromSeconds(2), RunPhase.Warmup, false);
+separateRunStatistics.FinalizeMain(hrDistance.Snapshot);
+separateRunStatistics.Advance(TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), RunPhase.Work, false);
+var separateMain = separateRunStatistics.Snapshot(TimeSpan.FromSeconds(5), hrDistance.Snapshot, true);
+
+// Assert
+Require(separateMain.Main.ActiveTime == TimeSpan.FromSeconds(3) && separateMain.CurrentSplit is not null,
+    "A warm-up boundary cannot finalize main, and a new run has no frozen result inherited from a previous instance.");
+Console.WriteLine("PASS: main results and splits freeze at the real boundary while total HR coverage continues through cooldown.");
