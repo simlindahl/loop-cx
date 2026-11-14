@@ -50,8 +50,24 @@ internal static class HealthConnectOutboxProbe
                 Require(retry.Token != first.Token && retry.AttemptCount == 2 && retry.FrozenPlan.PayloadHash == first.FrozenPlan.PayloadHash, "Frozen restart contract");
                 Require(!store.CompleteSimulation(id, first.Token, plan.PayloadHash, receipts), "Stale success must not ACK newer attempt");
                 Require(!store.Fail(id, first.Token, plan.PayloadHash, "stale", true), "Stale failure must not change newer attempt");
-                Require(store.CompleteSimulation(id, retry.Token, plan.PayloadHash, receipts), "Current simulation ACK");
-                Require(!store.CompleteSimulation(id, retry.Token, plan.PayloadHash, receipts), "Duplicate ACK");
+                // Abort only this scratch database's ACK update: the preceding frozen claim must survive.
+                database.ExecSQL("CREATE TRIGGER reject_probe_ack BEFORE UPDATE ON export_queue WHEN NEW.attempt_json LIKE '%simulated_complete%' BEGIN SELECT RAISE(ABORT, 'injected local ACK failure'); END");
+                var failedAck = false;
+                try
+                {
+                    store.CompleteSimulation(id, retry.Token, plan.PayloadHash, receipts);
+                }
+                catch (SQLiteException)
+                {
+                    failedAck = true;
+                }
+                Require(failedAck, "Injected SQLite ACK failure must be observable");
+                database.ExecSQL("DROP TRIGGER reject_probe_ack");
+                var recovered = store.PrepareSimulation(plan).Attempt ?? throw new InvalidOperationException("Failed ACK was not retryable in the same process.");
+                Require(recovered.AttemptCount == 3 && recovered.FrozenPlan.PayloadHash == plan.PayloadHash, "Failed ACK preserves frozen payload");
+                Require(!store.CompleteSimulation(id, retry.Token, plan.PayloadHash, receipts), "Failed ACK token becomes stale after reclaim");
+                Require(store.CompleteSimulation(id, recovered.Token, plan.PayloadHash, receipts), "Current simulation ACK");
+                Require(!store.CompleteSimulation(id, recovered.Token, plan.PayloadHash, receipts), "Duplicate ACK");
             }
 
             using (var database = SQLiteDatabase.OpenDatabase(path, null, DatabaseOpenFlags.OpenReadwrite)!)
