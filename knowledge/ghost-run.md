@@ -11,7 +11,7 @@ title: Ghost Run
 <a id="omfattning-och-ingång"></a>
 ### Scope and entry point
 
-Ghost Run is a separate feature, accessible from Training without changing the existing three main navigation destinations. After a completed continuous workout, the runner can choose Save route to Ghost Run in session details. This applies only to main-set distance, not warm-up/cool-down. Intervals, pacers/target pace and arbitrary previous attempts are excluded. Ghost Run uses English, Basalt, Space Grotesk and Material Icons. See the [preliminary screens](../design/mockups/index.html#ghost-routes).
+Ghost Run is a separate feature, accessible from Training without changing the existing three main navigation destinations. After a completed continuous workout, the runner can choose Save route to Ghost Run in session details. This applies only to main-set distance, not warm-up/cool-down. Intervals, pacers/target pace and arbitrary previous attempts are excluded. Ghost Run uses English, Basalt, Space Grotesk and Material Icons. Use the [approved twenty-one-state reference](../design/mockups/ghost-run/index.html#ghost-routes) under its [decision and limits](../design/decision.md#ghost-layout-approval); the matching older gallery examples are historical context.
 
 <a id="race-identity-and-applicability"></a>
 #### Race identity and applicability
@@ -89,11 +89,11 @@ Load route and reference data locally before starting; no new server is needed. 
 | Reopen/storage retry after finishing | Same result and reference; no duplicate records or export entries. |
 | Pixel/WHOOP/Spotify with screen on/off | Same race clock, position sequence and session. Report audio, readability, notification actions and battery use with actual evidence. |
 
-Deliver small vertical slices: route storage/record selection, deterministic playback and route matching, session/pause/persistence integration, then approved live UI and physical verification. Mockups are preliminary; the request approves product rules, not detailed layout. Prototypes/integration and app UI follow the design decision gate in AGENTS.md. Overnight work may cover the data model, calculation rules, synthetic verification and technical analysis within approved rules while detailed layout is reviewed. PR review and merge follow the delegated workflow in AGENTS.md.
+Deliver small vertical slices: route storage/record selection, deterministic playback and route matching, session/pause/persistence integration, then live UI and physical verification. The identified twenty-one-state detailed direction is now owner-approved; do not ask again for the same layout. Implement within that scope and the existing architecture, review and acceptance rules. New material redesigns still follow AGENTS.md. Static approval and synthetic verification do not establish runtime race/GPS/storage behavior or physical records. PR review and merge follow the delegated workflow in AGENTS.md.
 
 
 ### Native archive adapter boundary
 
 The isolated archive adapter uses the existing local session database and the canonical [archive DDL](../storage/ghost/schema-1.sql), with an independent archive revision marker and no session-schema version change. It installs atomically only when explicitly used. Save a captured route/version and its source attempt together; identical stable identities/evidence are idempotent, conflicting copies roll back without replacing archived rows. Readers return the frozen geometry, rule/quality policy, raw/progress evidence and saved local start/zone for existing domain selection. Successful storage is never proof of Verified quality; unsupported legacy zone provenance is not backfilled. See [the native archive contract](../docs/ghost-archive.md).
 
-Acceptance for this bounded slice is real Android SQLite initialization, route/source-attempt rollback, identical/conflicting retries, reopen and preservation of existing run/raw/outbox data. The session database version remains unchanged; an unknown/partial Ghost namespace is rejected. No route-save screen, race-service integration, preliminary-layout prototype, map provider or health operation is delivered by this adapter.
+Acceptance for this bounded slice is real Android SQLite initialization, route/source-attempt rollback, identical/conflicting retries, reopen and preservation of existing run/raw/outbox data. The session database version remains unchanged; an unknown/partial Ghost namespace is rejected. No route-save screen, race-service integration, UI prototype, map provider or health operation is delivered by this adapter.

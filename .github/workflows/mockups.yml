@@ -28,6 +28,7 @@ jobs:
         run: |
           node design/mockups/verify.cjs
           node design/mockups/verify-integrations.cjs
+          node design/mockups/verify-ghost.cjs
       - name: Upload review evidence
         if: always()
         uses: actions/upload-artifact@v4
