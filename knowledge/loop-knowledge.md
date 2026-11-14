@@ -16,6 +16,8 @@ Historical approved baseline: the guide and detailed screens at revision `4a4c97
 
 Keep Get started actionable with brief rationale at the relevant choice; fuller assumptions, evidence limits and optional self-competition belong in Learn more or the bundled system reference. Keep critical safety instructions visible in the entry flow. The owner requested no visible RPE in the reader proposal; do not infer heart-rate-zone defaults from it. The separate [#96](https://github.com/simlindahl/loop-cx/issues/96) app presentation/target decision does not rewrite archived raw/export values or implement itself through this content change.
 
+The subsequent #97 content revision makes the [system document](training/system.md) an independently readable scientific white paper, not a product reference. It explains physiology, practical prescriptions and evidence strength/limitations with numbered references. The guide may link to it one-way; product behavior, Ghost feature rules and migration provenance are excluded from the paper. This deeper rewrite still awaits fresh content review and the owner's reading and does not change the reader runtime hold or already approved detailed layout.
+
 Review acceptance:
 - From Settings, open What is LOOP?, read Get started, then return to the introduction and Settings without a new main tab.
 - Explain C1 → S1 + M → C2 → S2 + M, all four workout cards, safe technical failure, gym/home substitutions and continuing after interruptions.

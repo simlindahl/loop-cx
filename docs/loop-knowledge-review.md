@@ -19,6 +19,8 @@ Core defaults retain two working sets to technical failure, safe stops and recov
 
 The requested refresh explains the interrupted-life assumption, experience/autoregulation, order versus dose, general capacity versus specialization, failure/fatigue, exercise choices and M/recovery compromises. Get started keeps brief why statements; Learn more/system reference carry deeper detail. The new reader has no visible RPE and invents no replacement zone defaults. Its optional Ghost rationale explains personal mastery and contextual self-reference without claiming a health score, compulsory race frequency, leaderboard superiority or complete-programme validation. Ghost runtime rules and [#96](https://github.com/simlindahl/loop-cx/issues/96) target/presentation choices keep their own owners.
 
+Subsequent owner feedback requires a genuinely independent white paper rather than a product-linked summary. The revised [paper](../knowledge/training/system.md) now separates physiology, empirical findings and LOOP's practical choices, with a complete numbered bibliography and near-claim citations. It includes conditioning, strength dose/failure/rest, mixed-work interference, recovery, interrupted exposure and voluntary self-competition, including differing findings across short laboratory studies. It contains no product or Ghost-feature references or outgoing links to product documents; provenance stays in the [migration record](loop-source-migration.md). The reader remains the shorter pedagogical route. Earlier draft approvals do not approve the new prose; fresh independent review and the owner's reading remain required.
+
 ## Proposed navigation
 
 Settings → What is LOOP? → Get started (one scrolling reading page, four sections).

@@ -6,12 +6,14 @@ Requested by Simon on 14 November 2026 under [#97](https://github.com/simlindahl
 
 | Migrated resource | Owner and purpose |
 |---|---|
-| [LOOP system reference](../knowledge/training/system.md) | General training rules, assumptions, rationale and deliberate tradeoffs |
+| [LOOP training-system white paper](../knowledge/training/system.md) | Independent training prescriptions, physiology, evidence and deliberate tradeoffs; no product references |
 | [Health and recovery](../knowledge/training/health-recovery.md) | Supporting lifestyle reference; no new mandatory training steps |
 | [Mobility](../knowledge/training/mobility.md) | Optional movement resource, not a daily Core requirement |
 | [Generic 10K adaptation](../knowledge/training/plugins/10k.md) | Temporary event-reference material, not a personal plan or delivered app feature |
 
 [What is LOOP?](../knowledge/what-is-loop.md) explains the system for an experienced trainee whose life interrupts training. It is a pedagogical projection, not a competing rule authority. App specifications own resolved/frozen plans, measurements, recording, execution, target contracts and acceptance; their numerical protocol tables are synchronized projections of approved training decisions. The roadmap owns delivery boundaries, not a separate training programme.
+
+The subsequent owner revision requires the system document to stand alone as a scientific white paper, with substantially deeper physiological reasoning, primary scientific citations near claims and a complete numbered bibliography. The guide and product may point to the paper; the paper contains no product links, feature rules or migration/provenance framing. This file retains provenance and reconciliation. Exact default training doses are preserved; count sliders, five-minute UI steps and global Off/1–15-minute validation stay solely in their product owners rather than being presented as physiological principles. The white paper remains a draft pending fresh independent review and the owner's reading.
 
 ## Provenance and reconciliation
 
