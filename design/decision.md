@@ -159,3 +159,7 @@ The existing fresh scope/hash token, runtime allowlist and version-2 settled-ope
 ## RPE information-icon conformance — 14 November 2026
 
 Simon requested a smaller, round information icon. Both existing Core RPE controls use the approved 22px circled information glyph inside an unchanged 48×48px transparent touch target. Their English accessible names, dialogs, trigger IDs, focus return and reduced-motion behavior remain unchanged. This is a correction to the approved Core reference, not a new layout or a change to RPE.
+
+## Normal Health Connect prospective consent — 15 November 2026
+
+Simon explicitly approved **Godkänn förslaget** against proposal `404314fa328fbd02e73d3286d7a7c4c0b0f6d7eb`. [The integration owner](../knowledge/integrations-data.md#normal-health-connect-delivery) records the approved prospective-start intent, denial/Off/re-enable behavior and faithful production privacy route; the existing M1 Settings/History WRITE-only layouts remain the visual baseline. This authorises implementation, not normal Release provider execution, permission changes, device operations, READ access, historical backfill or WHOOP credit. Positive normal provider acceptance needs the separately scoped execution plan/authority in [delivery acceptance](../knowledge/delivery-acceptance.md#normal-health-connect-delivery). The isolated DEBUG three-record fixture retains its separate approval and guards.
