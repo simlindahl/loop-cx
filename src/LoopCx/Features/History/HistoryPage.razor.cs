@@ -142,7 +142,7 @@ public partial class HistoryPage
             if (!CurrentShare(id, request)) return;
 
             opening = true;
-            await RunJsonShareSheet.OpenAsync(path);
+            await RunJsonShareSheet.OpenAsync(path, () => CurrentShare(id, request));
             if (!CurrentShare(id, request)) return;
             shareMessage = "Android controls sharing. No recipient delivery is confirmed.";
         }
