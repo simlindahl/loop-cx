@@ -90,3 +90,13 @@ Paused notification action priority: Manual shows Resume only; Auto shows Resume
 ## M2 identity and fresh installation · 14 November 2026
 
 Simon explicitly chose full technical as well as visible LOOP naming, then removed the migration requirement because he is the only installed user and accepts reinstallation. The [owning M2 roadmap](../knowledge/loop-core-roadmap.md#rename-at-the-start-of-m2) now requires a consistent technical rename and verified fresh installation after M1 acceptance, without a local-data bridge or history/settings import. This supersedes the prior data-preserving package-transition gate for the M2 rename only. No actual rename or app removal is performed by this specification update.
+
+
+## Global Core preparation opt-out · 14 November 2026
+
+Simon explicitly chose 1–15 whole minutes for each global C1 preparation phase, with independent opt-out: Off stores 0 and omits that phase from the resolved new plan. Defaults remain 4/3. This is one global Settings pair applying at every future C1 start, including saved shortcuts; no per-run preparation switch. C2 never inherits preparation. Started/historical plans remain frozen and +1/skip apply only to existing runtime preparation phases. This replaces the reference's earlier unresolved zero/bounds note.
+
+
+## Timed workout without GPS · 14 November 2026
+
+Simon explicitly approved a user-started ongoing workout timer without GPS. On Android14+, use eligible Location only with granted location access and enabled location; otherwise declare/select Special Use with a truthful subtype for ongoing timed workout phases and visible notification while locked. This adds no health/BLE runtime permission and does not fabricate a device connection. Unknown GPS is not standstill or zero distance. Native denied/disabled checks remain required. Future Google Play Special Use review is an obligation, not guaranteed approval; M4 distribution/payment discovery does not waive it. Human-facing shared labels use **Warm-up and cool-down**, never preparation as the name of cool-down; historical decisions/serialized contracts remain unchanged.

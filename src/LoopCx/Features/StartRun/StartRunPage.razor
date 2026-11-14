@@ -1,4 +1,6 @@
-@implements IDisposable
+@using LoopCx.Features.ActiveRun
+@implements IAsyncDisposable
+@inject Microsoft.JSInterop.IJSRuntime JS
 <main>
     <header>
         <h1>LOOP Cx</h1>
@@ -6,12 +8,15 @@
     @if (RunService.Snapshot is { } state)
     {
         <section aria-labelledby="phase-heading">
-            <p class="eyebrow">@(state.TemplateId == "C2" ? "C2 · Zone 2" : "C1 · Intervals")</p>
+            <p class="eyebrow">@(state.FrozenTemplate?.ProtocolId ?? state.TemplateId) · @(state.FrozenTemplate?.ShortcutName ?? (state.TemplateId == "C2" ? "Zone 2" : "Intervals"))</p>
             <h2 id="phase-heading">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))</h2>
             @if (state.Paused)
             {
                 <p>@(IsAutomatic(state) ? "Move to resume automatically." : "Use Resume to continue.") · @PhaseLabel(state.Phase)</p>
             }
+            @if (state.TemplateId == "C1" && state.Phase is "Work" or "Recovery") { <p>Work @state.WorkRepetition of @state.WorkRepetitions</p> }
+            <p>Target RPE @state.TargetRpe · intended effort</p>
+            <p>@TargetLabel(state.FrozenTemplate?.Targets)</p>
             <p class="countdown"><strong>@Clock(state.RemainingSeconds)</strong><span>min:sec remaining</span></p>
             <p class="status">@state.GpsStatus</p>
             <p>Active time · @Clock(state.ActiveSeconds) min:sec</p>
@@ -32,54 +37,116 @@
             }
         </section>
     }
-    else
+    else if (!loadFailed)
     {
         <section aria-labelledby="start-heading">
-            <h2 id="start-heading">Start a run</h2>
-            <div class="workout">
-                <h3>C1 · Intervals</h3>
-                <button type="button" class="primary" @onclick="() => Start(false)">Start C1 · Intervals</button>
-            </div>
-            <div class="workout">
-                <h3>C2 · Zone 2</h3>
-                <p>45 min · Target RPE 3 · Zone 2 target</p>
-                <button type="button" class="primary" @onclick="() => Start(true)">Start C2 · Zone 2</button>
-            </div>
+            <div class="card-heading"><h2 id="start-heading">Start a run</h2><button id="core-settings" type="button" @onclick="OpenSettings">Settings</button></div>
+            <section class="workout" aria-labelledby="c1-heading">
+                <div class="card-heading"><h3 id="c1-heading">C1 · @SelectedProtocol.Title</h3><button id="change-c1" type="button" @onclick="OpenVariant">Change</button></div>
+                <p><strong>@SelectedC1.ProtocolId</strong> · @Dose(SelectedC1)</p>
+                <p>@SelectedProtocol.Purpose</p>
+                <p>Target RPE <strong>@SelectedProtocol.WorkRpe / @SelectedProtocol.RecoveryRpe</strong> · work / recovery <button id="rpe-c1" class="info" type="button" aria-label="Explain C1 RPE" @onclick='() => OpenRpe(SelectedC1.ProtocolId, "rpe-c1")'>i</button></p>
+                <p>@Times(SelectedC1)<small>@WarmupCooldown(SelectedC1)</small></p>
+                <p>@TargetLabel(SelectedC1.Targets)</p>
+                <div class="actions"><button type="button" class="primary" @onclick="() => Start(SelectedC1)">Start @SelectedC1.ProtocolId</button><button id="personalise-c1" type="button" @onclick='() => OpenTarget(SelectedC1, "personalise-c1")'>Personalise</button></div>
+                <button id="shortcut-c1" type="button" class="text" @onclick='() => OpenShortcut(SelectedC1, "shortcut-c1")'>Save shortcut</button>
+            </section>
+            <section class="workout" aria-labelledby="c2-heading">
+                <div class="card-heading"><h3 id="c2-heading">C2 · Zone 2</h3><button id="change-c2" type="button" @onclick="OpenDuration">Change</button></div>
+                <p>Steady, conversational running.<br /><strong>@(statePreferences.C2Selection.ContinuousMinutes ?? 45) min main / total</strong></p>
+                <p>Target RPE <strong>4</strong> <button id="rpe-c2" class="info" type="button" aria-label="Explain C2 RPE" @onclick='() => OpenRpe("C2", "rpe-c2")'>i</button></p>
+                <p>Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p>
+                <p>@TargetLabel(statePreferences.C2Selection.Targets)</p>
+                <div class="actions"><button type="button" class="primary" @onclick="() => Start(statePreferences.C2Selection)">Start C2</button><button id="target-c2" type="button" @onclick='() => OpenTarget(statePreferences.C2Selection, "target-c2")'>Adapt target</button></div>
+                <button id="shortcut-c2" type="button" class="text" @onclick='() => OpenShortcut(statePreferences.C2Selection, "shortcut-c2")'>Save shortcut</button>
+            </section>
+            @if (statePreferences.Shortcuts.Count > 0) { <h3>Saved shortcuts</h3> }
+            @foreach (var shortcut in statePreferences.Shortcuts)
+            {
+                <section class="workout" @key="shortcut.Id"><h3>@shortcut.Name</h3><p>@shortcut.Request.ProtocolId · @Dose(shortcut.Request)</p><p>@Times(shortcut.Request)<small>@WarmupCooldown(shortcut.Request)</small></p><p>@TargetLabel(shortcut.Request.Targets)</p><button type="button" class="primary" @onclick="() => Start(shortcut.Request with { ShortcutId = shortcut.Id, ShortcutName = shortcut.Name })">Start @shortcut.Name</button></section>
+            }
         </section>
     }
-    @if (error is not null)
+    @if (error is not null || RunService.StartError is not null)
     {
-        <p role="alert">@error</p>
+        <p role="alert">@(error ?? RunService.StartError)</p>
     }
 </main>
-@code {
-    private string? error;
 
-    private static bool IsAutomatic(RunSnapshot state) => state.Motion?.PauseReason == LoopCx.Features.ActiveRun.PauseReason.Automatic;
-
-    private static string Clock(long seconds) => $"{seconds / 60}:{seconds % 60:00}";
-
-    private static string PhaseLabel(string phase) => phase switch
-    {
-        "Warmup" => "Warm-up",
-        "Cooldown" => "Cool-down",
-        _ => phase
-    };
-
-    protected override void OnInitialized() => RunService.Changed += Refresh;
-    private void Refresh() => _ = InvokeAsync(StateHasChanged);
-    private void TogglePause() => RunService.Command(RunService.Snapshot?.Paused == true ? "resume" : "pause");
-    private async Task Start(bool continuous)
-    {
-        var granted = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-        if (granted != PermissionStatus.Granted)
+@if (dialogMode is not null)
+{
+    <dialog id="core-dialog" aria-labelledby="core-dialog-title">
+        <h2 id="core-dialog-title" tabindex="-1">@DialogTitle</h2>
+        @if (dialogError is not null) { <p role="alert">@dialogError</p> }
+        @if (dialogMode == "variant")
         {
-            error = "Location permission is required for this GPS preview. Enable it in Android settings.";
-            return;
+            <form @onsubmit="SaveVariant" @onsubmit:preventDefault novalidate>
+                <fieldset><legend>Official C1 protocol</legend>
+                    @foreach (var protocol in CoreProtocols.All)
+                    {
+                        <label class="choice"><input type="radio" name="protocol" value="@protocol.Id" checked="@(draftProtocol == protocol.Id)" @onchange="() => draftProtocol = protocol.Id" /><span><strong>@protocol.Id · @protocol.Title</strong><small>@Dose(new CoreStartRequest(protocol.Id, protocol.DefaultCount))<br />Target RPE @protocol.WorkRpe / @protocol.RecoveryRpe<br />@Times(new CoreStartRequest(protocol.Id, protocol.DefaultCount))</small>@protocol.Purpose</span></label>
+                    }
+                </fieldset>
+                <p>Choosing a protocol uses its official repetition default. Saved shortcuts keep their own count.</p>
+                <div class="actions"><button type="submit" class="primary">Use variant</button><button type="button" @onclick="CloseDialog">Cancel</button></div>
+            </form>
         }
-        if (OperatingSystem.IsAndroidVersionAtLeast(33))
-            await Permissions.RequestAsync<NotificationPermission>();
-        RunService.Command(continuous ? "start-c2" : "start");
-    }
-    public void Dispose() => RunService.Changed -= Refresh;
+        else if (dialogMode == "target")
+        {
+            <form @onsubmit="SaveTarget" @onsubmit:preventDefault novalidate>
+                <p>RPE stays fixed. Add one optional target type; this is a target, not a live reading.</p>
+                @if (draftRequest.ProtocolId != "C2")
+                {
+                    <label for="rep-count">Work repetitions</label>
+                    <div class="count-controls"><button type="button" aria-label="One fewer work effort" disabled="@(!ValidCount || CountValue <= DraftProtocol.MinimumCount)" @onclick="() => ChangeCount(-1)">−</button><input id="rep-count" type="number" step="1" min="@DraftProtocol.MinimumCount" max="@DraftProtocol.MaximumCount" inputmode="numeric" @bind="draftCount" @bind:event="oninput" aria-describedby="count-help" /><button type="button" aria-label="One more work effort" disabled="@(!ValidCount || CountValue >= DraftProtocol.MaximumCount)" @onclick="() => ChangeCount(1)">+</button></div>
+                    <p id="count-help">@DraftProtocol.MinimumCount–@DraftProtocol.MaximumCount efforts. Work @Duration(DraftProtocol.WorkSeconds) / recovery @Duration(DraftProtocol.RecoverySeconds) fixed. Main set includes recovery and must be 10–60 min; warm-up and cool-down are outside that limit.</p>
+                    <p>Target RPE <strong>@DraftProtocol.WorkRpe / @DraftProtocol.RecoveryRpe</strong> · work / recovery</p>
+                    <p role="status">@(ValidCount ? Times(draftRequest with { Repetitions = CountValue }) : "Use a whole repetition count within the displayed limits.")</p>
+                }
+                <label for="target-mode">Additional target</label>
+                <select id="target-mode" value="@((int)targetMode)" @onchange="ChangeTargetMode"><option value="0">None · RPE only</option><option value="1">Pace</option><option value="2">Heart-rate zone</option></select>
+                @if (targetMode != CoreTargetMode.None)
+                {
+                    <label for="target-work">@(draftRequest.ProtocolId == "C2" ? "Continuous target" : "Work target") @(targetMode == CoreTargetMode.Pace ? "(min/km)" : "")</label>
+                    @if (targetMode == CoreTargetMode.Pace) { <input id="target-work" placeholder="5:30" inputmode="numeric" @bind="draftWork" /> }
+                    else { <select id="target-work" @bind="draftWork"><option value="">Not set</option>@for (var zone = 1; zone <= 5; zone++) { <option value="@zone">Zone @zone</option> }</select> }
+                    @if (draftRequest.ProtocolId != "C2")
+                    {
+                        <label for="target-recovery">Recovery target (optional) @(targetMode == CoreTargetMode.Pace ? "(min/km)" : "")</label>
+                        @if (targetMode == CoreTargetMode.Pace) { <input id="target-recovery" placeholder="7:00" inputmode="numeric" @bind="draftRecovery" /> }
+                        else { <select id="target-recovery" @bind="draftRecovery"><option value="">Not set</option>@for (var zone = 1; zone <= 5; zone++) { <option value="@zone">Zone @zone</option> }</select> }
+                    }
+                    @if (targetMode == CoreTargetMode.HeartRateZone) { <p>Zone targets are intentions. Missing heart-rate readings and unconfigured personal boundaries remain unknown.</p> }
+                }
+                <div class="actions"><button type="submit" class="primary">Use changes</button><button type="button" @onclick="CloseDialog">Cancel</button></div>
+            </form>
+        }
+        else if (dialogMode == "duration")
+        {
+            <form @onsubmit="SaveDuration" @onsubmit:preventDefault novalidate>
+                <p>Continuous running · Target RPE 4 · No warm-up or cool-down</p>
+                <label for="c2-duration">Duration: <output for="c2-duration">@draftDuration minutes</output></label><input id="c2-duration" type="range" min="20" max="120" step="5" @bind="draftDuration" @bind:event="oninput" aria-valuetext="@($"{draftDuration} minutes")" />
+                <p>20–120 minutes in five-minute steps. Main time equals total time.</p>
+                <div class="actions"><button type="submit" class="primary">Use duration</button><button type="button" @onclick="CloseDialog">Cancel</button></div>
+            </form>
+        }
+        else if (dialogMode == "settings")
+        {
+            <form @onsubmit="SaveSettings" @onsubmit:preventDefault novalidate>
+                <p>One global pair applies to all C1 variants at their next start, including saved shortcuts. C2 has no warm-up or cool-down. Started and past runs keep their frozen plans.</p>
+                <label class="choice"><input type="checkbox" @bind="warmupEnabled" /> Warm-up enabled</label><label for="c1-warmup">Warm-up (minutes)</label><input id="c1-warmup" type="number" min="1" max="15" step="1" inputmode="numeric" disabled="@(!warmupEnabled)" @bind="draftWarmup" />
+                <label class="choice"><input type="checkbox" @bind="cooldownEnabled" /> Cool-down enabled</label><label for="c1-cooldown">Cool-down (minutes)</label><input id="c1-cooldown" type="number" min="1" max="15" step="1" inputmode="numeric" disabled="@(!cooldownEnabled)" @bind="draftCooldown" />
+                <p>Each phase may be Off or 1–15 whole minutes. Defaults are 4/3. Runtime +1 min and skip do not change Settings.</p>
+                <div class="actions"><button type="submit" class="primary">Save Settings</button><button type="button" @onclick="CloseDialog">Cancel</button></div>
+            </form>
+        }
+        else if (dialogMode == "shortcut")
+        {
+            <form @onsubmit="SaveShortcut" @onsubmit:preventDefault novalidate><p>Save @draftRequest.ProtocolId with its current count or duration and target. C1 starts always use the current global warm-up and cool-down Settings. Previous runs keep their frozen plan.</p><label for="shortcut-name">Shortcut name</label><input id="shortcut-name" autocomplete="off" @bind="draftName" /><div class="actions"><button type="submit" class="primary">Save shortcut</button><button type="button" @onclick="CloseDialog">Cancel</button></div></form>
+        }
+        else if (dialogMode == "rpe")
+        {
+            <p>RPE means Rating of Perceived Exertion: how hard the effort feels, from 1 (very easy) to 10 (maximum).</p><p><strong>@RpeCue</strong></p><p>@RpeGuidance</p><button type="button" @onclick="CloseDialog">Close explanation</button>
+        }
+    </dialog>
 }

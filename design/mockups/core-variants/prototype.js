@@ -112,7 +112,7 @@ function chooseVariant(opener) {
 }
 
 function chooseC2Duration(opener) {
-  openDialog('Choose C2 duration', `<form id="c2-duration-form" novalidate><p>Continuous running · Target RPE 4 · No preparation</p><div id="duration-errors" role="alert"></div><div class="field"><label for="c2-duration">Duration: <output id="c2-duration-value" for="c2-duration">${c2Duration} minutes</output></label><input id="c2-duration" name="duration" type="range" min="20" max="120" step="5" value="${c2Duration}" aria-valuetext="${c2Duration} minutes"><p class="small">20–120 minutes, in 5-minute steps. Main time equals total time.</p></div><div class="actions"><button type="submit" class="primary">Use duration</button><button type="button" data-dialog="close">Cancel</button></div></form>`, opener);
+  openDialog('Choose C2 duration', `<form id="c2-duration-form" novalidate><p>Continuous running · Target RPE 4 · No warm-up or cool-down</p><div id="duration-errors" role="alert"></div><div class="field"><label for="c2-duration">Duration: <output id="c2-duration-value" for="c2-duration">${c2Duration} minutes</output></label><input id="c2-duration" name="duration" type="range" min="20" max="120" step="5" value="${c2Duration}" aria-valuetext="${c2Duration} minutes"><p class="small">20–120 minutes, in 5-minute steps. Main time equals total time.</p></div><div class="actions"><button type="submit" class="primary">Use duration</button><button type="button" data-dialog="close">Cancel</button></div></form>`, opener);
 }
 
 function targetForm(id, opener, retained = null) {
@@ -123,7 +123,7 @@ function targetForm(id, opener, retained = null) {
     const v = variants[id];
     dialog.querySelector('#target-form > p').textContent = 'Choose the repetition count. Work/recovery lengths and RPE stay fixed. You can also add pace or a heart-rate zone.';
     dialog.querySelector('#target-form button[type="submit"]').textContent = 'Use changes';
-    dialog.querySelector('#target-mode').closest('.field').insertAdjacentHTML('beforebegin', `<div class="field"><label for="rep-count">Work repetitions</label><div class="count-controls"><button type="button" data-count="-1" aria-label="One fewer work effort">−</button><input id="rep-count" type="number" min="${v.minCount}" max="${v.maxCount}" step="1" inputmode="numeric" value="${counts[id]}" aria-describedby="count-help"><button type="button" data-count="1" aria-label="One more work effort">+</button></div><p class="small" id="count-help">${v.minCount}–${v.maxCount} efforts · work ${v.work} / recovery ${v.recovery} min fixed. Main set includes recovery and must be 10–60 min; preparation is outside that limit.</p><p>Target RPE <strong>${v.rpe}</strong> · work / recovery</p><p id="dose-preview" role="status"></p></div>`);
+    dialog.querySelector('#target-mode').closest('.field').insertAdjacentHTML('beforebegin', `<div class="field"><label for="rep-count">Work repetitions</label><div class="count-controls"><button type="button" data-count="-1" aria-label="One fewer work effort">−</button><input id="rep-count" type="number" min="${v.minCount}" max="${v.maxCount}" step="1" inputmode="numeric" value="${counts[id]}" aria-describedby="count-help"><button type="button" data-count="1" aria-label="One more work effort">+</button></div><p class="small" id="count-help">${v.minCount}–${v.maxCount} efforts · work ${v.work} / recovery ${v.recovery} min fixed. Main set includes recovery and must be 10–60 min; warm-up and cool-down are outside that limit.</p><p>Target RPE <strong>${v.rpe}</strong> · work / recovery</p><p id="dose-preview" role="status"></p></div>`);
     updateDosePreview();
   }
   renderTargetFields();
@@ -156,15 +156,15 @@ function renderTargetFields() {
 }
 
 function settingsDialog(opener) {
-  const body = `<form id="settings-form" novalidate><p>One global pair applies to all C1 variants at their next start, including saved shortcuts. Official defaults are 4 min warm-up and 3 min cool-down.</p><p>C2 has no preparation. Started and past runs keep their frozen plan.</p><div id="settings-errors" role="alert"></div><div class="field"><label for="c1-warmup">C1 warm-up (minutes)</label><input id="c1-warmup" name="c1-warmup" type="number" min="1" step="1" value="${settings.warmup}"></div><div class="field"><label for="c1-cooldown">C1 cool-down (minutes)</label><input id="c1-cooldown" name="c1-cooldown" type="number" min="1" step="1" value="${settings.cooldown}"></div><p class="small">During a run, +1 min and skip remain available without changing these Settings.</p><div class="actions"><button type="submit" class="primary">Use Settings preview</button><button type="button" data-dialog="close">Cancel</button></div></form>`;
-  openDialog('C1 preparation Settings', body, opener);
+  const body = `<form id="settings-form" novalidate><p>One global pair applies to all C1 variants at their next start, including saved shortcuts. Official defaults are 4 min warm-up and 3 min cool-down.</p><p>C2 has no warm-up or cool-down. Started and past runs keep their frozen plan.</p><div id="settings-errors" role="alert"></div><div class="field"><label for="c1-warmup">C1 warm-up (minutes; 0 is Off)</label><input id="c1-warmup" name="c1-warmup" type="number" min="0" max="15" step="1" value="${settings.warmup}"></div><div class="field"><label for="c1-cooldown">C1 cool-down (minutes; 0 is Off)</label><input id="c1-cooldown" name="c1-cooldown" type="number" min="0" max="15" step="1" value="${settings.cooldown}"></div><p class="small">During a run, +1 min and skip remain available without changing these Settings.</p><div class="actions"><button type="submit" class="primary">Use Settings preview</button><button type="button" data-dialog="close">Cancel</button></div></form>`;
+  openDialog('C1 warm-up and cool-down Settings', body, opener);
 }
 
 function start(id, target, name = '', duration = c2Duration, count = counts[id]) {
   const plan = { variant: id, sourceRevision: 'proposed variant set', name, target: clone(target), rpe: id === 'C2' ? '4' : variants[id].rpe, count: id === 'C2' ? null : count, recoveryCount: id === 'C2' ? null : count - 1, main: id === 'C2' ? duration : mainMinutes(id, count), preparation: id === 'C2' ? { warmup: 0, cooldown: 0 } : clone(settings) };
   plan.total = plan.main + plan.preparation.warmup + plan.preparation.cooldown;
   starts.push(plan);
-  document.querySelector('#snapshots').innerHTML = starts.map((value, index) => `<li>Preview ${index + 1}: ${value.variant} · ${durationLabel(value.main)} main / ${durationLabel(value.total)} total · preparation ${value.preparation.warmup}/${value.preparation.cooldown} · ${escapeText(targetLabel(value.target))}</li>`).join('');
+  document.querySelector('#snapshots').innerHTML = starts.map((value, index) => `<li>Preview ${index + 1}: ${value.variant} · ${durationLabel(value.main)} main / ${durationLabel(value.total)} total · warm-up/cool-down ${value.preparation.warmup}/${value.preparation.cooldown} · ${escapeText(targetLabel(value.target))}</li>`).join('');
   reviewEvent.textContent = `Frozen synthetic start preview: ${id}. No real recording started. Earlier snapshots remain unchanged.`;
 }
 
@@ -184,7 +184,7 @@ app.addEventListener('click', event => {
       break;
     }
     case 'favourite':
-      openDialog('Save a shortcut', `<form id="favourite-form"><p>Save ${id}${id === 'C2' ? ` at ${c2Duration} minutes` : ` with ${counts[id]} work efforts`} and its current target. C1 starts use the current preparation Settings. C2 has no preparation. Previous runs keep their frozen plan.</p><div class="field"><label for="shortcut-name">Shortcut name</label><input id="shortcut-name" required autocomplete="off"></div><div class="actions"><button type="submit" class="primary">Save shortcut</button><button type="button" data-dialog="close">Cancel</button></div><input type="hidden" name="variant" value="${id}"></form>`, button);
+      openDialog('Save a shortcut', `<form id="favourite-form"><p>Save ${id}${id === 'C2' ? ` at ${c2Duration} minutes` : ` with ${counts[id]} work efforts`} and its current target. C1 starts use the current warm-up and cool-down Settings. C2 has no warm-up or cool-down. Previous runs keep their frozen plan.</p><div class="field"><label for="shortcut-name">Shortcut name</label><input id="shortcut-name" required autocomplete="off"></div><div class="actions"><button type="submit" class="primary">Save shortcut</button><button type="button" data-dialog="close">Cancel</button></div><input type="hidden" name="variant" value="${id}"></form>`, button);
       break;
   }
 });
@@ -266,8 +266,8 @@ dialog.addEventListener('submit', event => {
   } else if (event.target.id === 'settings-form') {
     const warmup = Number(event.target.elements['c1-warmup'].value);
     const cooldown = Number(event.target.elements['c1-cooldown'].value);
-    if (![warmup, cooldown].every(value => Number.isInteger(value) && value > 0)) {
-      dialog.querySelector('#settings-errors').innerHTML = '<p class="error">For this preview, use positive whole minutes.</p>';
+    if (![warmup, cooldown].every(value => Number.isInteger(value) && value >= 0 && value <= 15)) {
+      dialog.querySelector('#settings-errors').innerHTML = '<p class="error">Use Off (0) or whole minutes from 1 to 15.</p>';
       return;
     }
     Object.assign(settings, { warmup, cooldown, overridden: warmup !== 4 || cooldown !== 3 });

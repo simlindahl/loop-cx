@@ -10,5 +10,7 @@
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunMotion.cs" Link="RunMotion.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreTemplate.cs" Link="CoreTemplate.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunStatistics.cs" Link="RunStatistics.cs" />
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreStartRequest.cs" Link="CoreStartRequest.cs" />
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreSelections.cs" Link="CoreSelections.cs" />
   </ItemGroup>
 </Project>

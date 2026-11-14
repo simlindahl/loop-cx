@@ -34,11 +34,24 @@ internal sealed class App : Application
             ComponentType = typeof(StartRunPage)
         });
 
-        return new Window(new ContentPage
+        return new Window(new CorePage
         {
             Content = view,
             SafeAreaEdges = new SafeAreaEdges(SafeAreaRegions.Container),
             BackgroundColor = Color.FromArgb("#111111")
         });
+    }
+}
+
+
+internal sealed class CorePage : ContentPage
+{
+    protected override bool OnBackButtonPressed()
+    {
+        if (CoreDialogNavigation.Close is not { } close) return base.OnBackButtonPressed();
+
+        close();
+
+        return true;
     }
 }

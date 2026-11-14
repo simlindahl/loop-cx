@@ -60,3 +60,81 @@ h3 {
     padding-inline-start: 16px;
     overflow-wrap: anywhere;
 }
+
+
+.card-heading {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+small {
+    display: block;
+    color: var(--cx-muted);
+}
+.info {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 8px;
+}
+.text {
+    margin-top: 16px;
+    background: transparent;
+}
+dialog {
+    width: min(40rem, calc(100% - 32px));
+    max-height: calc(100dvh - 48px);
+    overflow: auto;
+    border: 1px solid var(--cx-muted);
+    border-radius: 16px;
+    padding: 24px;
+    background: var(--cx-surface);
+    color: var(--cx-text);
+}
+dialog::backdrop {
+    background: #000a;
+}
+dialog label {
+    display: block;
+    margin-block: 16px 8px;
+}
+dialog input, dialog select {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px;
+    font: inherit;
+    background: var(--cx-bg);
+    color: var(--cx-text);
+    border: 1px solid var(--cx-muted);
+    border-radius: 8px;
+}
+dialog input:focus-visible, dialog select:focus-visible {
+    outline: 3px solid var(--cx-accent);
+    outline-offset: 4px;
+}
+dialog input[type="radio"], dialog input[type="checkbox"] {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    accent-color: var(--cx-accent);
+}
+.choice {
+    display: flex !important;
+    align-items: start;
+    gap: 16px;
+}
+.count-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.count-controls input {
+    min-width: 0;
+    text-align: center;
+}
+fieldset {
+    border: 1px solid var(--cx-muted);
+    min-width: 0;
+    padding: 16px;
+}
