@@ -159,6 +159,14 @@ public sealed partial class MainActivity : MauiAppCompatActivity
         }
 
         var command = intent?.GetStringExtra("loop-command");
+        if (command is "storage-failure-on" or "storage-failure-off")
+        {
+            if ((int)Build.VERSION.SdkInt == 35 && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64"
+                && Build.Model == "sdk_gphone64_x86_64" && Build.SupportedAbis?.FirstOrDefault() == "x86_64"
+                && Build.Fingerprint?.StartsWith("google/sdk_gphone64_x86_64/", StringComparison.Ordinal) == true)
+                RunService.Command(command);
+            return;
+        }
         if (command == "hr-source-failure" && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")
             RunService.Command(command);
         if (command is "start" or "start-c2" or "pause" or "resume" or "extend" or "skip" or "complete")
