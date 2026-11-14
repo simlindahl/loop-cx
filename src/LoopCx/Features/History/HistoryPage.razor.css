@@ -4,13 +4,45 @@ h2 {
 }
 
 .history-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content 24px;
     width: 100%;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
     margin-block: 16px;
     text-align: start;
+}
+
+.history-value {
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+
+.history-chevron {
+    width: 24px;
+    text-align: center;
+    overflow-wrap: normal;
+}
+
+@media (max-width: 480px) {
+    .history-row {
+        grid-template-columns: minmax(0, 1fr) 24px;
+    }
+
+    .history-label {
+        grid-column: 1;
+    }
+
+    .history-chevron {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .history-value {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
 }
 
 small {
@@ -20,6 +52,11 @@ small {
 
 .big-result {
     font-size: 2.5rem;
+}
+
+.big-result small {
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 dl > div {

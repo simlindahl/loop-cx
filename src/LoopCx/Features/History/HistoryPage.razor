@@ -7,14 +7,17 @@
     @if (busy) { <p role="status">Loading stored recording…</p> }
     else if (detail is { } run)
     {
+        var totalDistance = Distance(run.Summary.Total);
+        var mainDistance = Distance(run.Main);
+        var averageHeartRate = Number(run.Main?.AverageHeartRate);
         <p>@Started(run.Summary)</p>
-        <p class="big-result">@Distance(run.Summary.Total)<small>km total · accepted measurement</small></p>
+        <p class="big-result">@totalDistance<small>@(totalDistance == "Unavailable" ? "Total distance" : "km total · accepted measurement")</small></p>
         @if (run.Summary.Synthetic) { <p>Synthetic test recording · not a physical workout.</p> }
         <dl>
             <div><dt>Total active / elapsed</dt><dd>@Time(run.Summary.TotalActive) / @Time(run.TotalElapsed)</dd></div>
             <div><dt>Main active / elapsed</dt><dd>@Time(run.MainActive) / @Time(run.MainElapsed)</dd></div>
-            <div><dt>Main distance / avg pace</dt><dd>@Distance(run.Main) km / @Pace(run.Main?.AveragePaceSecondsPerKilometre)</dd></div>
-            <div><dt>Main average heart rate</dt><dd>@Number(run.Main?.AverageHeartRate) bpm</dd></div>
+            <div><dt>Main distance / avg pace</dt><dd>@(mainDistance == "Unavailable" ? mainDistance : mainDistance + " km") / @Pace(run.Main?.AveragePaceSecondsPerKilometre)</dd></div>
+            <div><dt>Main average heart rate</dt><dd>@(averageHeartRate == "Unavailable" ? averageHeartRate : averageHeartRate + " bpm")</dd></div>
             <div><dt>Warm-up / cool-down</dt><dd>@Time(run.Warmup) / @Time(run.Cooldown)</dd></div>
             <div><dt>Workout source</dt><dd>@run.Summary.Source</dd></div>
             <div><dt>Target effort</dt><dd>@Effort(run.Plan)</dd></div>
@@ -30,9 +33,11 @@
         <p>Your work, kept local.</p>
         @foreach (var item in runs)
         {
+            var distance = Distance(item.Total);
             <button id="@($"history-{item.Id}")" class="history-row" type="button" @onclick="() => Open(item.Id)">
-                <span>@item.Name<small>@Started(item) · @Time(item.TotalActive) total active · @item.ExportLabel</small></span>
-                <span>@Distance(item.Total) km <span aria-hidden="true">›</span></span>
+                <span class="history-label">@item.Name<small>@Started(item) · @Time(item.TotalActive) total active · @item.ExportLabel</small></span>
+                <span class="history-value">@(distance == "Unavailable" ? distance : distance + " km")</span>
+                <span class="history-chevron" aria-hidden="true">›</span>
             </button>
         }
         @if (runs.Count == 0 && error is null && unreadable == 0)
