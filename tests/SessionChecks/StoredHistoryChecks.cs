@@ -9,6 +9,15 @@ internal static class StoredHistoryChecks
     {
         // Arrange: frozen v1 is deliberately different from today's Core and Settings.
         var id = Guid.NewGuid();
+        if (StoredRunProjection.TargetSummary(new(CoreTargetMode.Pace, 320), false) != "Work target: 5:20 min/km · intended, not measured"
+            || StoredRunProjection.TargetSummary(new(CoreTargetMode.HeartRateZone, 2), true) != "Continuous target: Zone 2 · intended, not measured"
+            || StoredRunProjection.TargetSummary(new(CoreTargetMode.Pace, 320, 420), false) != "Work target: 5:20 min/km · Recovery: 7:00 min/km · intended, not measured"
+            || StoredRunProjection.TargetSummary(new(), false) != "RPE only"
+            || StoredRunProjection.TargetSummary(null, false) != "Unavailable")
+        {
+            throw new InvalidOperationException("Stored target summaries must distinguish configured recovery, continuous intent and unavailable legacy facts.");
+        }
+
         RunNotificationEntry.Request(id, id);
         if (!RunNotificationEntry.Consume(id) || RunNotificationEntry.Consume(id))
             throw new InvalidOperationException("Notification entry must be consumed once for the same recording.");

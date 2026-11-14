@@ -19,7 +19,7 @@
             <div><dt>Workout source</dt><dd>@run.Summary.Source</dd></div>
             <div><dt>Target effort</dt><dd>@Effort(run.Plan)</dd></div>
             <div><dt>Planned main set</dt><dd>@Dose(run.Plan)</dd></div>
-            <div><dt>Optional target</dt><dd>@Target(run.Targets)</dd></div>
+            <div><dt>Optional target</dt><dd>@StoredRunProjection.TargetSummary(run.Targets, run.Plan is { Count: 1 } && run.Plan[0].Kind == LoopCx.Features.ActiveRun.RunPhase.Work)</dd></div>
             <div><dt>Health Connect</dt><dd>@run.Summary.ExportLabel</dd></div>
         </dl>
         <p>@Coverage(run.Main)</p>

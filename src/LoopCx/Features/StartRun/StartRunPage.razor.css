@@ -239,3 +239,10 @@ dialog input[type="range"] {
 .destination-nav button {
     flex: 1;
 }
+
+.destination-nav button[aria-current="page"] {
+    color: var(--cx-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+}

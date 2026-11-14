@@ -18,6 +18,23 @@ public sealed record StoredRunDetail(StoredRunSummary Summary, MeasuredStatistic
 // Read stored facts only. No Settings/default factory, raw-data recomputation or persistence dependency.
 public static class StoredRunProjection
 {
+    public static string TargetSummary(CoreTargets? target, bool continuous)
+    {
+        if (target is null) return "Unavailable";
+        if (target.Mode == CoreTargetMode.None) return "RPE only";
+        target.Validate(continuous);
+        static string Value(CoreTargetMode mode, int value)
+        {
+            return mode == CoreTargetMode.Pace
+            ? $"{value / 60}:{value % 60:00} min/km" : $"Zone {value}";
+        }
+
+        var text = $"{(continuous ? "Continuous target" : "Work target")}: {Value(target.Mode, target.Work!.Value)}";
+        if (target.Recovery is { } recovery) text += $" · Recovery: {Value(target.Mode, recovery)}";
+
+        return text + " · intended, not measured";
+    }
+
     public static StoredRunSummary Summary(StoredRunRow row)
     {
         if (row.Status != "finished" || row.Id == Guid.Empty) throw new InvalidDataException("Only committed finished recordings belong in this view.");
@@ -59,6 +76,7 @@ public static class StoredRunProjection
         {
             throw new InvalidDataException("Malformed stored phase plan.");
         }
+        template?.Targets?.Validate(plan is { Length: 1 } && plan[0].Kind == RunPhase.Work);
 
         TimeSpan? elapsed = null, mainElapsed = null;
         if (plan is { Length: > 0 } && boundaries is not null)

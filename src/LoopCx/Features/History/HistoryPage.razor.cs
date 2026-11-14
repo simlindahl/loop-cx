@@ -86,12 +86,6 @@ public partial class HistoryPage
         + (plan.Any(phase => phase.Kind == RunPhase.Recovery) ? " · recovery " + string.Join("/", plan.Where(phase => phase.Kind == RunPhase.Recovery).Select(phase => phase.TargetRpe).Distinct()) : " · no recovery phase");
     private static string Dose(IReadOnlyList<TimedPhase>? plan) => plan is null ? "Unavailable"
         : $"{plan.Count(phase => phase.Kind == RunPhase.Work)} work phases ({Time(TimeSpan.FromTicks(plan.Where(phase => phase.Kind == RunPhase.Work).Sum(phase => phase.Duration.Ticks)))}) · {plan.Count(phase => phase.Kind == RunPhase.Recovery)} recoveries ({Time(TimeSpan.FromTicks(plan.Where(phase => phase.Kind == RunPhase.Recovery).Sum(phase => phase.Duration.Ticks)))})";
-    private static string Target(CoreTargets? target) => target is null ? "Unavailable" : target.Mode switch
-    {
-        CoreTargetMode.None => "RPE only",
-        CoreTargetMode.Pace => $"Work {Time(target.Work is { } w ? TimeSpan.FromSeconds(w) : null)} / recovery {Time(target.Recovery is { } r ? TimeSpan.FromSeconds(r) : null)} min/km · intended",
-        _ => $"Work Zone {target.Work} / recovery Zone {target.Recovery} · intended, not measured"
-    };
     private static string Coverage(MeasuredStatistics? scope) => scope is null ? "Measurement coverage unavailable."
         : $"Main GPS known {Time(scope.KnownGpsActiveTime)} / unknown {Time(scope.UnknownGpsActiveTime)}. HR known {Time(scope.KnownHeartRateActiveTime)} / unknown {Time(scope.UnknownHeartRateActiveTime)}.";
     private static string ZoneSummary(IReadOnlyList<HeartRateZone>? zones) => zones is null ? "Frozen heart-rate zones unavailable."
