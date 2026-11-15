@@ -32,10 +32,24 @@ internal static class RunAudioChecks
             try { _ = AudioConfiguration.Parse(AudioSummaryTrigger.ActiveTime, invalid); throw new InvalidOperationException("Invalid audio interval accepted."); }
             catch (ArgumentException) { }
         }
-        foreach (var invalid in new[] { "0", "-1", "NaN", "Infinity", "" })
+        foreach (var invalid in new[] { "0", "-1", "-1E-20", "NaN", "Infinity", "1E309", "1,5", "1,000", "" })
         {
             try { _ = AudioConfiguration.Parse(AudioSummaryTrigger.Distance, invalid); throw new InvalidOperationException("Invalid distance interval accepted."); }
             catch (ArgumentException) { }
+        }
+
+        foreach (var input in new[] { "250.5", "0.5", "0.00000000000000000001", "100000000000000000000" })
+        {
+            // Arrange
+            var stored = AudioConfiguration.Parse(AudioSummaryTrigger.Distance, input);
+
+            // Act: the actual editor uses this invariant display conversion before unchanged Save.
+            var displayed = stored.Interval.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var resaved = AudioConfiguration.Parse(AudioSummaryTrigger.Distance, displayed);
+
+            // Assert
+            if (resaved != stored)
+                throw new InvalidOperationException("An unchanged numeric audio setting must survive parse/display/Save without changing its value.");
         }
 
         foreach (var interval in new[] { "0.5", "0.00000000000000000001" })

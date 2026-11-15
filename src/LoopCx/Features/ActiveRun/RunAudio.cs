@@ -30,7 +30,7 @@ public sealed record AudioConfiguration(int Version = 1, AudioSummaryTrigger Tri
 
             interval = (minutes * 60) + seconds;
         }
-        else if (!double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out interval))
+        else if (!double.TryParse(value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out interval))
         {
             throw new ArgumentException("Use a positive distance in metres.");
         }
