@@ -147,7 +147,7 @@ caption {
     padding-block: 12px;
 }
 
-.split-cards {
+.split-cards, .phase-cards {
     display: none;
 }
 
@@ -161,15 +161,18 @@ caption {
     display: block;
 }
 
-.history-content[data-split-layout="cards"] .split-table {
+.history-content[data-split-layout="cards"] .split-table,
+.history-content[data-split-layout="cards"] .phase-table {
     display: none;
 }
 
-.history-content[data-split-layout="cards"] .split-cards {
+.history-content[data-split-layout="cards"] .split-cards,
+.history-content[data-split-layout="cards"] .phase-cards {
     display: block;
 }
 
-.history-content[data-split-layout="cards"] .split-cards section {
+.history-content[data-split-layout="cards"] .split-cards section,
+.history-content[data-split-layout="cards"] .phase-cards section {
     border-bottom: 1px solid var(--cx-line);
     padding-block: 18px;
 }

@@ -85,6 +85,15 @@
                 <table class="phase-table"><caption>Recorded phases · min:sec</caption><thead><tr><th scope="col">Phase</th><th scope="col">Active</th><th scope="col">Elapsed</th></tr></thead>
                     <tbody>@foreach (var phase in phases) { <tr><th scope="row">@PhaseLabel(phase)</th><td>@Time(phase.Active)</td><td>@Time(phase.Elapsed)</td></tr> }</tbody>
                 </table>
+                <div class="phase-cards">
+                    @foreach (var phase in phases)
+                    {
+                        <section><h4>@PhaseLabel(phase)</h4><dl class="split-metrics">
+                            <div><dt>Active · min:sec</dt><dd>@Time(phase.Active)</dd></div>
+                            <div><dt>Elapsed · min:sec</dt><dd>@Time(phase.Elapsed)</dd></div>
+                        </dl></section>
+                    }
+                </div>
             }
             <p>Per-phase distance, pace and heart rate: Unavailable. Whole-run totals are not divided between phases.</p>
         }
