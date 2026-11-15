@@ -19,6 +19,7 @@ public sealed class RunService : Service, ILocationListener
 {
     private AndroidRunAudio? audio;
     private RunAudioPolicy? audioPolicy;
+    private readonly RunDeviation deviation = new();
 #if DEBUG
     private NativeFeasibility? nativeProbe;
 
@@ -448,17 +449,38 @@ public sealed class RunService : Service, ILocationListener
         }
     }
 
+    private DeviationObservation DeviationInput()
+    {
+        var now = TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100);
+        return new(session!.PhaseIndex, distance!.Snapshot.Splits.Count + 1, session.Current?.Kind,
+            session.IsPaused, session.TotalActiveTime, now, template.Targets,
+            livePace.Snapshot(now, session.IsPaused, session.IsFinished), heartRate?.Snapshot(now));
+    }
+
     private void PublishAudio(RunSnapshot state)
     {
         if (audioPolicy is null || audio is null) return;
         if (state.Paused || session!.IsFinished) audio.Cancel();
         var cue = audioPolicy.Observe(session!.PhaseIndex, session.Current?.Kind, state.Paused,
             session.MainActiveTime, state.Statistics!.Main.MeasuredMetres);
-        if (cue is null) return;
-        audio.Speak(cue.PhasePriority
-            ? RunAudioText.Phase(session.Current?.Kind, session.Remaining, state.WorkRepetition ?? 0, state.WorkRepetitions ?? 0)
-            : RunAudioText.Summary(state.Statistics.Main, state.Statistics.CurrentSplit,
-                state.LivePace?.SecondsPerKilometre, state.HeartRate?.CurrentBpm), cue.PhasePriority);
+        var coaching = deviation.Observe(DeviationInput());
+        audio.ValidateCurrent();
+
+        if (cue?.PhasePriority == true)
+        {
+            audio.Speak(RunAudioText.Phase(session.Current?.Kind, session.Remaining,
+                state.WorkRepetition ?? 0, state.WorkRepetitions ?? 0), AudioCueKind.Phase);
+        }
+        else if (coaching is not null)
+        {
+            if (audio.Speak(coaching.Text, AudioCueKind.Coaching, () => deviation.IsCurrent(coaching, DeviationInput())))
+                deviation.Attempted(coaching);
+        }
+        else if (cue is not null)
+        {
+            audio.Speak(RunAudioText.Summary(state.Statistics.Main, state.Statistics.CurrentSplit,
+                state.LivePace?.SecondsPerKilometre, state.HeartRate?.CurrentBpm), AudioCueKind.Summary);
+        }
     }
 
     private RunSnapshot CreateSnapshot() => new(id, session!.Current?.Kind.ToString() ?? "Finished",

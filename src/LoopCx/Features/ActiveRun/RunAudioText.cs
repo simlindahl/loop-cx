@@ -6,7 +6,7 @@ public static class RunAudioText
 {
     private static string Time(TimeSpan value)
     {
-        return $"{(long)value.TotalMinutes} minutes {value.Seconds} seconds";
+        return $"{(long)value.TotalMinutes} {((long)value.TotalMinutes == 1 ? "minute" : "minutes")} {value.Seconds} {(value.Seconds == 1 ? "second" : "seconds")}";
     }
 
     private static string Number(double value)

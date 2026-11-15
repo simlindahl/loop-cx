@@ -62,14 +62,20 @@ public partial class StartRunPage
     }
     private async Task SaveShortcutAudio(AudioConfiguration configuration)
     {
-        try
+        if (Persist(current =>
         {
-            var current = CorePreferences.Load();
-            if (!current.Shortcuts.Any(item => item.Id == editingShortcutId)) { Fail("This shortcut no longer exists.", "audio-interval"); return; }
-            if (Persist(current with { Shortcuts = current.Shortcuts.Select(item => item.Id == editingShortcutId
-                ? item with { Request = item.Request with { Audio = configuration } } : item).ToArray() })) await CloseDialog();
+            if (!current.Shortcuts.Any(item => item.Id == editingShortcutId)) throw new ArgumentException("This shortcut no longer exists.");
+
+            return current with
+            {
+                Shortcuts = [.. current.Shortcuts.Select(item => item.Id == editingShortcutId
+                ? item with { Request = item.Request with { Audio = configuration } } : item)]
+            };
+        }))
+        {
+            await CloseDialog();
         }
-        catch (InvalidDataException problem) { Fail(problem.Message, "audio-interval"); }
+        else focusPending = "audio-interval";
     }
 
     private string MotionSurface => showHistory ? "history" : showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
@@ -128,6 +134,7 @@ public partial class StartRunPage
         settingsPage = null;
         managing = false;
         CoreDialogNavigation.Close = null;
+        ReloadPreferences();
         focusPending = "phase-heading";
         StateHasChanged();
     });
@@ -215,6 +222,7 @@ public partial class StartRunPage
 
     private void ShowTraining()
     {
+        ReloadPreferences();
         showHistory = false;
         historyPage = null;
         showSettings = false;
@@ -302,6 +310,7 @@ public partial class StartRunPage
     private async Task CloseSettingsDestination()
     {
         initialHealthSettings = false;
+        ReloadPreferences();
         if (healthSettingsReturnRun is { } runId)
         {
             healthSettingsReturnRun = null;
@@ -310,14 +319,19 @@ public partial class StartRunPage
         }
         showSettings = false;
         settingsPage = null;
-        try { statePreferences = CorePreferences.Load(); }
-        catch (InvalidDataException problem) { error = problem.Message; loadFailed = true; }
         CoreDialogNavigation.Close = null;
         focusPending = RunService.Snapshot is null ? "core-settings" : "active-settings";
     }
 
+    private void ReloadPreferences()
+    {
+        try { statePreferences = CorePreferences.Load(); loadFailed = false; }
+        catch (InvalidDataException problem) { error = problem.Message; loadFailed = true; }
+    }
+
     private void OpenSettings()
     {
+        ReloadPreferences();
         var settings = statePreferences.WarmupCooldown;
         warmupEnabled = settings.WarmupMinutes > 0;
         cooldownEnabled = settings.CooldownMinutes > 0;
@@ -337,19 +351,19 @@ public partial class StartRunPage
         draftWork = draftRecovery = "";
     }
 
-    private bool Persist(CorePreferencesState state)
+    private bool Persist(Func<CorePreferencesState, CorePreferencesState> change)
     {
         try
         {
-            CorePreferences.Save(state);
-            statePreferences = state;
+            statePreferences = CorePreferences.Update(change);
             resultPending = true;
 
             return true;
         }
-        catch (Exception problem) when (problem is ArgumentException or InvalidOperationException or IOException)
+        catch (Exception problem) when (problem is ArgumentException or InvalidDataException or InvalidOperationException or IOException)
         {
-            var message = problem is ArgumentException ? problem.Message : "Your changes could not be saved. Try again.";
+            if (problem is InvalidDataException) loadFailed = true;
+            var message = problem is ArgumentException or InvalidDataException ? problem.Message : "Your changes could not be saved. Try again.";
             if (dialogMode is null) error = message; else dialogError = message;
             return false;
         }
@@ -358,16 +372,21 @@ public partial class StartRunPage
     private async Task SaveVariant()
     {
         var protocol = CoreProtocols.Find(draftProtocol);
-        var choices = statePreferences.C1Selections.Select(request => request.ProtocolId == protocol.Id
-            ? request with { Repetitions = protocol.DefaultCount } : request).ToArray();
-        if (Persist(statePreferences with { SelectedProtocol = protocol.Id, C1Selections = choices })) await CloseDialog();
+        if (Persist(current => current with
+        {
+            SelectedProtocol = protocol.Id,
+            C1Selections = [.. current.C1Selections.Select(request => request.ProtocolId == protocol.Id
+            ? request with { Repetitions = protocol.DefaultCount } : request)]
+        }))
+        {
+            await CloseDialog();
+        }
     }
 
     private async Task SaveDuration()
     {
         if (!int.TryParse(draftDuration, out var duration)) { Fail("Choose a whole duration from 20 to 120 minutes.", "c2-duration"); return; }
-        var request = statePreferences.C2Selection with { ContinuousMinutes = duration };
-        if (Persist(statePreferences with { C2Selection = request })) await CloseDialog();
+        if (Persist(current => current with { C2Selection = current.C2Selection with { ContinuousMinutes = duration } })) await CloseDialog();
         else focusPending = "c2-duration";
     }
 
@@ -397,11 +416,35 @@ public partial class StartRunPage
                 if (!int.TryParse(draftDuration, out var duration)) { Fail("Choose a whole duration from 20 to 120 minutes.", "edit-c2-duration"); return; }
                 request = request with { ContinuousMinutes = duration };
             }
-            var state = editingShortcutId is { } editingId
-                ? statePreferences with { Shortcuts = statePreferences.Shortcuts.Select(item => item.Id == editingId ? item with { Name = draftName.Trim(), Request = request } : item).ToArray() }
-                : request.ProtocolId == "C2" ? statePreferences with { C2Selection = request }
-                : statePreferences with { C1Selections = statePreferences.C1Selections.Select(value => value.ProtocolId == request.ProtocolId ? request : value).ToArray() };
-            if (Persist(state)) await CloseDialog();
+            CoreStartRequest ApplyTarget(CoreStartRequest saved)
+            {
+                return saved with
+                {
+                    Repetitions = request.Repetitions,
+                    Targets = request.Targets,
+                    ContinuousMinutes = editingShortcutId is not null && request.ProtocolId == "C2" ? request.ContinuousMinutes : saved.ContinuousMinutes
+                };
+            }
+
+            if (Persist(current =>
+            {
+                if (editingShortcutId is { } editingId)
+                {
+                    if (!current.Shortcuts.Any(item => item.Id == editingId)) throw new ArgumentException("This shortcut no longer exists.");
+
+                    return current with
+                    {
+                        Shortcuts = [.. current.Shortcuts.Select(item => item.Id == editingId
+                        ? item with { Name = draftName.Trim(), Request = ApplyTarget(item.Request) } : item)]
+                    };
+                }
+
+                return request.ProtocolId == "C2" ? current with { C2Selection = ApplyTarget(current.C2Selection) }
+                    : current with { C1Selections = [.. current.C1Selections.Select(value => value.ProtocolId == request.ProtocolId ? ApplyTarget(value) : value)] };
+            }))
+            {
+                await CloseDialog();
+            }
         }
         catch (ArgumentException problem) { Fail(problem.Message, "target-work"); }
     }
@@ -412,14 +455,25 @@ public partial class StartRunPage
         if (cooldownEnabled && (!int.TryParse(draftCooldown, out var cooldown) || cooldown is < 1 or > 15)) { Fail("Cool-down must be Off or 1–15 whole minutes.", "c1-cooldown"); return; }
         var settings = new C1WarmupCooldownSettings(warmupEnabled ? int.Parse(draftWarmup, CultureInfo.InvariantCulture) : 0,
             cooldownEnabled ? int.Parse(draftCooldown, CultureInfo.InvariantCulture) : 0);
-        if (Persist(statePreferences with { WarmupCooldown = settings })) await CloseDialog();
+        if (Persist(current => current with { WarmupCooldown = settings })) await CloseDialog();
     }
 
     private async Task SaveShortcut()
     {
         if (string.IsNullOrWhiteSpace(draftName)) { Fail("Enter a shortcut name.", "shortcut-name"); return; }
-        var shortcut = new CoreShortcut(Guid.NewGuid(), draftName.Trim(), draftRequest with { Audio = CorePreferences.Load().EffectiveAudio });
-        if (Persist(statePreferences with { Shortcuts = statePreferences.Shortcuts.Append(shortcut).ToArray() })) await CloseDialog();
+        var shortcutId = Guid.NewGuid();
+        if (Persist(current => current with
+        {
+            Shortcuts =
+            [
+                .. current.Shortcuts,
+                new CoreShortcut(shortcutId, draftName.Trim(),
+                    draftRequest with { Audio = current.EffectiveAudio }),
+            ]
+        }))
+        {
+            await CloseDialog();
+        }
     }
 
     private async Task OpenManage()
@@ -463,10 +517,11 @@ public partial class StartRunPage
         if (index < 0) return;
 
         shortcuts.RemoveAt(index);
-        if (!Persist(statePreferences with { Shortcuts = shortcuts })) return;
+        if (!Persist(current => current with { Shortcuts = [.. current.Shortcuts.Where(item => item.Id != editingShortcutId)] })) return;
 
         await CloseDialog();
-        focusPending = shortcuts.Count > 0 ? $"edit-{shortcuts[Math.Min(index, shortcuts.Count - 1)].Id}" : "manage-heading";
+        var remaining = statePreferences.Shortcuts;
+        focusPending = remaining.Count > 0 ? $"edit-{remaining[Math.Min(index, remaining.Count - 1)].Id}" : "manage-heading";
     }
 
     [JSInvokable]
@@ -502,7 +557,22 @@ public partial class StartRunPage
     private async Task CommitOrder(List<CoreShortcut> shortcuts, CoreShortcut item, int index)
     {
         if (statePreferences.Shortcuts.Select(static value => value.Id).SequenceEqual(shortcuts.Select(static value => value.Id))) return;
-        if (!Persist(statePreferences with { Shortcuts = shortcuts })) return;
+        if (!Persist(current =>
+        {
+            var remaining = current.Shortcuts.ToList();
+            var moving = remaining.SingleOrDefault(value => value.Id == item.Id)
+                ?? throw new ArgumentException("This shortcut no longer exists.");
+            _ = remaining.Remove(moving);
+            var nextId = index + 1 < shortcuts.Count ? shortcuts[index + 1].Id : (Guid?)null;
+            var destination = nextId is { } next ? remaining.FindIndex(value => value.Id == next) : remaining.Count;
+            if (destination < 0) throw new ArgumentException("The shortcut order changed. Reopen Manage shortcuts and try again.");
+            remaining.Insert(destination, moving);
+
+            return current with { Shortcuts = remaining };
+        }))
+        {
+            return;
+        }
 
         orderFeedback = $"{item.Name} moved to position {index + 1} of {shortcuts.Count}.";
         focusPending = $"handle-{item.Id}";
