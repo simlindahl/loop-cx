@@ -2,8 +2,6 @@
   <PropertyGroup>
     <TargetFramework>net10.0-android36.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <AndroidManifestPlaceholders>healthProbeEnabled=false</AndroidManifestPlaceholders>
-    <AndroidManifestPlaceholders Condition="'$(Configuration)' == 'Debug'">healthProbeEnabled=true</AndroidManifestPlaceholders>
     <UseMaui>true</UseMaui>
     <EnableDefaultCssItems>false</EnableDefaultCssItems>
     <SingleProject>true</SingleProject>

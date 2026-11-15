@@ -4,11 +4,13 @@ title: What is LOOP?
 ---
 # What is LOOP?
 
-**Revised content draft · LOOP by Simon Lindahl · reader implementation remains on hold**
+**LOOP by Simon Lindahl · reader implementation remains on hold**
 
 You know how to train. Finding room for it is the harder part now. Work runs late, children get sick, travel interrupts routines, and a missed Monday can turn a weekly plan into an administrative problem.
 
 LOOP is a repeating sequence of conditioning, strength and mixed movement. Do the next useful session when life allows. It aims at broad, lasting physical capability with fewer decisions, rather than a perfect week or a peak for one event. You can use it with a notebook; the app, a subscription and a wearable are not prerequisites.
+
+Its foundation is ESSENS: simplify, direct your effort toward what matters, and keep some lightness along the way. Choose training that earns its place and is easy to return to. Sustainable participation and enjoyment matter more than turning every session into another optimization project. An interruption is a reason to adapt, not a debt or a judgement about your discipline.
 
 This guide explains the [LOOP training reference](training/system.md), an independent account of the system's prescriptions, physiological rationale, evidence and tradeoffs. The guide is a practical way in, not a second programme. The exact combination has not been tested as a complete intervention and does not guarantee health, injury prevention or race readiness.
 

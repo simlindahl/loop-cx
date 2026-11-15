@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/RunAudio.cs" Link="RunAudio.cs" />
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/RunAudioText.cs" Link="RunAudioText.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/TimedSession.cs" Link="TimedSession.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunSaveBuffer.cs" Link="RunSaveBuffer.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/HeartRateMeasurement.cs" Link="HeartRateMeasurement.cs" />
@@ -18,6 +20,7 @@
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreStartRequest.cs" Link="CoreStartRequest.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CoreSelections.cs" Link="CoreSelections.cs" />
     <Compile Include="../../src/LoopCx/Features/ExportRun/*.cs" Link="ExportRun/%(Filename)%(Extension)" />
+    <Compile Include="../../src/LoopCx/Features/StartRun/CorePresentation.cs" Link="CorePresentation.cs" />
     <Compile Include="../../src/LoopCx/Features/History/StoredRun.cs" Link="History/StoredRun.cs" />
     <Compile Include="../../src/LoopCx/Features/History/InterruptedRun.cs" Link="History/InterruptedRun.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunNotificationEntry.cs" Link="RunNotificationEntry.cs" />

@@ -16,10 +16,24 @@
   <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
   <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>
   <application android:allowBackup="false" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
+    <activity android:name="se.loopcx.running.MainActivity" android:theme="@style/Maui.MainTheme.NoActionBar"
+        android:exported="true" android:launchMode="singleTop"
+        android:configChanges="screenSize|orientation|uiMode|screenLayout|smallestScreenSize|density">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+    <activity-alias android:name="se.loopcx.running.HealthOnboardingAlias"
+        android:targetActivity="se.loopcx.running.MainActivity" android:exported="true"
+        android:permission="android.permission.health.START_ONBOARDING">
+      <intent-filter><action android:name="android.health.connect.action.SHOW_ONBOARDING" /></intent-filter>
+    </activity-alias>
     <activity android:name="se.loopcx.running.HealthRationaleActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
-    <activity-alias android:name="se.loopcx.running.HealthRationaleAlias"
-        android:targetActivity="se.loopcx.running.HealthRationaleActivity"
-        android:enabled="${healthProbeEnabled}" android:exported="true"
+    <activity android:name="se.loopcx.running.HealthPrivacyActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
+    <activity-alias android:name="se.loopcx.running.HealthPrivacyAlias"
+        android:targetActivity="se.loopcx.running.HealthPrivacyActivity"
+        android:exported="true"
         android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
       <intent-filter>
         <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />

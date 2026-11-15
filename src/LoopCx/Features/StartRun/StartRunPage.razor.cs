@@ -20,6 +20,8 @@ public partial class StartRunPage
     private Guid? historyInitialRun;
     private LoopCx.Features.History.HistoryPage? historyPage;
     private LoopCx.Features.Settings.SettingsPage? settingsPage;
+    private bool initialHealthSettings;
+    private Guid? healthSettingsReturnRun;
     private bool managePending;
     private Guid? editingShortcutId;
     private string orderFeedback = "";
@@ -43,6 +45,32 @@ public partial class StartRunPage
     private string draftCooldown = "3";
     private bool warmupEnabled;
     private bool cooldownEnabled;
+    private AudioConfiguration draftAudio = new();
+    private bool draftAudioInherited;
+
+    private void OpenShortcutAudio(CoreShortcut shortcut)
+    {
+        try
+        {
+            editingShortcutId = shortcut.Id;
+            draftName = shortcut.Name;
+            draftAudioInherited = shortcut.Request.Audio is null;
+            draftAudio = shortcut.Request.Audio ?? CorePreferences.Load().EffectiveAudio;
+            Open("audio", "audio-" + shortcut.Id);
+        }
+        catch (InvalidDataException problem) { error = problem.Message; }
+    }
+    private async Task SaveShortcutAudio(AudioConfiguration configuration)
+    {
+        try
+        {
+            var current = CorePreferences.Load();
+            if (!current.Shortcuts.Any(item => item.Id == editingShortcutId)) { Fail("This shortcut no longer exists.", "audio-interval"); return; }
+            if (Persist(current with { Shortcuts = current.Shortcuts.Select(item => item.Id == editingShortcutId
+                ? item with { Request = item.Request with { Audio = configuration } } : item).ToArray() })) await CloseDialog();
+        }
+        catch (InvalidDataException problem) { Fail(problem.Message, "audio-interval"); }
+    }
 
     private string MotionSurface => showHistory ? "history" : showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
     private string MotionKey => $"{MotionSurface}:{RunService.Snapshot?.Id}:{RunService.Snapshot?.Phase}:{RunService.Snapshot?.Motion?.PauseReason}";
@@ -54,6 +82,7 @@ public partial class StartRunPage
     private bool ValidCount => CountValue >= DraftProtocol.MinimumCount && CountValue <= DraftProtocol.MaximumCount;
     private string DialogTitle => dialogMode switch
     {
+        "audio" => "Audio coaching",
         "variant" => "Choose C1",
         "target" => $"Personalise · {draftRequest.ProtocolId}",
         "duration" => "Choose C2 duration",
@@ -61,20 +90,8 @@ public partial class StartRunPage
         "shortcut" => "Save a shortcut",
         "edit" => "Edit shortcut",
         "delete" => "Delete shortcut?",
-        _ => "What does RPE mean?"
+        _ => "Workout options"
     };
-    private string RpeCue => draftProtocol switch
-    {
-        "C1.1" => "C1.1: Work 10: maximal, all-out sprinting. Recovery 2: easy.",
-        "C1.2" => "C1.2: Work 7: hard but repeatable. Recovery 3: easy.",
-        "C1.3" => "C1.3: Work 6: controlled, sustained effort. Recovery 3: easy.",
-        _ => "C2: Target 4: steady, conversational running."
-    };
-    private string RpeGuidance => draftProtocol == "C1.1"
-        ? "Work 10 means maximal, all-out sprinting. Recovery 2 is easy. This is a maximal-effort option, not an automatic next step. Stop rather than force a sprint when control is lost. Perceived effort is not a measured heart-rate value."
-        : draftProtocol == "C2" ? "Keep the effort comfortable rather than trying to run faster. The target is a guide, not a score to beat. Perceived effort describes how you feel today, not a measured heart-rate value."
-        : "Aim for the planned effort. Stay in control so you can repeat the next effort; this is not an all-out sprint. Perceived effort describes how you feel, not a measured heart-rate value.";
-
     protected override void OnInitialized()
     {
         try { statePreferences = CorePreferences.Load(); }
@@ -83,8 +100,23 @@ public partial class StartRunPage
         RunService.Changed += Refresh;
         AndroidMotionPreference.Changed += RefreshSystemMotion;
         RunNotificationEntry.Changed += OpenNotificationRun;
+        HealthConnectSettings.OpenRequested += OpenHealthSettings;
+        OpenHealthSettings();
         OpenNotificationRun();
     }
+
+    private void OpenHealthSettings() => _ = InvokeAsync(async () =>
+    {
+        if (!HealthConnectSettings.ConsumeOpen()) return;
+        if (settingsPage is not null) { await settingsPage.ShowHealth(); return; }
+        if (dialogMode is not null) await CloseDialog();
+        showHistory = false;
+        historyPage = null;
+        showSettings = false;
+        settingsPage = null;
+        OpenSettingsDestinationCore(true);
+        StateHasChanged();
+    });
 
     private void OpenNotificationRun() => _ = InvokeAsync(async () =>
     {
@@ -122,8 +154,6 @@ public partial class StartRunPage
 
     private string WarmupCooldown(CoreStartRequest request) => request.ProtocolId == "C2" ? "No warm-up or cool-down."
         : $"Warm-up: {(statePreferences.WarmupCooldown.WarmupMinutes == 0 ? "Off" : statePreferences.WarmupCooldown.WarmupMinutes + " min")} · Cool-down: {(statePreferences.WarmupCooldown.CooldownMinutes == 0 ? "Off" : statePreferences.WarmupCooldown.CooldownMinutes + " min")}";
-    private static string RpeFor(CoreStartRequest request) => request.ProtocolId == "C2" ? "4"
-        : $"{CoreProtocols.Find(request.ProtocolId).WorkRpe} / {CoreProtocols.Find(request.ProtocolId).RecoveryRpe}";
 
     private static string Dose(CoreStartRequest request)
     {
@@ -135,9 +165,13 @@ public partial class StartRunPage
         return $"{count} × {Duration(protocol.WorkSeconds)} work · {count - 1} × {Duration(protocol.RecoverySeconds)} recovery";
     }
 
-    private static string TargetLabel(CoreTargets? target, bool continuous = false) => target is null || target.Mode == CoreTargetMode.None ? "RPE only"
+    private static string TargetLabel(CoreTargets? target, bool continuous = false)
+    {
+        return target is null || target.Mode == CoreTargetMode.None ? (continuous ? "Personal zone target not set" : "Target zone not set")
         : $"{(continuous ? "Continuous target" : "Work target")}: {(target.Mode == CoreTargetMode.Pace ? Clock(target.Work!.Value) + " min/km" : "Zone " + target.Work)}"
             + (target.Recovery is { } recovery ? $" · Recovery: {(target.Mode == CoreTargetMode.Pace ? Clock(recovery) + " min/km" : "Zone " + recovery)}" : "");
+    }
+
     private static string StatisticTime(MeasuredStatistics? value) => value is null ? "Unavailable" : Clock((long)value.ActiveTime.TotalSeconds);
     private static string StatisticDistance(MeasuredStatistics? value) => value is null ? "Unavailable" : value.MeasuredMetres is > 0 || value.KnownGpsActiveTime > TimeSpan.Zero
         ? (value.MeasuredMetres / 1000).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "Unavailable";
@@ -145,14 +179,15 @@ public partial class StartRunPage
     private static string HeartRate(double? bpm) => bpm is > 0 && double.IsFinite(bpm.Value) ? Math.Round(bpm.Value).ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "Unavailable";
     private static string CoverageLabel(MeasuredStatistics? value) => value is null ? "Unavailable"
         : $"GPS {Clock((long)value.KnownGpsActiveTime.TotalSeconds)} known, {Clock((long)value.UnknownGpsActiveTime.TotalSeconds)} unknown; HR {Clock((long)value.KnownHeartRateActiveTime.TotalSeconds)} known, {Clock((long)value.UnknownHeartRateActiveTime.TotalSeconds)} unknown (min:sec).";
+
     private static string PhaseTargetLabel(RunSnapshot state)
     {
         if (state.Phase is not ("Work" or "Recovery")) return "";
         var target = state.FrozenTemplate?.Targets;
         var value = state.Phase == "Recovery" ? target?.Recovery : target?.Work;
-        if (target is null || target.Mode == CoreTargetMode.None || value is null) return "RPE only";
-
-        return target.Mode == CoreTargetMode.Pace ? $"Target pace {Clock(value.Value)} min/km · intended effort"
+        return target is null || target.Mode == CoreTargetMode.None || value is null
+            ? "Target not set · intended effort is not a measurement"
+            : target.Mode == CoreTargetMode.Pace ? $"Target pace {Clock(value.Value)} min/km · intended effort"
             : $"Target Zone {value} · intended effort, not a measurement";
     }
 
@@ -229,12 +264,6 @@ public partial class StartRunPage
         Open("duration", "change-c2");
     }
 
-    private void OpenRpe(string id, string trigger)
-    {
-        draftProtocol = id;
-        Open("rpe", trigger);
-    }
-
     private void OpenTarget(CoreStartRequest request, string trigger)
     {
         editingShortcutId = null;
@@ -254,15 +283,31 @@ public partial class StartRunPage
         Open("shortcut", trigger);
     }
 
-    private void OpenSettingsDestination()
+    private void OpenSettingsDestination() => OpenSettingsDestinationCore(false);
+
+    private void OpenSettingsDestinationCore(bool health)
     {
+        initialHealthSettings = health;
         showHistory = false;
         historyPage = null;
         showSettings = true;
         CoreDialogNavigation.Close = () => _ = InvokeAsync(() => settingsPage?.GoBack() ?? Task.CompletedTask);
     }
-    private void CloseSettingsDestination()
+    private void OpenHistoryHealthSettings(Guid runId)
     {
+        healthSettingsReturnRun = runId;
+        OpenSettingsDestinationCore(true);
+    }
+
+    private async Task CloseSettingsDestination()
+    {
+        initialHealthSettings = false;
+        if (healthSettingsReturnRun is { } runId)
+        {
+            healthSettingsReturnRun = null;
+            await OpenHistory(runId);
+            return;
+        }
         showSettings = false;
         settingsPage = null;
         try { statePreferences = CorePreferences.Load(); }
@@ -373,7 +418,7 @@ public partial class StartRunPage
     private async Task SaveShortcut()
     {
         if (string.IsNullOrWhiteSpace(draftName)) { Fail("Enter a shortcut name.", "shortcut-name"); return; }
-        var shortcut = new CoreShortcut(Guid.NewGuid(), draftName.Trim(), draftRequest);
+        var shortcut = new CoreShortcut(Guid.NewGuid(), draftName.Trim(), draftRequest with { Audio = CorePreferences.Load().EffectiveAudio });
         if (Persist(statePreferences with { Shortcuts = statePreferences.Shortcuts.Append(shortcut).ToArray() })) await CloseDialog();
     }
 
@@ -518,6 +563,7 @@ public partial class StartRunPage
     {
         RunService.Changed -= Refresh;
         RunNotificationEntry.Changed -= OpenNotificationRun;
+        HealthConnectSettings.OpenRequested -= OpenHealthSettings;
         AndroidMotionPreference.Changed -= RefreshSystemMotion;
         CoreDialogNavigation.Close = null;
         reference?.Dispose();

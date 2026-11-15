@@ -24,7 +24,8 @@ public sealed record C1WarmupCooldownSettings(int WarmupMinutes = 4, int Cooldow
     }
 }
 public sealed record CoreStartRequest(string ProtocolId, int? Repetitions = null, int? ContinuousMinutes = null,
-    CoreTargets? Targets = null, Guid? ShortcutId = null, string? ShortcutName = null);
+    CoreTargets? Targets = null, Guid? ShortcutId = null, string? ShortcutName = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] AudioConfiguration? Audio = null);
 public sealed record ResolvedCoreStart(TimedSession Session, CoreTemplate Template);
 public sealed record CoreProtocol(string Id, string Title, string Purpose, int DefaultCount, int MinimumCount,
     int MaximumCount, int WorkSeconds, int RecoverySeconds, int WorkRpe, int RecoveryRpe)

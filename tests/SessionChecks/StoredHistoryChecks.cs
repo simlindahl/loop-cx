@@ -12,7 +12,7 @@ internal static class StoredHistoryChecks
         if (StoredRunProjection.TargetSummary(new(CoreTargetMode.Pace, 320), false) != "Work target: 5:20 min/km · intended, not measured"
             || StoredRunProjection.TargetSummary(new(CoreTargetMode.HeartRateZone, 2), true) != "Continuous target: Zone 2 · intended, not measured"
             || StoredRunProjection.TargetSummary(new(CoreTargetMode.Pace, 320, 420), false) != "Work target: 5:20 min/km · Recovery: 7:00 min/km · intended, not measured"
-            || StoredRunProjection.TargetSummary(new(), false) != "RPE only"
+            || StoredRunProjection.TargetSummary(new(), false) != "Target not set"
             || StoredRunProjection.TargetSummary(null, false) != "Unavailable")
         {
             throw new InvalidOperationException("Stored target summaries must distinguish configured recovery, continuous intent and unavailable legacy facts.");

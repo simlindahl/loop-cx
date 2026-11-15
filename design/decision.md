@@ -43,6 +43,15 @@ Subsequent #97 feedback first required substantially deeper, independent trainin
 
 The reference remains about the training system only, without product/feature/implementation links or migration framing. Generic voluntary self-competition remains a training rationale, not Ghost-feature rules. Product and guide links may point to the reference one-way; source provenance stays in the migration record. Preserve calisthenics as the primary strength method, loaded RDL as its deliberate complement, technical failure as simple autoregulation with qualified low-volume evidence, and all practical doses/order/progression/safety. The direction authorizes this prose revision, not approval of its final wording or new reader layout. The reader runtime hold and paused delivery goal remain unchanged.
 
+<a id="essens-foundation-for-loop"></a>
+## ESSENS as LOOP's foundation · 15 November 2026
+
+Simon approved the training-reference content at `6184542cd1377e6bf442c4d4dcdeb39b04716931` (system blob `5b58ea67105d260dd4fcd7d128152dd39f242cfe`). He then supplied ESSENS and clarified the intended relationship: LOOP should be permeated by and built on ESSENS, **not migrated or renamed to ESSENS**. The briefly proposed identity replacement is superseded; no such migration or rename was performed.
+
+The authenticated source was read at version 4, commit `ea16ad9c96734dc0a0c81ff8a32d7c574083650f`. Its minimalism, Pareto and humor principles guide meaningful simplicity, useful effort, warmth, self-distance and enjoyment. Explicit training/software examples support easy starts, movement joy, the simplest adequate solution and real user benefit. These are values, not scientific validation, numerical efficacy claims or new workout prescriptions.
+
+Apply the foundation in the system reference, explanatory guide, product/UX priorities and LOOP-specific team principles. Preserve training doses, research qualifications, safety, honest measurements and optional self-competition. Do not infer new features, compulsory reflection, a new visual identity or technical identifiers. The existing LOOP identity, M2 transition boundaries and reader runtime hold remain; the source does not authorize a reader implementation or change the Site's ownership/audience. [Provenance and boundaries](../docs/loop-source-migration.md#essens-source-and-boundary) remain outside the independent training reference.
+
 ## Ghost Run · 13 November 2026
 
 Simon approved a separate feature with routes saved after continuous workouts and racing only against year best or personal best. The race clock continues through all stops and pauses; a pause alone does not disqualify. On 13 November, mockup additions were requested before specification and the feature was added to overnight work. See the [Ghost Run specification](../knowledge/ghost-run.md) and mockups/index.html#ghost-routes. The 20 new states are preliminary. These product rules are approved; detailed layout is not approved for app UI or integration prototypes. Existing Basalt decisions apply.
@@ -172,3 +181,11 @@ The existing fresh scope/hash token, runtime allowlist and version-2 settled-ope
 ## RPE information-icon conformance — 14 November 2026
 
 Simon requested a smaller, round information icon. Both existing Core RPE controls use the approved 22px circled information glyph inside an unchanged 48×48px transparent touch target. Their English accessible names, dialogs, trigger IDs, focus return and reduced-motion behavior remain unchanged. This is a correction to the approved Core reference, not a new layout or a change to RPE.
+
+## Normal Health Connect prospective consent — 15 November 2026
+
+Simon explicitly approved **Godkänn förslaget** against proposal `404314fa328fbd02e73d3286d7a7c4c0b0f6d7eb`. [The integration owner](../knowledge/integrations-data.md#normal-health-connect-delivery) records the approved prospective-start intent, denial/Off/re-enable behavior and faithful production privacy route; the existing M1 Settings/History WRITE-only layouts remain the visual baseline. This authorises implementation, not normal Release provider execution, permission changes, device operations, READ access, historical backfill or WHOOP credit. Positive normal provider acceptance needs the separately scoped execution plan/authority in [delivery acceptance](../knowledge/delivery-acceptance.md#normal-health-connect-delivery). The isolated DEBUG three-record fixture retains its separate approval and guards.
+
+## Compact zone-first layout approval — 15 November 2026
+
+Simon explicitly approved implementation of the corrected compact zone-first study for issue #96. The reviewed HTML SHA-256 is `0f543989848e325a32cdfee7eccf51bd832490c61bd036fcd64e2c856cd2ec43`, CSS `72929f6232b577914deaa2ca23d38af7871e24916f524324ec39fbdd1c01e674` and JavaScript `ec73b3b08080b4aaeab15bd2200f59ba66bae791fdc3b3826d077230139d0af4`. Required Main/Split and shortcut visibility are retained. This approval covers compact layout and RPE presentation removal, not inferred numerical C1 defaults, removal of the approved pace option or dose changes. Versioned reference promotion and runtime implementation belong to #96 after normal Health Connect delivery; this record adds no concurrent #96 app changes.

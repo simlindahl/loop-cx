@@ -2,7 +2,7 @@
 
 ## Scope and status
 
-Requested by Simon on 14 November 2026 under [#97](https://github.com/simlindahl/loop-cx/issues/97). This content change proposes the public LOOP repository as the single owner of the generic training texts. Final revised wording still needs review; the previous reader approval is preserved at `4a4c97170c858c2206b507b0cd9296795b5ccc84`. Neither this migration nor repository publication releases the reader runtime hold.
+Requested by Simon on 14 November 2026 under [#97](https://github.com/simlindahl/loop-cx/issues/97). This content change establishes the public LOOP repository as the owner of the generic training texts after merge. Simon approved the revised training reference at `6184542cd1377e6bf442c4d4dcdeb39b04716931` on 15 November; its system-text blob is `5b58ea67105d260dd4fcd7d128152dd39f242cfe`. The subsequent ESSENS foundation is a clarified value direction, not migration of LOOP into ESSENS. The prior reader approval remains recorded at `4a4c97170c858c2206b507b0cd9296795b5ccc84`; reader runtime is still held.
 
 | Migrated resource | Owner and purpose |
 |---|---|
@@ -13,7 +13,13 @@ Requested by Simon on 14 November 2026 under [#97](https://github.com/simlindahl
 
 [What is LOOP?](../knowledge/what-is-loop.md) explains the system for an experienced trainee whose life interrupts training. It is a pedagogical projection, not a competing rule authority. App specifications own resolved/frozen plans, measurements, recording, execution, target contracts and acceptance; their numerical protocol tables are synchronized projections of approved training decisions. The roadmap owns delivery boundaries, not a separate training programme.
 
-The owner's current direction is a professional, evidence-based training reference: advanced practical programming and training theory for informed trainees, coaches and practitioners. It should explain what the evidence means for training in continuous, authoritative but accessible prose, with useful prescription tables, precise near-claim citations and a full reference list. This replaces the earlier overly formal academic presentation, not its substantive physiology or evidence limits. The guide and product may link one-way to the reference; it contains no product links, feature rules or migration/provenance framing. This file retains provenance and reconciliation. Exact default training doses are preserved; count sliders, five-minute UI steps and global Off/1–15-minute validation stay solely in their product owners. The revised prose remains a draft pending fresh independent review and the owner's reading.
+The owner's direction is a professional, evidence-based training reference: advanced practical programming and training theory for informed trainees, coaches and practitioners. It explains what the evidence means for training in authoritative but accessible prose, with useful prescription tables, near-claim citations and a full reference list. This replaces the earlier academic presentation, not its substantive physiology or evidence limits. The guide and product link one-way to the reference; it contains no product links, feature rules or migration/provenance framing. Exact doses are preserved; UI count/time validation stays in its app owners. Later changes receive normal independent review without treating the earlier approval as approval of altered training prescriptions.
+
+### ESSENS source and boundary
+
+The owner supplied ESSENS as LOOP's philosophical foundation and then explicitly prohibited migration or renaming to ESSENS. The authenticated source was read on 15 November 2026 at version 4, source commit `ea16ad9c96734dc0a0c81ff8a32d7c574083650f`. It combines minimalism, Pareto and humor, with explicit training and software-development applications: easy starts, meaningful effort, movement enjoyment, simple adequate solutions and real user benefit. The six optional reflection questions are editorial prompts, not six new app requirements.
+
+LOOP summarizes those values in its own context. ESSENS remains a separate source; no Site code, identity, accounts or data are moved. The values are distinct from training research and establish no measured efficacy claim, new protocol dose, app feature, visual redesign or reader-runtime authorization. Earlier version 2 was inspected but is superseded by version 4 for this integration. Source access does not make the Site public or change its audience.
 
 ## Provenance and reconciliation
 

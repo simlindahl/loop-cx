@@ -55,15 +55,30 @@
             <div><dt>Main active / elapsed</dt><dd>@Time(run.MainActive) / @Time(run.MainElapsed)</dd></div>
             <div><dt>Main distance / avg pace</dt><dd>@(mainDistance == "Unavailable" ? mainDistance : mainDistance + " km") / @Pace(run.Main?.AveragePaceSecondsPerKilometre)</dd></div>
             <div><dt>Main average heart rate</dt><dd>@(averageHeartRate == "Unavailable" ? averageHeartRate : averageHeartRate + " bpm")</dd></div>
-            <div><dt>Warm-up / cool-down</dt><dd>@Time(run.Warmup) / @Time(run.Cooldown)</dd></div>
-            <div><dt>Workout source</dt><dd>@run.Summary.Source</dd></div>
-            <div><dt>Target effort</dt><dd>@Effort(run.Plan)</dd></div>
-            <div><dt>Planned main set</dt><dd>@Dose(run.Plan)</dd></div>
-            <div><dt>Optional target</dt><dd>@StoredRunProjection.TargetSummary(run.Targets, run.Plan is { Count: 1 } && run.Plan[0].Kind == LoopCx.Features.ActiveRun.RunPhase.Work)</dd></div>
             <div><dt>Health Connect</dt><dd>@run.Summary.ExportLabel</dd></div>
         </dl>
-        <p>@Coverage(run.Main)</p>
-        <p>@ZoneSummary(run.Zones)</p>
+        <details>
+            <summary>Workout plan</summary>
+            <dl>
+            <div><dt>Warm-up / cool-down</dt><dd>@Time(run.Warmup) / @Time(run.Cooldown)</dd></div>
+            <div><dt>Workout source</dt><dd>@run.Summary.Source</dd></div>
+            <div><dt>Planned main set</dt><dd>@Dose(run.Plan)</dd></div>
+            <div><dt>Optional target</dt><dd>@StoredRunProjection.TargetSummary(run.Targets, run.Plan is { Count: 1 } && run.Plan[0].Kind == LoopCx.Features.ActiveRun.RunPhase.Work)</dd></div>
+            </dl>
+        </details>
+        @if (run.Summary.ExportLabel is "Pending" or "Action required")
+        {
+            <p>Your run is saved locally. Export is not confirmed; review Health Connect write access in Settings if needed.</p>
+            <button type="button" disabled="@busy" @onclick="RetryHealthConnect">Retry export</button>
+            <button type="button" @onclick="() => OnHealthSettings.InvokeAsync(run.Summary.Id)">Review Health Connect access</button>
+        }
+        @if (run.Summary.ExportLabel == "Exported")
+        { <p>Written to Health Connect. This does not confirm WHOOP import.</p> }
+        <details>
+            <summary>Recorded measurements and coverage</summary>
+            <p>@Coverage(run.Main)</p>
+            <p>@ZoneSummary(run.Zones)</p>
+        </details>
         <button id="history-share" type="button" class="primary" @onclick="ShowShare">Share workout data</button>
     }
     else if (!busy)

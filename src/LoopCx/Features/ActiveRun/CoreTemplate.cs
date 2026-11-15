@@ -9,7 +9,8 @@ public sealed record CoreTemplate(string TemplateId, string Source, string Categ
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] C1WarmupCooldownSettings? ResolvedWarmupCooldown = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Guid? ShortcutId = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ShortcutName = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsPersonalised = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsPersonalised = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] AudioConfiguration? Audio = null)
 {
     public static CoreTemplate C1 { get; } = new("C1", "LOOP Core", "intervals", 2, null);
     public static CoreTemplate C2 { get; } = new("C2", "LOOP Core", "continuous", 1, 2);
@@ -24,6 +25,7 @@ public sealed record CoreTemplate(string TemplateId, string Source, string Categ
 
         var continuous = request.ProtocolId == "C2";
         var targets = request.Targets ?? new CoreTargets();
+        request.Audio?.Validate();
         targets.Validate(continuous);
 
         if (continuous)
@@ -35,7 +37,7 @@ public sealed record CoreTemplate(string TemplateId, string Source, string Categ
 
             return new(TimedSession.Continuous(TimeSpan.FromMinutes(minutes), 4),
                 new("C2", "LOOP Core", "continuous", 2, 2, "C2", 2, targets, null, request.ShortcutId, request.ShortcutName,
-                    minutes != 45 || targets.Mode != CoreTargetMode.None));
+                    minutes != 45 || targets.Mode != CoreTargetMode.None, Audio: request.Audio));
         }
 
         var protocol = CoreProtocols.Find(request.ProtocolId);
@@ -51,7 +53,7 @@ public sealed record CoreTemplate(string TemplateId, string Source, string Categ
             TimeSpan.FromSeconds(protocol.RecoverySeconds), protocol.WorkRpe, protocol.RecoveryRpe,
             TimeSpan.FromMinutes(warmupCooldown.WarmupMinutes), TimeSpan.FromMinutes(warmupCooldown.CooldownMinutes)),
             new("C1", "LOOP Core", "intervals", 3, null, protocol.Id, 1, targets, warmupCooldown, request.ShortcutId, request.ShortcutName,
-                count != protocol.DefaultCount || targets.Mode != CoreTargetMode.None || warmupCooldown != new C1WarmupCooldownSettings()));
+                count != protocol.DefaultCount || targets.Mode != CoreTargetMode.None || warmupCooldown != new C1WarmupCooldownSettings(), Audio: request.Audio));
     }
 
     public static TimedSession CreateC1Session() => TimedSession.Intervals(5,

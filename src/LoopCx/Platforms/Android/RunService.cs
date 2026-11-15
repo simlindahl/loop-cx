@@ -17,6 +17,8 @@ public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long Active
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice | ForegroundService.TypeSpecialUse)]
 public sealed class RunService : Service, ILocationListener
 {
+    private AndroidRunAudio? audio;
+    private RunAudioPolicy? audioPolicy;
 #if DEBUG
     private NativeFeasibility? nativeProbe;
 
@@ -71,6 +73,7 @@ public sealed class RunService : Service, ILocationListener
     private DateTimeOffset started;
     private long startedMonotonic;
     private RunStartContext? startContext;
+    private Guid? healthConnectConsentRevision;
     private RunTerminalContext? terminalContext;
     private readonly List<PhaseBoundaryFact> phaseBoundaries = [];
     private string initialPlan = "";
@@ -80,6 +83,7 @@ public sealed class RunService : Service, ILocationListener
     private readonly RunSaveBuffer saveBuffer = new();
     private long saveRevision;
     private bool terminalSaveCaptured;
+    private bool finishExportScheduled;
     private bool journalAvailable;
 
     public override void OnCreate()
@@ -184,13 +188,15 @@ public sealed class RunService : Service, ILocationListener
                     request = shortcut.Request with { ShortcutId = shortcut.Id, ShortcutName = shortcut.Name };
                 }
 
-                var resolved = CoreTemplate.Resolve(request, preferences.WarmupCooldown);
+                var effectiveAudio = preferences.AudioFor(request);
+                var resolved = CoreTemplate.Resolve(request with { Audio = effectiveAudio }, preferences.WarmupCooldown);
                 var savedHeartRate = HeartRatePreferences.Load();
                 heartRateConfiguration = savedHeartRate.Configuration with { Zones = Array.AsReadOnly(savedHeartRate.Configuration.Zones.ToArray()) };
                 heartRate = new RunHeartRate(heartRateConfiguration, savedHeartRate.ConfigurationError);
                 heartRateMetadata = System.Text.Json.JsonSerializer.Serialize(savedHeartRate with { Configuration = heartRateConfiguration });
                 session = resolved.Session;
-                template = resolved.Template;
+                template = resolved.Template with { Audio = effectiveAudio };
+                audioPolicy = new(effectiveAudio);
                 templateMetadata = System.Text.Json.JsonSerializer.Serialize(template);
                 StartError = null;
             }
@@ -205,7 +211,9 @@ public sealed class RunService : Service, ILocationListener
             }
 
             id = Guid.NewGuid();
-            started = DateTimeOffset.UtcNow;
+            handler = new Handler(Looper.MainLooper!);
+            audio = new(handler, id);
+            (started, healthConnectConsentRevision) = HealthConnectSettings.FreezeStart();
             startedMonotonic = SystemClock.ElapsedRealtime();
             var startZone = TimeZoneInfo.Local;
             startContext = new(startZone.Id, (int)startZone.GetUtcOffset(started).TotalSeconds, startedMonotonic);
@@ -235,7 +243,6 @@ public sealed class RunService : Service, ILocationListener
 
             Publish("start");
             RefreshLocationSubscription();
-            handler = new Handler(Looper.MainLooper!);
             tick = Tick;
             handler.PostDelayed(tick, 1000);
             StartHeartRateSource();
@@ -409,6 +416,7 @@ public sealed class RunService : Service, ILocationListener
                 Snapshot = snapshot,
                 AutomaticEvent = automaticEvent,
                 StartContext = startContext,
+                HealthConnectConsentRevision = healthConnectConsentRevision,
                 PhaseBoundaries = phaseBoundaries,
                 TerminalContext = terminalContext,
                 session.Plan,
@@ -423,6 +431,7 @@ public sealed class RunService : Service, ILocationListener
         }
         saveBuffer.Save(journal.Commit, explicitRetry);
         Snapshot = CreateSnapshot() with { Storage = saveBuffer.Status };
+        PublishAudio(Snapshot);
         ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification());
 #if DEBUG
         if (session.IsFinished && OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
@@ -432,7 +441,24 @@ public sealed class RunService : Service, ILocationListener
 #if DEBUG
         global::Android.Util.Log.Info("LoopRun", System.Text.Json.JsonSerializer.Serialize(Snapshot));
 #endif
-        if (session.IsFinished && saveBuffer.Status.State == "saved") StopSelf();
+        if (session.IsFinished && saveBuffer.Status.State == "saved")
+        {
+            if (!finishExportScheduled) { finishExportScheduled = true; HealthConnectScheduling.Resume(); }
+            StopSelf();
+        }
+    }
+
+    private void PublishAudio(RunSnapshot state)
+    {
+        if (audioPolicy is null || audio is null) return;
+        if (state.Paused || session!.IsFinished) audio.Cancel();
+        var cue = audioPolicy.Observe(session!.PhaseIndex, session.Current?.Kind, state.Paused,
+            session.MainActiveTime, state.Statistics!.Main.MeasuredMetres);
+        if (cue is null) return;
+        audio.Speak(cue.PhasePriority
+            ? RunAudioText.Phase(session.Current?.Kind, session.Remaining, state.WorkRepetition ?? 0, state.WorkRepetitions ?? 0)
+            : RunAudioText.Summary(state.Statistics.Main, state.Statistics.CurrentSplit,
+                state.LivePace?.SecondsPerKilometre, state.HeartRate?.CurrentBpm), cue.PhasePriority);
     }
 
     private RunSnapshot CreateSnapshot() => new(id, session!.Current?.Kind.ToString() ?? "Finished",
@@ -701,6 +727,8 @@ public sealed class RunService : Service, ILocationListener
 
     public override void OnDestroy()
     {
+        audio?.Dispose();
+        audio = null;
 #if DEBUG
         if (OperatingSystem.IsAndroidVersionAtLeast(33)) nativeProbe?.Stop();
         if (journalAvailable)

@@ -1,0 +1,43 @@
+@using LoopCx.Features.ActiveRun
+@using Microsoft.AspNetCore.Components.Web
+<p>@Context</p>
+@if (Inherited) { <p>Uses current Core audio default until you save an explicit value.</p> }
+<form @onsubmit="Save" @onsubmit:preventDefault novalidate>
+    <div class="field"><label for="audio-trigger">Summary trigger</label>
+        <select id="audio-trigger" @bind="trigger" @bind:after="ChangeTrigger"><option value="@AudioSummaryTrigger.ActiveTime">Active time</option><option value="@AudioSummaryTrigger.Distance">Distance</option></select>
+    </div>
+    <div class="field"><label for="audio-interval">@(trigger == AudioSummaryTrigger.ActiveTime ? "Interval (min:ss)" : "Interval (metres)")</label>
+        <input @ref="intervalInput" id="audio-interval" type="@(trigger == AudioSummaryTrigger.ActiveTime ? "text" : "number")" step="any" inputmode="@(trigger == AudioSummaryTrigger.ActiveTime ? "text" : "decimal")" @bind="value" @bind:event="oninput" aria-invalid="@(error is not null)" aria-describedby="@(error is not null ? "audio-error" : null)" />
+    </div>
+    @if (error is not null) { <p id="audio-error" role="alert">@error</p> }
+    <p>Counted from main-set start, including planned recovery. Warm-up, cool-down and pauses are excluded. This does not change kilometre splits.</p>
+    <p>Uses an installed offline English voice. If none is available, training continues without announcements.</p>
+    <div class="actions"><button type="submit" class="primary">Save audio settings</button><button type="button" @onclick="OnCancel">Cancel</button></div>
+</form>
+
+@code {
+    [Parameter] public AudioConfiguration Initial { get; set; } = new();
+    [Parameter] public string Context { get; set; } = "Default for new Core runs";
+    [Parameter] public bool Inherited { get; set; }
+    [Parameter] public EventCallback<AudioConfiguration> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    private AudioSummaryTrigger trigger;
+    private string value = "";
+    private string? error;
+    private ElementReference intervalInput;
+
+    protected override void OnInitialized()
+    {
+        trigger = Initial.Trigger;
+        value = trigger == AudioSummaryTrigger.ActiveTime
+            ? $"{(long)Initial.Interval / 60}:{(long)Initial.Interval % 60:00}"
+            : Initial.Interval.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private void ChangeTrigger() { value = ""; error = null; }
+    private async Task Save()
+    {
+        try { var configuration = AudioConfiguration.Parse(trigger, value); await OnSave.InvokeAsync(configuration); error = null; }
+        catch (ArgumentException problem) { error = problem.Message; await intervalInput.FocusAsync(); }
+    }
+}

@@ -15,7 +15,7 @@ Read this entry point and the affected owning specification before a change. Rul
 | Owner | Scope |
 |---|---|
 | [LOOP training reference](training/system.md) | Independent account of general training prescriptions, physiology, evidence and tradeoffs; no dependency on product specifications or features |
-| [What is LOOP?](what-is-loop.md) | Pedagogical projection of the system reference, not a second training-rule authority; revised content awaits review and reader runtime stays held |
+| [What is LOOP?](what-is-loop.md) | Pedagogical projection of the system reference, not a second training-rule authority; reader runtime stays held |
 | [Running workouts](running-workouts.md) | Current product delivery, C1/C2, workout/phase/statistics/pause rules and coaching |
 | [Architecture](architecture.md) | Approved local modular monolith, service ownership and code organization |
 | [Integrations and data](integrations-data.md) | Android permissions, WHOOP, SQLite, maps, Health Connect and JSON |
@@ -25,7 +25,13 @@ Read this entry point and the affected owning specification before a change. Rul
 | [LOOP knowledge feature](loop-knowledge.md) | Approved reader scope and acceptance; runtime implementation remains on hold |
 | [Future LOOP Core](loop-core-roadmap.md) | M2 planning, rename gate, Sx/M management boundary and open product decisions |
 
-[LOOP's independent training reference](training/system.md) is the proposed migrated owner of general Core prescriptions and scientific rationale under [#97](https://github.com/simlindahl/loop-cx/issues/97); the [training guide](what-is-loop.md) explains it. Links point from the product/guide to the reference, never back from the reference to product documents. The [migration record](../docs/loop-source-migration.md) identifies provenance, reconciliation and the pending private pointer change. App specifications retain resolved-plan, measurement, recording, UI guardrails and acceptance contracts; their numerical training-dose tables are synchronized projections, not separate general training authorities. [C1/C2 product decision](loop-cx.md) retains source-template decisions. [Design decisions](../design/decision.md) record approvals; [AGENTS.md](../AGENTS.md) owns delivery/review rules. GitHub Projects is the sole work list; milestones group outcomes and do not replace issue acceptance.
+[LOOP's independent training reference](training/system.md) owns general Core prescriptions and scientific rationale under [#97](https://github.com/simlindahl/loop-cx/issues/97); the [training guide](what-is-loop.md) explains it. Links point from the product/guide to the reference, never back from the reference to product documents. The [migration record](../docs/loop-source-migration.md) identifies provenance, reconciliation and the pending private pointer change. App specifications retain resolved-plan, measurement, recording, UI guardrails and acceptance contracts; their numerical training-dose tables are synchronized projections, not separate general training authorities. [C1/C2 product decision](loop-cx.md) retains source-template decisions. [Design decisions](../design/decision.md) record approvals; [AGENTS.md](../AGENTS.md) owns delivery/review rules. GitHub Projects is the sole work list; milestones group outcomes and do not replace issue acceptance.
+
+## ESSENS foundation
+
+LOOP applies ESSENS to training and to the product's development: meaningful simplicity, effort directed toward real user benefit, and warmth, curiosity and enjoyment. Prioritize easy starts, few unnecessary decisions and a clear next useful action. Use Pareto as a prioritization heuristic, not a numerical efficacy promise. These values guide tradeoffs; they do not prescribe new features, scores, streaks or mandatory reflection flows.
+
+LOOP retains its identity. This is not a migration into ESSENS, a new package identity, a change to training doses or a release of the reader runtime hold. The [training reference](training/system.md#essens-as-the-foundation) explains the training application; [design](ux-design.md#essens-in-the-experience) owns the experience implications, and [the decision record](../design/decision.md#essens-foundation-for-loop) preserves the clarified owner direction.
 
 ## Milestones
 

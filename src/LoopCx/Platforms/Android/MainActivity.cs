@@ -5,11 +5,8 @@ using Android.OS;
 
 namespace LoopCx;
 
-[Activity(Name = "se.loopcx.running.MainActivity", Theme = "@style/Maui.MainTheme.NoActionBar",
-    MainLauncher = true, Exported = true, LaunchMode = LaunchMode.SingleTop,
-    ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation |
-        ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize |
-        ConfigChanges.Density)]
+// The ordered manifest entry owns launcher and runtime configuration; this binds the stable class name.
+[Activity(Name = "se.loopcx.running.MainActivity")]
 public sealed partial class MainActivity : MauiAppCompatActivity
 {
     private AndroidMotionPreference? motionPreference;
@@ -34,12 +31,15 @@ public sealed partial class MainActivity : MauiAppCompatActivity
     {
         base.OnResume();
         AndroidMotionPreference.Refresh();
+        HealthConnectSettings.Refresh();
+        HealthConnectScheduling.Resume();
         if (RunService.Snapshot is { Phase: not "Finished" }) RunService.Command("refresh-sensors");
     }
 
     protected override void OnDestroy()
     {
         CancelHeartRateSelection();
+        CompleteHealthWrite();
         motionPreference?.Dispose();
         motionPreference = null;
         base.OnDestroy();
@@ -68,6 +68,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
 
     private static void HandleRunEntry(Intent? intent)
     {
+        if (intent?.Action == "android.health.connect.action.SHOW_ONBOARDING")
+        {
+            HealthConnectSettings.RequestOpen(); // Navigation only; existing Android grants never create app opt-in.
+            return;
+        }
         if (intent?.Action != Features.ActiveRun.RunNotificationEntry.Action) return;
         var id = intent.GetStringExtra(Features.ActiveRun.RunNotificationEntry.RunIdExtra);
         intent.RemoveExtra(Features.ActiveRun.RunNotificationEntry.RunIdExtra);

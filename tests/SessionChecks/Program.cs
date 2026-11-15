@@ -1066,3 +1066,9 @@ RunSaveChecks.Run();
 StoredHistoryChecks.Run();
 
 RunJsonSharingChecks.Run(modernExport, args);
+
+HCConsentChecks.Run(modernExport);
+
+CorePresentationChecks.Run();
+
+RunAudioChecks.Run();

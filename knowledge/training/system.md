@@ -3,13 +3,21 @@ type: Training Reference
 ---
 # LOOP: Training principles and practical programming
 
-**LOOP by Simon Lindahl · Advanced training reference · Draft for review**
+**LOOP by Simon Lindahl · Advanced training reference**
 
 A useful training system has to work on ordinary weeks, not only on the weeks when everything goes to plan. LOOP starts from that constraint. Conditioning, strength and mixed movement have a clear place, but the calendar can change without turning missed sessions into debt.
 
 The aim is broad physical capacity: enough aerobic endurance to keep working, enough strength to handle meaningful resistance, and enough control to use both when tasks become varied or tiring. Calisthenics is the primary strength method, complemented by a loaded Romanian deadlift. Hard intervals, steady conditioning and a short mixed finish supply different exposures around that strength work.
 
 This reference is for experienced trainees, coaches and practitioners who want to understand both the prescription and the reasoning. The central question is what each choice contributes, what it costs in time and recovery, and when it needs adjusting. The doses give a usable starting structure; judgement turns that structure into appropriate training.
+
+## ESSENS as the foundation
+
+LOOP applies ESSENS to training: make room for what matters, direct effort where it is useful, and preserve enjoyment along the way. Simplicity is a means to a fuller life, not a competition to tolerate the smallest possible programme. A demanding exercise or a necessary recovery period still belongs when it serves that purpose.
+
+Minimalism asks what earns its place. Pareto helps prioritize the work that matters most without promising that a fixed fraction of effort delivers a measured fraction of results. In practice, make starting straightforward and protect meaningful sessions before collecting more exercises, measurements or optimization tasks.
+
+Humor adds perspective, warmth and playfulness. Take the training seriously without treating an interrupted week or imperfect performance as a verdict on yourself. Leave room for curiosity and the pleasure of movement. These are the system's values; they are not scientific evidence for a particular training dose. The physiological reasoning and research qualifications below remain separate.
 
 ## Build a broad base without trying to maximize everything
 

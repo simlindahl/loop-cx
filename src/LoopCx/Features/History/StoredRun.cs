@@ -22,7 +22,7 @@ public static class StoredRunProjection
     public static string TargetSummary(CoreTargets? target, bool continuous)
     {
         if (target is null) return "Unavailable";
-        if (target.Mode == CoreTargetMode.None) return "RPE only";
+        if (target.Mode == CoreTargetMode.None) return "Target not set";
         target.Validate(continuous);
         static string Value(CoreTargetMode mode, int value)
         {
@@ -113,6 +113,11 @@ public static class StoredRunProjection
     private static string ExportLabel(StoredRunRow row)
     {
         if (row.ExportStatus == "disabled_synthetic") return "Not exported · debug/synthetic";
+        if (row.ExportStatus is "pending" or "action_required")
+        {
+            using var checkpoint = JsonDocument.Parse(row.Checkpoint);
+            if (!HCConsent.Eligible(checkpoint.RootElement)) return "Not exported · local only";
+        }
         if (row.ExportStatus == "pending") return "Pending";
         if (row.ExportStatus == "action_required") return "Action required";
         if (row.ExportStatus != "exported") return "Export status unavailable";
