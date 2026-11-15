@@ -1,10 +1,15 @@
 using System.Text.Json;
+using LoopCx.Features.ActiveRun;
 
 namespace LoopCx.Features.ExportRun;
 
 // Storage facts, detached inside one journal read transaction. Projection never consults live state.
 public sealed record ExportLocation(long SnapshotOrder, long UtcMilliseconds, long BootMonotonicNanoseconds,
-    double LatitudeDegrees, double LongitudeDegrees, double? AccuracyMetres);
+    double LatitudeDegrees, double LongitudeDegrees, double? AccuracyMetres)
+{
+    [System.Text.Json.Serialization.JsonIgnore]
+    public RunPointProvenance? Provenance { get; init; }
+}
 public sealed record ExportHeartRate(long Sequence, string ReceiptUtc, long BootReceiptMonotonicTicks, int? Bpm, string Quality);
 public sealed record ExportEvent(long Sequence, string Command, string ObservedUtc, long ObservedElapsedMilliseconds, JsonElement Checkpoint);
 public sealed record ExportJournalSnapshot(Guid Id, string StartedUtc, string LastObservedUtc,
@@ -34,6 +39,12 @@ public sealed record ExportRunV1(int SchemaVersion, IReadOnlyDictionary<string, 
 
     public static string Project(ExportJournalSnapshot snapshot)
     {
+        Validate(snapshot);
+        return JsonSerializer.Serialize(new ExportRunV1(1, Version1Units, snapshot), JsonOptions);
+    }
+
+    internal static void Validate(ExportJournalSnapshot snapshot)
+    {
         ArgumentNullException.ThrowIfNull(snapshot);
         if (snapshot.Checkpoint.TryGetProperty(nameof(SchemaVersion), out var checkpointVersion))
         {
@@ -45,10 +56,9 @@ public sealed record ExportRunV1(int SchemaVersion, IReadOnlyDictionary<string, 
         }
         if (snapshot.Id == Guid.Empty || snapshot.ObservedElapsedMilliseconds < 0)
             throw new InvalidDataException("A journal export requires an existing run and nonnegative observed elapsed time.");
-        return snapshot.Events.Zip(snapshot.Events.Skip(1)).Any(pair => pair.First.Sequence >= pair.Second.Sequence)
+        if (snapshot.Events.Zip(snapshot.Events.Skip(1)).Any(pair => pair.First.Sequence >= pair.Second.Sequence)
             || snapshot.HeartRate.Zip(snapshot.HeartRate.Skip(1)).Any(pair => pair.First.Sequence >= pair.Second.Sequence)
-            || snapshot.Locations.Zip(snapshot.Locations.Skip(1)).Any(pair => pair.First.SnapshotOrder >= pair.Second.SnapshotOrder)
-            ? throw new InvalidDataException("Journal rows must retain their unique snapshot order.")
-            : JsonSerializer.Serialize(new ExportRunV1(1, Version1Units, snapshot), JsonOptions);
+            || snapshot.Locations.Zip(snapshot.Locations.Skip(1)).Any(pair => pair.First.SnapshotOrder >= pair.Second.SnapshotOrder))
+            throw new InvalidDataException("Journal rows must retain their unique snapshot order.");
     }
 }

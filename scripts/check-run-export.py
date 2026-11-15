@@ -15,9 +15,11 @@ spec.loader.exec_module(consumer)
 schema = json.loads((root / "docs/export/run-v1.schema.json").read_text(encoding="utf-8"))
 Draft202012Validator.check_schema(schema)
 validator = Draft202012Validator(schema, format_checker=FormatChecker())
-paths = [root / "docs/export/sample-v1.json", root / "docs/export/sample-current-v1.json"] + [Path(value) for value in sys.argv[1:]]
+validators = {1: validator, 2: Draft202012Validator(json.loads((root / "docs/export/run-v2.schema.json").read_text(encoding="utf-8")), format_checker=FormatChecker())}
+paths = [root / "docs/export/sample-v1.json", root / "docs/export/sample-current-v1.json", root / "docs/export/sample-current-v2.json"] + [Path(value) for value in sys.argv[1:]]
 for path in paths:
     document = json.loads(path.read_text(encoding="utf-8"))
+    validator = validators[document["schemaVersion"]]
     validator.validate(document)
     reconstructed = consumer.read_export(path)
     run = document["run"]
@@ -33,7 +35,7 @@ for path in paths:
             assert reconstructed[key] is None
     assert reconstructed["locations"] == run["locations"]
     assert reconstructed["heartRate"] == run["heartRate"]
-    invalid_cases = [lambda value: value.update(schemaVersion=2),
+    invalid_cases = [lambda value: value.update(schemaVersion=3),
                      lambda value: value["units"].update(distance="miles"),
                      lambda value: value["run"]["originalPlan"][0].update(Duration="bananas")]
     if known_checkpoint:
@@ -72,6 +74,7 @@ for path in paths:
                     raise AssertionError("Consumer accepted missing or nonconserving statistics")
     print("PASS schema + independent reconstruction:", path.name)
 
+validator = validators[1]
 current = json.loads((root / "docs/export/sample-current-v1.json").read_text(encoding="utf-8"))
 terminal = {"TerminalPreviousPhaseIndex": 2, "ObservedTimeZoneId": "Europe/Stockholm",
             "ObservedUtcOffsetSeconds": 3600, "EffectiveUtcOffsetSeconds": 7200,
@@ -95,3 +98,21 @@ with tempfile.TemporaryDirectory() as temporary:
     assert reconstructed["phaseBoundaries"] is None and reconstructed["startContext"] is None
     assert reconstructed["terminalContext"] is None
 print("PASS explicit unknown legacy checkpoint without fabricated current facts")
+
+route = json.loads((root / "docs/export/sample-current-v2.json").read_text(encoding="utf-8"))
+for mutation in ("boolean-version", "future", "different-run", "rejected-link"):
+    bad = copy.deepcopy(route)
+    points = bad["run"]["locations"]
+    assert len(points) >= 2
+    fact = points[1]["provenance"]
+    if mutation == "boolean-version": fact["version"] = True
+    elif mutation == "future": fact["drawablePredecessor"] = 999
+    elif mutation == "different-run": fact["runId"] = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    else: fact["outcome"] = "rejected"
+    with tempfile.TemporaryDirectory() as temporary:
+        target = Path(temporary) / "bad-route.json"
+        target.write_text(json.dumps(bad), encoding="utf-8", newline="\n")
+        try: consumer.read_export(target)
+        except (ValueError, KeyError, TypeError): pass
+        else: raise AssertionError("Consumer accepted malformed route " + mutation)
+print("PASS: v2 independent provenance rejects boolean versions, forward/cross-run and invalid links")

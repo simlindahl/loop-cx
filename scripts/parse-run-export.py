@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent consumer of the documented v1 JSON; no app assembly or projector import."""
+"""Independent consumer of the documented v1/v2 JSON; no app assembly or projector import."""
 import argparse
 import datetime
 import json
@@ -163,12 +163,49 @@ def interpret_hr_setup(value):
     return {"deviceAddress": config["DeviceAddress"], "maximumGapTicks": gap, "zones": zones, "configurationError": value["ConfigurationError"]}
 
 
+def validate_points(version, run):
+    seen = {}
+    latest = 0
+    chain = None
+    for point in run["locations"]:
+        if version == 1:
+            if "provenance" in point:
+                raise ValueError("Version 1 has no point provenance field")
+            continue
+        fact = point.get("provenance")
+        if fact is None:
+            chain = None
+            continue
+        expected = {"version", "runId", "pointId", "outcome", "drawablePredecessor", "breakReason"}
+        if set(fact) != expected or type(fact["version"]) is not int or fact["version"] != 1 or uuid.UUID(fact["runId"]) != uuid.UUID(run["id"]):
+            raise ValueError("Unsupported point provenance")
+        identity = fact["pointId"]
+        outcome = fact["outcome"]
+        predecessor = fact["drawablePredecessor"]
+        if type(identity) is not int or identity <= latest or outcome not in ("valid", "rejected", "ignored", "not-assessed"):
+            raise ValueError("Invalid point identity or outcome")
+        if predecessor is None:
+            if not isinstance(fact["breakReason"], str) or not fact["breakReason"].strip():
+                raise ValueError("Unlinked point requires explicit break provenance")
+        elif (type(predecessor) is not int or outcome != "valid" or predecessor != chain
+              or predecessor not in seen or seen[predecessor]["provenance"]["outcome"] != "valid"
+              or fact["breakReason"] is not None
+              or seen[predecessor]["bootMonotonicNanoseconds"] >= point["bootMonotonicNanoseconds"]):
+            raise ValueError("Invalid drawable predecessor")
+        seen[identity] = point
+        latest = identity
+        if outcome == "valid":
+            chain = identity
+        elif outcome != "ignored":
+            chain = None
+
+
 def read_export(path):
     def reject_constant(value):
         raise ValueError("Nonfinite JSON number: " + value)
 
     document = json.loads(Path(path).read_text(encoding="utf-8"), parse_constant=reject_constant)
-    if document.get("schemaVersion") != 1 or document.get("units") != UNITS:
+    if document.get("schemaVersion") not in (1, 2) or document.get("units") != UNITS:
         raise ValueError("Unsupported export version or units")
     run = document["run"]
     uuid.UUID(run["id"])
@@ -178,6 +215,7 @@ def read_export(path):
             raise ValueError("Run UTC timestamp has a non-UTC offset")
     if run["status"] not in ("recording", "finished", "interrupted") or run["observedElapsedMilliseconds"] < 0:
         raise ValueError("Invalid observed run state")
+    validate_points(document["schemaVersion"], run)
     original_plan = [phase(value) for value in run["originalPlan"]]
     checkpoint = run["checkpoint"]
     decoded = reconstruct_checkpoint(checkpoint)

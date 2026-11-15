@@ -82,6 +82,7 @@ public sealed class RunService : Service, ILocationListener
     private CoreTemplate template = CoreTemplate.C1;
     private string templateMetadata = "";
     private RunJournal journal = null!;
+    private RunRouteCapture? routeCapture;
     private readonly RunSaveBuffer saveBuffer = new();
     private long saveRevision;
     private bool terminalSaveCaptured;
@@ -213,6 +214,7 @@ public sealed class RunService : Service, ILocationListener
             }
 
             id = Guid.NewGuid();
+            routeCapture = new(id);
             handler = new Handler(Looper.MainLooper!);
             audio = new(handler, id);
             (started, healthConnectConsentRevision) = HealthConnectSettings.FreezeStart();
@@ -330,6 +332,7 @@ public sealed class RunService : Service, ILocationListener
             livePace.Reset(session.IsPaused ? "paused" : "acquiring");
             paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
             distance!.Interrupt(TimeSpan.FromMilliseconds(lastTick), "Manual pause boundary");
+            routeCapture?.Break("Manual pause boundary");
             motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
             candidateDistance = null;
         }
@@ -343,7 +346,11 @@ public sealed class RunService : Service, ILocationListener
         if (!session!.IsPaused)
         {
             distance!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
-            if (!distance.Observation.Valid && !distance.Observation.Ignored) livePace.Reset();
+            if (!distance.Observation.Valid && !distance.Observation.Ignored)
+            {
+                livePace.Reset();
+                routeCapture?.Break(distance.Snapshot.Status);
+            }
             if (!distance.Observation.Valid && !distance.Observation.Ignored) paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
         }
         motion!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
@@ -371,6 +378,8 @@ public sealed class RunService : Service, ILocationListener
     {
         distance!.Boundary(next, at, session!.MainActiveTime);
 
+        if (!(previous is RunPhase.Work or RunPhase.Recovery && next is RunPhase.Work or RunPhase.Recovery))
+            routeCapture?.Break("Phase boundary");
         livePace.Boundary(previous, next);
         paceTrend.Boundary(at, session.PhaseIndex);
 
@@ -613,6 +622,7 @@ public sealed class RunService : Service, ILocationListener
             if (locationAvailable)
             {
                 distance?.Unavailable("GPS unavailable");
+                routeCapture?.Break("GPS unavailable");
                 motion?.Unavailable();
                 candidateDistance = null;
             }
@@ -623,6 +633,7 @@ public sealed class RunService : Service, ILocationListener
             livePace.Reset("acquiring");
             paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
             distance?.Reanchor(restoredAt, "GPS restored");
+            routeCapture?.Break("GPS restored");
             motion?.Boundary(restoredAt);
             candidateDistance = null;
             gpsStatus = "Waiting for GPS";
@@ -684,21 +695,23 @@ public sealed class RunService : Service, ILocationListener
     {
         if (session is null || session.IsFinished || session.PauseReason == PauseReason.Manual) return;
 
-        saveBuffer.Add(new(location.Time, location.ElapsedRealtimeNanos, location.Latitude, location.Longitude,
-            location.HasAccuracy ? location.Accuracy : null));
+        var raw = new RunSaveLocation(location.Time, location.ElapsedRealtimeNanos, location.Latitude, location.Longitude,
+            location.HasAccuracy ? location.Accuracy : null);
         AdvanceClock();
-        if (!locationAvailable)
+        if (session.IsFinished || !locationAvailable)
         {
+            saveBuffer.Add(routeCapture!.Capture(raw, null, session.IsFinished ? "Finalization" : "Source unavailable"));
             locations++;
             Publish();
-
             return;
         }
-
         var receivedAt = TimeSpan.FromMilliseconds(lastTick);
         var fix = new DistanceFix(TimeSpan.FromMilliseconds(location.ElapsedRealtimeNanos / 1_000_000),
             location.Latitude, location.Longitude, location.HasAccuracy ? location.Accuracy : null);
-        var moved = !session.IsPaused && distance!.Observe(fix, receivedAt, session.MainActiveTime);
+        var assessed = !session.IsPaused;
+        var moved = assessed && distance!.Observe(fix, receivedAt, session.MainActiveTime);
+        var assessment = assessed ? distance!.Observation : null;
+        var assessmentReason = assessed ? distance!.Snapshot.Status : "Automatic pause";
         if (!session.IsPaused)
         {
             statistics.Observe(distance!.Observation);
@@ -721,6 +734,7 @@ public sealed class RunService : Service, ILocationListener
             automaticEvent = motion.Event;
             livePace.Reset("paused");
             paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
+            routeCapture?.Break("Automatic pause boundary");
             statistics.Exclude(automaticEvent!.OnsetMonotonicTime!.Value, automaticEvent.ExcludedThroughMonotonicTime!.Value);
             distance!.ConfirmStandstill(candidate, receivedAt,
                 receivedAt > automaticEvent!.ExcludedThroughMonotonicTime);
@@ -732,6 +746,7 @@ public sealed class RunService : Service, ILocationListener
             livePace.Reset("acquiring");
             paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
             distance!.Reanchor(receivedAt, "Automatic resume boundary");
+            routeCapture?.Break("Automatic resume boundary");
             motion.Boundary(receivedAt);
             candidateDistance = null;
         }
@@ -740,6 +755,7 @@ public sealed class RunService : Service, ILocationListener
             candidateDistance = null;
         }
 
+        saveBuffer.Add(routeCapture!.Capture(raw, assessment, assessmentReason));
         locations++;
         gpsStatus = location.HasAccuracy ? $"GPS ±{location.Accuracy:0} m" : "GPS accuracy unknown";
         Publish(automaticEvent?.Kind, automaticEvent);

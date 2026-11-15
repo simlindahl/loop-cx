@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Android.Content;
 using Android.Database.Sqlite;
-using System.Text.Json;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
 using LoopCx.Features.History;
@@ -26,7 +26,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     private RunJournal() : this(JournalFileName, true, new PreservingCorruptionHandler()) { }
 
     private RunJournal(string fileName, bool markInterrupted, PreservingCorruptionHandler handler)
-        : base(global::Android.App.Application.Context, fileName, null, 6, handler)
+        : base(global::Android.App.Application.Context, fileName, null, 7, handler)
     {
         corruptionHandler = handler;
         // Only runs left by an earlier process are interrupted. Never infer missing time.
@@ -54,7 +54,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     {
         var db = database!;
         db.ExecSQL("CREATE TABLE runs (id TEXT PRIMARY KEY, started_utc TEXT NOT NULL, observed_utc TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, status TEXT NOT NULL, initial_plan TEXT NOT NULL, checkpoint TEXT NOT NULL, template_metadata TEXT)");
-        db.ExecSQL("CREATE TABLE locations (run_id TEXT NOT NULL, utc_ms INTEGER NOT NULL, monotonic_ns INTEGER NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, accuracy REAL)");
+        db.ExecSQL("CREATE TABLE locations (run_id TEXT NOT NULL, utc_ms INTEGER NOT NULL, monotonic_ns INTEGER NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, accuracy REAL, provenance TEXT)");
         CreateExportQueue(db);
         CreateEvents(db);
         CreateHeartRate(db);
@@ -84,6 +84,7 @@ public sealed class RunJournal : SQLiteOpenHelper
             db.ExecSQL("ALTER TABLE export_queue ADD COLUMN last_error TEXT");
         }
         if (oldVersion < 6) db!.ExecSQL("ALTER TABLE runs ADD COLUMN recovery_saved_utc TEXT");
+        if (oldVersion < 7) db!.ExecSQL("ALTER TABLE locations ADD COLUMN provenance TEXT");
     }
 
     public void Commit(RunSaveBatch batch)
@@ -181,6 +182,8 @@ public sealed class RunJournal : SQLiteOpenHelper
                 raw.Put("monotonic_ns", location.MonotonicNanoseconds);
                 raw.Put("latitude", location.Latitude); raw.Put("longitude", location.Longitude);
                 if (location.Accuracy is { } accuracy) raw.Put("accuracy", accuracy); else raw.PutNull("accuracy");
+                if (location.Provenance is { } provenance) raw.Put("provenance", JsonSerializer.Serialize(provenance, ExportRunV1.JsonOptions));
+                else raw.PutNull("provenance");
                 db.InsertOrThrow("locations", null, raw);
             }
             foreach (var observation in batch.HeartRate)
@@ -256,7 +259,7 @@ public sealed class RunJournal : SQLiteOpenHelper
         db.BeginTransactionNonExclusive();
         try
         {
-            snapshot = ReadExportSnapshot(db, id);
+            snapshot = ReadExportSnapshot(db, id, includeRoute: true);
             using var row = db.RawQuery("SELECT recovery_saved_utc FROM runs WHERE id = ?", [id.ToString()])!;
             if (!row.MoveToFirst()) throw new KeyNotFoundException("The recorded run no longer exists.");
             recovered = row.IsNull(0) ? null : row.GetString(0);
@@ -366,7 +369,7 @@ public sealed class RunJournal : SQLiteOpenHelper
     }
 
     // Caller owns the single transaction; all values are detached before returning.
-    internal static ExportJournalSnapshot ReadExportSnapshot(SQLiteDatabase db, Guid id)
+    internal static ExportJournalSnapshot ReadExportSnapshot(SQLiteDatabase db, Guid id, bool includeRoute = false)
     {
         if (!db.InTransaction()) throw new InvalidOperationException("A consistent export snapshot requires a transaction.");
         using var run = db.RawQuery("SELECT started_utc, observed_utc, elapsed_ms, status, initial_plan, template_metadata, heart_rate_metadata, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
@@ -375,8 +378,14 @@ public sealed class RunJournal : SQLiteOpenHelper
         using (var rows = db.RawQuery("SELECT sequence, command, observed_utc, elapsed_ms, checkpoint FROM run_events WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
             while (rows.MoveToNext()) events.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetString(2)!, rows.GetLong(3), ParseJson(rows.GetString(4)!)));
         var locations = new List<ExportLocation>();
-        using (var rows = db.RawQuery("SELECT rowid, utc_ms, monotonic_ns, latitude, longitude, accuracy FROM locations WHERE run_id = ? ORDER BY rowid", [id.ToString()])!)
-            while (rows.MoveToNext()) locations.Add(new(rows.GetLong(0), rows.GetLong(1), rows.GetLong(2), rows.GetDouble(3), rows.GetDouble(4), rows.IsNull(5) ? null : rows.GetDouble(5)));
+        using (var rows = db.RawQuery("SELECT rowid, utc_ms, monotonic_ns, latitude, longitude, accuracy" +
+            (includeRoute ? ", provenance" : "") + " FROM locations WHERE run_id = ? ORDER BY rowid", [id.ToString()])!)
+        {
+            while (rows.MoveToNext()) locations.Add(new(rows.GetLong(0), rows.GetLong(1), rows.GetLong(2), rows.GetDouble(3), rows.GetDouble(4), rows.IsNull(5) ? null : rows.GetDouble(5))
+            {
+                Provenance = includeRoute && !rows.IsNull(6) ? RunPointProvenance.Parse(rows.GetString(6)!) : null
+            });
+        }
         var heartRate = new List<ExportHeartRate>();
         using (var rows = db.RawQuery("SELECT sequence, receipt_utc, receipt_monotonic_ticks, bpm, quality FROM heart_rate WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
             while (rows.MoveToNext()) heartRate.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetLong(2), rows.IsNull(3) ? null : rows.GetInt(3), rows.GetString(4)!));
