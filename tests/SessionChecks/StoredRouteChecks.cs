@@ -52,6 +52,32 @@ internal static class StoredRouteChecks
             change(node);
             return JsonSerializer.SerializeToElement(node);
         }
+        var unsupportedSynthetic = Changed(node =>
+        {
+            node["StartContext"] = null;
+            node["PhaseBoundaries"]![0]!["Synthetic"] = true;
+        });
+        var syntheticLegacy = StoredRouteProjection.Read(id, unsupportedSynthetic, 50000, points);
+        Require(!syntheticLegacy.Main.Supported && syntheticLegacy.Synthetic,
+            "Known synthetic boundary provenance survives missing Main clock support.");
+        var invalidSynthetic = Changed(node =>
+        {
+            node["Plan"]![0]!["Kind"] = 99;
+            node["PhaseBoundaries"]![0]!["Synthetic"] = true;
+        });
+        Require(StoredRouteProjection.Read(id, invalidSynthetic, 50000, points).Synthetic,
+            "Early Main-validation failure cannot discard a later explicit synthetic flag.");
+        var statisticsSynthetic = Changed(node =>
+        {
+            node["StartContext"] = null;
+            node["Snapshot"]!["Statistics"] = JsonSerializer.SerializeToNode(new RunStatisticsState(1, DistancePolicy.Pilot,
+                TimeSpan.FromSeconds(50), new(TimeSpan.FromSeconds(45), 0, TimeSpan.Zero, TimeSpan.FromSeconds(45)),
+                new(TimeSpan.FromSeconds(25), 0, TimeSpan.Zero, TimeSpan.FromSeconds(25)), [], null, true));
+        });
+        Require(StoredRouteProjection.Read(id, statisticsSynthetic, 50000, points).Synthetic,
+            "Valid frozen statistics retain their explicit synthetic label independently of Main support.");
+        Require(!StoredRouteProjection.Read(id, Changed(node => node["StartContext"] = null), 50000, points).Synthetic,
+            "Unavailable Main alone does not invent synthetic provenance.");
         foreach (var bad in new[] {
             Changed(node => node["Completed"]![0]!["Plan"]!["Kind"] = 1),
             Changed(node => node["PhaseBoundaries"]![0]!["PreviousPhaseIndex"] = 1),

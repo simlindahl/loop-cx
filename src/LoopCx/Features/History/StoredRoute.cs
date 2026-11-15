@@ -24,8 +24,11 @@ public static class StoredRouteProjection
             && (point.Provenance is null || point.Provenance.Outcome == "valid")).ToArray();
         var whole = Scope(visible);
         var main = new StoredRouteScope(false, [], [], false);
-        var synthetic = Field(checkpoint, "Snapshot", "Statistics", "HasSyntheticTime").ValueKind == JsonValueKind.True;
-        if (TryIntervals(checkpoint, observedElapsedMilliseconds, out var start, out var intervals, out var syntheticBoundaries))
+        var boundaries = Field(checkpoint, "PhaseBoundaries");
+        var synthetic = Field(checkpoint, "Snapshot", "Statistics", "HasSyntheticTime").ValueKind == JsonValueKind.True
+            || boundaries.ValueKind == JsonValueKind.Array && boundaries.EnumerateArray().Any(
+                static fact => Field(fact, "Synthetic").ValueKind == JsonValueKind.True);
+        if (TryIntervals(checkpoint, observedElapsedMilliseconds, out var start, out var intervals))
         {
             var selected = visible.Where(point => intervals.Any(interval =>
             {
@@ -34,7 +37,7 @@ public static class StoredRouteProjection
             })).ToArray();
             main = Scope(selected);
         }
-        return new(id, whole, main, synthetic || syntheticBoundaries);
+        return new(id, whole, main, synthetic);
     }
 
     private static StoredRouteScope Scope(ExportLocation[] points)
@@ -50,11 +53,10 @@ public static class StoredRouteProjection
     }
 
     private static bool TryIntervals(JsonElement checkpoint, long observed, out long start,
-        out List<(long From, long To, bool Inclusive)> intervals, out bool synthetic)
+        out List<(long From, long To, bool Inclusive)> intervals)
     {
         start = 0;
         intervals = [];
-        synthetic = false;
         var anchor = Integer(Field(checkpoint, "StartContext", "BootMonotonicStartMilliseconds"));
         var plan = Field(checkpoint, "Plan");
         var boundaries = Field(checkpoint, "PhaseBoundaries");
@@ -85,7 +87,6 @@ public static class StoredRouteProjection
             var effective = Integer(Field(fact, "EffectiveElapsedMilliseconds"));
             var receipt = Integer(Field(fact, "ObservedElapsedMilliseconds"));
             var flag = Field(fact, "Synthetic");
-            synthetic |= flag.ValueKind == JsonValueKind.True;
             if (index != ends.Count || index >= completed.GetArrayLength() || index >= phases.Length || effective is null || receipt is null
                 || effective < previousEffective || receipt < previousReceipt || receipt < effective || receipt > observed
                 || Integer(Field(fact, "PreviousPhase")) != phases[index.Value]

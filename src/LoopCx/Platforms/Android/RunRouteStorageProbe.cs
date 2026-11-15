@@ -170,7 +170,7 @@ internal static class RunRouteStorageProbe
         Require(recordedPart.Id == partial && recordedPart.Main.Supported && recordedPart.Main.Points.Count == 3
             && recordedPart.Whole.Points.Count == 4, "Actual confirmed partial query preserves recorded cutoff, no actual stop invented");
         var old = journal.ReadRoute(legacy);
-        Require(old.Id == legacy && !old.Main.Supported && old.Whole.UnknownQuality && old.Whole.Links.Count == 0
+        Require(old.Id == legacy && !old.Main.Supported && old.Synthetic && old.Whole.UnknownQuality && old.Whole.Links.Count == 0
             && old.Whole.Points.Count == 6, "Actual legacy query leaves missing clock/quality unknown");
         _ = journal.ReadFinishedRun(finished);
         _ = journal.ExportJson(finished);
