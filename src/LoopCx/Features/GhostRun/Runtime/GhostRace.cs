@@ -210,6 +210,9 @@ public sealed class GhostRace
             Unavailable();
             return;
         }
+        // Preserve every raw delivery, but cached/older input cannot acknowledge a new interruption or renew support.
+        if (measured <= lastSupportedBoot) return;
+
         available = true;
         lastSupportedBoot = measured;
         var matched = matcher.Observe(fix);

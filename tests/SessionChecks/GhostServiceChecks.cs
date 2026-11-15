@@ -99,6 +99,25 @@ internal static class GhostServiceChecks
         providerBreak.Location(Position(22, .0002), 122000);
         Require(providerBreak.Ended && providerBreak.Snapshot.Clock.State == GhostClockState.Finished,
             "Only supported re-entry followed by the ordered finish can complete the interrupted route.");
+        var repeatedBreak = Compared();
+        for (var second = 1; second <= 19; second++) repeatedBreak.Location(Position(second), 100000 + second * 1000);
+        repeatedBreak.Unavailable();
+        repeatedBreak.Location(Position(20, .00019), 120000);
+        Require(repeatedBreak.Snapshot.Match.State == RouteMatchState.Tracking, "The duplicate fixture first has a genuine gap re-entry.");
+        repeatedBreak.Unavailable();
+        repeatedBreak.Location(Position(20, .00019), 120100); // Exact cached Tracking input, now after a second interruption.
+        Require(repeatedBreak.Snapshot.Match.Metres is null, "A duplicate re-entry cannot supply support after a new provider break.");
+        repeatedBreak.Location(Position(21, .0002), 121000);
+        Require(!repeatedBreak.Ended && repeatedBreak.Checkpoint(1, 121000).Raw[^1].GapBefore
+            && repeatedBreak.Checkpoint(1, 121000).Raw.Count == 23,
+            "The raw duplicate is retained, but cannot consume the second interruption and bridge straight to finish.");
+        var chronological = Compared();
+        chronological.Location(Position(1), 101000);
+        chronological.Location(Position(.5), 101100);
+        chronological.Observe(103500);
+        Require(chronological.Snapshot.Match.State == RouteMatchState.Tracking && chronological.Snapshot.Match.Metres is not null
+            && chronological.Checkpoint(1, 103500).Raw.Count == 3,
+            "Older raw delivery is preserved without regressing the last supported measurement or destroying its still-fresh comparison.");
         var staleEnd = Compared(); staleEnd.Location(Position(1), 101000);
         Require(staleEnd.Snapshot.Gap.SecondsAhead is not null, "The stale-End fixture starts with a real comparison.");
         staleEnd.End(105000); // No intermediate stale UI/timer observation.
