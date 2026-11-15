@@ -161,17 +161,15 @@ caption {
     display: block;
 }
 
-@container (max-width: 21em) {
-    .split-table {
-        display: none;
-    }
+.history-content[data-split-layout="cards"] .split-table {
+    display: none;
+}
 
-    .split-cards {
-        display: block;
-    }
+.history-content[data-split-layout="cards"] .split-cards {
+    display: block;
+}
 
-    .split-cards section {
-        border-bottom: 1px solid var(--cx-line);
-        padding-block: 18px;
-    }
+.history-content[data-split-layout="cards"] .split-cards section {
+    border-bottom: 1px solid var(--cx-line);
+    padding-block: 18px;
 }

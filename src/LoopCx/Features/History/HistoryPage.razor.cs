@@ -63,6 +63,8 @@ public partial class HistoryPage
     private string? error;
     private string? focusPending = "history-heading";
     private IJSObjectReference? module;
+    private IJSObjectReference? layoutModule;
+    private ElementReference historyContent;
     private Guid? sharingRun;
     private bool preparingShare;
     private long shareRequest;
@@ -282,6 +284,13 @@ public partial class HistoryPage
         : "Frozen zones: " + string.Join(" · ", zones.Select(zone => $"Zone {zone.Number}: {zone.MinimumBpm}–{zone.MaximumBpm} bpm"));
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        layoutModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/history-layout.js");
+        if (disposed)
+        {
+            await layoutModule.DisposeAsync();
+            return;
+        }
+        await layoutModule.InvokeVoidAsync("observe", historyContent);
         if (focusPending is not { } focus) return;
         focusPending = null;
         module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
@@ -292,6 +301,11 @@ public partial class HistoryPage
         disposed = true;
         HealthConnectSettings.Changed -= RefreshHealthConnect;
         shareRequest++;
+        if (layoutModule is not null)
+        {
+            await layoutModule.InvokeVoidAsync("dispose", historyContent);
+            await layoutModule.DisposeAsync();
+        }
         if (module is not null) await module.DisposeAsync();
         GC.SuppressFinalize(this);
     }

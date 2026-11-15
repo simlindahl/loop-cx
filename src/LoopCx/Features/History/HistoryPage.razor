@@ -1,6 +1,6 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
-<section class="history-content" aria-labelledby="history-heading">
+<section @ref="historyContent" class="history-content" aria-labelledby="history-heading">
     <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null ? "Training" : "History")</button>
     <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
@@ -58,7 +58,7 @@
                     <thead><tr><th scope="col">Split</th><th scope="col">Time</th><th scope="col">km</th><th scope="col">Avg pace</th><th scope="col">Avg HR</th></tr></thead>
                     <tbody>@foreach (var split in splits)
                     {
-                        <tr><th scope="row">@SplitLabel(split)</th><td>@Time(split.Active)</td><td>@(split.HasMeasuredDistance ? Metres(split.Metres) : "Unavailable")</td><td>@if (split.Pace is > 0) { @PaceValue(split.Pace) } else { <span role="img" aria-label="Unavailable">—</span> }</td><td>@Number(split.HeartRate)</td></tr>
+                        <tr><th scope="row">@SplitLabel(split)</th><td>@Time(split.Active)</td><td>@if (split.HasMeasuredDistance) { @Metres(split.Metres) } else { <span role="img" aria-label="Unavailable">—</span> }</td><td>@if (split.Pace is > 0) { @PaceValue(split.Pace) } else { <span role="img" aria-label="Unavailable">—</span> }</td><td>@if (split.HeartRate is { } bpm) { @Number(bpm) } else { <span role="img" aria-label="Unavailable">—</span> }</td></tr>
                     }</tbody>
                 </table>
                 <p class="split-table">— Unavailable. Missing measurements are not zero.</p>
@@ -90,7 +90,7 @@
         }
         else
         {
-            <p>Frozen boundaries from this run's start. Time is based on valid recorded heart rate, not the intended target.</p>
+            <p>Frozen boundaries from this run's start. Time is based on valid recorded heart rate, not the intended target. Times are displayed in whole seconds.</p>
             @foreach (var entry in new[] { ("Main set", stored.Measurements.Main), ("Whole run · includes warm-up and cool-down", stored.Measurements.Whole) })
             {
                 var scope = entry.Item2;
