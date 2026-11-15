@@ -45,6 +45,32 @@ public partial class StartRunPage
     private string draftCooldown = "3";
     private bool warmupEnabled;
     private bool cooldownEnabled;
+    private AudioConfiguration draftAudio = new();
+    private bool draftAudioInherited;
+
+    private void OpenShortcutAudio(CoreShortcut shortcut)
+    {
+        try
+        {
+            editingShortcutId = shortcut.Id;
+            draftName = shortcut.Name;
+            draftAudioInherited = shortcut.Request.Audio is null;
+            draftAudio = shortcut.Request.Audio ?? CorePreferences.Load().EffectiveAudio;
+            Open("audio", "audio-" + shortcut.Id);
+        }
+        catch (InvalidDataException problem) { error = problem.Message; }
+    }
+    private async Task SaveShortcutAudio(AudioConfiguration configuration)
+    {
+        try
+        {
+            var current = CorePreferences.Load();
+            if (!current.Shortcuts.Any(item => item.Id == editingShortcutId)) { Fail("This shortcut no longer exists.", "audio-interval"); return; }
+            if (Persist(current with { Shortcuts = current.Shortcuts.Select(item => item.Id == editingShortcutId
+                ? item with { Request = item.Request with { Audio = configuration } } : item).ToArray() })) await CloseDialog();
+        }
+        catch (InvalidDataException problem) { Fail(problem.Message, "audio-interval"); }
+    }
 
     private string MotionSurface => showHistory ? "history" : showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
     private string MotionKey => $"{MotionSurface}:{RunService.Snapshot?.Id}:{RunService.Snapshot?.Phase}:{RunService.Snapshot?.Motion?.PauseReason}";
@@ -56,6 +82,7 @@ public partial class StartRunPage
     private bool ValidCount => CountValue >= DraftProtocol.MinimumCount && CountValue <= DraftProtocol.MaximumCount;
     private string DialogTitle => dialogMode switch
     {
+        "audio" => "Audio coaching",
         "variant" => "Choose C1",
         "target" => $"Personalise · {draftRequest.ProtocolId}",
         "duration" => "Choose C2 duration",
@@ -391,7 +418,7 @@ public partial class StartRunPage
     private async Task SaveShortcut()
     {
         if (string.IsNullOrWhiteSpace(draftName)) { Fail("Enter a shortcut name.", "shortcut-name"); return; }
-        var shortcut = new CoreShortcut(Guid.NewGuid(), draftName.Trim(), draftRequest);
+        var shortcut = new CoreShortcut(Guid.NewGuid(), draftName.Trim(), draftRequest with { Audio = CorePreferences.Load().EffectiveAudio });
         if (Persist(statePreferences with { Shortcuts = statePreferences.Shortcuts.Append(shortcut).ToArray() })) await CloseDialog();
     }
 

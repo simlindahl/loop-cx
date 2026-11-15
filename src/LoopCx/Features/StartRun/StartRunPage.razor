@@ -126,6 +126,7 @@
 <p>@TargetLabel(shortcut.Request.Targets, shortcut.Request.ProtocolId == "C2")</p>
                         <div class="actions">
 <button id="@($"edit-{shortcut.Id}")" type="button" @onclick="() => OpenEdit(shortcut)">Edit</button>
+<button id="@($"audio-{shortcut.Id}")" type="button" @onclick="() => OpenShortcutAudio(shortcut)">Audio coaching</button>
 <button id="@($"delete-{shortcut.Id}")" type="button" @onclick="() => OpenDelete(shortcut)">Delete</button>
 </div>
                         <div class="order-controls" aria-label="@($"Reorder {shortcut.Name}")">
@@ -212,7 +213,11 @@
     <dialog id="core-dialog" aria-labelledby="core-dialog-title">
         <h2 id="core-dialog-title" tabindex="-1">@DialogTitle</h2>
         @if (dialogError is not null) { <p role="alert">@dialogError</p> }
-        @if (dialogMode == "variant")
+        @if (dialogMode == "audio")
+        {
+            <LoopCx.Features.Settings.AudioEditor Initial="draftAudio" Context="@($"Audio coaching · {draftName}")" Inherited="draftAudioInherited" OnSave="SaveShortcutAudio" OnCancel="CloseDialog" />
+        }
+        else if (dialogMode == "variant")
         {
             <form @onsubmit="SaveVariant" @onsubmit:preventDefault novalidate>
                 <fieldset>
