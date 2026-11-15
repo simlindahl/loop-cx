@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/LoopCx/Features/ActiveRun/RunDeviation.cs" Link="RunDeviation.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunAudio.cs" Link="RunAudio.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunAudioText.cs" Link="RunAudioText.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/TimedSession.cs" Link="TimedSession.cs" />

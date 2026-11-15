@@ -1072,3 +1072,5 @@ HCConsentChecks.Run(modernExport);
 CorePresentationChecks.Run();
 
 RunAudioChecks.Run();
+
+RunDeviationChecks.Run();
