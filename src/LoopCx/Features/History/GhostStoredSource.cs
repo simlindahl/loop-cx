@@ -12,7 +12,8 @@ namespace LoopCx.Features.History;
 public sealed record GhostSourceEvidenceV2(int Version, Guid SourceRunId, string StartedUtc, string LastObservedUtc,
     long ObservedElapsedMilliseconds, JsonElement OriginalPlan, JsonElement? Template, JsonElement Checkpoint,
     IReadOnlyList<ExportEvent> Events, IReadOnlyList<ExportLocationV2> Locations,
-    long MainStartMilliseconds, long MainEndMilliseconds, string LocalStartProvenance);
+    long MainStartMilliseconds, long MainEndMilliseconds, DateTimeOffset MainStartedLocal,
+    string MainTimeZoneId, string LocalStartProvenance);
 
 public sealed class StoredGhostCapture
 {
@@ -44,11 +45,29 @@ public static class GhostSourceEvidenceCodec
             || source.Locations is null || source.Events is null || source.Locations.Any(point => point is null)
             || source.Events.Any(item => item is null) || string.IsNullOrWhiteSpace(source.LocalStartProvenance))
             throw new InvalidDataException("Unsupported or malformed stored Ghost source evidence.");
+        var clock = GhostStoredSource.ReadFrozenClock(source.Checkpoint, source.Template, source.ObservedElapsedMilliseconds, source.StartedUtc);
+        if (source.MainStartMilliseconds != clock.From || source.MainEndMilliseconds != clock.To
+            || source.MainStartedLocal.UtcDateTime != clock.SourceUtc.AddMilliseconds(clock.From).UtcDateTime
+            || source.MainTimeZoneId != clock.Start.TimeZoneId
+            || source.MainStartedLocal.Offset.TotalSeconds is < -50400 or > 50400
+            || source.MainStartedLocal.Offset.TotalSeconds % 60 != 0
+            || (clock.From == 0 && source.MainStartedLocal.Offset.TotalSeconds != clock.Start.UtcOffsetSeconds)
+            || source.LocalStartProvenance != (clock.From == 0 ? GhostStoredSource.RecordedCivil : GhostStoredSource.DerivedCivil))
+            throw new InvalidDataException("Stored Main clock and frozen civil provenance disagree.");
         ExportRunV2.ValidatePoints(source.SourceRunId, source.Locations.Select(point => new ExportLocation(point.SnapshotOrder,
             point.UtcMilliseconds, point.BootMonotonicNanoseconds, point.LatitudeDegrees, point.LongitudeDegrees, point.AccuracyMetres)
         { Provenance = point.Provenance }).ToArray());
         return source;
     }
+    public static void ValidateAttempt(GhostSourceEvidenceV2 source, GhostAttempt attempt)
+    {
+        if (source.SourceRunId != attempt.SourceRunId
+            || !source.MainStartedLocal.EqualsExact(attempt.StartedLocal)
+            || source.MainTimeZoneId != attempt.TimeZoneId
+            || (decimal)(source.MainEndMilliseconds - source.MainStartMilliseconds) * TimeSpan.TicksPerMillisecond != attempt.Elapsed.Ticks)
+            throw new InvalidDataException("Archived attempt disagrees with its frozen Main source clock or civil provenance.");
+    }
+
 }
 
 // Integration bridge only: original callback evidence stays separate from the legacy geometry derivation.
@@ -70,56 +89,14 @@ public static class GhostStoredSource
         if (source.Status != "finished") throw new InvalidDataException("Finish and save the continuous run first.");
         ExportRunV1.Validate(source);
         ExportRunV2.ValidatePoints(source.Id, source.Locations);
-        var checkpoint = source.Checkpoint;
-        if (!checkpoint.TryGetProperty("SchemaVersion", out var version) || version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out var schema) || schema != 1
-            || checkpoint.GetProperty("Snapshot").GetProperty("Phase").GetString() != "Finished")
-            throw new InvalidDataException("The saved source does not have supported finished phase facts.");
-        var template = source.Template?.ValueKind == JsonValueKind.Null ? null : source.Template?.Deserialize<CoreTemplate>();
-        var plan = checkpoint.GetProperty("Plan").Deserialize<TimedPhase[]>()
-            ?? throw new InvalidDataException("The saved phase plan is unavailable.");
-        if (!IsContinuous(template, plan)) throw new InvalidDataException("Only a recorded continuous C2 source can supply a Ghost route.");
-        var completed = checkpoint.GetProperty("Completed").Deserialize<CompletedPhase[]>();
-        if (completed is null || completed.Length != plan!.Length || completed.Where((phase, index) => phase is null
-            || phase.Plan != plan[index] || phase.ActiveTime < TimeSpan.Zero || phase.ActiveTime > phase.Plan.Duration).Any())
-            throw new InvalidDataException("The saved continuous phase instances are unavailable.");
-        var start = checkpoint.GetProperty("StartContext").Deserialize<RunStartContext>()
-            ?? throw new InvalidDataException("The source start clock and local zone were not recorded.");
-        if (start.BootMonotonicStartMilliseconds < 0 || string.IsNullOrWhiteSpace(start.TimeZoneId)
-            || start.UtcOffsetSeconds is < -50400 or > 50400 || start.UtcOffsetSeconds % 60 != 0)
-            throw new InvalidDataException("The saved source start clock or local zone is unsupported.");
-        var facts = checkpoint.GetProperty("PhaseBoundaries").Deserialize<PhaseBoundaryFact[]>()
-            ?? throw new InvalidDataException("Main start and end times were not recorded.");
-        if (facts.Any(fact => fact is null)) throw new InvalidDataException("Saved phase boundaries are malformed.");
-        var mainIndex = Array.FindIndex(plan, phase => phase.Kind == RunPhase.Work);
-        PhaseBoundaryFact Boundary(int index)
-        {
-            var matching = facts.Where(fact => fact.PreviousPhaseIndex == index).ToArray();
-            if (matching.Length != 1 || matching[0].PreviousPhase != plan[index].Kind
-                || matching[0].NextPhaseIndex != (index == plan.Length - 1 ? null : index + 1)
-                || matching[0].NextPhase != (index == plan.Length - 1 ? null : plan[index + 1].Kind)
-                || matching[0].EffectiveElapsedMilliseconds < 0
-                || matching[0].EffectiveElapsedMilliseconds > matching[0].ObservedElapsedMilliseconds
-                || matching[0].ObservedElapsedMilliseconds > source.ObservedElapsedMilliseconds)
-                throw new InvalidDataException("The saved Main boundary clock is inconsistent.");
-            return matching[0];
-        }
-        var from = mainIndex == 0 ? 0 : Boundary(mainIndex - 1).EffectiveElapsedMilliseconds;
-        var to = Boundary(mainIndex).EffectiveElapsedMilliseconds;
-        if (to <= from || to - from > TimeSpan.MaxValue.Ticks / TimeSpan.TicksPerMillisecond
-            || completed[mainIndex].ActiveTime > TimeSpan.FromMilliseconds(to - from))
-            throw new InvalidDataException("The full saved Main elapsed time is unavailable.");
-        var sourceUtc = DateTimeOffset.Parse(source.StartedUtc, CultureInfo.InvariantCulture);
-        if (sourceUtc.Offset != TimeSpan.Zero) throw new InvalidDataException("The source UTC anchor is unavailable.");
+        var clock = ReadFrozenClock(source.Checkpoint, source.Template, source.ObservedElapsedMilliseconds, source.StartedUtc);
+        var (start, from, to, sourceUtc) = clock;
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(start.TimeZoneId);
+        if (zone.GetUtcOffset(sourceUtc) != TimeSpan.FromSeconds(start.UtcOffsetSeconds))
+            throw new InvalidDataException("Recorded source offset conflicts with saved zone rules.");
         var mainUtc = sourceUtc.AddMilliseconds(from);
-        var offset = TimeSpan.FromSeconds(start.UtcOffsetSeconds);
-        var localProvenance = "Main starts at recorded source start; original offset and zone retained";
-        if (from != 0)
-        {
-            var zone = TimeZoneInfo.FindSystemTimeZoneById(start.TimeZoneId);
-            if (zone.GetUtcOffset(sourceUtc) != offset) throw new InvalidDataException("Recorded source offset conflicts with saved zone rules.");
-            offset = zone.GetUtcOffset(mainUtc);
-            localProvenance = "Main UTC derived from frozen start and boundary; civil offset derived using recorded source zone rules at route capture, not a Main-zone observation";
-        }
+        var offset = from == 0 ? TimeSpan.FromSeconds(start.UtcOffsetSeconds) : zone.GetUtcOffset(mainUtc);
+        var localProvenance = from == 0 ? RecordedCivil : DerivedCivil;
         var main = source.Locations.Where(point => (decimal)(point.BootMonotonicNanoseconds / 1000000) - start.BootMonotonicStartMilliseconds >= from
             && (decimal)(point.BootMonotonicNanoseconds / 1000000) - start.BootMonotonicStartMilliseconds <= to).ToArray();
         var recording = new List<RecordedRouteFix>();
@@ -150,10 +127,61 @@ public static class GhostStoredSource
             start.TimeZoneId, fullElapsed, reason is null ? AttemptQuality.Verified : AttemptQuality.InsufficientEvidence,
             Pilot.RuleVersion, progress);
         var envelope = new GhostSourceEvidenceV2(2, source.Id, source.StartedUtc, source.LastObservedUtc, source.ObservedElapsedMilliseconds,
-            source.OriginalPlan.Clone(), source.Template?.Clone(), checkpoint.Clone(), source.Events.ToArray(),
+            source.OriginalPlan.Clone(), source.Template?.Clone(), source.Checkpoint.Clone(), source.Events.ToArray(),
             source.Locations.Select(point => new ExportLocationV2(point.SnapshotOrder, point.UtcMilliseconds, point.BootMonotonicNanoseconds,
-                point.LatitudeDegrees, point.LongitudeDegrees, point.AccuracyMetres, point.Provenance)).ToArray(), from, to, localProvenance);
+                point.LatitudeDegrees, point.LongitudeDegrees, point.AccuracyMetres, point.Provenance)).ToArray(), from, to, attempt.StartedLocal, attempt.TimeZoneId, localProvenance);
         return new(captured, attempt, reason, GhostSourceEvidenceCodec.Write(envelope));
+    }
+
+    internal const string RecordedCivil = "recorded-source-start-civil-v1";
+    internal const string DerivedCivil = "main-civil-derived-from-recorded-zone-at-capture-v1";
+
+    // Validates persisted anchors only. Archive reads must never consult today's zone rules.
+    internal static (RunStartContext Start, long From, long To, DateTimeOffset SourceUtc) ReadFrozenClock(
+        JsonElement checkpoint, JsonElement? templateJson, long observedMilliseconds, string startedUtc)
+    {
+        if (!checkpoint.TryGetProperty("SchemaVersion", out var version) || version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out var schema) || schema != 1
+            || checkpoint.GetProperty("Snapshot").GetProperty("Phase").GetString() != "Finished")
+            throw new InvalidDataException("The saved source does not have supported finished phase facts.");
+        var template = templateJson?.ValueKind == JsonValueKind.Null ? null : templateJson?.Deserialize<CoreTemplate>();
+        var plan = checkpoint.GetProperty("Plan").Deserialize<TimedPhase[]>()
+            ?? throw new InvalidDataException("The saved phase plan is unavailable.");
+        if (!IsContinuous(template, plan)) throw new InvalidDataException("Only a recorded continuous C2 source can supply a Ghost route.");
+        var completed = checkpoint.GetProperty("Completed").Deserialize<CompletedPhase[]>();
+        if (completed is null || completed.Length != plan!.Length || completed.Where((phase, index) => phase is null
+            || phase.Plan != plan[index] || phase.ActiveTime < TimeSpan.Zero || phase.ActiveTime > phase.Plan.Duration).Any())
+            throw new InvalidDataException("The saved continuous phase instances are unavailable.");
+        var start = checkpoint.GetProperty("StartContext").Deserialize<RunStartContext>()
+            ?? throw new InvalidDataException("The source start clock and local zone were not recorded.");
+        if (start.BootMonotonicStartMilliseconds < 0 || string.IsNullOrWhiteSpace(start.TimeZoneId)
+            || start.UtcOffsetSeconds is < -50400 or > 50400 || start.UtcOffsetSeconds % 60 != 0)
+            throw new InvalidDataException("The saved source start clock or local zone is unsupported.");
+        var facts = checkpoint.GetProperty("PhaseBoundaries").Deserialize<PhaseBoundaryFact[]>()
+            ?? throw new InvalidDataException("Main start and end times were not recorded.");
+        if (facts.Any(fact => fact is null)) throw new InvalidDataException("Saved phase boundaries are malformed.");
+        var mainIndex = Array.FindIndex(plan, phase => phase.Kind == RunPhase.Work);
+        PhaseBoundaryFact Boundary(int index)
+        {
+            var matching = facts.Where(fact => fact.PreviousPhaseIndex == index).ToArray();
+            if (matching.Length != 1 || matching[0].PreviousPhase != plan[index].Kind
+                || matching[0].NextPhaseIndex != (index == plan.Length - 1 ? null : index + 1)
+                || matching[0].NextPhase != (index == plan.Length - 1 ? null : plan[index + 1].Kind)
+                || matching[0].EffectiveElapsedMilliseconds < 0
+                || matching[0].EffectiveElapsedMilliseconds > matching[0].ObservedElapsedMilliseconds
+                || matching[0].ObservedElapsedMilliseconds > observedMilliseconds
+                || matching[0].StartAnchorDerivedEffectiveUtc.Offset != TimeSpan.Zero
+                || matching[0].StartAnchorDerivedEffectiveUtc != DateTimeOffset.Parse(startedUtc, CultureInfo.InvariantCulture).AddMilliseconds(matching[0].EffectiveElapsedMilliseconds))
+                throw new InvalidDataException("The saved Main boundary clock is inconsistent.");
+            return matching[0];
+        }
+        var from = mainIndex == 0 ? 0 : Boundary(mainIndex - 1).EffectiveElapsedMilliseconds;
+        var to = Boundary(mainIndex).EffectiveElapsedMilliseconds;
+        if (to <= from || to - from > TimeSpan.MaxValue.Ticks / TimeSpan.TicksPerMillisecond
+            || completed[mainIndex].ActiveTime > TimeSpan.FromMilliseconds(to - from))
+            throw new InvalidDataException("The full saved Main elapsed time is unavailable.");
+        var sourceUtc = DateTimeOffset.Parse(startedUtc, CultureInfo.InvariantCulture);
+        if (sourceUtc.Offset != TimeSpan.Zero) throw new InvalidDataException("The source UTC anchor is unavailable.");
+        return (start, from, to, sourceUtc);
     }
 
     public static StoredGhostCapture Name(StoredGhostCapture captured, string name)

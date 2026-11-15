@@ -98,6 +98,7 @@ public sealed class AndroidGhostArchive
             || attempt.Route != captured.Geometry.Route.Key || attempt.RuleVersion != captured.Geometry.Policy.RuleVersion
             || attempt.Elapsed.Ticks != (evidence.MainEndMilliseconds - evidence.MainStartMilliseconds) * TimeSpan.TicksPerMillisecond)
             throw new ArgumentException("Stored source identity and full Main clock must agree.");
+        GhostSourceEvidenceCodec.ValidateAttempt(evidence, attempt);
         ValidateReason(attempt, captured.QualityReason);
         var routeValues = RouteValues(captured.Geometry.Route, captured.Geometry.Policy);
         var attemptValues = AttemptValues(attempt, captured.QualityReason, captured.RawJson);
@@ -253,6 +254,7 @@ public sealed class AndroidGhostArchive
                 rows.GetString(5)!, TimeSpan.FromTicks(rows.GetLong(7)), Enum.Parse<AttemptQuality>(rows.GetString(8)!), rows.GetString(2)!, points);
             if (attempt.SavedLocalYear != rows.GetInt(4) || startedLocal.UtcDateTime.Ticks != rows.GetLong(6))
                 throw new InvalidDataException("Archived start-zone provenance disagrees.");
+            if (storedSource is not null) GhostSourceEvidenceCodec.ValidateAttempt(GhostSourceEvidenceCodec.Read(rawJson), attempt);
             result.Add(new(attempt, rows.IsNull(9) ? null : rows.GetString(9), Array.AsReadOnly(raw)) { StoredSourceV2 = storedSource });
         }
 

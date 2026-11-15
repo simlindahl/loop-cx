@@ -96,10 +96,81 @@ internal static class GhostStoredSourceChecks
         try { _ = GhostSourceEvidenceCodec.Read(unsupported.ToJsonString()); }
         catch (InvalidDataException) { unsupported = null; }
         Require(unsupported is null, "Unsupported stored-source versions fail closed without rewriting old evidence.");
+        foreach (var context in new[] { new RunStartContext("Missing/UnknownZone", 3600, 1000), new RunStartContext("Europe/Stockholm", -3600, 1000) })
+        {
+            var checkpoint = JsonNode.Parse(Source(false).Checkpoint.GetRawText())!;
+            checkpoint["StartContext"] = JsonSerializer.SerializeToNode(context);
+            Reject(() => GhostStoredSource.Capture(Source(false) with { Checkpoint = JsonSerializer.SerializeToElement(checkpoint) }, "Bad civil evidence"),
+                "Main starting at zero still requires a resolvable saved zone and matching offset.");
+        }
+        Reject(() => GhostSourceEvidenceCodec.Read(GhostSourceEvidenceCodec.Write(envelope with
+        {
+            MainStartMilliseconds = 1000,
+            MainEndMilliseconds = 41000,
+            ObservedElapsedMilliseconds = 41000
+        })), "Same-duration shifted Main bounds must match the actual stored phase instance.");
+        Reject(() => GhostSourceEvidenceCodec.Read(GhostSourceEvidenceCodec.Write(envelope with
+        {
+            StartedUtc = utc.AddSeconds(1).ToString("O")
+        })), "Changed source UTC cannot retain unrelated recorded effective boundary anchors.");
+        Reject(() => GhostSourceEvidenceCodec.Read(GhostSourceEvidenceCodec.Write(envelope with
+        {
+            MainStartedLocal = envelope.MainStartedLocal.ToOffset(TimeSpan.FromHours(-1))
+        })), "Recorded-start civil offset cannot contradict frozen start context.");
+        Reject(() => GhostSourceEvidenceCodec.ValidateAttempt(envelope, new GhostAttempt(captured.Attempt.Id, id,
+            captured.Attempt.Route, captured.Attempt.StartedLocal.AddYears(1), captured.Attempt.TimeZoneId,
+            captured.Attempt.Elapsed, captured.Attempt.Quality, captured.Attempt.RuleVersion, captured.Attempt.Points)),
+            "The archive reader must reject an attempt whose local year/start differs from its source.");
+        Reject(() => GhostSourceEvidenceCodec.ValidateAttempt(envelope, new GhostAttempt(captured.Attempt.Id, id,
+            captured.Attempt.Route, captured.Attempt.StartedLocal, "Other/Zone", captured.Attempt.Elapsed,
+            captured.Attempt.Quality, captured.Attempt.RuleVersion, captured.Attempt.Points)),
+            "The archive reader must bind the saved attempt zone identity to source evidence.");
+        GhostSourceEvidenceCodec.ValidateAttempt(envelope, captured.Attempt);
+        var warmedSource = Source(false);
+        TimedPhase[] warmedPlan = [new(RunPhase.Warmup, TimeSpan.FromSeconds(10), 2), plan[0]];
+        var warmedCheckpoint = JsonNode.Parse(warmedSource.Checkpoint.GetRawText())!;
+        warmedCheckpoint["Plan"] = JsonSerializer.SerializeToNode(warmedPlan);
+        warmedCheckpoint["Completed"] = JsonSerializer.SerializeToNode(warmedPlan.Select(phase => new CompletedPhase(phase, phase.Duration)));
+        warmedCheckpoint["PhaseBoundaries"] = JsonSerializer.SerializeToNode(new[]
+        {
+            new PhaseBoundaryFact(0, 1, RunPhase.Warmup, RunPhase.Work, 10000, 10000, utc.AddSeconds(10), utc.AddSeconds(10), false),
+            new PhaseBoundaryFact(1, null, RunPhase.Work, null, 50000, 50000, utc.AddSeconds(50), utc.AddSeconds(50), false)
+        });
+        warmedSource = warmedSource with
+        {
+            OriginalPlan = JsonSerializer.SerializeToElement(warmedPlan),
+            Checkpoint = JsonSerializer.SerializeToElement(warmedCheckpoint),
+            ObservedElapsedMilliseconds = 50000,
+            LastObservedUtc = utc.AddSeconds(50).ToString("O"),
+            Locations = warmedSource.Locations.Select(point => point with
+            {
+                BootMonotonicNanoseconds = point.BootMonotonicNanoseconds + 10000000000,
+                UtcMilliseconds = point.UtcMilliseconds + 10000
+            }).ToArray()
+        };
+        var warmedCapture = GhostStoredSource.Capture(warmedSource, "After recorded warm-up");
+        var warmedEnvelope = GhostSourceEvidenceCodec.Read(warmedCapture.RawJson);
+        GhostSourceEvidenceCodec.ValidateAttempt(warmedEnvelope, warmedCapture.Attempt);
+        Require(warmedEnvelope.MainStartMilliseconds == 10000 && warmedEnvelope.MainEndMilliseconds == 50000
+            && warmedEnvelope.MainStartedLocal.EqualsExact(warmedCapture.Attempt.StartedLocal)
+            && warmedEnvelope.LocalStartProvenance == GhostStoredSource.DerivedCivil,
+            "Main after warm-up freezes capture-derived civil evidence; subsequent reads validate saved facts without resolving current zone rules.");
+        Reject(() => GhostSourceEvidenceCodec.Read(GhostSourceEvidenceCodec.Write(warmedEnvelope with
+        {
+            MainStartMilliseconds = 0,
+            MainEndMilliseconds = 40000
+        })), "An equal-duration window cannot substitute for Main after the actual warm-up boundary.");
         const string legacy = "[{\"Elapsed\":\"00:00:00\",\"Utc\":\"2025-01-01T00:00:00+00:00\",\"Latitude\":59,\"Longitude\":18,\"AccuracyMetres\":5,\"Section\":1,\"GapBefore\":false}]";
         Require(JsonSerializer.Serialize(JsonSerializer.Deserialize<RecordedRouteFix[]>(legacy)) == legacy,
             "Legacy raw-array bytes must stay identical for existing InsertFrozen retry comparisons.");
-        Console.WriteLine("PASS: stored Ghost full Main versus GPS span, unknown ends, positive eligibility, raw ignored retention and exact legacy/v2 codec bytes.");
+        Console.WriteLine("PASS: stored Ghost full Main versus GPS span, unknown ends, positive eligibility, bound source/civil clocks, raw ignored retention and exact legacy/v2 codec bytes.");
+    }
+
+    private static void Reject(Action action, string message)
+    {
+        try { action(); }
+        catch (Exception error) when (error is InvalidDataException or TimeZoneNotFoundException or InvalidTimeZoneException) { return; }
+        throw new InvalidOperationException(message);
     }
 
     private static void Require(bool condition, string message)
