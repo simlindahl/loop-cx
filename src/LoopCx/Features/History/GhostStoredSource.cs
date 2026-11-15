@@ -101,10 +101,17 @@ public static class GhostStoredSource
             && (decimal)(point.BootMonotonicNanoseconds / 1000000) - start.BootMonotonicStartMilliseconds <= to).ToArray();
         var recording = new List<RecordedRouteFix>();
         long? previous = null;
+        var finalizationTail = false;
         foreach (var point in main)
         {
             var evidence = point.Provenance ?? throw new InvalidDataException("This older recording has no saved route-continuity evidence.");
             if (evidence.Outcome == "ignored") continue; // Original raw row remains in the v2 envelope.
+            if (evidence.Outcome == "not-assessed" && evidence.BreakReason == "Finalization")
+            {
+                finalizationTail = true;
+                continue; // Not assessed at this callback: supported prefix remains, endpoint does not become known.
+            }
+            if (finalizationTail) throw new InvalidDataException("Finalization evidence is not a trailing source suffix.");
             if (evidence.Outcome != "valid") throw new InvalidDataException("The Main track contains unassessed or rejected GPS evidence.");
             var elapsed = TimeSpan.FromMilliseconds((long)((decimal)(point.BootMonotonicNanoseconds / 1000000) - start.BootMonotonicStartMilliseconds - from));
             recording.Add(new(elapsed, DateTimeOffset.FromUnixTimeMilliseconds(point.UtcMilliseconds), point.LatitudeDegrees,

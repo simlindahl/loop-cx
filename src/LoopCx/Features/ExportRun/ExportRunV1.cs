@@ -43,9 +43,17 @@ public sealed record ExportRunV1(int SchemaVersion, IReadOnlyDictionary<string, 
         return JsonSerializer.Serialize(new ExportRunV1(1, Version1Units, snapshot), JsonOptions);
     }
 
+    public static void RequireCore(JsonElement checkpoint)
+    {
+        if (checkpoint.TryGetProperty("ActivityKind", out var kind)
+            && (kind.ValueKind != JsonValueKind.String || kind.GetString() != "core"))
+            throw new InvalidDataException("This recording activity requires its own mapping; Core interpretation is unavailable.");
+    }
+
     internal static void Validate(ExportJournalSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        RequireCore(snapshot.Checkpoint);
         if (snapshot.Checkpoint.TryGetProperty(nameof(SchemaVersion), out var checkpointVersion))
         {
             if (checkpointVersion.ValueKind != JsonValueKind.Number || !checkpointVersion.TryGetInt32(out var version) || version != 1

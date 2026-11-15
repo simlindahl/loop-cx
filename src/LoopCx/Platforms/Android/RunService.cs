@@ -5,17 +5,22 @@ using Android.Locations;
 using Android.OS;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
+using LoopCx.Features.GhostRun;
 
 namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
-    long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null, MotionState? Motion = null, RunStatisticsState? Statistics = null, CoreTemplate? FrozenTemplate = null,
+    long? RemainingSeconds, int Locations, string GpsStatus, string? TemplateId, DistanceState? Distance = null, MotionState? Motion = null, RunStatisticsState? Statistics = null, CoreTemplate? FrozenTemplate = null,
     int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null, HeartRateState? HeartRate = null, LivePaceState? LivePace = null,
-    RunSaveStatus? Storage = null);
+    RunSaveStatus? Storage = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore] public string ActivityKind { get; init; } = "core";
+    [System.Text.Json.Serialization.JsonIgnore] public GhostRaceSnapshot? Ghost { get; init; }
+}
 
 [Property("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE", Value = "User-started ongoing timed workout phases and visible controls while screen is locked, when GPS is unavailable or declined.")]
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice | ForegroundService.TypeSpecialUse)]
-public sealed class RunService : Service, ILocationListener
+public sealed partial class RunService : Service, ILocationListener
 {
     private AndroidRunAudio? audio;
     private RunAudioPolicy? audioPolicy;
@@ -125,11 +130,13 @@ public sealed class RunService : Service, ILocationListener
     {
         if (!journalAvailable)
         {
+            CompleteGhostStart(intent, "Local storage could not be opened. The race has not started.");
             Changed?.Invoke();
             StopSelf();
             return StartCommandResult.NotSticky;
         }
         var command = intent?.Action;
+        if (command == "start-ghost" || ghost is not null) return HandleGhostCommand(intent, command);
 #if DEBUG
         if (command == "native-probe" && OperatingSystem.IsAndroidVersionAtLeast(33))
         {
@@ -410,6 +417,7 @@ public sealed class RunService : Service, ILocationListener
 
     private void Tick()
     {
+        if (ghost is not null) { TickGhost(); return; }
         if (!session!.IsFinished) AdvanceClock();
         Publish();
         if (!session.IsFinished) handler!.PostDelayed(tick!, 1000);
@@ -520,7 +528,7 @@ public sealed class RunService : Service, ILocationListener
 
     private void StartHeartRateSource()
     {
-        if (session is null || session.IsFinished || heartRateConfiguration.DeviceAddress is not { } address) return;
+        if ((ghost is null ? session is null || session.IsFinished : ghost.Ended) || heartRateConfiguration.DeviceAddress is not { } address) return;
 
         var expectedRunId = id;
 
@@ -542,6 +550,14 @@ public sealed class RunService : Service, ILocationListener
 
     private void ReceiveHeartRate(Guid expectedRunId, HeartRateObservation observation)
     {
+        if (ghost is not null)
+        {
+            if (ghost.Ended || expectedRunId != id) return;
+            ghost.Observe(SystemClock.ElapsedRealtime());
+            heartRate!.Observe(observation);
+            PublishGhost(observation: observation);
+            return;
+        }
         if (session is null || session.IsFinished || expectedRunId != id) return;
 
         AdvanceClock();
@@ -615,6 +631,7 @@ public sealed class RunService : Service, ILocationListener
 
         if (!available)
         {
+            ghost?.Unavailable();
             gpsStatus = "GPS unavailable · allow location in Android settings";
             livePace.Reset();
             paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
@@ -651,7 +668,8 @@ public sealed class RunService : Service, ILocationListener
         var pendingOpen = PendingIntent.GetActivity(this, 0, open, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var pauseReason = !state.Paused ? PauseReason.None
             : state.Motion?.PauseReason == PauseReason.Automatic ? PauseReason.Automatic : PauseReason.Manual;
-        var text = RunNotificationText.Create(state.Phase, state.RemainingSeconds, pauseReason,
+        if (state.Ghost is { } race) return BuildGhostNotification(state, race, pendingOpen);
+        var text = RunNotificationText.Create(state.Phase, state.RemainingSeconds!.Value, pauseReason,
             state.HeartRate?.CurrentBpm, state.LivePace?.SecondsPerKilometre);
         var builder = new Notification.Builder(this, ChannelId)
             .SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
@@ -693,6 +711,7 @@ public sealed class RunService : Service, ILocationListener
 
     public void OnLocationChanged(global::Android.Locations.Location location)
     {
+        if (ghost is not null) { GhostLocation(location); return; }
         if (session is null || session.IsFinished || session.PauseReason == PauseReason.Manual) return;
 
         var raw = new RunSaveLocation(location.Time, location.ElapsedRealtimeNanos, location.Latitude, location.Longitude,
@@ -763,6 +782,11 @@ public sealed class RunService : Service, ILocationListener
 
     public void OnProviderDisabled(string provider)
     {
+        if (ghost is not null)
+        {
+            if (!ghost.Ended) { ghost.Unavailable(); RefreshLocationSubscription(); PublishGhost(); }
+            return;
+        }
         if (session is null || session.IsFinished) return;
 
         RefreshLocationSubscription();
@@ -771,6 +795,11 @@ public sealed class RunService : Service, ILocationListener
 
     public void OnProviderEnabled(string provider)
     {
+        if (ghost is not null)
+        {
+            if (!ghost.Ended) { ghost.Unavailable(); RefreshLocationSubscription(); PublishGhost(); }
+            return;
+        }
         if (session is null || session.IsFinished) return;
 
         RefreshLocationSubscription();

@@ -21,7 +21,15 @@
         </svg>
         <p>Recorded geometry · background map unavailable.</p>
         @if (sourceReason is not null) { <p>@sourceReason</p> }
-        @* Draft checkpoint: approved race/reference/start controls require the real service path before this feature can ship. *@
+        <fieldset disabled="@(acquiring is not null)">
+            <legend>Ghost reference</legend>
+            <label><input type="radio" name="ghost-mode" checked="@(mode == GhostMode.YearBest)" @onchange="() => mode = GhostMode.YearBest" /> Year best · @year</label>
+            <label><input type="radio" name="ghost-mode" checked="@(mode == GhostMode.PersonalBest)" @onchange="() => mode = GhostMode.PersonalBest" /> Personal best</label>
+        </fieldset>
+        <p>@(records?.ReferenceFor(mode) is null ? "Set first time without a ghost for this selection." : "Your selected record is frozen when the race starts.")</p>
+        <p>Race time keeps running during stops and pauses.</p>
+        @if (acquiring is not null) { <p role="status">Checking your actual GPS position at the start… Use Back to cancel.</p> }
+        <button type="button" class="primary" disabled="@(acquiring is not null)" @onclick="StartRace">Start Ghost Run</button>
     }
     else if (catalogue)
     {

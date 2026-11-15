@@ -9,7 +9,10 @@ namespace LoopCx.Features.History;
 public sealed record StoredRunRow(Guid Id, string StartedUtc, string Status, string? Template, string Checkpoint,
     string? ExportStatus, string? AttemptJson);
 public sealed record StoredRunArchive(IReadOnlyList<StoredRunRow> Finished, int InterruptedCount, int UnreadableCount = 0,
-    IReadOnlyList<InterruptedRun>? Interrupted = null);
+    IReadOnlyList<InterruptedRun>? Interrupted = null)
+{
+    public IReadOnlyList<LoopCx.Features.GhostRun.GhostStoredRun> Ghost { get; init; } = [];
+}
 public sealed record StoredRunSummary(Guid Id, DateTimeOffset? StartedUtc, string Name, string Source,
     TimeSpan? TotalActive, MeasuredStatistics? Total, string ExportLabel, bool Synthetic, string? StartZone, int? StartOffset);
 public sealed record StoredRunDetail(StoredRunSummary Summary, MeasuredStatistics? Main, TimeSpan? MainActive,
@@ -137,6 +140,7 @@ public static class StoredRunProjection
 
     private static void ValidateCheckpoint(JsonElement checkpoint)
     {
+        ExportRunV1.RequireCore(checkpoint);
         if (checkpoint.ValueKind != JsonValueKind.Object) throw new InvalidDataException("Stored checkpoint is not readable.");
         if (checkpoint.TryGetProperty("SchemaVersion", out var version)
             && (version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out var number) || number != 1))

@@ -14,6 +14,36 @@
     {
         <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnHealthSettings="OpenHistoryHealthSettings" OnTraining="ShowTraining" />
     }
+    else if (RunService.Snapshot is { Ghost: { } race } ghostState)
+    {
+        <section aria-labelledby="phase-heading">
+            <p>Ghost Run · @race.RouteName</p>
+            <h2 id="phase-heading" tabindex="-1">@(ghostState.Phase == "Finished" ? race.Clock.State.ToString() : race.PauseReason == PauseReason.Automatic ? "Training autopaused" : ghostState.Paused ? "Training paused" : "Ghost Run")</h2>
+            <p class="countdown"><strong>@Clock((long)race.Clock.RaceElapsed.TotalSeconds)</strong><span>race time · keeps running during pauses</span></p>
+            <p>Training active · @Clock((long)race.Clock.TrainingActive.TotalSeconds)</p>
+            <p>@ghostState.GpsStatus</p>
+            <dl><div><dt>Time difference</dt><dd>@(race.Gap.SecondsAhead is { } gap ? $"{Math.Abs(gap):0} sec {(gap < 0 ? "behind" : "ahead")}" : "Unavailable")</dd></div>
+                <div><dt>Distance difference</dt><dd>@(race.Gap.MetresAhead is { } metres ? $"{Math.Abs(metres):0} m {(metres < 0 ? "behind" : "ahead")}" : "Unavailable")</dd></div></dl>
+            @if (RunService.StartError is { } deviceError) { <p role="status">@deviceError</p> }
+            @if (ghostState.Storage?.Error is not null)
+            {
+                <p role="alert">Recent recording could not be saved. Recent data may be lost if the app closes.</p>
+                @if (ghostState.Storage.CanRetry) { <button type="button" @onclick='() => RunService.Command("retry-saving")'>Retry saving</button> }
+            }
+            @if (ghostState.Storage?.State == "saved")
+            {
+                <p role="status">Ghost Run saved locally.</p>
+                <button type="button" class="primary" @onclick="() => OpenHistory(ghostState.Id)">View run</button>
+                <button type="button" @onclick="BackToTraining">Back to training</button>
+            }
+            else if (ghostState.Phase != "Finished")
+            {
+                <button type="button" class="primary" @onclick='() => RunService.Command(ghostState.Paused ? "resume" : "pause")'>@(ghostState.Paused ? "Resume training" : "Pause training")</button>
+                @if (race.PauseReason == PauseReason.Automatic) { <button type="button" @onclick='() => RunService.Command("pause")'>Pause manually</button> }
+                <button type="button" @onclick='() => RunService.Command("end-ghost")'>End attempt</button>
+            }
+        </section>
+    }
     else if (RunService.Snapshot is { } state)
     {
         @if (state.Storage?.Error is not null)
@@ -44,7 +74,7 @@
             }
             @if (state.Paused && state.TemplateId == "C1" && (state.Phase is "Work" or "Recovery")) { <p>Work @state.WorkRepetition of @state.WorkRepetitions</p> }
             <p class="countdown">
-<strong>@Clock(state.RemainingSeconds)</strong>
+<strong>@Clock(state.RemainingSeconds!.Value)</strong>
 <span>remaining · @Clock(state.ActiveSeconds) active</span>
 </p>
             <p class="status">@state.GpsStatus</p>

@@ -29,11 +29,14 @@ public sealed class GhostRaceClock
             var end = endedAt ?? observedAt;
             var elapsed = end - startedAt;
             var paused = TimeSpan.Zero;
-            foreach (var pause in pauses)
+            var through = startedAt;
+            foreach (var pause in pauses.OrderBy(value => value.StartedAt))
             {
-                if (pause.StartedAt >= end) continue;
+                var from = pause.StartedAt > through ? pause.StartedAt : through;
                 var until = pause.EndedAt is { } resumed && resumed < end ? resumed : end;
-                paused += until - pause.StartedAt;
+                if (until <= from) continue;
+                paused += until - from;
+                through = until;
             }
             var trainingPaused = pauses.Any(p => p.StartedAt <= end && (p.EndedAt is null || p.EndedAt > end));
             return new(elapsed, elapsed - paused, trainingPaused, state);
@@ -54,6 +57,17 @@ public sealed class GhostRaceClock
         if (state == GhostClockState.Running && (pauses.Count == 0 || pauses[^1].EndedAt is not null))
             pauses.Add(new(monotonicNow, null));
         return Current;
+    }
+
+    // Exclude only the proven standstill window; the delayed callback tail stayed training-active.
+    public GhostClockSnapshot PauseTrainingAutomatically(TimeSpan onset, TimeSpan excludedThrough, TimeSpan receivedAt)
+    {
+        if (state != GhostClockState.Running) return Current;
+        if (onset < startedAt || excludedThrough - onset != TimeSpan.FromSeconds(10) || excludedThrough > receivedAt)
+            throw new ArgumentOutOfRangeException(nameof(onset), "Automatic exclusion must be exactly ten supported seconds within this race.");
+        Observe(receivedAt);
+        pauses.Add(new(onset, excludedThrough));
+        return PauseTraining(receivedAt);
     }
 
     public GhostClockSnapshot ResumeTraining(TimeSpan monotonicNow)

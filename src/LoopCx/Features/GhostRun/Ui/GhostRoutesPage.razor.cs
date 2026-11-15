@@ -12,6 +12,9 @@ public partial class GhostRoutesPage
 {
     [Parameter] public Guid SourceRunId { get; set; }
     [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnStarted { get; set; }
+    private CancellationTokenSource? acquiring;
+    private GhostMode mode;
     private readonly NameForm form = new();
     private readonly List<ArchivedGhostRoute> routes = [];
     private StoredGhostCapture? capture, frozenSave;
@@ -42,6 +45,29 @@ public partial class GhostRoutesPage
         }
         finally { if (generation == request) { loading = false; focusPending = true; } }
         if (existingKey is { } key && !disposed && generation == request) await OpenRoute(key);
+    }
+
+    private async Task StartRace()
+    {
+        if (selected is null || acquiring is not null || saving) return;
+        error = null;
+        using var operation = new CancellationTokenSource();
+        acquiring = operation;
+        try
+        {
+            await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<Microsoft.Maui.ApplicationModel.Permissions.LocationWhenInUse>();
+            if (disposed || operation.IsCancellationRequested) return;
+            var position = await AndroidGhostPosition.Acquire(operation.Token);
+            if (disposed || operation.IsCancellationRequested) return;
+            var failure = await RunService.StartGhostAsync(new(selected.Route.Key, mode, position), operation.Token);
+            if (disposed || operation.IsCancellationRequested) return;
+            if (failure is not null) error = failure;
+            else await OnStarted.InvokeAsync();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception issue) when (Expected(issue) || issue is Java.Lang.RuntimeException)
+        { if (!disposed) error = issue is InvalidDataException ? issue.Message : "The race has not started. GPS or local storage is unavailable."; }
+        finally { if (ReferenceEquals(acquiring, operation)) acquiring = null; }
     }
 
     private async Task SaveRoute()
@@ -97,6 +123,7 @@ public partial class GhostRoutesPage
     public async Task GoBack()
     {
         if (saving) return;
+        acquiring?.Cancel();
         if (selected is not null)
         {
             loading = true;
@@ -140,6 +167,7 @@ public partial class GhostRoutesPage
     public async ValueTask DisposeAsync()
     {
         disposed = true;
+        acquiring?.Cancel();
         request++;
         if (focusModule is not null) await focusModule.DisposeAsync();
         GC.SuppressFinalize(this);

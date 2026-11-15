@@ -15,6 +15,7 @@ public static class HCWritePlanner
         try
         {
             var checkpoint = source.Checkpoint;
+            ExportRunV1.RequireCore(checkpoint);
             if (checkpoint.GetProperty("SchemaVersion").GetInt32() != 1)
                 throw new InvalidDataException("The checkpoint version is not supported by mapping v1.");
             var snapshot = checkpoint.GetProperty("Snapshot");

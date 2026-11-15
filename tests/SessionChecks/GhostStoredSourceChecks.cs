@@ -160,6 +160,40 @@ internal static class GhostStoredSourceChecks
             MainStartMilliseconds = 0,
             MainEndMilliseconds = 40000
         })), "An equal-duration window cannot substitute for Main after the actual warm-up boundary.");
+        foreach (var terminalMs in new[] { 40000L, 39999L })
+        {
+            var terminalSource = Source(false);
+            var terminalPoints = terminalSource.Locations.ToArray();
+            terminalPoints[^1] = terminalPoints[^1] with
+            {
+                UtcMilliseconds = utc.AddMilliseconds(terminalMs).ToUnixTimeMilliseconds(),
+                BootMonotonicNanoseconds = (terminalMs + 1000) * 1000000,
+                Provenance = terminalPoints[^1].Provenance! with { Outcome = "not-assessed", DrawablePredecessor = null, BreakReason = "Finalization" }
+            };
+            terminalSource = terminalSource with
+            {
+                Locations = terminalPoints,
+                ObservedElapsedMilliseconds = 40001,
+                LastObservedUtc = utc.AddMilliseconds(40001).ToString("O")
+            };
+            var terminalCapture = GhostStoredSource.Capture(terminalSource, "Supported prefix");
+            var terminalEnvelope = GhostSourceEvidenceCodec.Read(terminalCapture.RawJson);
+            Require(terminalCapture.Geometry.Raw.Count == 10 && terminalCapture.Attempt.Elapsed == TimeSpan.FromSeconds(40)
+                && terminalCapture.Attempt.Points[^1] == new GhostPoint(TimeSpan.FromSeconds(40), terminalCapture.Geometry.Route.LengthMetres, false)
+                && terminalCapture.Attempt.Quality == AttemptQuality.InsufficientEvidence
+                && GhostReferences.Select(terminalCapture.Geometry.Route, [terminalCapture.Attempt], 2025).PersonalBest is null
+                && terminalEnvelope.Locations[^1].Provenance!.BreakReason == "Finalization",
+                "A measured endpoint delivered after actual finalization retains raw evidence and supported prefix, never a fabricated known finish/PB.");
+        }
+        var interior = Source(false);
+        var interiorPoints = interior.Locations.ToArray();
+        interiorPoints[2] = interiorPoints[2] with
+        {
+            Provenance = interiorPoints[2].Provenance! with
+            { Outcome = "not-assessed", DrawablePredecessor = null, BreakReason = "Finalization" }
+        };
+        Reject(() => GhostStoredSource.Capture(interior with { Locations = interiorPoints }, "Not a terminal suffix"),
+            "A Finalization label inside a later valid track cannot bypass an interior evidence break.");
         const string legacy = "[{\"Elapsed\":\"00:00:00\",\"Utc\":\"2025-01-01T00:00:00+00:00\",\"Latitude\":59,\"Longitude\":18,\"AccuracyMetres\":5,\"Section\":1,\"GapBefore\":false}]";
         Require(JsonSerializer.Serialize(JsonSerializer.Deserialize<RecordedRouteFix[]>(legacy)) == legacy,
             "Legacy raw-array bytes must stay identical for existing InsertFrozen retry comparisons.");

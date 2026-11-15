@@ -92,6 +92,8 @@ public sealed class RunJournal : SQLiteOpenHelper
     {
         try { CommitTransaction(batch); }
         catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
+        catch (Exception error) when (error is InvalidDataException or JsonException or ArgumentException)
+        { throw new RunSaveReadException("Frozen recording or archive evidence is inconsistent. Nothing was overwritten.", error); }
     }
 
     internal static IOException ClassifyNativeFailure(SQLiteException error) => error switch
@@ -141,6 +143,23 @@ public sealed class RunJournal : SQLiteOpenHelper
     private void CommitTransaction(RunSaveBatch batch)
     {
         var state = batch.Latest;
+        GhostRaceCheckpoint? ghost = null;
+        try
+        {
+            using var document = JsonDocument.Parse(state.Checkpoint);
+            if (GhostRaceCheckpoint.IsGhost(document.RootElement))
+            {
+                ghost = GhostRaceCheckpoint.Read(state.Checkpoint);
+                if (state.Id != ghost.Id || state.StartedUtc != ghost.StartedUtc || state.Revision != ghost.SaveRevision
+                    || state.Finished != (ghost.Snapshot.Clock.State != GhostClockState.Running) || state.OriginalPlan != "[]")
+                    throw new InvalidDataException("Ghost journal identity or terminal facts disagree.");
+                if (ghost.ArchiveDisposition == "zero-elapsed-incomplete" && !batch.Events.Any(item => item.Command == "end-attempt" && item.Checkpoint == state.Checkpoint))
+                    throw new InvalidDataException("Zero elapsed requires the exact recorded explicit End event in this terminal batch.");
+            }
+            else ExportRunV1.RequireCore(document.RootElement);
+        }
+        catch (Exception error) when (error is JsonException or InvalidDataException or ArgumentException)
+        { throw new RunSaveReadException("The pending checkpoint is unsupported. No overwrite was attempted.", error); }
         var db = WritableDatabase!;
         db.BeginTransaction();
         try
@@ -168,7 +187,7 @@ public sealed class RunJournal : SQLiteOpenHelper
             values.Put("started_utc", state.StartedUtc.ToString("O"));
             values.Put("observed_utc", state.ObservedUtc.ToString("O"));
             values.Put("elapsed_ms", state.ElapsedMilliseconds);
-            values.Put("status", state.Finished ? "finished" : "recording");
+            values.Put("status", ghost?.Snapshot.Clock.State == GhostClockState.Incomplete ? "incomplete" : state.Finished ? "finished" : "recording");
             values.Put("initial_plan", state.OriginalPlan);
             values.Put("template_metadata", state.TemplateMetadata);
             if (state.HeartRateMetadata is not null) values.Put("heart_rate_metadata", state.HeartRateMetadata);
@@ -205,7 +224,8 @@ public sealed class RunJournal : SQLiteOpenHelper
                 recorded.Put("elapsed_ms", recordedEvent.ElapsedMilliseconds); recorded.Put("checkpoint", recordedEvent.Checkpoint);
                 db.InsertOrThrow("run_events", null, recorded);
             }
-            if (state.Finished)
+            if (ghost is not null) new AndroidGhostArchive(db, transactionOwned: true).CommitRace(ghost);
+            else if (state.Finished)
             {
                 using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)")!;
                 queued.BindString(1, state.Id.ToString());
@@ -279,13 +299,25 @@ public sealed class RunJournal : SQLiteOpenHelper
         var db = ReadableDatabase!;
         var rows = new List<StoredRunRow>();
         var unreadable = 0;
+        var ghosts = new List<GhostStoredRun>();
         db.BeginTransactionNonExclusive();
         try
         {
-            using var cursor = db.RawQuery("SELECT r.id, r.started_utc, r.status, r.template_metadata, r.checkpoint, q.status, q.attempt_json FROM runs r LEFT JOIN export_queue q ON q.run_id = r.id WHERE r.status = 'finished' ORDER BY julianday(r.started_utc) DESC, r.id", null)!;
+            using var cursor = db.RawQuery("SELECT r.id, r.started_utc, r.status, r.template_metadata, r.checkpoint, q.status, q.attempt_json FROM runs r LEFT JOIN export_queue q ON q.run_id = r.id WHERE r.status IN ('finished', 'incomplete') ORDER BY julianday(r.started_utc) DESC, r.id", null)!;
             while (cursor.MoveToNext())
             {
                 if (!Guid.TryParse(cursor.GetString(0), out var id)) { unreadable++; continue; }
+                try
+                {
+                    using var document = JsonDocument.Parse(cursor.GetString(4)!);
+                    if (GhostRaceCheckpoint.IsGhost(document.RootElement))
+                    {
+                        ghosts.Add(GhostStoredRun.Read(id, cursor.GetString(2)!, cursor.GetString(4)!));
+                        continue;
+                    }
+                }
+                catch (Exception issue) when (issue is JsonException or InvalidDataException or ArgumentException)
+                { unreadable++; continue; }
                 rows.Add(new(id, cursor.GetString(1)!, cursor.GetString(2)!, cursor.IsNull(3) ? null : cursor.GetString(3),
                     cursor.GetString(4)!, cursor.IsNull(5) ? null : cursor.GetString(5), cursor.IsNull(6) ? null : cursor.GetString(6)));
             }
@@ -295,11 +327,21 @@ public sealed class RunJournal : SQLiteOpenHelper
             while (interrupted.MoveToNext())
             {
                 interruptedCount++;
-                try { partials.Add(ReadInterrupted(interrupted)); }
+                try
+                {
+                    using var document = JsonDocument.Parse(interrupted.GetString(4)!);
+                    if (GhostRaceCheckpoint.IsGhost(document.RootElement))
+                    {
+                        ghosts.Add(GhostStoredRun.Read(Guid.Parse(interrupted.GetString(0)!), "interrupted", interrupted.GetString(4)!));
+                        interruptedCount--;
+                        continue;
+                    }
+                    partials.Add(ReadInterrupted(interrupted));
+                }
                 catch (Exception issue) when (InterruptedRunProjection.IsUnreadableRow(issue))
                 { unreadable++; }
             }
-            var result = new StoredRunArchive(rows, interruptedCount, unreadable, partials);
+            var result = new StoredRunArchive(rows, interruptedCount, unreadable, partials) { Ghost = ghosts.AsReadOnly() };
             db.SetTransactionSuccessful();
             return result;
         }
@@ -350,6 +392,18 @@ public sealed class RunJournal : SQLiteOpenHelper
             finally { db.EndTransaction(); }
         }
         catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
+    }
+
+    public GhostStoredRun? ReadGhostRun(Guid id)
+    {
+        using var row = ReadableDatabase!.RawQuery("SELECT status, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
+        if (!row.MoveToFirst()) throw new KeyNotFoundException("The recorded run no longer exists.");
+        using var document = JsonDocument.Parse(row.GetString(1)!);
+        if (!GhostRaceCheckpoint.IsGhost(document.RootElement)) return null;
+        if (row.GetString(0) == "recording") throw new InvalidDataException("The Ghost recording is still owned by the service.");
+        var checkpoint = GhostRaceCheckpoint.Read(row.GetString(1)!);
+        if (checkpoint.Id != id) throw new InvalidDataException("The recorded Ghost identity disagrees.");
+        return GhostStoredRun.Read(id, row.GetString(0)!, row.GetString(1)!);
     }
 
     public StoredRunDetail ReadFinishedRun(Guid id)

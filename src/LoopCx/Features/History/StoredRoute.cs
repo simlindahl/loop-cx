@@ -15,6 +15,7 @@ public static class StoredRouteProjection
 {
     public static StoredRoute Read(Guid id, JsonElement checkpoint, long observedElapsedMilliseconds, IReadOnlyList<ExportLocation> points)
     {
+        ExportRunV1.RequireCore(checkpoint);
         if (id == Guid.Empty || observedElapsedMilliseconds < 0) throw new InvalidDataException("Invalid stored route identity or observation.");
         if (points.Zip(points.Skip(1)).Any(pair => pair.First.SnapshotOrder >= pair.Second.SnapshotOrder))
             throw new InvalidDataException("Stored route order is inconsistent.");

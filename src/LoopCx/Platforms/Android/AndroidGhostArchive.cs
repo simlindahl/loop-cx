@@ -11,6 +11,7 @@ namespace LoopCx;
 public sealed class AndroidGhostArchive
 {
     private readonly SQLiteDatabase db;
+    private readonly bool transactionOwned;
 
     public AndroidGhostArchive(RunJournal journal)
     {
@@ -19,10 +20,11 @@ public sealed class AndroidGhostArchive
     }
 
     // Isolated native storage tests may supply their own private scratch connection.
-    internal AndroidGhostArchive(SQLiteDatabase database)
+    internal AndroidGhostArchive(SQLiteDatabase database, bool transactionOwned = false)
     {
         ArgumentNullException.ThrowIfNull(database);
         db = database;
+        this.transactionOwned = transactionOwned;
     }
 
     private void EnsureSchema()
@@ -57,6 +59,12 @@ public sealed class AndroidGhostArchive
 
     private T InArchive<T>(Func<T> operation)
     {
+        if (transactionOwned)
+        {
+            if (!db.InTransaction()) throw new InvalidOperationException("The journal must own the Ghost transaction.");
+            EnsureSchema();
+            return operation();
+        }
         db.BeginTransaction();
         try
         {
@@ -123,6 +131,45 @@ public sealed class AndroidGhostArchive
             if (route.Route.RuleVersion != attempt.RuleVersion) throw new ArgumentException("The attempt uses another route rule version.");
             var inserted = InsertAttempt(attempt, values);
             return inserted ? GhostArchiveWrite.Inserted : GhostArchiveWrite.AlreadyStored;
+        });
+    }
+
+    // Only RunJournal's actual start/final checkpoint transaction uses this entry.
+    internal void CommitRace(GhostRaceCheckpoint race)
+    {
+        if (!transactionOwned || !db.InTransaction()) throw new InvalidOperationException("Race writes require the journal transaction.");
+        InArchive(() =>
+        {
+            _ = ReadRouteCore(race.Route.Key) ?? throw new InvalidDataException("The frozen race route is unavailable.");
+            var reference = race.Reference;
+            var values = new Dictionary<string, object?>
+            {
+                ["race_id"] = race.Id.ToString(),
+                ["route_id"] = race.Route.Key.Id.ToString(),
+                ["version_id"] = race.Route.Key.Version.ToString(),
+                ["rule_version"] = race.Route.RuleVersion,
+                ["started_local"] = race.StartedLocal.ToString("O"),
+                ["frozen_year"] = race.StartedLocal.Year,
+                ["mode"] = race.Mode.ToString(),
+                ["reference_attempt_id"] = reference?.Id.ToString(),
+                ["reference_elapsed_ticks"] = reference?.Elapsed.Ticks,
+                ["reference_quality"] = reference?.Quality.ToString(),
+                ["frozen_profile_json"] = JsonSerializer.Serialize(race.Profile)
+            };
+            InsertFrozen("ghost_race_starts", values, "race_id=?", [race.Id.ToString()]);
+            if (race.ArchiveDisposition == "zero-elapsed-incomplete")
+            {
+                if (race.TerminalKind != "explicit-end" || race.Snapshot.Clock.State != GhostClockState.Incomplete || race.Snapshot.Clock.RaceElapsed != TimeSpan.Zero)
+                    throw new InvalidDataException("Only an explicit zero-elapsed incomplete End can omit an archive attempt.");
+            }
+            else if (race.Snapshot.Clock.State != GhostClockState.Running)
+            {
+                var attempt = race.Attempt();
+                var reason = attempt.Quality == AttemptQuality.Verified ? null : race.Snapshot.QualityReason ?? "The recorded route finish is not verified.";
+                ValidateReason(attempt, reason);
+                InsertAttempt(attempt, AttemptValues(attempt, reason, race.Raw));
+            }
+            return true;
         });
     }
 

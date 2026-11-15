@@ -30,8 +30,21 @@
     color: var(--cx-muted);
 }
 
-input {
+input[type="text"] {
     width: 100%;
     min-height: 48px;
     font: inherit;
+}
+
+fieldset label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+}
+
+input[type="radio"] {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
 }

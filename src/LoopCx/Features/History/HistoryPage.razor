@@ -3,15 +3,29 @@
 <section @ref="historyContent" class="history-content" aria-labelledby="@(ghostOpen ? "ghost-heading" : "history-heading")">
     @if (ghostOpen && detail is { } ghostSource)
     {
-        <LoopCx.Features.GhostRun.Ui.GhostRoutesPage @ref="ghostPage" SourceRunId="ghostSource.Summary.Id" OnBack="CloseGhostRoutes" />
+        <LoopCx.Features.GhostRun.Ui.GhostRoutesPage @ref="ghostPage" SourceRunId="ghostSource.Summary.Id" OnBack="CloseGhostRoutes" OnStarted="OnTraining" />
     }
     else
     {
     <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null ? "Training" : "History")</button>
-    <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
+    <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : ghostResult is not null ? "Ghost Run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
     @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
-    @if (sharingRun is not null)
+    @if (ghostResult is { } ghostStored)
+    {
+        var race = ghostStored.Checkpoint.Snapshot;
+        <p>@race.RouteName · Ghost Run</p>
+        <p>@(ghostStored.Status == "interrupted" ? "Interrupted recording · actual stop time unknown" : ghostStored.Status == "incomplete" ? "Incomplete attempt · saved locally" : "Finished · saved locally")</p>
+        <dl>
+            <div><dt>@(ghostStored.Status == "interrupted" ? "Last saved race time" : "Race time")</dt><dd>@Time(race.Clock.RaceElapsed)</dd></div>
+            <div><dt>Training active</dt><dd>@Time(race.Clock.TrainingActive)</dd></div>
+            <div><dt>Result</dt><dd>@(ghostStored.Status == "finished" ? race.Clock.State.ToString() : "Not a verified record")</dd></div>
+            <div><dt>Frozen reference</dt><dd>@(race.ReferenceElapsed is { } referenceTime ? Time(referenceTime) : "No ghost · first time")</dd></div>
+        </dl>
+        @if (race.QualityReason is not null) { <p>@race.QualityReason</p> }
+        <p>Saved locally. Ghost Run export mapping is not available yet. No Health Connect write is confirmed.</p>
+    }
+    else if (sharingRun is not null)
     {
         <p>A UTF-8 JSON file.</p>
         <p>Includes the frozen plan and targets, phases, splits, heart rate, route coordinates, point assessment and continuity, pauses and data gaps. Older point quality may be unknown.</p>
@@ -170,16 +184,26 @@
     else if (!busy)
     {
         <p>Your work, kept local.</p>
-        @foreach (var item in runs)
+        @foreach (var entry in HistoryEntries)
         {
+            if (entry is LoopCx.Features.GhostRun.GhostStoredRun ghostEntry)
+            {
+            <button id="@($"history-{ghostEntry.Id}")" class="history-row" type="button" @onclick="() => Open(ghostEntry.Id)">
+                <span class="history-label">Ghost Run · @ghostEntry.Checkpoint.Route.Name<small>@ghostEntry.Status · stored race recording</small></span>
+                <span class="history-value">@Time(ghostEntry.Checkpoint.Snapshot.Clock.RaceElapsed)</span><span class="history-chevron" aria-hidden="true">›</span>
+            </button>
+            }
+            else if (entry is StoredRunSummary item)
+            {
             var distance = Distance(item.Total);
             <button id="@($"history-{item.Id}")" class="history-row" type="button" @onclick="() => Open(item.Id)">
                 <span class="history-label">@item.Name<small>@Started(item) · @Time(item.TotalActive) total active · @item.ExportLabel</small></span>
                 <span class="history-value">@(distance == "Unavailable" ? distance : distance + " km")</span>
                 <span class="history-chevron" aria-hidden="true">›</span>
             </button>
+            }
         }
-        @if (runs.Count == 0 && error is null && unreadable == 0)
+        @if (runs.Count == 0 && ghostRuns.Count == 0 && error is null && unreadable == 0)
         {
             <p>@(interrupted > 0 ? "No completed runs are available here. Interrupted recordings are stored separately." : "No completed runs yet.")</p>
         }
