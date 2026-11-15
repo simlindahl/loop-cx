@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
 
 internal static class RunJsonSharingChecks
@@ -18,12 +19,13 @@ internal static class RunJsonSharingChecks
         var legacyJson = RunJsonSharing.Project(legacy, null, null);
 
         // Assert
-        if (completeJson != ExportRunV1.Project(finished) || partialJson != ExportRunV1.Project(partial)
-            || legacyJson != ExportRunV1.Project(legacy) || partialJson.Contains(acknowledgement, StringComparison.Ordinal))
+        if (completeJson != ExportRunV2.Project(finished) || partialJson != ExportRunV2.Project(partial)
+            || legacyJson != ExportRunV2.Project(legacy) || partialJson.Contains(acknowledgement, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException("Sharing must preserve the exact existing JSON v1 projection without inventing recovery or end facts.");
+            throw new InvalidOperationException("Sharing must preserve the normal JSON v2 projection without inventing recovery or end facts.");
         }
 
+        CheckPointProvenance(finished);
         RejectUnconfirmedOrActive(source, acknowledgement);
         CheckCompletePrivateFiles(completeJson, partialJson);
         if (arguments.Length == 2 && arguments[0] == "--export-json-share-samples")
@@ -34,7 +36,54 @@ internal static class RunJsonSharingChecks
             File.WriteAllText(Path.Combine(destination, "confirmed-partial.json"), partialJson, new UTF8Encoding(false, true));
             File.WriteAllText(Path.Combine(destination, "legacy.json"), legacyJson, new UTF8Encoding(false, true));
         }
-        Console.WriteLine("PASS: sharing eligibility, unchanged v1 facts, complete UTF-8 files, isolated operations, scoped stale cleanup and failed preparation.");
+        Console.WriteLine("PASS: sharing eligibility, v2 sharing with unchanged frozen facts, complete UTF-8 files, isolated operations, scoped stale cleanup and failed preparation.");
+    }
+
+    private static void CheckPointProvenance(ExportJournalSnapshot source)
+    {
+        var capture = new RunRouteCapture(source.Id);
+        RunSaveLocation Raw(int second) => new(second * 1000L, second * 1_000_000_000L, 1, 2, 5);
+        var first = capture.Capture(Raw(1), new(true, null, TimeSpan.FromSeconds(1)), "Acquiring");
+        var second = capture.Capture(Raw(2), new(true, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)), "Tracking");
+        var ignored = capture.Capture(Raw(1), new(false, null, TimeSpan.FromSeconds(1)) { Ignored = true }, "Tracking");
+        var afterIgnored = capture.Capture(Raw(3), new(true, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(3)), "Tracking");
+        if (ignored.Provenance!.Outcome != "ignored" || ignored.Provenance.BreakReason != "Duplicate or out-of-order delivery"
+            || ignored.Provenance.DrawablePredecessor is not null || afterIgnored.Provenance!.DrawablePredecessor != second.Provenance!.PointId)
+            throw new InvalidOperationException("Ignored delivery has its own outcome reason and preserves the newer valid chain.");
+        capture.Break("Manual pause");
+        var unassessed = capture.Capture(Raw(3), null, "Automatic pause");
+        var resumed = capture.Capture(Raw(4), new(true, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(4)), "Reanchor");
+        if (second.Provenance!.DrawablePredecessor != first.Provenance!.PointId
+            || unassessed.Provenance!.Outcome != "not-assessed" || resumed.Provenance!.DrawablePredecessor is not null)
+            throw new InvalidOperationException("Only the actual callback may link; pause/unassessed facts break continuity.");
+
+        var points = new[] { first, second, unassessed, resumed }.Select((point, index) =>
+            new ExportLocation(index + 1, point.UtcMilliseconds, point.MonotonicNanoseconds,
+                point.Latitude, point.Longitude, point.Accuracy)
+            { Provenance = point.Provenance }).ToArray();
+        var stored = source with { Locations = points };
+        var v1 = ExportRunV1.Project(stored);
+        if (v1.Contains("provenance", StringComparison.Ordinal)
+            || v1 != ExportRunV1.Project(stored with { Locations = points.Select(point => point with { Provenance = null }).ToArray() }))
+            throw new InvalidOperationException("Version 1 must retain its actual historical shape independently of route metadata.");
+        _ = ExportRunV2.Project(stored);
+        foreach (var bad in new[]
+        {
+            second.Provenance! with { Version = 2 },
+            second.Provenance! with { RunId = Guid.NewGuid() },
+            second.Provenance! with { DrawablePredecessor = 3 },
+            second.Provenance! with { DrawablePredecessor = 2 },
+            second.Provenance! with { Outcome = "rejected" }
+        })
+        {
+            var invalid = stored with { Locations = [points[0], points[1] with { Provenance = bad }] };
+            try { _ = ExportRunV2.Project(invalid); }
+            catch (InvalidDataException) { continue; }
+            throw new InvalidOperationException("Invalid version/cross-run/forward/self/unsupported links must fail closed.");
+        }
+        try { _ = capture.Capture(Raw(5), new(true, null, TimeSpan.FromSeconds(4)), "stale observation"); }
+        catch (InvalidDataException) { return; }
+        throw new InvalidOperationException("A prior callback observation cannot become new raw point provenance.");
     }
 
     private static void RejectUnconfirmedOrActive(ExportJournalSnapshot source, string acknowledgement)

@@ -25,7 +25,7 @@ public static class RunJsonSharing
             throw new InvalidDataException("Only a finished or confirmed locally saved partial recording can be shared.");
         }
 
-        return ExportRunV1.Project(snapshot);
+        return ExportRunV2.Project(snapshot);
     }
 
     public static string PrepareFile(string cacheDirectory, string json)

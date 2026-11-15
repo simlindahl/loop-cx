@@ -151,6 +151,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
             _ = HealthConnectProviderVerificationProbe.Run(this, probe.EndsWith("-dry-run", StringComparison.Ordinal));
             return;
         }
+        if (probe == "route-storage")
+        {
+            RunRouteStorageProbe.Run(this);
+            return;
+        }
         if (probe == "storage-corruption")
         {
             RunSaveCorruptionProbe.Run(this);

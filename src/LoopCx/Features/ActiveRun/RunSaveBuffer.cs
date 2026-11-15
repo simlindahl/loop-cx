@@ -2,7 +2,10 @@ namespace LoopCx.Features.ActiveRun;
 
 public sealed record RunSaveStatus(string State, string? Error = null, bool CanRetry = true);
 public sealed class RunSaveReadException(string message, Exception? inner = null) : IOException(message, inner);
-public sealed record RunSaveLocation(long UtcMilliseconds, long MonotonicNanoseconds, double Latitude, double Longitude, double? Accuracy);
+public sealed record RunSaveLocation(long UtcMilliseconds, long MonotonicNanoseconds, double Latitude, double Longitude, double? Accuracy)
+{
+    public RunPointProvenance? Provenance { get; init; }
+}
 public sealed record RunSaveEvent(string Command, DateTimeOffset ObservedUtc, long ElapsedMilliseconds, string Checkpoint);
 public sealed record RunSaveCheckpoint(Guid Id, long Revision, DateTimeOffset StartedUtc, DateTimeOffset ObservedUtc,
     long ElapsedMilliseconds, bool Finished, string OriginalPlan, string TemplateMetadata, string? HeartRateMetadata, string Checkpoint);

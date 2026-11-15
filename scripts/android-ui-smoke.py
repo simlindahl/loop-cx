@@ -390,18 +390,18 @@ try:
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 7
             assert db.execute("SELECT initial_plan, checkpoint, template_metadata FROM runs WHERE id='v2'").fetchone() == ('[]', '{"legacy":true}', None)
             assert db.execute("SELECT checkpoint FROM run_events WHERE run_id='v2'").fetchall() == [('{"event":true}',)]
             assert db.execute("SELECT heart_rate_metadata, recovery_saved_utc FROM runs WHERE id='v2'").fetchone() == (None, None)
             assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
         adb("shell", "run-as", PACKAGE, "rm", "databases/runs-debug.db")
         open_app()
-        capture("fresh-schema6-idle", "Start C2")
+        capture("fresh-schema7-idle", "Start C2")
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 7
             assert "heart_rate_metadata" in [row[1] for row in db.execute("PRAGMA table_info(runs)")]
             assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
             assert db.execute("SELECT COUNT(*) FROM heart_rate").fetchone()[0] == 0
@@ -435,6 +435,8 @@ try:
                              2280000 if finished else 120000, status, legacy_plan_json, checkpoint, metadata))
         with closing(sqlite3.connect(db_path)) as db, db:
             # Turn the fresh DB into the actual previous schema before journal migration.
+            db.execute("ALTER TABLE locations DROP COLUMN provenance")
+            assert [row[1] for row in db.execute("PRAGMA table_info(locations)")] == ["run_id", "utc_ms", "monotonic_ns", "latitude", "longitude", "accuracy"]
             db.execute("ALTER TABLE runs DROP COLUMN recovery_saved_utc")
             db.execute("ALTER TABLE runs DROP COLUMN heart_rate_metadata")
             db.execute("DROP TABLE heart_rate")
@@ -458,7 +460,7 @@ try:
         adb("shell", "am", "force-stop", PACKAGE)
         db_path.write_bytes(adb("exec-out", "run-as", PACKAGE, "cat", "databases/runs-debug.db", binary=True))
         with closing(sqlite3.connect(db_path)) as db, db:
-            assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+            assert db.execute("PRAGMA user_version").fetchone()[0] == 7
             assert [row[1] for row in db.execute("PRAGMA table_info(export_queue)")] == ["run_id", "status", "attempt_json", "last_error"]
             for row in old_rows:
                 if row[4] == "finished":

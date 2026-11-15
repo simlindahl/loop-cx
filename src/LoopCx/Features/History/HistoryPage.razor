@@ -8,10 +8,10 @@
     @if (sharingRun is not null)
     {
         <p>A UTF-8 JSON file.</p>
-        <p>Includes the frozen plan and targets, phases, splits, heart rate, route coordinates, pauses and data gaps.</p>
+        <p>Includes the frozen plan and targets, phases, splits, heart rate, route coordinates, point assessment and continuity, pauses and data gaps. Older point quality may be unknown.</p>
         <dl>
             <div><dt>Filename</dt><dd>@LoopCx.Features.ExportRun.RunJsonSharing.FileName</dd></div>
-            <div><dt>Schema</dt><dd>Version 1 · units explicit</dd></div>
+            <div><dt>Schema</dt><dd>Version 2 · units explicit</dd></div>
         </dl>
         <aside class="share-notice">
             <strong>Contains your route</strong>

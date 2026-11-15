@@ -45,6 +45,8 @@ The team lead maintains one clearly labelled current handoff in the existing PR 
 
 Identify the actual reviewable seam, files or recorded checkpoint available now, with one short affected user-visible state invariant. Include only the current dependency/environment paths needed for the next step, separating executable prerequisites from historical evidence. Internal specialist assignments retain the resolved absolute project/worktree identity and revision; public PRs use repository-relative source paths and the appropriate evidence pointers. Follow [local workspace ownership](local-workspace.md), and preserve historical manifests rather than relabelling their original paths as a new execution.
 
+Lead with the exact current head, review status and next action; move superseded checkpoint details below an explicit historical label. When persistence or file formats change, name their independent versions briefly so a database or AI-file change is not mistaken for a checkpoint or Health Connect mapping change.
+
 At the first stable checkpoint, schedule the existing developer/requirements source review before packaging or expensive CI where feasible. Inspect first service-entry ordering when lifecycle wiring changes, and one affected stored-value parse, display and unchanged-Save roundtrip when persistence changes. Use the actual changed representation boundary rather than a generic checklist. Source/host inspection does not prove Android startup; retain actual native acceptance and all final independent reviews and required checks. This moves existing work earlier, without adding an approval gate or another report.
 
 For an asynchronous persistence change, state what a missing callback and a native commit failure mean, and provide a focused failure check before packaging. A local timeout does not prove remote cancellation.
@@ -70,6 +72,20 @@ Before readiness, reconcile current decisions, review scope and Waiting/next-act
 The 14 November export/CI micro-retrospective follow-up in [#68](https://github.com/simlindahl/loop-cx/issues/68) retains historical table-shape assertions and adds the callback/commit-failure precision to the existing handoff above. The developer and QA own the focused checks; the lead owns the handoff. Effects on owner overview remain unverified.
 
 Record this project's completed retrospectives in this section through the normal documentation workflow. Each concise dated entry states participating roles, evidence, keep/change decisions, one to three concrete actions with owners, the owning file or workflow, state, expected observable benefit and the next relevant follow-up point. Link actions with remaining work to the existing Project rather than creating another board. At follow-up, record the observed effect and whether the team kept, adjusted or reverted the improvement; label unmeasured effects explicitly.
+
+### 2026-11-15 · Current handoffs and scoped native evidence
+
+All five separate specialists and the lead supplied direct input after [live metrics #108](https://github.com/simlindahl/loop-cx/pull/108) and during the [point-provenance source review](https://github.com/simlindahl/loop-cx/issues/4). The consolidated refinements were shared with the participants; the lead selected A–C below. No new product-owner endorsement or unreceived evening overview feedback is inferred.
+
+Keep specification-first changes, independent source review before packaging and exact-input native checks. Developer/requirements input identified mixed current and historical handoffs; architecture input separated independent format versions; QA identified stale last-log and whole-page accessibility observations; UX identified simplified fixtures that missed actual SVG geometry. The lead also observed recurring CI diagnostics and text corrections caught by external read-back. These are observations, not measured productivity gains.
+
+| Action | Owner and existing destination | Applied change and follow-up |
+|---|---|---|
+| A · Put current head/status/next action first and distinguish affected format versions | Lead and developer; [current handoff](#current-review-handoff) | The current #4 handoff was corrected and this instruction refined. At the next reviewer/package handoff, check whether historical inputs or format versions still cause confusion. Benefit remains unmeasured. |
+| B · Bind observations to the actual run and affected surface; distinguish outer entry from inner probe scope | QA with developer/lead; [interactive native acceptance](android.md#interactive-native-acceptance) | Instruction refined for the next #4 cold-entry/migration and scratch-probe checkpoint. Expected benefit: fewer conclusions based on an old run, broad page count or narrower inner method. No new report or test gate. |
+| C · Use actual markup/assets and inspect visible glyph bounds in existing geometry fixtures | UX and developer with QA; [interactive native acceptance](android.md#interactive-native-acceptance) | Applied to #108's corrected heart fixture and native retake; instruction refined for the next changed-control check. Browser evidence remains scoped and never replaces native acceptance. Recurrence and efficiency effects remain unmeasured. |
+
+Follow-up on the preceding issue-closure action: actual closing-reference lists were empty before #107 and #108 merged, and their partially delivered parent issues remained open afterward. Keep that existing check. These refinements belong to repository handoff/Android instructions; Dev Team's reusable roles and retrospective procedure remain unchanged. No additional report, approval gate or plugin release is introduced.
 
 ### 2026-11-15 · History design, observers and issue closure
 

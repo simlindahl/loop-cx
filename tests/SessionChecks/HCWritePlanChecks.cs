@@ -43,6 +43,13 @@ internal static class HCWritePlanChecks
         var result = HCWritePlanner.Create(source, false);
         Require(result.State == "ready" && result.Plan is not null, "A real-like finalized snapshot produces a plan without provider calls.");
         var frozen = result.Plan!;
+        var routeOnly = source with
+        {
+            Locations = [new(1, 1000, 1000000000, 1, 2, null)
+            { Provenance = new(999, Guid.NewGuid(), 1, "invalid route metadata", null, null) }]
+        };
+        Require(HCWritePlanner.Create(routeOnly, false).Plan!.PayloadHash == frozen.PayloadHash,
+            "Route-only metadata, including unsupported metadata isolated from HC reads, cannot alter HC records, warnings or frozen hash.");
         var session = frozen.Records.Single(record => record.Kind == HCRecordKind.RunningSession);
         Require(session.StartUtc == started && session.EndUtc == started.AddSeconds(45) && session.Pauses.Single() == new HCPause(started.AddSeconds(12), started.AddSeconds(17)),
             "Whole warm-up/main/cool-down elapsed window retains explicit pause rather than shrinking to active time.");
