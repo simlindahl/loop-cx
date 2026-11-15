@@ -26,6 +26,14 @@ internal static class CorePreferences
         }
     }
 
+    internal static CorePreferencesState Update(Func<CorePreferencesState, CorePreferencesState> change)
+    {
+        var updated = change(Load());
+        Save(updated);
+
+        return updated;
+    }
+
     internal static void Save(CorePreferencesState state)
     {
         state.Validate();
