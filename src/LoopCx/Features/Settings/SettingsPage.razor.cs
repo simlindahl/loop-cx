@@ -23,7 +23,20 @@ public partial class SettingsPage
     private HealthConnectAccess health = new(false, false, []);
     private bool disposed;
     private IJSObjectReference? module;
-    private string Title => page switch { "connection" => "Heart-rate connection", "zones" => "Your heart-rate zones", "health" => "Health Connect", _ => "Settings" };
+    private AudioConfiguration audioConfiguration = new();
+    private string Title => page switch { "audio" => "Audio coaching", "connection" => "Heart-rate connection", "zones" => "Your heart-rate zones", "health" => "Health Connect", _ => "Settings" };
+
+    private void OpenAudio()
+    {
+        try { audioConfiguration = CorePreferences.Load().EffectiveAudio; Open("audio"); }
+        catch (InvalidDataException problem) { error = problem.Message; }
+    }
+    private void CancelAudio() { Open("settings"); focusPending = "audio-settings"; }
+    private void SaveAudio(AudioConfiguration configuration)
+    {
+        try { CorePreferences.Save(CorePreferences.Load() with { Audio = configuration }); Open("settings"); message = "Audio settings saved for new Core runs."; focusPending = "audio-settings"; }
+        catch (Exception problem) when (problem is InvalidDataException or ArgumentException or IOException) { error = problem.Message; }
+    }
     private HeartRateState? LiveSource => RunService.Snapshot is { Phase: not "Finished", HeartRate: { } hr }
         && configuration.DeviceAddress is not null && string.Equals(configuration.DeviceAddress, hr.Configuration.DeviceAddress, StringComparison.OrdinalIgnoreCase) ? hr : null;
     private bool DifferentActiveSource => RunService.Snapshot is { Phase: not "Finished", HeartRate: { } hr }
@@ -81,6 +94,7 @@ public partial class SettingsPage
     public async Task GoBack()
     {
         if (page == "settings") await OnTraining.InvokeAsync();
+        else if (page == "audio") CancelAudio();
         else CancelZones();
     }
     private void CancelZones()

@@ -12,6 +12,11 @@
         <button class="setting-row" type="button" @onclick="OpenZones">Heart-rate zones <small>@ProfileStatus</small></button>
         <button id="health-settings" class="setting-row" type="button" @onclick='() => Open("health")'>Health Connect <small>@health.Label</small></button>
         <button id="warmup-cooldown-settings" class="setting-row" type="button" @onclick="OnWarmupCooldown">Warm-up and cool-down <small>Global C1 defaults</small></button>
+        <button id="audio-settings" class="setting-row" type="button" @onclick="OpenAudio">Audio coaching <small>Default for new Core runs</small></button>
+    }
+    else if (page == "audio")
+    {
+        <AudioEditor Initial="audioConfiguration" OnSave="SaveAudio" OnCancel="CancelAudio" />
     }
     else if (page == "connection")
     {
