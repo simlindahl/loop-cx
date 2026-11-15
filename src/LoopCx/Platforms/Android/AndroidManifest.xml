@@ -16,7 +16,14 @@
   <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
   <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>
   <application android:allowBackup="false" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
-    <activity android:name="se.loopcx.running.MainActivity" />
+    <activity android:name="se.loopcx.running.MainActivity" android:theme="@style/Maui.MainTheme.NoActionBar"
+        android:exported="true" android:launchMode="singleTop"
+        android:configChanges="screenSize|orientation|uiMode|screenLayout|smallestScreenSize|density">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
     <activity-alias android:name="se.loopcx.running.HealthOnboardingAlias"
         android:targetActivity="se.loopcx.running.MainActivity" android:exported="true"
         android:permission="android.permission.health.START_ONBOARDING">
