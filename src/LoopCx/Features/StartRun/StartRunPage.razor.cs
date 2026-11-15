@@ -63,20 +63,8 @@ public partial class StartRunPage
         "shortcut" => "Save a shortcut",
         "edit" => "Edit shortcut",
         "delete" => "Delete shortcut?",
-        _ => "What does RPE mean?"
+        _ => "Workout options"
     };
-    private string RpeCue => draftProtocol switch
-    {
-        "C1.1" => "C1.1: Work 10: maximal, all-out sprinting. Recovery 2: easy.",
-        "C1.2" => "C1.2: Work 7: hard but repeatable. Recovery 3: easy.",
-        "C1.3" => "C1.3: Work 6: controlled, sustained effort. Recovery 3: easy.",
-        _ => "C2: Target 4: steady, conversational running."
-    };
-    private string RpeGuidance => draftProtocol == "C1.1"
-        ? "Work 10 means maximal, all-out sprinting. Recovery 2 is easy. This is a maximal-effort option, not an automatic next step. Stop rather than force a sprint when control is lost. Perceived effort is not a measured heart-rate value."
-        : draftProtocol == "C2" ? "Keep the effort comfortable rather than trying to run faster. The target is a guide, not a score to beat. Perceived effort describes how you feel today, not a measured heart-rate value."
-        : "Aim for the planned effort. Stay in control so you can repeat the next effort; this is not an all-out sprint. Perceived effort describes how you feel, not a measured heart-rate value.";
-
     protected override void OnInitialized()
     {
         try { statePreferences = CorePreferences.Load(); }
@@ -139,8 +127,6 @@ public partial class StartRunPage
 
     private string WarmupCooldown(CoreStartRequest request) => request.ProtocolId == "C2" ? "No warm-up or cool-down."
         : $"Warm-up: {(statePreferences.WarmupCooldown.WarmupMinutes == 0 ? "Off" : statePreferences.WarmupCooldown.WarmupMinutes + " min")} · Cool-down: {(statePreferences.WarmupCooldown.CooldownMinutes == 0 ? "Off" : statePreferences.WarmupCooldown.CooldownMinutes + " min")}";
-    private static string RpeFor(CoreStartRequest request) => request.ProtocolId == "C2" ? "4"
-        : $"{CoreProtocols.Find(request.ProtocolId).WorkRpe} / {CoreProtocols.Find(request.ProtocolId).RecoveryRpe}";
 
     private static string Dose(CoreStartRequest request)
     {
@@ -152,9 +138,13 @@ public partial class StartRunPage
         return $"{count} × {Duration(protocol.WorkSeconds)} work · {count - 1} × {Duration(protocol.RecoverySeconds)} recovery";
     }
 
-    private static string TargetLabel(CoreTargets? target, bool continuous = false) => target is null || target.Mode == CoreTargetMode.None ? "RPE only"
+    private static string TargetLabel(CoreTargets? target, bool continuous = false)
+    {
+        return target is null || target.Mode == CoreTargetMode.None ? (continuous ? "Personal zone target not set" : "Target zone not set")
         : $"{(continuous ? "Continuous target" : "Work target")}: {(target.Mode == CoreTargetMode.Pace ? Clock(target.Work!.Value) + " min/km" : "Zone " + target.Work)}"
             + (target.Recovery is { } recovery ? $" · Recovery: {(target.Mode == CoreTargetMode.Pace ? Clock(recovery) + " min/km" : "Zone " + recovery)}" : "");
+    }
+
     private static string StatisticTime(MeasuredStatistics? value) => value is null ? "Unavailable" : Clock((long)value.ActiveTime.TotalSeconds);
     private static string StatisticDistance(MeasuredStatistics? value) => value is null ? "Unavailable" : value.MeasuredMetres is > 0 || value.KnownGpsActiveTime > TimeSpan.Zero
         ? (value.MeasuredMetres / 1000).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "Unavailable";
@@ -162,14 +152,15 @@ public partial class StartRunPage
     private static string HeartRate(double? bpm) => bpm is > 0 && double.IsFinite(bpm.Value) ? Math.Round(bpm.Value).ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "Unavailable";
     private static string CoverageLabel(MeasuredStatistics? value) => value is null ? "Unavailable"
         : $"GPS {Clock((long)value.KnownGpsActiveTime.TotalSeconds)} known, {Clock((long)value.UnknownGpsActiveTime.TotalSeconds)} unknown; HR {Clock((long)value.KnownHeartRateActiveTime.TotalSeconds)} known, {Clock((long)value.UnknownHeartRateActiveTime.TotalSeconds)} unknown (min:sec).";
+
     private static string PhaseTargetLabel(RunSnapshot state)
     {
         if (state.Phase is not ("Work" or "Recovery")) return "";
         var target = state.FrozenTemplate?.Targets;
         var value = state.Phase == "Recovery" ? target?.Recovery : target?.Work;
-        if (target is null || target.Mode == CoreTargetMode.None || value is null) return "RPE only";
-
-        return target.Mode == CoreTargetMode.Pace ? $"Target pace {Clock(value.Value)} min/km · intended effort"
+        return target is null || target.Mode == CoreTargetMode.None || value is null
+            ? "Target not set · intended effort is not a measurement"
+            : target.Mode == CoreTargetMode.Pace ? $"Target pace {Clock(value.Value)} min/km · intended effort"
             : $"Target Zone {value} · intended effort, not a measurement";
     }
 
@@ -244,12 +235,6 @@ public partial class StartRunPage
     {
         draftDuration = (statePreferences.C2Selection.ContinuousMinutes ?? 45).ToString(CultureInfo.InvariantCulture);
         Open("duration", "change-c2");
-    }
-
-    private void OpenRpe(string id, string trigger)
-    {
-        draftProtocol = id;
-        Open("rpe", trigger);
     }
 
     private void OpenTarget(CoreStartRequest request, string trigger)

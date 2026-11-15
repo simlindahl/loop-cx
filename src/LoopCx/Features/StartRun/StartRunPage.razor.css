@@ -5,19 +5,19 @@ main {
 }
 
 h1 {
-    margin: 0 0 32px;
+    margin: 0 0 16px;
     font-size: 1.75rem;
 }
 
 h2 {
-    margin: 0 0 24px;
-    font-size: 2rem;
+    margin: 0 0 12px;
+    font-size: 1.5rem;
     line-height: 1.2;
     overflow-wrap: anywhere;
 }
 
 h3 {
-    margin: 0 0 16px;
+    margin: 0 0 8px;
     font-size: 1.125rem;
 }
 
@@ -44,15 +44,15 @@ h3 {
 .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 24px;
+    gap: 8px;
+    margin-top: 12px;
 }
 
 .workout {
     margin-block-end: 16px;
     background: var(--cx-surface);
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 12px;
+    padding: 20px;
 }
 
 [role="alert"] {
@@ -73,23 +73,6 @@ small {
     display: block;
     color: var(--cx-muted);
 }
-.info {
-    --cx-button-border: transparent;
-    --cx-button-bg: transparent;
-    display: inline-grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-    padding: 0;
-    vertical-align: middle;
-    border-radius: 50%;
-}
-.info span {
-    font-size: 22px;
-    line-height: 1;
-}
 .text {
     --cx-button-bg: transparent;
     margin-top: 16px;
@@ -99,8 +82,8 @@ dialog {
     max-height: calc(100dvh - 48px);
     overflow: auto;
     border: 1px solid var(--cx-muted);
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 12px;
+    padding: 20px;
     background: var(--cx-surface);
     color: var(--cx-text);
 }
@@ -177,10 +160,6 @@ fieldset {
     cursor: default;
 }
 
-.statistics-scroll {
-    overflow-x: auto;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -190,18 +169,19 @@ table {
 caption {
     text-align: start;
     color: var(--cx-muted);
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
 th, td {
     text-align: start;
     vertical-align: top;
-    padding: 12px 4px;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--cx-line);
     overflow-wrap: anywhere;
 }
 
 .live-values {
-    margin-top: 24px;
+    margin-top: 16px;
 }
 
 .live-values dl {
@@ -245,4 +225,27 @@ dialog input[type="range"] {
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 6px;
+}
+
+.workout p {
+    margin-block: 8px;
+}
+
+.target-intent {
+    padding-inline-start: 12px;
+    border-inline-start: 3px solid var(--cx-line);
+    overflow-wrap: anywhere;
+}
+
+th:first-child {
+    width: 42%;
+}
+
+th:not(:first-child), td {
+    text-align: end;
+}
+
+h3, p, small, dt {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }

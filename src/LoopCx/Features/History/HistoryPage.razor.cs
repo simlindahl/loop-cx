@@ -225,9 +225,6 @@ public partial class HistoryPage
     private static string Started(StoredRunSummary run) => run.StartedUtc is not { } utc ? "Start time unavailable"
         : run.StartOffset is { } offset ? utc.ToOffset(TimeSpan.FromSeconds(offset)).ToString("d MMM yyyy · HH:mm zzz", CultureInfo.InvariantCulture)
         : utc.ToUniversalTime().ToString("d MMM yyyy · HH:mm 'UTC'", CultureInfo.InvariantCulture);
-    private static string Effort(IReadOnlyList<TimedPhase>? plan) => plan is null ? "Unavailable"
-        : "Work " + string.Join("/", plan.Where(phase => phase.Kind == RunPhase.Work).Select(phase => phase.TargetRpe).Distinct())
-        + (plan.Any(phase => phase.Kind == RunPhase.Recovery) ? " · recovery " + string.Join("/", plan.Where(phase => phase.Kind == RunPhase.Recovery).Select(phase => phase.TargetRpe).Distinct()) : " · no recovery phase");
     private static string Dose(IReadOnlyList<TimedPhase>? plan) => plan is null ? "Unavailable"
         : $"{plan.Count(phase => phase.Kind == RunPhase.Work)} work phases ({Time(TimeSpan.FromTicks(plan.Where(phase => phase.Kind == RunPhase.Work).Sum(phase => phase.Duration.Ticks)))}) · {plan.Count(phase => phase.Kind == RunPhase.Recovery)} recoveries ({Time(TimeSpan.FromTicks(plan.Where(phase => phase.Kind == RunPhase.Recovery).Sum(phase => phase.Duration.Ticks)))})";
     private static string Coverage(MeasuredStatistics? scope) => scope is null ? "Measurement coverage unavailable."

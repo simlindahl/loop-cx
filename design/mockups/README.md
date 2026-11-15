@@ -22,7 +22,7 @@ The [live-measurements study](live-metrics/index.html) is the approved visual di
 
 ## Approved compact zone-first reference
 
-The [compact zone-first reference](compact-zone-first/index.html) and [scope/provenance notes](compact-zone-first/decision-notes.md) prepare the owner-approved 15 November #96 direction. Compact hierarchy and RPE presentation removal supersede matching older Core-first presentation; required Main/Split groups and shortcut starts remain visible. Numerical official C1 zone choices remain undecided. Raw historical RPE, frozen data, doses and the approved pace alternative are retained. This is a static reference preparation, with runtime implementation queued after normal Health Connect delivery and native/physical acceptance still separate.
+The [compact zone-first reference](compact-zone-first/index.html) and [scope/provenance notes](compact-zone-first/decision-notes.md) prepare the owner-approved 15 November #96 direction. Compact hierarchy and RPE presentation removal supersede matching older Core-first presentation; required Main/Split groups and shortcut starts remain visible. Numerical official C1 zone choices remain undecided. Raw historical RPE, frozen data, doses and the approved pace alternative are retained. This is a static reference preparation, with runtime delivery/native acceptance tracked separately from this reference.
 
 ## Earlier approved Core-first reference
 

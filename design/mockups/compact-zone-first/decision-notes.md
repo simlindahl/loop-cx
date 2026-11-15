@@ -1,6 +1,6 @@
 # Approved compact zone-first reference
 
-Simon approved the corrected issue #96 study on 15 November 2026. [The source-bound decision](../../decision.md#compact-zone-first-layout-approval--15-november-2026) owns approval; [the UX specification](../../../knowledge/ux-design.md) and [workout owner](../../../knowledge/running-workouts.md) retain behavior, dose and acceptance. This portable browser copy prepares the approved reference only. Runtime implementation remains queued after normal Health Connect delivery; this is no native/physical acceptance or new design approval.
+Simon approved the corrected issue #96 study on 15 November 2026. [The source-bound decision](../../decision.md#compact-zone-first-layout-approval--15-november-2026) owns approval; [the UX specification](../../../knowledge/ux-design.md) and [workout owner](../../../knowledge/running-workouts.md) retain behavior, dose and acceptance. This portable browser copy prepares the approved reference only. Runtime delivery and native acceptance remain separate from this reference; this is no physical acceptance or new design approval.
 
 ## Scope and precedence
 
