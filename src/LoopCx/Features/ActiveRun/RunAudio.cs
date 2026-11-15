@@ -48,7 +48,7 @@ public sealed class RunAudioPolicy
 {
     private readonly AudioConfiguration configuration;
     private int previousPhase = -1;
-    private long consumed;
+    private double consumedBoundary;
     private bool previouslyPaused;
 
     public RunAudioPolicy(AudioConfiguration configuration)
@@ -60,10 +60,10 @@ public sealed class RunAudioPolicy
     public AudioCue? Observe(int phaseIndex, RunPhase? phase, bool paused, TimeSpan mainActive, double mainMetres)
     {
         var counter = configuration.Trigger == AudioSummaryTrigger.ActiveTime ? mainActive.TotalSeconds : mainMetres;
-        var bucket = double.IsFinite(counter) && counter > 0 ? Math.Floor(counter / configuration.Interval) : 0;
-        var threshold = bucket >= long.MaxValue ? long.MaxValue : (long)bucket;
-        var due = threshold > consumed;
-        consumed = Math.Max(consumed, threshold); // Corrections never replay an already consumed threshold.
+        // Remainder avoids an overflowing quotient for valid very small distance intervals.
+        var boundary = double.IsFinite(counter) && counter >= configuration.Interval ? counter - (counter % configuration.Interval) : 0;
+        var due = boundary > consumedBoundary;
+        consumedBoundary = Math.Max(consumedBoundary, boundary); // Corrections never replay a consumed boundary.
         var changed = previousPhase != phaseIndex;
         previousPhase = phaseIndex;
         var resumed = previouslyPaused && !paused;

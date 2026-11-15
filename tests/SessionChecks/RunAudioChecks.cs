@@ -38,6 +38,32 @@ internal static class RunAudioChecks
             catch (ArgumentException) { }
         }
 
+        foreach (var interval in new[] { "0.5", "0.00000000000000000001" })
+        {
+            // Arrange
+            var small = new RunAudioPolicy(AudioConfiguration.Parse(AudioSummaryTrigger.Distance, interval));
+            _ = small.Observe(0, RunPhase.Work, false, TimeSpan.Zero, 0);
+
+            // Act
+            var first = small.Observe(0, RunPhase.Work, false, TimeSpan.FromSeconds(1), 1);
+            var second = small.Observe(0, RunPhase.Work, false, TimeSpan.FromSeconds(2), 2);
+            var duplicate = small.Observe(0, RunPhase.Work, false, TimeSpan.FromSeconds(2), 2);
+            var rollback = small.Observe(0, RunPhase.Work, false, TimeSpan.FromSeconds(1), 0.5);
+            var recross = small.Observe(0, RunPhase.Work, false, TimeSpan.FromSeconds(2), 2);
+            var third = small.Observe(0, RunPhase.Work, false, TimeSpan.FromSeconds(3), 3);
+
+            // Assert
+            if (first?.PhasePriority != false || second?.PhasePriority != false || third?.PhasePriority != false
+                || duplicate is not null || rollback is not null || recross is not null)
+            {
+                throw new InvalidOperationException("Every positive representable interval must keep advancing without saturation or replay.");
+            }
+        }
+        if (AudioConfiguration.Parse(AudioSummaryTrigger.ActiveTime, "35791394:07").Interval != int.MaxValue)
+            throw new InvalidOperationException("The largest supported whole-second interval must not overflow.");
+        try { _ = AudioConfiguration.Parse(AudioSummaryTrigger.ActiveTime, "35791394:08"); throw new InvalidOperationException("Overflowing min:ss accepted."); }
+        catch (ArgumentException) { }
+
         var policy = new RunAudioPolicy(new(Interval: 5));
         AudioCue? At(int phase, RunPhase kind, bool paused, int active)
         {
