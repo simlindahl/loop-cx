@@ -37,20 +37,18 @@
         }
         <section aria-labelledby="phase-heading">
             <p class="eyebrow">@(state.FrozenTemplate?.ProtocolId ?? state.TemplateId) · @(state.FrozenTemplate?.ShortcutName ?? (state.TemplateId == "C2" ? "Zone 2" : "Intervals"))</p>
-            <h2 id="phase-heading" tabindex="-1" data-motion-state="@MotionKey">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))</h2>
+            <h2 id="phase-heading" tabindex="-1" data-motion-state="@MotionKey">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))@if (!state.Paused && state.TemplateId == "C1" && (state.Phase is "Work" or "Recovery")) { <span> · @state.WorkRepetition of @state.WorkRepetitions</span> }</h2>
             @if (state.Paused)
             {
                 <p>@(IsAutomatic(state) ? "Move to resume automatically." : "Use Resume to continue.") · @PhaseLabel(state.Phase)</p>
             }
-            @if (state.TemplateId == "C1" && state.Phase is "Work" or "Recovery") { <p>Work @state.WorkRepetition of @state.WorkRepetitions</p> }
-            @if (state.TargetRpe is { } rpe) { <p>Target RPE @rpe · intended effort</p> }
-            <p>@PhaseTargetLabel(state)</p>
+            @if (state.Paused && state.TemplateId == "C1" && (state.Phase is "Work" or "Recovery")) { <p>Work @state.WorkRepetition of @state.WorkRepetitions</p> }
             <p class="countdown">
 <strong>@Clock(state.RemainingSeconds)</strong>
-<span>min:sec remaining</span>
+<span>remaining · @Clock(state.ActiveSeconds) active</span>
 </p>
             <p class="status">@state.GpsStatus</p>
-            <p>Active time · @Clock(state.ActiveSeconds) min:sec</p>
+            @if (state.Phase is "Work" or "Recovery") { <p class="target-intent">@PhaseTargetLabel(state)</p> }
             @if (state.Statistics is { } statistics)
             {
                 <p>Elapsed time · @Clock((long)statistics.ObservedElapsed.TotalSeconds) min:sec</p>
@@ -69,29 +67,25 @@
                     var finalMain = state.Phase is "Cooldown" or "Finished";
                     var split = finalMain ? statistics.CompletedSplits.LastOrDefault() : statistics.CurrentSplit;
                     <section aria-labelledby="main-values">
-                        <h3 id="main-values">Main set &amp; split</h3>
-                        <div class="statistics-scroll">
-                            <table>
-                                <caption>@(finalMain ? "Final main set and last recorded split" : "Current main set and kilometre split")</caption>
-                                <thead><tr><td></td><th scope="col">Main set</th><th scope="col">@(finalMain ? "Final split" : "This split")</th></tr></thead>
+                        <table>
+                                <caption id="main-values">@(finalMain ? "Final main set and last recorded split" : "Current main set and kilometre split")</caption>
+                                <thead><tr><th scope="col">Metric</th><th scope="col">Main set</th><th scope="col">@(finalMain ? "Final split" : "This split")</th></tr></thead>
                                 <tbody>
                                     <tr><th scope="row">Time <small>min:sec</small></th><td>@StatisticTime(statistics.Main)</td><td>@StatisticTime(split)</td></tr>
                                     <tr><th scope="row">Distance <small>km</small></th><td>@StatisticDistance(statistics.Main)</td><td>@StatisticDistance(split)</td></tr>
                                     <tr><th scope="row">Avg pace <small>min/km</small></th><td>@Pace(statistics.Main.AveragePaceSecondsPerKilometre)</td><td>@Pace(split?.AveragePaceSecondsPerKilometre)</td></tr>
                                     <tr><th scope="row">Avg HR <small>bpm</small></th><td>@HeartRate(statistics.Main.AverageHeartRate)</td><td>@HeartRate(split?.AverageHeartRate)</td></tr>
                                 </tbody>
-                            </table>
-                        </div>
+                        </table>
                         <p><strong>Main coverage:</strong> @CoverageLabel(statistics.Main)</p>
                         <p><strong>Split coverage:</strong> @CoverageLabel(split)</p>
                     </section>
                 }
             }
-            <section class="live-values" aria-labelledby="live-values-heading">
-                <h3 id="live-values-heading">Live</h3>
+            <section class="live-values" aria-label="Live measurements">
                 <dl>
                     <div><dt>Pace <small>min/km</small></dt><dd>@Pace(state.LivePace?.SecondsPerKilometre)</dd></div>
-                    <div><dt>Heart rate <small>bpm</small></dt><dd>@HeartRate(state.HeartRate?.CurrentBpm)</dd></div>
+                    <div><dt>Heart rate <small>bpm</small></dt><dd>@HeartRate(state.HeartRate?.CurrentBpm)</dd><small>@CorePresentation.MeasuredZone(state.HeartRate)</small></div>
                 </dl>
                 <p>Pace: @(state.Paused ? "paused" : state.LivePace?.Quality ?? "unavailable"). Heart rate: @(state.HeartRate?.Quality ?? "unavailable").</p>
                 @if (state.HeartRate?.ConfigurationError is { } configurationError) { <p>Heart rate unavailable: @configurationError</p> }
@@ -129,7 +123,6 @@
 <p>@shortcut.Request.ProtocolId · @Dose(shortcut.Request)</p>
 <p>@Times(shortcut.Request)<small>@WarmupCooldown(shortcut.Request)</small>
 </p>
-<p>Target RPE @RpeFor(shortcut.Request) · intended effort</p>
 <p>@TargetLabel(shortcut.Request.Targets, shortcut.Request.ProtocolId == "C2")</p>
                         <div class="actions">
 <button id="@($"edit-{shortcut.Id}")" type="button" @onclick="() => OpenEdit(shortcut)">Edit</button>
@@ -161,8 +154,6 @@
                 <p>
 <strong>@SelectedC1.ProtocolId · @SelectedProtocol.Title</strong><br />@Dose(SelectedC1)</p>
                 <p>@SelectedProtocol.Purpose</p>
-                <p>Target RPE <strong>@SelectedProtocol.WorkRpe / @SelectedProtocol.RecoveryRpe</strong> · work / recovery <button id="rpe-c1" class="info" type="button" aria-label="Explain C1 RPE" @onclick='() => OpenRpe(SelectedC1.ProtocolId, "rpe-c1")'><span aria-hidden="true">ⓘ</span></button>
-</p>
                 <p>@Times(SelectedC1)<small>@WarmupCooldown(SelectedC1)</small>
 </p>
                 <p>@TargetLabel(SelectedC1.Targets)</p>
@@ -179,8 +170,6 @@
 </div>
                 <p>Steady, conversational running.<br />
 <strong>@(statePreferences.C2Selection.ContinuousMinutes ?? 45) min main / total</strong>
-</p>
-                <p>Target RPE <strong>4</strong> <button id="rpe-c2" class="info" type="button" aria-label="Explain C2 RPE" @onclick='() => OpenRpe("C2", "rpe-c2")'><span aria-hidden="true">ⓘ</span></button>
 </p>
                 <p>Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p>
                 <p>@TargetLabel(statePreferences.C2Selection.Targets, true)</p>
@@ -201,7 +190,6 @@
 <p>@shortcut.Request.ProtocolId · @Dose(shortcut.Request)</p>
 <p>@Times(shortcut.Request)<small>@WarmupCooldown(shortcut.Request)</small>
 </p>
-<p>Target RPE @RpeFor(shortcut.Request) · intended effort</p>
 <p>@TargetLabel(shortcut.Request.Targets, shortcut.Request.ProtocolId == "C2")</p>
 <button type="button" class="primary" @onclick="() => Start(shortcut.Request with { ShortcutId = shortcut.Id, ShortcutName = shortcut.Name })">Start @shortcut.Name</button>
 </section>
@@ -235,7 +223,7 @@
 <input type="radio" name="protocol" value="@protocol.Id" checked="@(draftProtocol == protocol.Id)" @onchange="() => draftProtocol = protocol.Id" />
 <span>
 <strong>@protocol.Id · @protocol.Title</strong>
-<small>@Dose(new CoreStartRequest(protocol.Id, protocol.DefaultCount))<br />Target RPE @protocol.WorkRpe / @protocol.RecoveryRpe<br />@Times(new CoreStartRequest(protocol.Id, protocol.DefaultCount))</small>@protocol.Purpose</span>
+<small>@Dose(new CoreStartRequest(protocol.Id, protocol.DefaultCount))<br />@Times(new CoreStartRequest(protocol.Id, protocol.DefaultCount))</small>@protocol.Purpose</span>
 </label>
                     }
                 </fieldset>
@@ -256,9 +244,9 @@
                     <p>@draftRequest.ProtocolId · fixed official protocol</p>
                     @if (draftRequest.ProtocolId == "C2") { <label for="edit-c2-duration">Duration: @draftDuration minutes</label>
 <input id="edit-c2-duration" type="range" min="20" max="120" step="5" @bind="draftDuration" @bind:event="oninput" aria-valuetext="@($"{draftDuration} minutes")" />
-<p>Target RPE <strong>4</strong> · No warm-up or cool-down</p> }
+<p>No warm-up or cool-down.</p> }
                 }
-                <p>RPE stays fixed. Add one optional target type; this is a target, not a live reading.</p>
+                <p>Choose an optional zone or pace target. Intended targets are not live measurements; no sensor or profile is required to start.</p>
                 @if (draftRequest.ProtocolId != "C2")
                 {
                     <label for="rep-count">Work repetitions</label>
@@ -268,14 +256,13 @@
 <button type="button" aria-label="One more work effort" disabled="@(!ValidCount || CountValue >= DraftProtocol.MaximumCount)" @onclick="() => ChangeCount(1)">+</button>
 </div>
                     <p id="count-help">@DraftProtocol.MinimumCount–@DraftProtocol.MaximumCount efforts. Work @Duration(DraftProtocol.WorkSeconds) / recovery @Duration(DraftProtocol.RecoverySeconds) fixed. Main set includes recovery and must be 10–60 min; warm-up and cool-down are outside that limit.</p>
-                    <p>Target RPE <strong>@DraftProtocol.WorkRpe / @DraftProtocol.RecoveryRpe</strong> · work / recovery</p>
                     <p role="status">@(ValidCount ? Times(draftRequest with { Repetitions = CountValue }) : "Use a whole repetition count within the displayed limits.")</p>
                 }
-                <label for="target-mode">Additional target</label>
+                <label for="target-mode">Intended target</label>
                 <select id="target-mode" value="@((int)targetMode)" @onchange="ChangeTargetMode">
-<option value="0">None · RPE only</option>
-<option value="1">Pace</option>
+<option value="0">Not set</option>
 <option value="2">Heart-rate zone</option>
+<option value="1">Pace</option>
 </select>
                 <div id="target-fields" data-target-mode="@targetMode">
                 @if (targetMode != CoreTargetMode.None)
@@ -303,7 +290,7 @@
         else if (dialogMode == "duration")
         {
             <form @onsubmit="SaveDuration" @onsubmit:preventDefault novalidate>
-                <p>Continuous running · Target RPE 4 · No warm-up or cool-down</p>
+                <p>Continuous running · No warm-up or cool-down</p>
                 <label for="c2-duration">Duration: <output for="c2-duration">@draftDuration minutes</output>
 </label>
 <input id="c2-duration" type="range" min="20" max="120" step="5" @bind="draftDuration" @bind:event="oninput" aria-valuetext="@($"{draftDuration} minutes")" />
@@ -355,15 +342,6 @@
 <button type="button" class="primary" @onclick="DeleteShortcut">Delete shortcut</button>
 <button type="button" @onclick="CloseDialog">Keep shortcut</button>
 </div>
-        }
-        else if (dialogMode == "rpe")
-        {
-            <p>RPE means Rating of Perceived Exertion: how hard the effort feels, from 1 (very easy) to 10 (maximum).</p>
-<p>
-<strong>@RpeCue</strong>
-</p>
-<p>@RpeGuidance</p>
-<button type="button" @onclick="CloseDialog">Close explanation</button>
         }
     </dialog>
 }

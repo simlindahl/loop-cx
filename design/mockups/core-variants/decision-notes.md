@@ -1,5 +1,7 @@
 # Approved Core-first design reference
 
+The [15 November compact zone-first direction](../compact-zone-first/decision-notes.md) supersedes this reference's RPE presentation and matching detailed layout. The earlier RPE/help descriptions below are historical presentation, not the next implementation direction. Raw archived RPE, dose/count/duration/preparation rules, the approved pace alternative and frozen-history behavior remain unchanged. Compact runtime delivery remains separate.
+
 Simon approved this complete Core-first layout and interaction direction, followed by explicit dose changes: SIT now has seven efforts and Threshold has three six-minute efforts. Those content deltas require no further dose/design approval. This is a standalone browser mockup, not app implementation or native acceptance evidence. The older arbitrary workout builder is historical and superseded.
 
 ## Approved protocols

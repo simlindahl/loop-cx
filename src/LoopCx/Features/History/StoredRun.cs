@@ -22,7 +22,7 @@ public static class StoredRunProjection
     public static string TargetSummary(CoreTargets? target, bool continuous)
     {
         if (target is null) return "Unavailable";
-        if (target.Mode == CoreTargetMode.None) return "RPE only";
+        if (target.Mode == CoreTargetMode.None) return "Target not set";
         target.Validate(continuous);
         static string Value(CoreTargetMode mode, int value)
         {

@@ -1,5 +1,5 @@
 h2 {
-    font-size: 2rem;
+    font-size: 1.5rem;
     overflow-wrap: anywhere;
 }
 
@@ -103,4 +103,15 @@ dd {
     border: 1px solid var(--cx-line);
     border-radius: 12px;
     background: var(--cx-surface);
+}
+
+summary {
+    min-height: 48px;
+    padding-block: 12px;
+    cursor: pointer;
+}
+
+summary:focus-visible {
+    outline: 3px solid var(--cx-accent);
+    outline-offset: 4px;
 }

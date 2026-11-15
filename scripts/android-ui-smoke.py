@@ -198,6 +198,25 @@ def reachable_button(name, label):
     raise AssertionError("Button not reachable at 48dp after bounded scrolling: " + label) from last_error
 
 
+def reachable_text(name, text):
+    screen_width, screen_height = map(int, re.findall(r"(\d+)x(\d+)", report["size"])[-1])
+
+    for attempt in range(12):
+        root = capture(name + "-scroll-" + str(attempt), "")
+
+        if any(node.get("package") == PACKAGE and text in (node.get("text", "") + node.get("content-desc", ""))
+               for node in root.iter("node")):
+            return capture(name, text)
+
+        if attempt == 0:
+            scroll_to_top()
+        elif attempt < 11:
+            adb("shell", "input", "swipe", str(screen_width//2), str(int(screen_height*0.8)),
+                str(screen_width//2), str(int(screen_height*0.3)), "400")
+
+    raise AssertionError("Text not reachable after bounded scrolling: " + text)
+
+
 def heading_height(root, text):
     heights = []
     for node in root.iter("node"):
@@ -280,7 +299,9 @@ try:
     adb("shell", "am", "start", "-n", PACKAGE + "/.MainActivity", "--es", "loop-command", "complete")
     capture("c1-saved", "Run saved locally.")
     button(reachable_button("saved-view-run", "View run"), "View run", tap=True)
-    capture("stored-c1-detail", "Workout source")
+    # Stored plan metadata is an approved disclosure; open it before checking its facts.
+    button(reachable_button("stored-c1-plan", "Workout plan"), "Workout plan", tap=True)
+    reachable_text("stored-c1-detail", "Workout source")
     assert snapshot()["Id"] == run_id, "Stored detail navigation must not create another session"
     button(reachable_button("stored-detail-back", "← History"), "← History", tap=True)
     capture("finished-history-list", "Your work, kept local.")
