@@ -30,6 +30,10 @@ Use the first checkpoint in the existing verification record to confirm that the
 
 Record the expected and observed state and the input method in that checkpoint. Distinguish genuine gestures/keyboard input from semantic activation or text entry. After an interaction, inspect the resulting state before linking visual evidence: an image focused on Cancel before activation cannot prove that the dialog closed or focus returned. A later observed tool frame may provide that proof, but identify it separately. Keep earlier attempts labelled diagnostic; no additional report or full-gallery capture is required.
 
+Bind a run-specific observation to the current run ID and affected view or callback. A previous last log entry or whole-page accessibility count does not establish the current state. Distinguish ordinary Activity/journal startup and any migration from the narrower scope of an inner scratch probe.
+
+For a changed visual control, reuse actual markup/assets in the existing geometry fixture and inspect the visible glyph's bounds as well as its container. Simplified markup can miss SVG baseline or reflow behavior. Keep browser results scoped to what they demonstrate; actual native acceptance remains separate.
+
 ## USB phone installation
 
 After a valuable feature merge, the team lead offers Simon installation of the merged app over USB under [AGENTS.md](../AGENTS.md#phone-installation-offers). Offer the new behavior to try and identify outstanding physical acceptance. Installation is optional and requires Simon to accept the offer; it does not block merge unless a physical test is itself mandatory acceptance.
