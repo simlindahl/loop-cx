@@ -1064,6 +1064,7 @@ HCProviderVerificationChecks.Run();
 RunSaveChecks.Run();
 
 StoredHistoryChecks.Run();
+StoredRouteChecks.Run();
 
 RunJsonSharingChecks.Run(modernExport, args);
 
