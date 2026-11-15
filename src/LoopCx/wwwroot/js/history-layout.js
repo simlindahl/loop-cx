@@ -1,10 +1,10 @@
-const owners = new WeakMap();
+const owners = new Map();
 
 // Android WebView TextZoom affects computed text size but not CSS container-query em units.
 // Compare the same 21-em threshold using the actual rendered font and available width.
-export function observe(element) {
-    if (!element?.isConnected) return;
-    const existing = owners.get(element);
+export function observe(element, token) {
+    if (!element?.isConnected || !token) return;
+    const existing = owners.get(token);
     if (existing) {
         existing.refresh();
         return;
@@ -21,16 +21,16 @@ export function observe(element) {
     const observer = new ResizeObserver(refresh);
     observer.observe(element);
     document.addEventListener('visibilitychange', refresh);
-    owners.set(element, { refresh, observer, stop: () => { active = false; } });
+    owners.set(token, { element, refresh, observer, stop: () => { active = false; } });
     refresh();
 }
 
-export function dispose(element) {
-    const owner = owners.get(element);
+export function dispose(token) {
+    const owner = owners.get(token);
     if (!owner) return;
     owner.stop();
     owner.observer.disconnect();
     document.removeEventListener('visibilitychange', owner.refresh);
-    owners.delete(element);
-    delete element.dataset.splitLayout;
+    owners.delete(token);
+    delete owner.element.dataset.splitLayout;
 }

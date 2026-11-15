@@ -2,9 +2,9 @@ using System.Globalization;
 using System.Text.Json;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
-using Microsoft.Maui.Storage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Microsoft.Maui.Storage;
 
 namespace LoopCx.Features.History;
 
@@ -65,6 +65,7 @@ public partial class HistoryPage
     private IJSObjectReference? module;
     private IJSObjectReference? layoutModule;
     private ElementReference historyContent;
+    private readonly string layoutOwner = Guid.NewGuid().ToString("N");
     private Guid? sharingRun;
     private bool preparingShare;
     private long shareRequest;
@@ -290,7 +291,7 @@ public partial class HistoryPage
             await layoutModule.DisposeAsync();
             return;
         }
-        await layoutModule.InvokeVoidAsync("observe", historyContent);
+        await layoutModule.InvokeVoidAsync("observe", historyContent, layoutOwner);
         if (focusPending is not { } focus) return;
         focusPending = null;
         module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
@@ -303,7 +304,7 @@ public partial class HistoryPage
         shareRequest++;
         if (layoutModule is not null)
         {
-            await layoutModule.InvokeVoidAsync("dispose", historyContent);
+            await layoutModule.InvokeVoidAsync("dispose", layoutOwner);
             await layoutModule.DisposeAsync();
         }
         if (module is not null) await module.DisposeAsync();
