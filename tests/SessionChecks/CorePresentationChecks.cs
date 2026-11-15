@@ -6,6 +6,20 @@ internal static class CorePresentationChecks
 {
     internal static void Run()
     {
+        // Arrange
+        var threshold = new CoreStartRequest("C1.3", 4);
+        var frozenBefore = System.Text.Json.JsonSerializer.Serialize(CoreTemplate.Resolve(threshold, new()).Session.Plan);
+        // Act
+        var label = CorePresentation.Dose(threshold);
+        var frozenAfter = CoreTemplate.Resolve(threshold, new()).Session.Plan;
+        // Assert
+        if (label != "4 × 6:3 min" || CorePresentation.Dose(new("C1.2")) != "5 × 3:2 min"
+            || CorePresentation.Dose(new("C1.1")) != "7 × 30 sec:3 min"
+            || CorePresentation.Dose(new("C2", ContinuousMinutes: 60)) != "60 min continuous"
+            || frozenAfter.Count(phase => phase.Kind == RunPhase.Recovery) != 3
+            || System.Text.Json.JsonSerializer.Serialize(frozenAfter) != frozenBefore)
+            throw new InvalidOperationException("Compact dose wording must preserve the exact frozen plan and N−1 recovery.");
+
         // Arrange: intended targets are deliberately unrelated to these frozen sensor boundaries.
         var profile = HeartRateReserveProfile.Create(50, 190);
         var configuration = HeartRateConfiguration.Empty with { ReserveProfile = profile, Zones = profile.ResolveZones() };

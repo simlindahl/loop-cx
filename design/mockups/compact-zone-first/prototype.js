@@ -2,9 +2,9 @@ const app = document.querySelector('#app');
 const dialog = document.querySelector('#dialog');
 const status = document.querySelector('#review-status');
 const protocols = {
-  'C1.1': ['Sprint intervals', '7 × 30 sec · 6 × 3 min recovery', '21:30 main · 28:30 total', 'Repeated maximal sprints with substantial easy recovery.'],
-  'C1.2': ['Aerobic intervals', '5 × 3 min · 4 × 2 min recovery', '23 min main · 30 min total', 'Sustained, controlled hard efforts. Keep them repeatable.'],
-  'C1.3': ['Threshold intervals', '3 × 6 min · 2 × 3 min recovery', '24 min main · 31 min total', 'Practise a controlled, sustainable effort near your threshold.']
+  'C1.1': ['Sprint intervals', '7 × 30 sec:3 min', '21:30 main · 28:30 total', 'Repeated maximal sprints with substantial easy recovery.'],
+  'C1.2': ['Aerobic intervals', '5 × 3:2 min', '23 min main · 30 min total', 'Sustained, controlled hard efforts. Keep them repeatable.'],
+  'C1.3': ['Threshold intervals', '3 × 6:3 min', '24 min main · 31 min total', 'Practise a controlled, sustainable effort near your threshold.']
 };
 let view = 'training';
 let selected = 'C1.2';

@@ -146,6 +146,10 @@ Compute supported seconds divided by accepted metres, times 1000. A continuous a
 
 Use the existing filter's quality outcome: invalid/jump/gap/provider loss resets the live chain; duplicate/out-of-order delivery adds nothing and does not destroy newer evidence. Manual/automatic pause and resume, warm-up/main/cool-down reanchors and finish reset the estimate. Planned Work/Recovery can keep a continuous main chain; a real +1-minute extension does not discard trusted movement. Confirmed exact-ten-second Auto correction clears/reacquires live pace without changing raw observations, receipt-tail active time or real commands. Strict aggregate pace and finalized main/split values keep their existing rules. Native GPS/service/snapshot/journal and physical calibration remain acceptance work; no new sensor source, permissions, framework or server is introduced.
 
+### Compact interval dose presentation
+
+Ordinary Core cards, protocol choices, personalisation previews and shortcut summaries use the owner's compact work:recovery notation: `5 × 3:2 min`, or `4 × 6:3 min` for four threshold efforts. Mixed-unit SIT remains explicit: `7 × 30 sec:3 min`. The first number is work repetitions; the actual resolved plan still has N−1 recoveries, with unchanged duration arithmetic. This is presentation only: frozen plans/raw JSON and detailed scientific/reference phase explanations retain their original facts. C2 continuous wording is unchanged.
+
 <a id="pace-trend-direction"></a>
 ### Pace trend direction
 
