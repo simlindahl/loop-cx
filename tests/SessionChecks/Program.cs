@@ -1065,6 +1065,7 @@ RunSaveChecks.Run();
 
 StoredHistoryChecks.Run();
 StoredRouteChecks.Run();
+GhostStoredSourceChecks.Run();
 
 RunJsonSharingChecks.Run(modernExport, args);
 

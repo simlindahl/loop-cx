@@ -17,5 +17,10 @@ public static class GhostArchiveSchema
 }
 
 public sealed record ArchivedGhostRoute(GhostRoute Route, RouteCapturePolicy Policy);
-public sealed record ArchivedGhostAttempt(GhostAttempt Attempt, string? QualityReason, IReadOnlyList<RecordedRouteFix> Raw);
+public sealed record ArchivedGhostAttempt(GhostAttempt Attempt, string? QualityReason, IReadOnlyList<RecordedRouteFix> Raw)
+{
+    // Null preserves the exact legacy serialized shape; v2 source evidence is not a legacy fix array.
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public System.Text.Json.JsonElement? StoredSourceV2 { get; init; }
+}
 public enum GhostArchiveWrite { Inserted, AlreadyStored }

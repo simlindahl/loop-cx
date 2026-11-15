@@ -1,0 +1,37 @@
+.ghost-map {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--cx-surface);
+}
+
+.ghost-map polyline {
+    fill: none;
+    stroke: var(--cx-accent);
+    stroke-width: 5;
+}
+
+.route-row {
+    --cx-button-bg: transparent;
+    --cx-button-border: transparent;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    min-height: 60px;
+    padding: 18px 0;
+    border-radius: 0;
+    border-bottom: 1px solid var(--cx-line);
+    text-align: start;
+}
+
+.route-row small {
+    display: block;
+    color: var(--cx-muted);
+}
+
+input {
+    width: 100%;
+    min-height: 48px;
+    font: inherit;
+}

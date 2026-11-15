@@ -3,6 +3,7 @@ using Android.Content;
 using Android.Database.Sqlite;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
+using LoopCx.Features.GhostRun;
 using LoopCx.Features.History;
 
 namespace LoopCx;
@@ -401,6 +402,29 @@ public sealed class RunJournal : SQLiteOpenHelper
             });
         }
         return locations;
+    }
+
+    public GhostArchiveWrite SaveGhostRoute(StoredGhostCapture captured)
+    {
+        try { return new AndroidGhostArchive(this).SaveStoredSource(captured); }
+        catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
+    }
+
+    public StoredGhostCapture PrepareGhostRoute(Guid id, string name)
+    {
+        ExportJournalSnapshot source;
+        var db = ReadableDatabase!;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            source = ReadExportSnapshot(db, id, includeRoute: true);
+            var owner = RunService.Snapshot;
+            if (owner?.Id == id && (owner.Phase != "Finished" || owner.Storage?.State != "saved"))
+                throw new InvalidDataException("The source final save is not confirmed.");
+            db.SetTransactionSuccessful();
+        }
+        finally { db.EndTransaction(); }
+        return GhostStoredSource.Capture(source, name);
     }
 
     public StoredRoute ReadRoute(Guid id)

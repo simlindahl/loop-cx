@@ -16,6 +16,7 @@ public sealed record StoredRunDetail(StoredRunSummary Summary, MeasuredStatistic
     TimeSpan? TotalElapsed, TimeSpan? MainElapsed, TimeSpan? Warmup, TimeSpan? Cooldown,
     IReadOnlyList<TimedPhase>? Plan, CoreTargets? Targets, IReadOnlyList<HeartRateZone>? Zones)
 {
+    public bool IsContinuousGhostSource { get; init; }
     public StoredMeasurementDetails Measurements { get; init; } = StoredMeasurementDetails.Unknown;
 }
 
@@ -103,7 +104,7 @@ public static class StoredRunProjection
         }
         return new(summary, statistics?.Main, Duration(checkpoint, "MainActiveTime"), elapsed, mainElapsed,
             CompletedTime(completed, plan, RunPhase.Warmup), CompletedTime(completed, plan, RunPhase.Cooldown), plan, template?.Targets, setup?.Configuration?.Zones)
-        { Measurements = StoredMeasurementProjection.Read(stored.Checkpoint, setup?.Configuration) };
+        { Measurements = StoredMeasurementProjection.Read(stored.Checkpoint, setup?.Configuration), IsContinuousGhostSource = GhostStoredSource.IsContinuous(template, plan) };
     }
 
     private static TimeSpan? CompletedTime(CompletedPhase[]? phases, TimedPhase[]? plan, RunPhase kind)

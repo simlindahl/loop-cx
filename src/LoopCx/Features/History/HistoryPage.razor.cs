@@ -13,6 +13,21 @@ public partial class HistoryPage
     [Parameter] public EventCallback OnTraining { get; set; }
     [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
+    private bool ghostOpen;
+    private LoopCx.Features.GhostRun.Ui.GhostRoutesPage? ghostPage;
+    private void OpenGhostRoutes()
+    {
+        if (busy || detail?.IsContinuousGhostSource != true) return;
+        ghostOpen = true;
+        focusPending = null;
+    }
+    private Task CloseGhostRoutes()
+    {
+        ghostOpen = false;
+        focusPending = "history-ghost";
+        return Task.CompletedTask;
+    }
+
     private readonly List<StoredRunSummary> runs = [];
     private StoredRunDetail? detail;
     private string? detailDestination;
@@ -79,7 +94,7 @@ public partial class HistoryPage
     }
     private void RefreshHealthConnect() => _ = InvokeAsync(async () =>
     {
-        if (disposed || busy || sharingRun is not null || partial is not null) return;
+        if (disposed || busy || ghostOpen || sharingRun is not null || partial is not null) return;
         if (detail is { } selected) await Open(selected.Summary.Id);
         else await ShowList();
         StateHasChanged();
@@ -92,6 +107,7 @@ public partial class HistoryPage
         error = null;
         detail = null;
         detailDestination = null;
+        ghostOpen = false;
         partial = null;
         sharingRun = null;
         shareRequest++;
@@ -239,6 +255,12 @@ public partial class HistoryPage
 
     public async Task GoBack()
     {
+        if (ghostOpen)
+        {
+            if (ghostPage is not null) await ghostPage.GoBack();
+            else await CloseGhostRoutes();
+            return;
+        }
         if (detailDestination is { } destination)
         {
             detailDestination = null;

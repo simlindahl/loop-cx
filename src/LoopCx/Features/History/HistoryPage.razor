@@ -1,6 +1,12 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
-<section @ref="historyContent" class="history-content" aria-labelledby="history-heading">
+<section @ref="historyContent" class="history-content" aria-labelledby="@(ghostOpen ? "ghost-heading" : "history-heading")">
+    @if (ghostOpen && detail is { } ghostSource)
+    {
+        <LoopCx.Features.GhostRun.Ui.GhostRoutesPage @ref="ghostPage" SourceRunId="ghostSource.Summary.Id" OnBack="CloseGhostRoutes" />
+    }
+    else
+    {
     <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null ? "Training" : "History")</button>
     <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
@@ -39,7 +45,7 @@
         {
             <p role="status">Partial recording saved locally.</p>
             <p>Not exported to Health Connect. A supported recorded end time is required for export.</p>
-            <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>
+        <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>
         }
     }
     else if (detail is { } stored && detailDestination is not null)
@@ -158,6 +164,7 @@
             <p>@Coverage(run.Main)</p>
             <p>@ZoneSummary(run.Zones)</p>
         </details>
+        @if (run.IsContinuousGhostSource) { <button id="history-ghost" type="button" @onclick="OpenGhostRoutes">Save route to Ghost Run</button> }
         <button id="history-share" type="button" class="primary" @onclick="ShowShare">Share workout data</button>
     }
     else if (!busy)
@@ -190,5 +197,6 @@
             }
         }
         @if (unreadable > 0) { <p role="alert">Some stored recordings could not be read. No data was changed.</p> }
+    }
     }
 </section>
