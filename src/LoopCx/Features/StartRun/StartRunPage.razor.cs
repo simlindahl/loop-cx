@@ -139,7 +139,11 @@ public partial class StartRunPage
         StateHasChanged();
     });
 
-    private void Refresh() => _ = InvokeAsync(StateHasChanged);
+    private void Refresh() => _ = InvokeAsync(() =>
+    {
+        motionPending = true;
+        StateHasChanged();
+    });
     private void RefreshSystemMotion() => _ = InvokeAsync(() =>
     {
         systemMotionPending = true;
@@ -162,15 +166,7 @@ public partial class StartRunPage
     private string WarmupCooldown(CoreStartRequest request) => request.ProtocolId == "C2" ? "No warm-up or cool-down."
         : $"Warm-up: {(statePreferences.WarmupCooldown.WarmupMinutes == 0 ? "Off" : statePreferences.WarmupCooldown.WarmupMinutes + " min")} · Cool-down: {(statePreferences.WarmupCooldown.CooldownMinutes == 0 ? "Off" : statePreferences.WarmupCooldown.CooldownMinutes + " min")}";
 
-    private static string Dose(CoreStartRequest request)
-    {
-        if (request.ProtocolId == "C2") return $"{request.ContinuousMinutes ?? 45} min continuous";
-
-        var protocol = CoreProtocols.Find(request.ProtocolId);
-        var count = request.Repetitions ?? protocol.DefaultCount;
-
-        return $"{count} × {Duration(protocol.WorkSeconds)} work · {count - 1} × {Duration(protocol.RecoverySeconds)} recovery";
-    }
+    private static string Dose(CoreStartRequest request) => CorePresentation.Dose(request);
 
     private static string TargetLabel(CoreTargets? target, bool continuous = false)
     {

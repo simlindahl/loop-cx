@@ -1,6 +1,7 @@
 const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 const motionEffects = new Set();
 const nodeEffects = new WeakMap();
+const liveEffects = new Map();
 const exitCopies = new Set();
 const motionEase = 'cubic-bezier(.2,0,0,1)';
 let listening = false;
@@ -28,6 +29,8 @@ function mediaMotionChanged() {
     if (systemMotion === undefined || systemMotion === null) clearMotion();
 }
 function clearMotion() {
+    liveEffects.forEach(item => item.animation.cancel());
+    liveEffects.clear();
     motionEffects.forEach(effect => effect.cancel());
     exitCopies.forEach(copy => copy.remove());
     exitCopies.clear();
@@ -35,7 +38,51 @@ function clearMotion() {
 function listenForMotion() {
     if (listening) return;
     motionPreference.addEventListener('change', mediaMotionChanged);
+    document.addEventListener('visibilitychange', liveVisibilityChanged);
+    window.addEventListener('pagehide', livePageHidden);
     listening = true;
+}
+function livePageHidden() {
+    document.documentElement.dataset.systemMotion = 'pending';
+    clearMotion();
+}
+function liveVisibilityChanged() {
+    if (document.hidden) livePageHidden();
+    // Return waits for the native preference refresh and the next real rendered snapshot.
+}
+function syncLiveEffect(key, node, frames, duration, identity) {
+    const existing = liveEffects.get(key);
+    if (!node || !duration || document.hidden || typeof systemMotion !== 'boolean' || reducedMotion()) {
+        existing?.animation.cancel();
+        liveEffects.delete(key);
+        return;
+    }
+    if (existing?.node === node && existing.identity === identity) {
+        if (existing.duration !== duration) {
+            const progress = existing.animation.effect.getComputedTiming().progress ?? 0;
+            existing.animation.effect.updateTiming({ duration });
+            existing.animation.currentTime = progress * duration;
+            existing.duration = duration;
+        }
+        return;
+    }
+    existing?.animation.cancel();
+    const animation = node.animate(frames, { duration, iterations: Infinity, easing: 'ease-in-out' });
+    liveEffects.set(key, { node, animation, duration, identity });
+}
+function syncLiveMetrics() {
+    const heart = document.getElementById('live-heart');
+    const bpm = Number(heart?.dataset.bpm);
+    syncLiveEffect('heart', heart,
+        [{ transform: 'scale(1)' }, { transform: 'scale(1.18)', offset: .35 }, { transform: 'scale(1)' }],
+        Number.isFinite(bpm) && bpm > 0 ? 60000 / bpm : null, 'heart');
+    const arrow = document.getElementById('live-trend-arrow');
+    const direction = arrow?.dataset.direction;
+    const pace = Number(arrow?.dataset.pace);
+    const moving = ['Faster', 'Slower'].includes(direction) && Number.isFinite(pace) && pace > 0;
+    syncLiveEffect('trend', arrow,
+        [{ transform: 'translate(0,0)' }, { transform: `translate(2px,${direction === 'Faster' ? -3 : 3}px)`, offset: .5 }, { transform: 'translate(0,0)' }],
+        moving ? Math.max(900, Math.min(1800, pace * 4)) : null, direction);
 }
 function effect(node, frames, duration, delay = 0) {
     if (!node || reducedMotion() || !node.getClientRects().length) return;
@@ -90,6 +137,7 @@ export function leaveDisclosure() {
 }
 export function syncMotion(saved) {
     listenForMotion();
+    syncLiveMetrics();
     const main = document.querySelector('main[data-motion-surface]');
     const surface = main?.dataset.motionSurface;
     if (surface !== lastSurface) {
@@ -114,6 +162,8 @@ export function syncMotion(saved) {
 export function dispose() {
     clearMotion();
     motionPreference.removeEventListener('change', mediaMotionChanged);
+    document.removeEventListener('visibilitychange', liveVisibilityChanged);
+    window.removeEventListener('pagehide', livePageHidden);
     listening = false;
     systemMotion = undefined;
     lastSurface = lastState = lastDisclosure = undefined;

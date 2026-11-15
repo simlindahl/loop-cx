@@ -68,6 +68,7 @@ public sealed class RunService : Service, ILocationListener
     private HeartRateConfiguration heartRateConfiguration = HeartRateConfiguration.Empty;
     private string? heartRateMetadata;
     private readonly RunStatistics statistics = new();
+    private readonly RunPaceTrend paceTrend = new();
     private readonly RunLivePace livePace = new(LivePacePolicy.Pilot);
     private RunDistance.CandidateDistance? candidateDistance;
     private Guid id;
@@ -327,6 +328,7 @@ public sealed class RunService : Service, ILocationListener
         else if (effective && command is "pause" or "resume")
         {
             livePace.Reset(session.IsPaused ? "paused" : "acquiring");
+            paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
             distance!.Interrupt(TimeSpan.FromMilliseconds(lastTick), "Manual pause boundary");
             motion!.Boundary(TimeSpan.FromMilliseconds(lastTick));
             candidateDistance = null;
@@ -342,6 +344,7 @@ public sealed class RunService : Service, ILocationListener
         {
             distance!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
             if (!distance.Observation.Valid && !distance.Observation.Ignored) livePace.Reset();
+            if (!distance.Observation.Valid && !distance.Observation.Ignored) paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
         }
         motion!.UpdateFreshness(TimeSpan.FromMilliseconds(now));
 
@@ -369,6 +372,7 @@ public sealed class RunService : Service, ILocationListener
         distance!.Boundary(next, at, session!.MainActiveTime);
 
         livePace.Boundary(previous, next);
+        paceTrend.Boundary(at, session.PhaseIndex);
 
         if (previous is RunPhase.Work or RunPhase.Recovery && next is not (RunPhase.Work or RunPhase.Recovery))
         {
@@ -490,7 +494,14 @@ public sealed class RunService : Service, ILocationListener
             distance!.Snapshot, session.Current?.Kind is RunPhase.Work or RunPhase.Recovery), template,
         session.Current?.TargetRpe, session.Completed.Count(static phase => phase.Plan.Kind == RunPhase.Work)
             + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work), heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)),
-        livePace.Snapshot(TimeSpan.FromMilliseconds(lastTick), session.IsPaused, session.IsFinished));
+        LivePaceSnapshot());
+
+    private LivePaceState LivePaceSnapshot()
+    {
+        var now = TimeSpan.FromMilliseconds(lastTick);
+        var live = livePace.Snapshot(now, session!.IsPaused, session.IsFinished);
+        return live with { Trend = paceTrend.Snapshot(now, live, session.IsPaused, session.IsFinished) };
+    }
 
     private void StopHeartRateSource()
     {
@@ -597,6 +608,7 @@ public sealed class RunService : Service, ILocationListener
         {
             gpsStatus = "GPS unavailable · allow location in Android settings";
             livePace.Reset();
+            paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
 
             if (locationAvailable)
             {
@@ -609,6 +621,7 @@ public sealed class RunService : Service, ILocationListener
         {
             var restoredAt = TimeSpan.FromMilliseconds(SystemClock.ElapsedRealtime());
             livePace.Reset("acquiring");
+            paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
             distance?.Reanchor(restoredAt, "GPS restored");
             motion?.Boundary(restoredAt);
             candidateDistance = null;
@@ -691,6 +704,7 @@ public sealed class RunService : Service, ILocationListener
             statistics.Observe(distance!.Observation);
 
             livePace.Observe(distance.Observation, distance.AcceptedEdge, receivedAt);
+            if (!session.IsFinished) paceTrend.Observe(distance.Observation, distance.AcceptedEdge, receivedAt, LivePacePolicy.Pilot);
         }
 
         var decision = motion!.Observe(fix, receivedAt, session.PhaseIndex, session.Current?.Kind, session.PauseReason, moved);
@@ -706,6 +720,7 @@ public sealed class RunService : Service, ILocationListener
         {
             automaticEvent = motion.Event;
             livePace.Reset("paused");
+            paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
             statistics.Exclude(automaticEvent!.OnsetMonotonicTime!.Value, automaticEvent.ExcludedThroughMonotonicTime!.Value);
             distance!.ConfirmStandstill(candidate, receivedAt,
                 receivedAt > automaticEvent!.ExcludedThroughMonotonicTime);
@@ -715,6 +730,7 @@ public sealed class RunService : Service, ILocationListener
         {
             automaticEvent = motion.Event;
             livePace.Reset("acquiring");
+            paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
             distance!.Reanchor(receivedAt, "Automatic resume boundary");
             motion.Boundary(receivedAt);
             candidateDistance = null;

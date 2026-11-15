@@ -19,6 +19,10 @@ let nextFavouriteId = 1;
 const escapeText = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const clone = value => JSON.parse(JSON.stringify(value));
 
+function doseLabel(id, count) {
+  const v = variants[id];
+  return `${count} × ${id === 'C1.1' ? '30 sec' : v.minutes}:${v.recovery} min`;
+}
 function durationLabel(value) {
   return Number.isInteger(value) ? `${value} min` : `${Math.floor(value)}:${String(Math.round((value % 1) * 60)).padStart(2, '0')} min:sec`;
 }
@@ -46,7 +50,7 @@ function render() {
   const v = variants[selected];
   const prep = settings;
   let html = '<p class="eyebrow">LOOP Cx</p><h2>Start a run</h2>';
-  html += `<section class="card"><div class="card-heading"><h3>C1 · Intervals</h3><button type="button" class="text" data-action="change">Change</button></div><p class="dose"><strong>${selected} · ${v.title}</strong><br>${counts[selected]} × ${v.work} work · ${counts[selected] - 1} × ${v.recovery} min recovery</p><p>${v.purpose}</p>${rpe(selected)}<p>${durationLabel(mainMinutes(selected))} main · <strong>${durationLabel(total(selected))} total</strong><small>${prep.warmup} min warm-up · ${prep.cooldown} min cool-down<br>${prep.overridden ? 'Settings override' : 'Official variant defaults'}</small></p><p class="small">${escapeText(targetLabel(targets[selected]))}</p><div class="actions"><button type="button" class="primary" data-action="start" data-id="${selected}">Start ${selected}</button><button type="button" data-action="adapt" data-id="${selected}">Personalise</button></div><button type="button" class="text" data-action="favourite" data-id="${selected}">Save shortcut</button></section>`;
+  html += `<section class="card"><div class="card-heading"><h3>C1 · Intervals</h3><button type="button" class="text" data-action="change">Change</button></div><p class="dose"><strong>${selected} · ${v.title}</strong><br>${doseLabel(selected, counts[selected])}</p><p>${v.purpose}</p>${rpe(selected)}<p>${durationLabel(mainMinutes(selected))} main · <strong>${durationLabel(total(selected))} total</strong><small>${prep.warmup} min warm-up · ${prep.cooldown} min cool-down<br>${prep.overridden ? 'Settings override' : 'Official variant defaults'}</small></p><p class="small">${escapeText(targetLabel(targets[selected]))}</p><div class="actions"><button type="button" class="primary" data-action="start" data-id="${selected}">Start ${selected}</button><button type="button" data-action="adapt" data-id="${selected}">Personalise</button></div><button type="button" class="text" data-action="favourite" data-id="${selected}">Save shortcut</button></section>`;
   html += `<section class="card"><div class="card-heading"><h3>C2 · Zone 2</h3><button type="button" class="text" data-action="change-c2" aria-label="Change C2 duration">Change</button></div><p class="dose">Steady, conversational running.<br><strong>${c2Duration} min main / total</strong></p>${rpe('C2')}<p class="small">Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p><p class="small">${escapeText(targetLabel(targets.C2))}</p><div class="actions"><button type="button" class="primary" data-action="start" data-id="C2">Start C2</button><button type="button" data-action="adapt" data-id="C2">Adapt target</button></div><button type="button" class="text" data-action="favourite" data-id="C2">Save shortcut</button></section>`;
   if (favourites.length) html += '<h3>Saved shortcuts</h3>';
   for (const favourite of favourites) {
@@ -105,7 +109,7 @@ function openRpe(id, opener) {
 function chooseVariant(opener) {
   let body = '<form id="variant-form"><fieldset><legend>Official C1 protocol</legend>';
   for (const [id, v] of Object.entries(variants)) {
-    body += `<label class="choice"><input type="radio" name="variant" value="${id}" ${selected === id ? 'checked' : ''}><span><strong>${id} · ${v.title}</strong><small>${v.count} × ${v.work} / ${v.recovery} min recovery<br>RPE ${v.rpe} · ${durationLabel(v.main)} main / ${durationLabel(total(id, v.count))} total</small>${v.purpose}</span></label>`;
+    body += `<label class="choice"><input type="radio" name="variant" value="${id}" ${selected === id ? 'checked' : ''}><span><strong>${id} · ${v.title}</strong><small>${doseLabel(id, v.count)}<br>RPE ${v.rpe} · ${durationLabel(v.main)} main / ${durationLabel(total(id, v.count))} total</small>${v.purpose}</span></label>`;
   }
   body += '</fieldset><p class="small">Selecting a protocol uses its official repetition default. Saved shortcuts keep their own count.</p><div class="actions"><button class="primary" type="submit">Use variant</button><button type="button" data-dialog="close">Cancel</button></div></form>';
   openDialog('Choose C1', body, opener);
@@ -135,7 +139,7 @@ function updateDosePreview() {
   const value = Number(input.value);
   const v = variants[targetDraft.id];
   const valid = Number.isInteger(value) && value >= v.minCount && value <= v.maxCount;
-  dialog.querySelector('#dose-preview').textContent = valid ? `${value} work / ${value - 1} recovery · ${durationLabel(mainMinutes(targetDraft.id, value))} main / ${durationLabel(total(targetDraft.id, value))} total` : 'Use a whole repetition count within the displayed limits.';
+  dialog.querySelector('#dose-preview').textContent = valid ? `${doseLabel(targetDraft.id, value)} · ${durationLabel(mainMinutes(targetDraft.id, value))} main / ${durationLabel(total(targetDraft.id, value))} total` : 'Use a whole repetition count within the displayed limits.';
   dialog.querySelector('[data-count="-1"]').disabled = !valid || value === v.minCount;
   dialog.querySelector('[data-count="1"]').disabled = !valid || value === v.maxCount;
 }

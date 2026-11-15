@@ -1076,3 +1076,5 @@ RunAudioChecks.Run();
 RunDeviationChecks.Run();
 
 CorePreferencesChecks.Run();
+
+RunPaceTrendChecks.Run();
