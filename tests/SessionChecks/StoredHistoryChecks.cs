@@ -58,6 +58,8 @@ internal static class StoredHistoryChecks
         var snapshot = new ExportJournalSnapshot(id, started.ToString("O"), started.AddMinutes(40).ToString("O"), 2400000,
             "finished", JsonSerializer.SerializeToElement(plan), template, setup, checkpoint, "disabled_synthetic", [], [], []);
 
+        StoredMeasurementChecks.Run(snapshot);
+
         // Act
         var result = StoredRunProjection.Detail(snapshot, null);
         var legacyUnknown = StoredRunProjection.Detail(snapshot with { Checkpoint = JsonSerializer.SerializeToElement(new { legacy = true }), Template = null, HeartRateSetup = null }, null);

@@ -14,7 +14,10 @@ public sealed record StoredRunSummary(Guid Id, DateTimeOffset? StartedUtc, strin
     TimeSpan? TotalActive, MeasuredStatistics? Total, string ExportLabel, bool Synthetic, string? StartZone, int? StartOffset);
 public sealed record StoredRunDetail(StoredRunSummary Summary, MeasuredStatistics? Main, TimeSpan? MainActive,
     TimeSpan? TotalElapsed, TimeSpan? MainElapsed, TimeSpan? Warmup, TimeSpan? Cooldown,
-    IReadOnlyList<TimedPhase>? Plan, CoreTargets? Targets, IReadOnlyList<HeartRateZone>? Zones);
+    IReadOnlyList<TimedPhase>? Plan, CoreTargets? Targets, IReadOnlyList<HeartRateZone>? Zones)
+{
+    public StoredMeasurementDetails Measurements { get; init; } = StoredMeasurementDetails.Unknown;
+}
 
 // Read stored facts only. No Settings/default factory, raw-data recomputation or persistence dependency.
 public static class StoredRunProjection
@@ -99,7 +102,8 @@ public static class StoredRunProjection
             if (first >= 0 && begin is >= 0 && end >= begin) mainElapsed = TimeSpan.FromMilliseconds(end.Value - begin.Value);
         }
         return new(summary, statistics?.Main, Duration(checkpoint, "MainActiveTime"), elapsed, mainElapsed,
-            CompletedTime(completed, plan, RunPhase.Warmup), CompletedTime(completed, plan, RunPhase.Cooldown), plan, template?.Targets, setup?.Configuration?.Zones);
+            CompletedTime(completed, plan, RunPhase.Warmup), CompletedTime(completed, plan, RunPhase.Cooldown), plan, template?.Targets, setup?.Configuration?.Zones)
+        { Measurements = StoredMeasurementProjection.Read(stored.Checkpoint, setup?.Configuration) };
     }
 
     private static TimeSpan? CompletedTime(CompletedPhase[]? phases, TimedPhase[]? plan, RunPhase kind)
