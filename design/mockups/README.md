@@ -20,7 +20,14 @@ These portable references supersede the matching older detailed gallery states, 
 
 The [live-measurements study](live-metrics/index.html) is the approved visual direction under its [source-bound decision](../decision.md#live-measurement-motion-approval). Its [scope notes](live-metrics/decision-notes.md) distinguish selected heart/pace presentation from uncalibrated comparison and animation parameters. Only outside-phone review text is normalized to English; phone content and behavior are preserved. It uses synthetic values, existing local fonts and no sensors or storage. This does not establish native/physical acceptance or release the reader hold.
 
-## Approved Core-first reference
+## Approved compact zone-first reference
+
+The [compact zone-first reference](compact-zone-first/index.html) and [scope/provenance notes](compact-zone-first/decision-notes.md) prepare the owner-approved 15 November #96 direction. Compact hierarchy and RPE presentation removal supersede matching older Core-first presentation; required Main/Split groups and shortcut starts remain visible. Numerical official C1 zone choices remain undecided. Raw historical RPE, frozen data, doses and the approved pace alternative are retained. This is a static reference preparation, with runtime implementation queued after normal Health Connect delivery and native/physical acceptance still separate.
+
+## Earlier approved Core-first reference
+
+Its RPE rows/help and matching detailed presentation below are historical where superseded by the compact zone-first direction above. Its dose/count/duration/preparation rules, pace alternative and frozen-history behavior remain applicable.
+
 
 The standalone [Core-first interactive reference](core-variants/index.html) and its [decision notes](core-variants/decision-notes.md) are the approved implementation reference for two Core cards, official C1 variant selection, RPE help, pace OR zone targets, shortcuts, initial C1.2/last selection and global 4/3-minute C1 warm-up/cool-down Settings for new starts. The latest explicit doses are SIT 7 × 30 seconds with 3-minute recovery (28:30 total), HIIT 5 × 3 minutes (30 min) and Threshold 3 × 6 minutes (31 min). C1 Personalise adjusts only repetitions within a 10–60-minute main set including recovery (SIT 4–18, HIIT 3–12, Threshold 2–7); warm-up and cool-down are excluded from that guard. Official defaults remain 7/5/3, and saved shortcuts retain their chosen count. C2 uses fixed target RPE 4 and a 20–120-minute slider in 5-minute steps (45 default), main equals total and no warm-up or cool-down. These are product guardrails, not evidence that every permitted maximal SIT dose suits every runner. See [the design decision](../decision.md) and [owning workout specification](../../knowledge/running-workouts.md) for conditions, frozen-history policy and remaining bounds.
 
