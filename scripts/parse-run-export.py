@@ -205,7 +205,7 @@ def read_export(path):
         raise ValueError("Nonfinite JSON number: " + value)
 
     document = json.loads(Path(path).read_text(encoding="utf-8"), parse_constant=reject_constant)
-    if document.get("schemaVersion") not in (1, 2) or document.get("units") != UNITS:
+    if type(document.get("schemaVersion")) is not int or document["schemaVersion"] not in (1, 2) or document.get("units") != UNITS:
         raise ValueError("Unsupported export version or units")
     run = document["run"]
     uuid.UUID(run["id"])

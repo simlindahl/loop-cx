@@ -35,7 +35,8 @@ for path in paths:
             assert reconstructed[key] is None
     assert reconstructed["locations"] == run["locations"]
     assert reconstructed["heartRate"] == run["heartRate"]
-    invalid_cases = [lambda value: value.update(schemaVersion=3),
+    invalid_cases = [lambda value: value.update(schemaVersion=True),
+                     lambda value: value.update(schemaVersion=3),
                      lambda value: value["units"].update(distance="miles"),
                      lambda value: value["run"]["originalPlan"][0].update(Duration="bananas")]
     if known_checkpoint:
