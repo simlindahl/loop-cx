@@ -113,11 +113,16 @@ internal static class GhostServiceChecks
             "The raw duplicate is retained, but cannot consume the second interruption and bridge straight to finish.");
         var chronological = Compared();
         chronological.Location(Position(1), 101000);
-        chronological.Location(Position(.5), 101100);
-        chronological.Observe(103500);
+        chronological.Location(Position(2), 102000);
+        chronological.Location(Position(.5), 102100); // Older but not yet stale at receipt.
+        chronological.Location(Position(.5), 104000); // Old age3.5s; newest actual support is still only2s old.
+        chronological.Observe(104500);
         Require(chronological.Snapshot.Match.State == RouteMatchState.Tracking && chronological.Snapshot.Match.Metres is not null
-            && chronological.Checkpoint(1, 103500).Raw.Count == 3,
-            "Older raw delivery is preserved without regressing the last supported measurement or destroying its still-fresh comparison.");
+            && chronological.Checkpoint(1, 104500).Raw.Count == 5 && !chronological.Checkpoint(1, 104500).Raw[^1].GapBefore,
+            "Even a stale older packet is retained without erasing newer still-fresh support or regressing its measurement clock.");
+        chronological.Location(Position(.5), 104600, sourceAvailable: false);
+        Require(chronological.Snapshot.Match.Metres is null && chronological.Checkpoint(2, 104600).Raw[^1].GapBefore,
+            "An explicit provider outage still breaks support even when delivered with an older packet.");
         var staleEnd = Compared(); staleEnd.Location(Position(1), 101000);
         Require(staleEnd.Snapshot.Gap.SecondsAhead is not null, "The stale-End fixture starts with a real comparison.");
         staleEnd.End(105000); // No intermediate stale UI/timer observation.

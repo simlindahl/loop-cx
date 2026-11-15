@@ -200,18 +200,26 @@ public sealed class GhostRace
         if (Ended) return;
         Observe(receivedBoot);
         var measured = point.MonotonicNanoseconds / 1000000;
+        var newer = measured > lastSupportedBoot;
+        var invalidNewTime = newer && (measured < startedBoot || measured > receivedBoot
+            || receivedBoot - measured > profile.MaximumStartAge.TotalMilliseconds);
         var fix = new RecordedRouteFix(TimeSpan.FromMilliseconds(measured - startedBoot),
             DateTimeOffset.FromUnixTimeMilliseconds(point.UtcMilliseconds), point.Latitude, point.Longitude, point.Accuracy,
-            RecordedRunSection.Main, interruptionPending || !sourceAvailable || measured > receivedBoot || receivedBoot - measured > profile.MaximumStartAge.TotalMilliseconds);
+            RecordedRunSection.Main, interruptionPending || !sourceAvailable || invalidNewTime);
         raw.Add(fix);
-        if (!sourceAvailable || measured < startedBoot || measured > receivedBoot
-            || receivedBoot - measured > profile.MaximumStartAge.TotalMilliseconds)
+        // A real provider outage wins regardless of packet order; every raw packet remains recorded.
+        if (!sourceAvailable)
         {
             Unavailable();
             return;
         }
-        // Preserve every raw delivery, but cached/older input cannot acknowledge a new interruption or renew support.
-        if (measured <= lastSupportedBoot) return;
+        // Only newer input is assessed for freshness. An old packet cannot invalidate newer support.
+        if (!newer) return;
+        if (invalidNewTime)
+        {
+            Unavailable();
+            return;
+        }
 
         available = true;
         lastSupportedBoot = measured;
