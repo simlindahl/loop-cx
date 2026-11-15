@@ -71,6 +71,7 @@ public sealed class RunService : Service, ILocationListener
     private DateTimeOffset started;
     private long startedMonotonic;
     private RunStartContext? startContext;
+    private Guid? healthConnectConsentRevision;
     private RunTerminalContext? terminalContext;
     private readonly List<PhaseBoundaryFact> phaseBoundaries = [];
     private string initialPlan = "";
@@ -80,6 +81,7 @@ public sealed class RunService : Service, ILocationListener
     private readonly RunSaveBuffer saveBuffer = new();
     private long saveRevision;
     private bool terminalSaveCaptured;
+    private bool finishExportScheduled;
     private bool journalAvailable;
 
     public override void OnCreate()
@@ -205,7 +207,7 @@ public sealed class RunService : Service, ILocationListener
             }
 
             id = Guid.NewGuid();
-            started = DateTimeOffset.UtcNow;
+            (started, healthConnectConsentRevision) = HealthConnectSettings.FreezeStart();
             startedMonotonic = SystemClock.ElapsedRealtime();
             var startZone = TimeZoneInfo.Local;
             startContext = new(startZone.Id, (int)startZone.GetUtcOffset(started).TotalSeconds, startedMonotonic);
@@ -409,6 +411,7 @@ public sealed class RunService : Service, ILocationListener
                 Snapshot = snapshot,
                 AutomaticEvent = automaticEvent,
                 StartContext = startContext,
+                HealthConnectConsentRevision = healthConnectConsentRevision,
                 PhaseBoundaries = phaseBoundaries,
                 TerminalContext = terminalContext,
                 session.Plan,
@@ -432,7 +435,11 @@ public sealed class RunService : Service, ILocationListener
 #if DEBUG
         global::Android.Util.Log.Info("LoopRun", System.Text.Json.JsonSerializer.Serialize(Snapshot));
 #endif
-        if (session.IsFinished && saveBuffer.Status.State == "saved") StopSelf();
+        if (session.IsFinished && saveBuffer.Status.State == "saved")
+        {
+            if (!finishExportScheduled) { finishExportScheduled = true; HealthConnectScheduling.Resume(); }
+            StopSelf();
+        }
     }
 
     private RunSnapshot CreateSnapshot() => new(id, session!.Current?.Kind.ToString() ?? "Finished",
