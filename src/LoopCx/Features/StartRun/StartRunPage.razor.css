@@ -185,9 +185,14 @@ th, td {
 }
 
 .live-values dl {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
+}
+
+.live-values dl > div {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .live-values dd {
@@ -248,4 +253,44 @@ th:not(:first-child), td {
 h3, p, small, dt {
     min-width: 0;
     overflow-wrap: anywhere;
+}
+
+.heart-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.heart-slot {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+}
+
+.heart-slot svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--cx-muted);
+    transform-origin: center;
+}
+
+.pace-trend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    color: var(--cx-muted);
+}
+
+.pace-trend > [aria-hidden] {
+    display: inline-block;
+    flex: 0 0 24px;
+    text-align: center;
+}
+
+.pace-trend > span:not([aria-hidden]) {
+    flex: 0 0 auto;
+    max-width: 100%;
+    overflow-wrap: normal;
 }

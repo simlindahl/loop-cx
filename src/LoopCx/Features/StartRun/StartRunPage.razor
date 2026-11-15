@@ -84,8 +84,10 @@
             }
             <section class="live-values" aria-label="Live measurements">
                 <dl>
-                    <div><dt>Pace <small>min/km</small></dt><dd>@Pace(state.LivePace?.SecondsPerKilometre)</dd></div>
-                    <div><dt>Heart rate <small>bpm</small></dt><dd>@HeartRate(state.HeartRate?.CurrentBpm)</dd><small>@CorePresentation.MeasuredZone(state.HeartRate)</small></div>
+                    <div><dt>Pace <small>min/km</small></dt><dd>@Pace(state.LivePace?.SecondsPerKilometre)</dd>
+                        <p class="pace-trend"><span id="live-trend-arrow" aria-hidden="true" data-direction="@state.LivePace?.Trend?.Direction" data-pace="@(state.LivePace?.SecondsPerKilometre?.ToString(System.Globalization.CultureInfo.InvariantCulture))">@(state.LivePace?.Trend?.Direction == "Faster" ? "↗" : state.LivePace?.Trend?.Direction == "Slower" ? "↘" : "—")</span><span>@(state.LivePace?.Trend?.Direction ?? state.LivePace?.Trend?.Quality ?? "unavailable")</span></p>
+                    </div>
+                    <div><dt>Heart rate <small>bpm</small></dt><dd class="heart-value">@HeartRate(state.HeartRate?.CurrentBpm)<span class="heart-slot" aria-hidden="true"><svg id="live-heart" viewBox="0 0 24 24" focusable="false" data-bpm="@(state.HeartRate?.Quality == "valid" ? state.HeartRate.CurrentBpm : null)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg></span></dd><small>@CorePresentation.MeasuredZone(state.HeartRate)</small></div>
                 </dl>
                 <p>Pace: @(state.Paused ? "paused" : state.LivePace?.Quality ?? "unavailable"). Heart rate: @(state.HeartRate?.Quality ?? "unavailable").</p>
                 @if (state.HeartRate?.ConfigurationError is { } configurationError) { <p>Heart rate unavailable: @configurationError</p> }

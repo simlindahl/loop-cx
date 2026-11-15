@@ -139,7 +139,11 @@ public partial class StartRunPage
         StateHasChanged();
     });
 
-    private void Refresh() => _ = InvokeAsync(StateHasChanged);
+    private void Refresh() => _ = InvokeAsync(() =>
+    {
+        motionPending = true;
+        StateHasChanged();
+    });
     private void RefreshSystemMotion() => _ = InvokeAsync(() =>
     {
         systemMotionPending = true;

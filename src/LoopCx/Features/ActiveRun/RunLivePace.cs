@@ -8,7 +8,11 @@ public sealed record LivePacePolicy(string Version, TimeSpan Window, TimeSpan Mi
 }
 
 public sealed record LivePaceState(LivePacePolicy Policy, double? SecondsPerKilometre, string Quality,
-    TimeSpan SupportedTime, TimeSpan? WindowFrom, TimeSpan? WindowTo, TimeSpan? LastAcceptedAt);
+    TimeSpan SupportedTime, TimeSpan? WindowFrom, TimeSpan? WindowTo, TimeSpan? LastAcceptedAt)
+{
+    [System.Text.Json.Serialization.JsonIgnore]
+    public PaceTrendState? Trend { get; init; }
+}
 
 /// <summary>Bounded contiguous trusted movement edges; no second GPS validator or future extrapolation.</summary>
 public sealed class RunLivePace
