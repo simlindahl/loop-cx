@@ -1,8 +1,8 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
-<section aria-labelledby="history-heading">
-    <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detail is null && partial is null ? "Training" : "History")</button>
-    <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
+<section @ref="historyContent" class="history-content" aria-labelledby="history-heading">
+    <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null ? "Training" : "History")</button>
+    <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
     @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
     @if (sharingRun is not null)
@@ -42,6 +42,83 @@
             <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>
         }
     }
+    else if (detail is { } stored && detailDestination is not null)
+    {
+        @if (stored.Summary.Synthetic) { <p>Synthetic test recording · not a physical workout.</p> }
+        @if (detailDestination == "splits")
+        {
+            <h3>Main-set splits</h3>
+            <p>Frozen recorded results. Final partial split included once; missing measurements are not zero.</p>
+            @if (stored.Measurements.Splits is not { } splits) { <p>Split measurements unavailable.</p> }
+            else if (splits.Count == 0) { <p>No recorded main-set splits.</p> }
+            else
+            {
+                <table class="split-table">
+                    <caption>Main-set splits · time min:sec · distance km · pace min/km · heart rate bpm</caption>
+                    <thead><tr><th scope="col">Split</th><th scope="col">Time</th><th scope="col">km</th><th scope="col">Avg pace</th><th scope="col">Avg HR</th></tr></thead>
+                    <tbody>@foreach (var split in splits)
+                    {
+                        <tr><th scope="row">@SplitLabel(split)</th><td>@Time(split.Active)</td><td>@if (split.HasMeasuredDistance) { @Metres(split.Metres) } else { <span role="img" aria-label="Unavailable">—</span> }</td><td>@if (split.Pace is > 0) { @PaceValue(split.Pace) } else { <span role="img" aria-label="Unavailable">—</span> }</td><td>@if (split.HeartRate is { } bpm) { @Number(bpm) } else { <span role="img" aria-label="Unavailable">—</span> }</td></tr>
+                    }</tbody>
+                </table>
+                <p class="split-table">— Unavailable. Missing measurements are not zero.</p>
+                <details class="split-table"><summary>Split measurement coverage</summary>
+                    @foreach (var split in splits) { <p>Split @SplitLabel(split) · @SplitCoverage(split)</p> }
+                </details>
+                <div class="split-cards">
+                    @foreach (var split in splits)
+                    {
+                        <section><h4>Split @SplitLabel(split)</h4><dl class="split-metrics">
+                            <div><dt>Active · min:sec</dt><dd>@Time(split.Active)</dd></div>
+                            <div><dt>Distance · km</dt><dd>@(split.HasMeasuredDistance ? Metres(split.Metres) : "Unavailable")</dd></div>
+                            <div><dt>Avg pace · min/km</dt><dd>@PaceValue(split.Pace)</dd></div>
+                            <div><dt>Avg heart rate · bpm</dt><dd>@Number(split.HeartRate)</dd></div>
+                        </dl><p>@SplitCoverage(split)</p></section>
+                    }
+                </div>
+            }
+            <h3>Recorded phases</h3>
+            <p>Active time excludes pauses. Elapsed requires recorded start and end times; planned durations are never substituted.</p>
+            @if (stored.Measurements.Phases is not { Count: > 0 } phases) { <p>Recorded phases unavailable.</p> }
+            else
+            {
+                <table class="phase-table"><caption>Recorded phases · min:sec</caption><thead><tr><th scope="col">Phase</th><th scope="col">Active</th><th scope="col">Elapsed</th></tr></thead>
+                    <tbody>@foreach (var phase in phases) { <tr><th scope="row">@PhaseLabel(phase)</th><td>@Time(phase.Active)</td><td>@Time(phase.Elapsed)</td></tr> }</tbody>
+                </table>
+                <div class="phase-cards">
+                    @foreach (var phase in phases)
+                    {
+                        <section><h4>@PhaseLabel(phase)</h4><dl class="split-metrics">
+                            <div><dt>Active · min:sec</dt><dd>@Time(phase.Active)</dd></div>
+                            <div><dt>Elapsed · min:sec</dt><dd>@Time(phase.Elapsed)</dd></div>
+                        </dl></section>
+                    }
+                </div>
+            }
+            <p>Per-phase distance, pace and heart rate: Unavailable. Whole-run totals are not divided between phases.</p>
+        }
+        else
+        {
+            <p>Frozen boundaries from this run's start. Time is based on valid recorded heart rate, not the intended target. Times are displayed in whole seconds.</p>
+            @foreach (var entry in new[] { ("Main set", stored.Measurements.Main), ("Whole run · includes warm-up and cool-down", stored.Measurements.Whole) })
+            {
+                var scope = entry.Item2;
+                <section><h3>@entry.Item1</h3><p>@Time(scope.Active) active</p>
+                    @if (scope.Zones.Count == 0) { <p>Frozen heart-rate boundaries unavailable or not configured for this run.</p> }
+                    else
+                    {
+                        <table><caption>Frozen heart-rate boundaries · bpm · time min:sec</caption><thead><tr><th scope="col">Zone</th><th scope="col">bpm</th><th scope="col">Time</th></tr></thead><tbody>
+                            @foreach (var zone in scope.Zones) { <tr><th scope="row">Zone @zone.Number</th><td>@zone.MinimumBpm–@zone.MaximumBpm</td><td>@Time(zone.Active)</td></tr> }
+                        </tbody></table>
+                    }
+                    <dl><div><dt>Known heart rate outside these zones</dt><dd>@Time(scope.Outside)</dd></div>
+                        <div><dt>Unknown heart rate</dt><dd>@Time(scope.Unknown)</dd></div>
+                        <div><dt>Known heart-rate coverage</dt><dd>@Time(scope.Known) of @Time(scope.Active) active</dd></div></dl>
+                </section>
+            }
+            <p>Outside-zone time is known heart rate; unknown time is not assigned to a zone. The stored aggregate does not distinguish below Zone 1 from above maximum.</p>
+        }
+    }
     else if (!busy && detail is { } run)
     {
         var totalDistance = Distance(run.Summary.Total);
@@ -57,6 +134,8 @@
             <div><dt>Main average heart rate</dt><dd>@(averageHeartRate == "Unavailable" ? averageHeartRate : averageHeartRate + " bpm")</dd></div>
             <div><dt>Health Connect</dt><dd>@run.Summary.ExportLabel</dd></div>
         </dl>
+        <button id="history-splits" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("splits")'><span>Splits &amp; phases<small>Frozen main-set splits and recorded phase times</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
+        <button id="history-zones" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("zones")'><span>Time in zones<small>Main set and whole run · frozen start boundaries</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
         <details>
             <summary>Workout plan</summary>
             <dl>

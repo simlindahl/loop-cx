@@ -2,9 +2,9 @@ using System.Globalization;
 using System.Text.Json;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
-using Microsoft.Maui.Storage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Microsoft.Maui.Storage;
 
 namespace LoopCx.Features.History;
 
@@ -15,6 +15,46 @@ public partial class HistoryPage
     [Parameter] public Guid? InitialRun { get; set; }
     private readonly List<StoredRunSummary> runs = [];
     private StoredRunDetail? detail;
+    private string? detailDestination;
+    private string DetailTitle => detailDestination == "splits" ? "Splits & phases" : "Time in zones";
+    private void ShowDetailDestination(string destination)
+    {
+        if (busy || detail is null || destination is not ("splits" or "zones")) return;
+        detailDestination = destination;
+        focusPending = "history-heading";
+    }
+    private static string SplitLabel(StoredSplit split)
+    {
+        return split.Number + (split.FinalPartial ? " · final partial" : "");
+    }
+
+    private static string PhaseLabel(StoredPhase phase)
+    {
+        return phase.Kind switch
+        {
+            RunPhase.Warmup => "Warm-up",
+            RunPhase.Cooldown => "Cool-down",
+            RunPhase.Work => $"Work · phase {phase.Number}",
+            RunPhase.Recovery => $"Recovery · phase {phase.Number}",
+            _ => "Unavailable"
+        };
+    }
+
+    private static string Metres(double metres)
+    {
+        return (metres / 1000).ToString("0.00", CultureInfo.InvariantCulture);
+    }
+
+    private static string PaceValue(double? value)
+    {
+        return value is > 0 ? Time(TimeSpan.FromSeconds(value.Value)) : "Unavailable";
+    }
+
+    private static string SplitCoverage(StoredSplit split)
+    {
+        return $"GPS {Time(split.GpsKnown)} known / {Time(split.GpsUnknown)} unknown. HR {Time(split.HrKnown)} known / {Time(split.HrUnknown)} unknown.";
+    }
+
     private readonly List<InterruptedRun> partials = [];
     private InterruptedRun? partial;
     private bool recoveryFailed, recoveryUnavailable;
@@ -23,6 +63,9 @@ public partial class HistoryPage
     private string? error;
     private string? focusPending = "history-heading";
     private IJSObjectReference? module;
+    private IJSObjectReference? layoutModule;
+    private ElementReference historyContent;
+    private readonly string layoutOwner = Guid.NewGuid().ToString("N");
     private Guid? sharingRun;
     private bool preparingShare;
     private long shareRequest;
@@ -48,6 +91,7 @@ public partial class HistoryPage
         busy = true;
         error = null;
         detail = null;
+        detailDestination = null;
         partial = null;
         sharingRun = null;
         shareRequest++;
@@ -195,6 +239,13 @@ public partial class HistoryPage
 
     public async Task GoBack()
     {
+        if (detailDestination is { } destination)
+        {
+            detailDestination = null;
+            focusPending = "history-" + destination;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
         if (sharingRun is not null)
         {
             sharingRun = null;
@@ -234,6 +285,13 @@ public partial class HistoryPage
         : "Frozen zones: " + string.Join(" · ", zones.Select(zone => $"Zone {zone.Number}: {zone.MinimumBpm}–{zone.MaximumBpm} bpm"));
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        layoutModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/history-layout.js");
+        if (disposed)
+        {
+            await layoutModule.DisposeAsync();
+            return;
+        }
+        await layoutModule.InvokeVoidAsync("observe", historyContent, layoutOwner);
         if (focusPending is not { } focus) return;
         focusPending = null;
         module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
@@ -244,6 +302,11 @@ public partial class HistoryPage
         disposed = true;
         HealthConnectSettings.Changed -= RefreshHealthConnect;
         shareRequest++;
+        if (layoutModule is not null)
+        {
+            await layoutModule.InvokeVoidAsync("dispose", layoutOwner);
+            await layoutModule.DisposeAsync();
+        }
         if (module is not null) await module.DisposeAsync();
         GC.SuppressFinalize(this);
     }

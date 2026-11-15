@@ -53,6 +53,8 @@ Before assigning the next step, the lead checks the matching role's current stat
 
 When the head or base changes, update that handoff and reassess affected evidence under the existing merge rules. Keep earlier results as labelled historical evidence rather than presenting them as current. After merge, reconcile the live issue and Project Next step with delivered scope and remaining acceptance; do not let an old candidate description remain the current status.
 
+Before merge, compare GitHub's actual `closingIssuesReferences` with the intended completed scope under [verify-run](../.agents/skills/verify-run/SKILL.md). Even negated closing language may trigger automatic closure. Remove unintended references and read back the result; a partial delivery must leave its parent issue open.
+
 ### Consolidated reporting and readiness
 
 The lead gives the product owner one concise consolidated overview: current milestone/focus, the next useful testable delivery and its remaining blockers, and decisions actually needed from the owner. Keep technical details and individual work-item progress in the existing Project/PRs. Limit new parallel delivery tracks while current slices can finish, preserving safe in-flight work and existing dependencies. This creates no new dashboard, board, automation or M2 expansion.
@@ -68,6 +70,26 @@ Before readiness, reconcile current decisions, review scope and Waiting/next-act
 The 14 November export/CI micro-retrospective follow-up in [#68](https://github.com/simlindahl/loop-cx/issues/68) retains historical table-shape assertions and adds the callback/commit-failure precision to the existing handoff above. The developer and QA own the focused checks; the lead owns the handoff. Effects on owner overview remain unverified.
 
 Record this project's completed retrospectives in this section through the normal documentation workflow. Each concise dated entry states participating roles, evidence, keep/change decisions, one to three concrete actions with owners, the owning file or workflow, state, expected observable benefit and the next relevant follow-up point. Link actions with remaining work to the existing Project rather than creating another board. At follow-up, record the observed effect and whether the team kept, adjusted or reverted the improvement; label unmeasured effects explicitly.
+
+### 2026-11-15 · History design, observers and issue closure
+
+All five separate specialists and the lead supplied direct input after [training reference #99](https://github.com/simlindahl/loop-cx/pull/99), [coaching #105](https://github.com/simlindahl/loop-cx/pull/105), [History contract #106](https://github.com/simlindahl/loop-cx/pull/106) and the approved History r4 study. Each specialist explicitly agreed on A–C below. This is team input, not an additional product-owner endorsement. Simon's earlier request for a clearer overview and linked task prefixes remains applicable; his latest request was access to this log.
+
+Keep early independent source review, frozen acceptance inputs and labelled historical evidence. The source checkpoint caught a History font-size deviation before packaging. Native #105 checks also found a real Settings-preservation defect that host checks had missed. These observations support retaining both stages, without claiming measured efficiency gains.
+
+Observed friction: History needed selectable-state and compact/large-text revisions; a lead screenshot misreading was corrected by inspecting the actual source rather than inventing a data defect. During coaching verification, synchronous observation disturbed GPS input cadence and a large log payload exceeded the observer's limit. Those attempts remain diagnostic. Finally, GitHub interpreted negated closing prose in PR #106 as a closing reference: its merge closed issue #4, despite remaining acceptance. The lead reopened the issue, restored Doing and corrected the reference; the actual closing-reference list was then empty.
+
+| Action | Owner and existing destination | Implementation state and follow-up |
+|---|---|---|
+| A · Check actual data/provenance, required selectable states and a representative normal/200% view with the longest realistic value before broad capture | UX and requirements, with developer/architect input as needed; [study handoff](../design/mockups/README.md#present-a-study-for-a-decision) | Instructions added in this candidate. At the next design handoff, check whether missing states or long-value layout issues recur. Benefit remains unmeasured. |
+| B · Preflight observer payload size and input cadence before a long native fixture; label missing/truncated evidence | QA and developer; [interactive native acceptance](android.md#interactive-native-acceptance) | Instructions added in this candidate. Apply at the next History native checkpoint and retain the actual result. No reconstructed acceptance data. |
+| C · Read actual GitHub closing references against completed scope before merge | Lead; [verify-run](../.agents/skills/verify-run/SKILL.md) and [current handoff](#current-review-handoff) | Instructions added in this candidate. Check the next partial-delivery PR and confirm the parent issue remains open after merge. |
+
+Formatter completion before final compilation remains an existing rule: the overlapping early History Compile was diagnostic, followed by a final check after formatting. No fourth action, new report, additional approval gate or plugin release is introduced. The refinements belong to this repository's design, Android and GitHub workflows. Their merge and observed follow-up remain pending until the normal delivery gates pass.
+
+First observed follow-up in PR #107 at `3fd1079`: the early normal/200% native checkpoint caught midword missing-value wrapping and a WebView text-zoom reflow defect before broad acceptance; both require correction and a new native check. The observer preflight found a saved checkpoint larger than Android's log limit, so QA compared detached SQLite with actual UI rather than reconstructing truncated logs. GitHub's actual closing-reference list for this partial PR was empty; issue #4 remained open, while the post-merge check is still pending. Keep A–C based on these bounded observations; recurrence and efficiency gains remain unmeasured. The original emulator baseline was restored after that checkpoint. Simon deferred further overview feedback until the evening, with a requested one-off 22:00 reminder; no assessment is inferred.
+
+Constructive feedback for the product owner: continue distinguishing exploratory ideas from replacement decisions, and group related layout or parameter choices when practical. The concrete three-view History approval made the delivery boundary clear. The team remains responsible for consequence analysis, accessible presentation, writing quality and keeping status understandable. Further owner feedback can be added through [#68](https://github.com/simlindahl/loop-cx/issues/68); no unreceived response or productivity gain is claimed.
 
 ### 2026-11-15 · Native checkpoints and visible history
 

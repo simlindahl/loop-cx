@@ -41,7 +41,7 @@ Final actual-main composition and independent exact source/package review preced
 
 ### Stored History detail and route contract
 
-The [next History data contract](integrations-data.md#stored-history-data-contract) is specified before implementation. The r4 destination study remains pending the owner's layout decision; these criteria are not UI approval or a claim that the map/details are delivered.
+The [next History data contract](integrations-data.md#stored-history-data-contract) is specified before implementation. The [exact r4 destination layouts are approved](../design/decision.md#history-details-r4-approval). Frozen Splits & phases and Time in zones are the first implementation increment; Route, new point-continuity provenance/AI v2 and actual Google SDK/configuration/rendering remain subsequent dependencies. Layout approval is not native acceptance or a claim that all details/maps or issue #4 are delivered.
 
 - A stored multi-phase run with extensions/skips and real pauses shows the original/applied plan and actual completed active times distinctly. Elapsed is available only with sufficient effective boundary evidence; legacy absence and unsupported per-phase distance/HR remain unavailable. Main, full/final-partial splits and Total retain their own frozen values after current Settings changes and later cool-down receipts. No final split is duplicated.
 - Missing/null legacy statistics and zone provenance remain unknown. Explicit supported zero, known HR outside zones and unknown HR remain distinct. Zone plus unclassified time conserves valid HR in each supported scope; no invented Below/Above allocation or RPE display.

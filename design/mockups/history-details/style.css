@@ -1,0 +1,282 @@
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../../../src/LoopCx/wwwroot/fonts/space-grotesk.ttf") format("truetype");
+  font-weight: 300 700;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: "Space Grotesk", sans-serif;
+  background: #111;
+  color: #f2f2f2;
+  --accent: #c4da73;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px 16px 48px;
+}
+
+aside, main {
+  width: min(100%, 430px);
+  margin: 0 auto 24px;
+}
+
+aside {
+  color: #b9b9b9;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #4b4b4b;
+  padding-bottom: 16px;
+}
+
+main {
+  font-size: 1rem;
+}
+
+body.large main {
+  font-size: 2rem;
+}
+
+h1 {
+  font-size: 1.75em;
+  line-height: 1.15;
+  margin: 16px 0;
+}
+
+h2 {
+  font-size: 1.2em;
+  margin: 16px 0 8px;
+}
+
+p {
+  margin: 10px 0;
+  line-height: 1.45;
+}
+
+h1, h2, p, span, strong, label, dt, dd, summary {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button, select, input:not([type="checkbox"]), textarea {
+  min-height: 48px;
+  border: 1px solid #8b8b8b;
+  background: #1c1c1c;
+  border-radius: 8px;
+  padding: 12px;
+  max-width: 100%;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:active {
+  background: #333;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #111;
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-block: 12px;
+}
+
+.field input, .field select, textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.muted {
+  color: #b9b9b9;
+}
+
+.card {
+  padding: 16px;
+  border-radius: 12px;
+  background: #1c1c1c;
+  margin-block: 16px;
+}
+
+.row {
+  padding: 12px 0;
+  border-bottom: 1px solid #4b4b4b;
+}
+
+dt {
+  color: #b9b9b9;
+}
+
+dd {
+  margin: 0 0 12px;
+}
+
+summary {
+  min-height: 48px;
+  padding-block: 12px;
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+[role="alert"] {
+  border-inline-start: 3px solid var(--accent);
+  padding-inline-start: 12px;
+}
+
+#announcement {
+  width: min(100%, 430px);
+  margin: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (min-width: 960px) {
+  body {
+    display: grid;
+    grid-template-columns: 300px 430px;
+    justify-content: center;
+    align-items: start;
+    gap: 32px;
+  }
+
+  aside {
+    margin: 0;
+    position: sticky;
+    top: 24px;
+  }
+
+  #announcement {
+    grid-column: 2;
+  }
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #4b4b4b;
+  border-radius: 0;
+  padding: 16px 0;
+}
+
+small {
+  display: block;
+  color: #b9b9b9;
+}
+
+h3 {
+  font-size: 1.1em;
+  overflow-wrap: anywhere;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th, td {
+  text-align: left;
+  padding: 12px 4px;
+  border-bottom: 1px solid #4b4b4b;
+  overflow-wrap: anywhere;
+}
+
+caption, figcaption {
+  text-align: left;
+  color: #b9b9b9;
+  line-height: 1.4;
+  margin-block: 8px;
+}
+
+figure {
+  margin: 16px 0;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+table:has(th:nth-child(2):last-child) th:first-child {
+  width: 60%;
+}
+
+.split-cards {
+  display: none;
+}
+
+body.large .split-table {
+  display: none;
+}
+
+body.large .split-cards {
+  display: block;
+}
+
+.split-table th, .split-table td {
+  padding-inline: 3px;
+}
+
+body.large .split-table-legend {
+  display: none;
+}

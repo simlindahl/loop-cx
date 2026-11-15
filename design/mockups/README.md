@@ -16,6 +16,10 @@ The [Settings integration reference](settings-integrations/index.html) and [Hist
 
 These portable references supersede the matching older detailed gallery states, including manual-zone illustrations. They do not approve the wider gallery, revised Ghost details or reader runtime. Both use existing fonts/assets, run offline and perform no real permissions, sensor, save, health or share operations. Run `node design/mockups/verify-integrations.cjs` for the focused browser checks; output shares the existing `qa/` evidence directory and must not be committed. Native and physical acceptance remain separate.
 
+## Approved stored History detail reference
+
+The [stored History detail reference](history-details/index.html) and [scope notes](history-details/README.md) preserve the explicitly approved r4 Splits & phases, Time in zones and Route layouts, including Main/Whole, unknowns, large text and map failure/gap/legacy states. See the [source-bound decision](../decision.md#history-details-r4-approval). These destinations supersede matching preliminary gallery details; wider gallery states remain outside this approval. This is a synthetic offline visual reference, not native Google Maps or measurement acceptance.
+
 ## Approved live-measurements reference
 
 The [live-measurements study](live-metrics/index.html) is the approved visual direction under its [source-bound decision](../decision.md#live-measurement-motion-approval). Its [scope notes](live-metrics/decision-notes.md) distinguish selected heart/pace presentation from uncalibrated comparison and animation parameters. Only outside-phone review text is normalized to English; phone content and behavior are preserved. It uses synthetic values, existing local fonts and no sensors or storage. This does not establish native/physical acceptance or release the reader hold.
@@ -163,6 +167,8 @@ In the large index.html gallery, the index and captions are review tools, not ap
 Local equivalent with Node and Playwright installed: `node design/mockups/verify.cjs`. `PLAYWRIGHT_MODULE` can select a separate installation; `PLAYWRIGHT_CHANNEL` can select an installed browser such as `chrome` instead of Playwright's bundled browser. Screenshots and the report are written to `design/mockups/qa/` and must not be committed. Record actual local and Actions results in the PR; browser availability depends on the environment. The verifier also follows Ghost route entry, return to session details, and the pause action in each live reference mode. The same CI job also runs `verify-integrations.cjs` and `verify-ghost.cjs` for the approved portable references.
 
 ### Present a study for a decision
+
+In the existing design handoff, identify actual data/provenance limits and explicitly required selectable states before broad capture. Check one representative normal-size and 200% view with the longest realistic value first. UX and requirements own this check, consulting the developer or architect where stored facts constrain the presentation; retain the resulting evidence in the same handoff.
 
 Before asking the product owner for a decision, the lead ensures the current interactive study is opened and verified through the intended presentation environment/path, including its relevant navigation/actions and local assets. Bind the request and decision to the version actually shown, using its commit or content identity; preserve earlier bindings and identify later transformations rather than silently presenting a different version as the reviewed one. Use focused changed-state checks during iteration, then a current final binding at review, with unchanged evidence reused only within its valid input/scope. Browser/static evidence does not establish native Android behavior and does not waive required CI or runtime acceptance.
 
