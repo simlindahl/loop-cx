@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/LoopCx/Features/History/StoredRoute.cs" Link="History/StoredRoute.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunPointProvenance.cs" Link="RunPointProvenance.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CorePreferences.cs" Link="CorePreferences.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunDeviation.cs" Link="RunDeviation.cs" />

@@ -377,15 +377,7 @@ public sealed class RunJournal : SQLiteOpenHelper
         var events = new List<ExportEvent>();
         using (var rows = db.RawQuery("SELECT sequence, command, observed_utc, elapsed_ms, checkpoint FROM run_events WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
             while (rows.MoveToNext()) events.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetString(2)!, rows.GetLong(3), ParseJson(rows.GetString(4)!)));
-        var locations = new List<ExportLocation>();
-        using (var rows = db.RawQuery("SELECT rowid, utc_ms, monotonic_ns, latitude, longitude, accuracy" +
-            (includeRoute ? ", provenance" : "") + " FROM locations WHERE run_id = ? ORDER BY rowid", [id.ToString()])!)
-        {
-            while (rows.MoveToNext()) locations.Add(new(rows.GetLong(0), rows.GetLong(1), rows.GetLong(2), rows.GetDouble(3), rows.GetDouble(4), rows.IsNull(5) ? null : rows.GetDouble(5))
-            {
-                Provenance = includeRoute && !rows.IsNull(6) ? RunPointProvenance.Parse(rows.GetString(6)!) : null
-            });
-        }
+        var locations = ReadLocations(db, id, includeRoute);
         var heartRate = new List<ExportHeartRate>();
         using (var rows = db.RawQuery("SELECT sequence, receipt_utc, receipt_monotonic_ticks, bpm, quality FROM heart_rate WHERE run_id = ? ORDER BY sequence", [id.ToString()])!)
             while (rows.MoveToNext()) heartRate.Add(new(rows.GetLong(0), rows.GetString(1)!, rows.GetLong(2), rows.IsNull(3) ? null : rows.GetInt(3), rows.GetString(4)!));
@@ -395,6 +387,52 @@ public sealed class RunJournal : SQLiteOpenHelper
             ParseJson(run.GetString(4)!), run.IsNull(5) ? null : ParseJson(run.GetString(5)!),
             run.IsNull(6) ? null : ParseJson(run.GetString(6)!), ParseJson(run.GetString(7)!), exportStatus,
             events, locations, heartRate);
+    }
+
+    private static List<ExportLocation> ReadLocations(SQLiteDatabase db, Guid id, bool includeRoute)
+    {
+        var locations = new List<ExportLocation>();
+        using (var rows = db.RawQuery("SELECT rowid, utc_ms, monotonic_ns, latitude, longitude, accuracy" +
+            (includeRoute ? ", provenance" : "") + " FROM locations WHERE run_id = ? ORDER BY rowid", [id.ToString()])!)
+        {
+            while (rows.MoveToNext()) locations.Add(new(rows.GetLong(0), rows.GetLong(1), rows.GetLong(2), rows.GetDouble(3), rows.GetDouble(4), rows.IsNull(5) ? null : rows.GetDouble(5))
+            {
+                Provenance = includeRoute && !rows.IsNull(6) ? RunPointProvenance.Parse(rows.GetString(6)!) : null
+            });
+        }
+        return locations;
+    }
+
+    public StoredRoute ReadRoute(Guid id)
+    {
+        try
+        {
+            var db = ReadableDatabase!;
+            JsonElement checkpoint;
+            long observed;
+            List<ExportLocation> points;
+            db.BeginTransactionNonExclusive();
+            try
+            {
+                using var row = db.RawQuery("SELECT status, checkpoint, elapsed_ms, recovery_saved_utc FROM runs WHERE id = ?", [id.ToString()])!;
+                if (!row.MoveToFirst()) throw new KeyNotFoundException("The stored recording no longer exists.");
+                var status = row.GetString(0);
+                var confirmed = !row.IsNull(3) && DateTimeOffset.TryParseExact(row.GetString(3), "O", System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out _);
+                if (status != "finished" && !(status == "interrupted" && confirmed))
+                    throw new InvalidDataException("Route reads require a finished or confirmed partial recording.");
+                var owner = RunService.Snapshot;
+                if (owner?.Id == id && (owner.Phase != "Finished" || owner.Storage?.State != "saved"))
+                    throw new InvalidDataException("The current unsaved owner is not a stored route source.");
+                checkpoint = ParseJson(row.GetString(1)!);
+                observed = row.GetLong(2);
+                points = ReadLocations(db, id, true);
+                db.SetTransactionSuccessful();
+            }
+            finally { db.EndTransaction(); }
+            return StoredRouteProjection.Read(id, checkpoint, observed, points);
+        }
+        catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
     }
 
     private static JsonElement ParseJson(string value)
