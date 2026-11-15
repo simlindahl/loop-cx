@@ -45,6 +45,11 @@ internal static class RunJsonSharingChecks
         RunSaveLocation Raw(int second) => new(second * 1000L, second * 1_000_000_000L, 1, 2, 5);
         var first = capture.Capture(Raw(1), new(true, null, TimeSpan.FromSeconds(1)), "Acquiring");
         var second = capture.Capture(Raw(2), new(true, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)), "Tracking");
+        var ignored = capture.Capture(Raw(1), new(false, null, TimeSpan.FromSeconds(1)) { Ignored = true }, "Tracking");
+        var afterIgnored = capture.Capture(Raw(3), new(true, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(3)), "Tracking");
+        if (ignored.Provenance!.Outcome != "ignored" || ignored.Provenance.BreakReason != "Duplicate or out-of-order delivery"
+            || ignored.Provenance.DrawablePredecessor is not null || afterIgnored.Provenance!.DrawablePredecessor != second.Provenance!.PointId)
+            throw new InvalidOperationException("Ignored delivery has its own outcome reason and preserves the newer valid chain.");
         capture.Break("Manual pause");
         var unassessed = capture.Capture(Raw(3), null, "Automatic pause");
         var resumed = capture.Capture(Raw(4), new(true, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(4)), "Reanchor");

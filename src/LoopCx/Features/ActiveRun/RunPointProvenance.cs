@@ -41,7 +41,8 @@ public sealed class RunRouteCapture(Guid runId)
             throw new InvalidDataException("Point provenance must describe this callback, not an earlier distance observation.");
 
         long? predecessor = outcome == "valid" && actual!.PreviousMonotonicTime == previousTime ? previousId : null;
-        var why = outcome != "valid" ? reason : predecessor is not null ? null : boundary ?? reason;
+        var why = outcome == "ignored" ? "Duplicate or out-of-order delivery"
+            : outcome != "valid" ? reason : predecessor is not null ? null : boundary ?? reason;
         var fact = new RunPointProvenance(1, runId, number, outcome, predecessor, why);
         if (outcome == "valid")
         {
