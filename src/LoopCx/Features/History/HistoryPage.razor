@@ -78,7 +78,7 @@
                 </div>
             }
             <h3>Recorded phases</h3>
-            <p>Active time excludes pauses. Elapsed requires saved effective boundary facts; planned durations are never substituted.</p>
+            <p>Active time excludes pauses. Elapsed requires recorded start and end times; planned durations are never substituted.</p>
             @if (stored.Measurements.Phases is not { Count: > 0 } phases) { <p>Recorded phases unavailable.</p> }
             else
             {
