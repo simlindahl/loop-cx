@@ -211,7 +211,8 @@ public sealed class RunService : Service, ILocationListener
             }
 
             id = Guid.NewGuid();
-            audio = new(handler!, id);
+            handler = new Handler(Looper.MainLooper!);
+            audio = new(handler, id);
             (started, healthConnectConsentRevision) = HealthConnectSettings.FreezeStart();
             startedMonotonic = SystemClock.ElapsedRealtime();
             var startZone = TimeZoneInfo.Local;
@@ -242,7 +243,6 @@ public sealed class RunService : Service, ILocationListener
 
             Publish("start");
             RefreshLocationSubscription();
-            handler = new Handler(Looper.MainLooper!);
             tick = Tick;
             handler.PostDelayed(tick, 1000);
             StartHeartRateSource();

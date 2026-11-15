@@ -93,7 +93,8 @@ internal sealed class AndroidRunAudio : IDisposable
     private void Report(string outcome, int token, string? text = null)
     {
 #if DEBUG
-        global::Android.Util.Log.Info("LoopAudio", System.Text.Json.JsonSerializer.Serialize(new { RunId = runId, Generation = token, Outcome = outcome, Text = text }));
+        var textHash = text is null ? null : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)));
+        global::Android.Util.Log.Info("LoopAudio", System.Text.Json.JsonSerializer.Serialize(new { RunId = runId, Generation = token, Outcome = outcome, TextSha256 = textHash, TextLength = text?.Length }));
 #endif
     }
 
