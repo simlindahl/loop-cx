@@ -16,6 +16,10 @@ The [Settings integration reference](settings-integrations/index.html) and [Hist
 
 These portable references supersede the matching older detailed gallery states, including manual-zone illustrations. They do not approve the wider gallery, revised Ghost details or reader runtime. Both use existing fonts/assets, run offline and perform no real permissions, sensor, save, health or share operations. Run `node design/mockups/verify-integrations.cjs` for the focused browser checks; output shares the existing `qa/` evidence directory and must not be committed. Native and physical acceptance remain separate.
 
+## Approved stored History detail reference
+
+The [stored History detail reference](history-details/index.html) and [scope notes](history-details/README.md) preserve the explicitly approved r4 Splits & phases, Time in zones and Route layouts, including Main/Whole, unknowns, large text and map failure/gap/legacy states. See the [source-bound decision](../decision.md#history-details-r4-approval). These destinations supersede matching preliminary gallery details; wider gallery states remain outside this approval. This is a synthetic offline visual reference, not native Google Maps or measurement acceptance.
+
 ## Approved live-measurements reference
 
 The [live-measurements study](live-metrics/index.html) is the approved visual direction under its [source-bound decision](../decision.md#live-measurement-motion-approval). Its [scope notes](live-metrics/decision-notes.md) distinguish selected heart/pace presentation from uncalibrated comparison and animation parameters. Only outside-phone review text is normalized to English; phone content and behavior are preserved. It uses synthetic values, existing local fonts and no sensors or storage. This does not establish native/physical acceptance or release the reader hold.
