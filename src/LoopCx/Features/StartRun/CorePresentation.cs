@@ -15,6 +15,15 @@ public static class CorePresentation
             : $"{count} × {protocol.WorkSeconds} sec:{protocol.RecoverySeconds / 60} min";
     }
 
+    public static string DoseExplanation(CoreStartRequest request)
+    {
+        if (request.ProtocolId == "C2") return Dose(request);
+        var protocol = CoreProtocols.Find(request.ProtocolId);
+        var count = request.Repetitions ?? protocol.DefaultCount;
+        static string Time(int seconds) => seconds % 60 == 0 ? $"{seconds / 60} minutes" : $"{seconds} seconds";
+        return $"{count} work efforts, {Time(protocol.WorkSeconds)} work and {Time(protocol.RecoverySeconds)} recovery between efforts.";
+    }
+
     public static string MeasuredZone(HeartRateState? heartRate)
     {
         if (heartRate is not { Quality: "valid", CurrentBpm: { } bpm }) return "No current reading";

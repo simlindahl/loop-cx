@@ -191,8 +191,9 @@ th, td {
 }
 
 .live-values dl > div {
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 1 1 0;
+    min-width: max-content;
+    max-width: 100%;
 }
 
 .live-values dd {
@@ -262,12 +263,16 @@ h3, p, small, dt {
 }
 
 .heart-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 28px;
     width: 28px;
     height: 28px;
 }
 
 .heart-slot svg {
+    display: block;
     width: 24px;
     height: 24px;
     fill: var(--cx-muted);
@@ -293,4 +298,14 @@ h3, p, small, dt {
     flex: 0 0 auto;
     max-width: 100%;
     overflow-wrap: normal;
+}
+
+.dose-description {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }

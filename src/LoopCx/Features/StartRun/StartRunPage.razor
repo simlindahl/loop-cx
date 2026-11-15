@@ -84,10 +84,10 @@
             }
             <section class="live-values" aria-label="Live measurements">
                 <dl>
-                    <div><dt>Pace <small>min/km</small></dt><dd>@Pace(state.LivePace?.SecondsPerKilometre)</dd>
+                    <div><dt>Pace <small>min/km</small></dt><dd>@if (state.LivePace?.SecondsPerKilometre is { } livePace) { @Pace(livePace) } else { <span role="img" aria-label="Unavailable">—</span> }</dd>
                         <p class="pace-trend"><span id="live-trend-arrow" aria-hidden="true" data-direction="@state.LivePace?.Trend?.Direction" data-pace="@(state.LivePace?.SecondsPerKilometre?.ToString(System.Globalization.CultureInfo.InvariantCulture))">@(state.LivePace?.Trend?.Direction == "Faster" ? "↗" : state.LivePace?.Trend?.Direction == "Slower" ? "↘" : "—")</span><span>@(state.LivePace?.Trend?.Direction ?? state.LivePace?.Trend?.Quality ?? "unavailable")</span></p>
                     </div>
-                    <div><dt>Heart rate <small>bpm</small></dt><dd class="heart-value">@HeartRate(state.HeartRate?.CurrentBpm)<span class="heart-slot" aria-hidden="true"><svg id="live-heart" viewBox="0 0 24 24" focusable="false" data-bpm="@(state.HeartRate?.Quality == "valid" ? state.HeartRate.CurrentBpm : null)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg></span></dd><small>@CorePresentation.MeasuredZone(state.HeartRate)</small></div>
+                    <div><dt>Heart rate <small>bpm</small></dt><dd class="heart-value">@if (state.HeartRate?.CurrentBpm is { } liveBpm) { @HeartRate(liveBpm) } else { <span role="img" aria-label="Unavailable">—</span> }<span class="heart-slot" aria-hidden="true"><svg id="live-heart" viewBox="0 0 24 24" focusable="false" data-bpm="@(state.HeartRate?.Quality == "valid" ? state.HeartRate.CurrentBpm : null)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg></span></dd><small>@CorePresentation.MeasuredZone(state.HeartRate)</small></div>
                 </dl>
                 <p>Pace: @(state.Paused ? "paused" : state.LivePace?.Quality ?? "unavailable"). Heart rate: @(state.HeartRate?.Quality ?? "unavailable").</p>
                 @if (state.HeartRate?.ConfigurationError is { } configurationError) { <p>Heart rate unavailable: @configurationError</p> }
@@ -122,7 +122,7 @@
                     var index = statePreferences.Shortcuts.ToList().FindIndex(item => item.Id == shortcut.Id);
                     <section class="workout" @key="shortcut.Id" data-shortcut-id="@shortcut.Id">
                         <h3>@shortcut.Name</h3>
-<p>@shortcut.Request.ProtocolId · @Dose(shortcut.Request)</p>
+<p>@shortcut.Request.ProtocolId · <span aria-hidden="true">@Dose(shortcut.Request)</span><span class="dose-description">@CorePresentation.DoseExplanation(shortcut.Request)</span></p>
 <p>@Times(shortcut.Request)<small>@WarmupCooldown(shortcut.Request)</small>
 </p>
 <p>@TargetLabel(shortcut.Request.Targets, shortcut.Request.ProtocolId == "C2")</p>
@@ -155,7 +155,7 @@
 <button id="change-c1" type="button" @onclick="OpenVariant">Change</button>
 </div>
                 <p>
-<strong>@SelectedC1.ProtocolId · @SelectedProtocol.Title</strong><br />@Dose(SelectedC1)</p>
+<strong>@SelectedC1.ProtocolId · @SelectedProtocol.Title</strong><br /><span aria-hidden="true">@Dose(SelectedC1)</span><span class="dose-description">@CorePresentation.DoseExplanation(SelectedC1)</span></p>
                 <p>@SelectedProtocol.Purpose</p>
                 <p>@Times(SelectedC1)<small>@WarmupCooldown(SelectedC1)</small>
 </p>
@@ -190,7 +190,7 @@
             {
                 <section class="workout" @key="shortcut.Id">
 <h3>@shortcut.Name</h3>
-<p>@shortcut.Request.ProtocolId · @Dose(shortcut.Request)</p>
+<p>@shortcut.Request.ProtocolId · <span aria-hidden="true">@Dose(shortcut.Request)</span><span class="dose-description">@CorePresentation.DoseExplanation(shortcut.Request)</span></p>
 <p>@Times(shortcut.Request)<small>@WarmupCooldown(shortcut.Request)</small>
 </p>
 <p>@TargetLabel(shortcut.Request.Targets, shortcut.Request.ProtocolId == "C2")</p>
@@ -230,7 +230,7 @@
 <input type="radio" name="protocol" value="@protocol.Id" checked="@(draftProtocol == protocol.Id)" @onchange="() => draftProtocol = protocol.Id" />
 <span>
 <strong>@protocol.Id · @protocol.Title</strong>
-<small>@Dose(new CoreStartRequest(protocol.Id, protocol.DefaultCount))<br />@Times(new CoreStartRequest(protocol.Id, protocol.DefaultCount))</small>@protocol.Purpose</span>
+<small><span aria-hidden="true">@Dose(new CoreStartRequest(protocol.Id, protocol.DefaultCount))</span><span class="dose-description">@CorePresentation.DoseExplanation(new CoreStartRequest(protocol.Id, protocol.DefaultCount))</span><br />@Times(new CoreStartRequest(protocol.Id, protocol.DefaultCount))</small>@protocol.Purpose</span>
 </label>
                     }
                 </fieldset>

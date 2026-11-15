@@ -13,7 +13,8 @@ internal static class CorePresentationChecks
         var label = CorePresentation.Dose(threshold);
         var frozenAfter = CoreTemplate.Resolve(threshold, new()).Session.Plan;
         // Assert
-        if (label != "4 × 6:3 min" || CorePresentation.Dose(new("C1.2")) != "5 × 3:2 min"
+        if (CorePresentation.DoseExplanation(threshold) != "4 work efforts, 6 minutes work and 3 minutes recovery between efforts."
+            || label != "4 × 6:3 min" || CorePresentation.Dose(new("C1.2")) != "5 × 3:2 min"
             || CorePresentation.Dose(new("C1.1")) != "7 × 30 sec:3 min"
             || CorePresentation.Dose(new("C2", ContinuousMinutes: 60)) != "60 min continuous"
             || frozenAfter.Count(phase => phase.Kind == RunPhase.Recovery) != 3

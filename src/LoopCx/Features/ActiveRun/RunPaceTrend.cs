@@ -6,12 +6,12 @@ public sealed record PaceTrendState(string Version, int PhaseIndex, string Quali
 /// <summary>Ephemeral visual comparison of two fully supported same-phase windows, not a new pace filter.</summary>
 public sealed class RunPaceTrend
 {
-    public const string Version = "accepted-edge-pace-trend-v1";
+    public const string Version = "accepted-edge-pace-trend-v2";
     private static readonly TimeSpan Window = TimeSpan.FromSeconds(10);
     private readonly List<AcceptedDistanceEdge> edges = [];
     private TimeSpan floor, watermark;
     private int phaseIndex;
-    private bool paceAvailable;
+    private TimeSpan? lastSnapshotAt;
 
     public void Boundary(TimeSpan effectiveAt, int instance)
     {
@@ -22,7 +22,6 @@ public sealed class RunPaceTrend
     public void Reset(TimeSpan at)
     {
         edges.Clear();
-        paceAvailable = false;
         if (at > floor) floor = at;
     }
 
@@ -36,7 +35,6 @@ public sealed class RunPaceTrend
         }
         if (edge is null || edge.To <= watermark) return;
 
-        var previous = watermark;
         watermark = edge.To;
         if (edge.From < floor)
         {
@@ -50,8 +48,8 @@ public sealed class RunPaceTrend
             return;
         }
 
-        // Freshness must be continuous even if a delayed callback bypassed any stale UI tick.
-        if (edges.Count > 0 && (edges[^1].To != edge.From || receivedAt - previous > policy.MaximumAge))
+        // Historical movement support is contiguous even if current display freshness briefly expired.
+        if (edges.Count > 0 && edges[^1].To != edge.From)
             Reset(edge.From);
 
         edges.Add(edge);
@@ -60,21 +58,28 @@ public sealed class RunPaceTrend
 
     public PaceTrendState Snapshot(TimeSpan now, LivePaceState live, bool paused, bool finished)
     {
+        if (lastSnapshotAt is { } previousSnapshot && now < previousSnapshot)
+        {
+            Reset(previousSnapshot);
+            return Unknown("unavailable");
+        }
+        lastSnapshotAt = now;
+        if (edges.Count > 0 && now < edges[^1].To)
+        {
+            Reset(edges[^1].To);
+            return Unknown("unavailable");
+        }
         var quality = paused ? "paused" : finished ? "unavailable" : live.Quality;
         if (paused || finished || live.SecondsPerKilometre is null || live.Quality != "tracking")
         {
-            if (paused || finished || quality == "stale") Reset(now);
-            else if (paceAvailable) edges.Clear();
-            paceAvailable = false;
+            if (paused || finished || quality is not ("stale" or "acquiring")) Reset(now);
             return Unknown(quality);
         }
-        paceAvailable = true;
         if (edges.Count == 0) return Unknown("acquiring");
 
         var end = edges[^1].To;
         if (now < end || now - end > live.Policy.MaximumAge)
         {
-            Reset(now);
             return Unknown("stale");
         }
 
