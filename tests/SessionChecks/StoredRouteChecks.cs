@@ -70,11 +70,11 @@ internal static class StoredRouteChecks
         Require(preStartRoute.Main.Supported && preStartRoute.Main.Points.All(point => point.SnapshotOrder != 0)
             && preStartRoute.Whole.Points.Any(point => point.SnapshotOrder == 0),
             "A cached legacy point before start stays Whole-only; it does not prove another boot or invalidate supported Main facts.");
-        var skipped = StoredRouteProjection.Read(id, Checkpoint(workEnd: 12000), 50000, points);
-        Require(skipped.Main.Points.Select(point => point.SnapshotOrder).SequenceEqual([2L]),
-            "Actual skip boundaries, not planned durations, delimit Main.");
-        var extended = StoredRouteProjection.Read(id, Checkpoint(workEnd: 40000), 60000, points);
-        Require(extended.Main.Points.Any(point => point.SnapshotOrder == 6), "Applied extension uses effective boundary evidence.");
+        var earlierBoundary = StoredRouteProjection.Read(id, Checkpoint(workEnd: 12000), 50000, points);
+        Require(earlierBoundary.Main.Points.Select(point => point.SnapshotOrder).SequenceEqual([2L]),
+            "Earlier effective boundary selects stored points; this fixture does not simulate a runtime skip.");
+        var laterBoundary = StoredRouteProjection.Read(id, Checkpoint(workEnd: 40000), 60000, points);
+        Require(laterBoundary.Main.Points.Any(point => point.SnapshotOrder == 6), "Later effective boundary selects stored points; this fixture does not simulate an applied-duration extension.");
         var partial = StoredRouteProjection.Read(id, Checkpoint(partial: true), 33000, [.. points.Where(point => point.SnapshotOrder < 6), Point(6, 33, 5) with { BootMonotonicNanoseconds = 34_000_500_000 }]);
         Require(partial.Main.Supported && partial.Main.Points.Any(point => point.SnapshotOrder == 6),
             "Committed current Recovery prefix includes the same owner-truncated millisecond with sub-ms raw receipt, without inventing stop.");
