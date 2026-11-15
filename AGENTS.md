@@ -28,6 +28,8 @@ This project-specific division of responsibility overrides the general learning-
 
 Every role applies minimalism and the Pareto principle: choose the simplest solution that demonstrably meets the need and focus effort on the small set of changes that provides the most user value, reduces material risk or supports important learning. Treat 80/20 as a prioritization heuristic, not a measured result; use evidence or explicit hypotheses. Avoid speculative features, abstractions and process or test overhead. This never waives correctness, security, accessibility, mandatory acceptance or required checks.
 
+For LOOP, these principles are grounded in [ESSENS](knowledge/product.md#essens-foundation), including warmth, curiosity, humor and self-distance. Favor meaningful outcomes over maximum activity and make room for enjoyment without trivializing users, errors, safety or evidence. ESSENS is LOOP's foundation, not a replacement identity or migration target. Keep reusable role responsibilities in Dev Team; this repository owns their LOOP-specific application.
+
 ## Phone installation offers
 
 After a valuable feature merge, proactively offer Simon a USB installation of the merged app so he can try the delivered behavior on his phone. Explain what is new and useful to try, and distinguish unverified physical behavior from automated evidence. Do not make the offer a merge gate or require installation for documentation-only changes. Wait for Simon to accept before installing; then follow [the phone installation workflow](docs/android.md#usb-phone-installation), preserving existing app data and reporting blockers.
