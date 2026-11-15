@@ -24,6 +24,8 @@ This first check covers app startup. GPS with a locked screen, WHOOP over BLE, a
 
 ## Interactive native acceptance
 
+Before a long sensor fixture, check that the existing observer can retain the actual log payload size and observe without disturbing the required input cadence. QA owns this preflight with the developer. Mark truncated or missing observations explicitly; do not reconstruct them or present interrupted input as acceptance evidence. Record this in the existing native checkpoint, not another report.
+
 Use the first checkpoint in the existing verification record to confirm that the required app access and input method actually work before a longer fixture. For emulator TalkBack checks, use a visible window with actual host access approval, a bound screen reader and observed focus movement. Headless smoke tests remain useful for their own scope; injected host/ADB input alone does not establish TalkBack behavior. When manual approval is needed, arrange a short availability window and present the prompt immediately.
 
 Record the expected and observed state and the input method in that checkpoint. Distinguish genuine gestures/keyboard input from semantic activation or text entry. After an interaction, inspect the resulting state before linking visual evidence: an image focused on Cancel before activation cannot prove that the dialog closed or focus returned. A later observed tool frame may provide that proof, but identify it separately. Keep earlier attempts labelled diagnostic; no additional report or full-gallery capture is required.
