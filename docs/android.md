@@ -22,9 +22,17 @@ The home screen should show **Start a run**. This verifies the path from Android
 
 This first check covers app startup. GPS with a locked screen, WHOOP over BLE, audio and Health Connect are tracked in issue #1. Windows strict x64 build, dedicated API35 emulator startup and the existing strong synthetic service/SQLite regression passed on 13 November 2026 at `193fb70909737011016a50e8bce5ee1a1980e2d7`; see the bounded native feasibility section below.
 
+## Interactive native acceptance
+
+Use the first checkpoint in the existing verification record to confirm that the required app access and input method actually work before a longer fixture. For emulator TalkBack checks, use a visible window with actual host access approval, a bound screen reader and observed focus movement. Headless smoke tests remain useful for their own scope; injected host/ADB input alone does not establish TalkBack behavior. When manual approval is needed, arrange a short availability window and present the prompt immediately.
+
+Record the expected and observed state and the input method in that checkpoint. Distinguish genuine gestures/keyboard input from semantic activation or text entry. After an interaction, inspect the resulting state before linking visual evidence: an image focused on Cancel before activation cannot prove that the dialog closed or focus returned. A later observed tool frame may provide that proof, but identify it separately. Keep earlier attempts labelled diagnostic; no additional report or full-gallery capture is required.
+
 ## USB phone installation
 
 After a valuable feature merge, the team lead offers Simon installation of the merged app over USB under [AGENTS.md](../AGENTS.md#phone-installation-offers). Offer the new behavior to try and identify outstanding physical acceptance. Installation is optional and requires Simon to accept the offer; it does not block merge unless a physical test is itself mandatory acceptance.
+
+Before the offer/build, record the configuration, selected journal, normal Health Connect eligibility and visible-history consequence in the existing manifest/handoff. Debug uses `runs-debug.db` and blocks normal Health Connect export; Release uses the separate `runs.db`. Preserved files alone do not establish that the same history will be visible after changing configuration. Explain the visible-history/export effect in the offer; keep technical journal names in the manifest. Simon's current M1 demo choice is Debug to retain visible history. Reuse that decision unless a material consequence changes; the separately approved [M2 identity transition](../knowledge/loop-core-roadmap.md#rename-at-the-start-of-m2) retains its own fresh-install boundary.
 
 After acceptance, ask Simon to connect and unlock the phone, enable USB debugging and approve the computer if needed. Verify the intended device with `adb devices -l` and select its serial explicitly when multiple devices are connected. Build or select an APK for the merged commit and the phone's actual ABI; the x64 emulator artifact is not a phone build. Use the existing package identity and a compatible signing key, and install with `adb -s <serial> install -r <apk-path>` to retain app data. If signing or version compatibility prevents an update, report the blocker; do not uninstall, clear data or downgrade without separate consent. Confirm the installed version and app startup on the phone, and report physical test results separately from emulator evidence.
 
