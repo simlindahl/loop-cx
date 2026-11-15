@@ -6,6 +6,14 @@ title: Screens and design
 
 [Product entry point and ownership](product.md). M1 requirements unless explicitly marked otherwise.
 
+## ESSENS in the experience
+
+Make it straightforward to start and return: few necessary decisions, directly visible key facts and a useful next action. Simplicity must not hide safety, controls or honest unknown measurements. Prioritize user benefit over another optimization task. ESSENS does not itself authorize new features, scores, streaks or obligatory reflection steps.
+
+Use warmth and self-distance in suitable explanatory copy, with room for movement enjoyment and voluntary self-challenge. Avoid guilt or pressure to make every easy session a race. Keep errors, consent, safety and measured values factual and unambiguous. Continuing the training sequence after a life interruption is different from recovering an interrupted recording; the latter must retain its actual technical limits.
+
+Retain approved Basalt, typography, layouts, accessibility and reduced-motion behavior. ESSENS is a value foundation, not authorization to copy the Site's branding or add new motion/screens. Material design changes still follow the existing approval process; reader runtime remains held.
+
 <a id="vyer-och-utformning"></a>
 ## Screens and layout
 - **Start a workout.** Show two Core cards using the [approved compact zone-first reference](../design/mockups/compact-zone-first/decision-notes.md) with retained [Core-first behavior](../design/mockups/core-variants/decision-notes.md): initial C1.2 and retained official selection, bounded counts/targets, a C2 duration slider and named saved shortcuts. Shortcuts retain count/duration/target, while current global warm-up/cool-down Settings resolve at each new C1 start. Start offline. The former arbitrary one-off builder is superseded; shortcut management beyond the approved flow remains separately tracked. Show GPS and heart-rate status without requiring an extra confirmation when everything is ready.

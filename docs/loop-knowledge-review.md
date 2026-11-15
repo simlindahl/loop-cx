@@ -1,20 +1,25 @@
 # What is LOOP? · review brief
 
-13 November 2026 · Refs #32 · **Content and mockups approved by Simon on 13 November 2026 at revision `4a4c971`. App implementation and publication remain on hold.**
+Content review record · Refs #32 and [#97](https://github.com/simlindahl/loop-cx/issues/97). **The historical content/mockup approval is `4a4c971` from 13 November. Simon approved the revised training reference at `6184542` on 15 November, then directed that LOOP be grounded in ESSENS without migration or a new identity. Reader implementation remains on hold. Repository publication was separately approved and completed.**
 
 ## Review material
 
 - [Complete English reading guide](../knowledge/what-is-loop.md).
+- [LOOP system reference](../knowledge/training/system.md) and [ownership migration](loop-source-migration.md): general rule owner and supporting resources; the guide explains them.
 - [Offline, clickable mockup gallery](../design/mockups/index.html#loop-about); open the HTML locally, not GitHub's source viewer.
 - [Proposed feature acceptance](../knowledge/loop-knowledge.md#loop-knowledge--review-proposal).
 
-The guide is the full content draft. Phone frames are representative excerpts that test hierarchy and navigation; they do not reproduce every paragraph. Implementation must bundle the approved complete content, not just these excerpts. No app configuration, reading progress, new main tab or automatic rotation tracking is proposed.
+The guide is the explanatory projection of the training reference. Existing phone frames represent the approved hierarchy/navigation and historical copy; they do not automatically show later content changes. Implementation must bundle the reviewed complete content and internal references, not just frame excerpts. The [ESSENS foundation decision](../design/decision.md#essens-foundation-for-loop) adds principles, not new app configuration, reading progress, a main tab or automatic rotation tracking.
 
 ## Decisions already reflected
 
 Audience: experienced exercisers adapting to career, family, travel and other demands. Explain the complete Core without requiring an app or wearable. Entry under Settings, short introduction, Get started, optional deeper learning. Four-part reading flow. Gym and home choices. Attribution: LOOP by Simon Lindahl. Private reference links and personal race data are excluded.
 
-Core defaults remain two working sets to technical failure, safe stops and recovery adjustments. C1 uses five efforts and exactly 38 minutes, matching the existing product decision. This resolves the private source's conflicting prose about four efforts; it is not a new training-rule change. Optional mobility material is not turned into a mandatory daily routine. Existing app WHOOP integration requirements are unchanged.
+Core defaults retain two working sets to technical failure, safe stops and recovery adjustments. The original review's single five-effort/38-minute C1 is historical, not the new-start dose. The subsequently approved three-protocol family and shared 4/3 defaults govern the synchronized current reference; frozen historical plans remain unchanged. Optional mobility stays optional. Brand-neutral BLE/HRR requirements remain with their current owners.
+
+The requested refresh explains the interrupted-life assumption, experience/autoregulation, order versus dose, general capacity versus specialization, failure/fatigue, exercise choices and M/recovery compromises. Get started keeps brief why statements; Learn more/system reference carry deeper detail. The new reader has no visible RPE and invents no replacement zone defaults. Its optional Ghost rationale explains personal mastery and contextual self-reference without claiming a health score, compulsory race frequency, leaderboard superiority or complete-programme validation. Ghost runtime rules and [#96](https://github.com/simlindahl/loop-cx/issues/96) target/presentation choices keep their own owners.
+
+The owner retained the independent-system boundary and substantive depth, then replaced the overly formal academic genre with professional training theory and advanced practical programming. The revised [training reference](../knowledge/training/system.md) targets informed athletes, coaches and practitioners at approximately 6/10 formality: technically fluent, explanatory and coaching-oriented. It leads with practical reasoning and consequences, uses useful prescription tables, and keeps precise citations and a full reference list without repeated sample-count/method paragraphs or a journal-style scaffold. Physiology, calisthenics priority, low-volume technical-failure reasoning, M/recovery, voluntary self-competition and consequential uncertainty remain. There are no product or Ghost-feature references or outgoing links to product documents; provenance stays in the [migration record](loop-source-migration.md). The guide remains the shorter accessible introduction. Simon approved the revised baseline at 6184542; the subsequent ESSENS foundation preserves the programme and reader hold, with new changes assessed through independent review.
 
 ## Proposed navigation
 

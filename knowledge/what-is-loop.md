@@ -4,13 +4,15 @@ title: What is LOOP?
 ---
 # What is LOOP?
 
-**Approved implementation reference · LOOP by Simon Lindahl**
+**LOOP by Simon Lindahl · reader implementation remains on hold**
 
-You know how to train. Finding room for it is the harder part now. Work runs late, children get sick, travel interrupts routines, and a missed Monday can turn a weekly plan into a small administrative problem.
+You know how to train. Finding room for it is the harder part now. Work runs late, children get sick, travel interrupts routines, and a missed Monday can turn a weekly plan into an administrative problem.
 
-LOOP is a repeating sequence of conditioning, strength and mixed movement. Instead of fitting every session into a perfect week, do the next useful session when life allows. The aim is broad, lasting physical capability with fewer decisions: enough structure to keep moving, enough flexibility to keep going.
+LOOP is a repeating sequence of conditioning, strength and mixed movement. Do the next useful session when life allows. It aims at broad, lasting physical capability with fewer decisions, rather than a perfect week or a peak for one event. You can use it with a notebook; the app, a subscription and a wearable are not prerequisites.
 
-LOOP is a training framework, not a guarantee of health, injury prevention or race performance. It cannot remove the need for effort, practice or recovery. Its exact combination has not been tested as a complete programme. You can use it with a notebook and ordinary equipment; the app and a wearable are optional.
+Its foundation is ESSENS: simplify, direct your effort toward what matters, and keep some lightness along the way. Choose training that earns its place and is easy to return to. Sustainable participation and enjoyment matter more than turning every session into another optimization project. An interruption is a reason to adapt, not a debt or a judgement about your discipline.
+
+This guide explains the [LOOP training reference](training/system.md), an independent account of the system's prescriptions, physiological rationale, evidence and tradeoffs. The guide is a practical way in, not a second programme. The exact combination has not been tested as a complete intervention and does not guarantee health, injury prevention or race readiness.
 
 ## Get started
 
@@ -18,143 +20,122 @@ LOOP is a training framework, not a guarantee of health, injury prevention or ra
 
 **C1 → S1 + M → C2 → S2 + M → repeat.**
 
-| Step | What you do | Purpose |
+| Step | What you do | Why it is there |
 |---|---|---|
-| C1 | Controlled hard intervals | Challenge your conditioning at a repeatable hard effort |
-| S1 + M | First strength session, then a short mixed finish | Strength across four movement patterns, then varied movement |
-| C2 | Easy, steady conditioning | Accumulate comfortable aerobic work |
-| S2 + M | Second strength session, then a short mixed finish | Complement S1, then varied movement |
+| C1 | Choose one interval format | Practise harder conditioning with a clear purpose |
+| S1 + M | Strength, then a short mixed finish | Build useful force, then combine movement under manageable fatigue |
+| C2 | Easy, steady conditioning | Make room for comfortable aerobic work |
+| S2 + M | Complementary strength, then mixed movement | Cover the other pull/push directions and repeat the leg patterns |
 
-C means conditioning, S means strength, and M means mixed. M belongs after each strength session; it is not a fifth step. There is no compulsory Monday start or fixed number of rest days. Use recovery, your recent training and available time to decide when to train.
+There is no compulsory Monday start or fixed rest-day schedule. Write down the next step. After rest or interruption, normally continue there; do not repay missed sessions. You can restart at C1 when practical, but repeatedly doing so can quietly remove strength or easy work.
 
-Write down the next step. After an interruption, continue there. Do not cram missed sessions together to catch up. Starting again at C1 is possible, but repeatedly restarting can quietly remove strength or easy conditioning from your training.
+**Why a rotation?** It reduces rescheduling decisions when life interrupts. It specifies order, not sufficient weekly dose: completing the sequence over fourteen days gives less exposure than completing it over seven. Actual training and recovery matter more than a balanced diagram.
 
-A rotation describes order, not weekly dose. Completing it in seven days and completing it in fourteen days give different exposure. Look at what you actually do over time, not just whether the sequence looks balanced on paper.
+### 2. Choose familiar movements and a safe load
 
-### 2. Choose exercises and load
+Calisthenics is LOOP's primary strength method: use bodyweight variations you control and keep them stable enough to judge progress. It prioritizes body control and relative strength while aiming to reduce travel, weight changes, setup time and cost. Scale leverage, assistance, controlled range or unilateral demand, then add weight when useful. This gives many practical progressions, not a promise of free training anywhere or unlimited progression without equipment. Safe pulling needs a suitable anchor; loaded RDL deliberately complements bodyweight work because enough scalable hinge resistance can be harder to obtain through bodyweight alone, especially when trained.
 
-Start with movements you already perform comfortably. Choose one version of each strength pattern that lets you control the full intended range. Keep these choices stable long enough to judge progress. Equipment is a means to load a movement, not a membership requirement.
-
-| Pattern | Gym example | Home example and limitation |
+| Pattern | Primary calisthenics route / RDL exception | Equipment alternative or practical limit |
 |---|---|---|
-| Hip hinge | Romanian deadlift with barbell or dumbbells | Backpack or dumbbell RDL; supported single-leg RDL if it remains stable. Available load can become limiting. |
-| Horizontal pull | Chest-supported or cable row | Securely anchored band row or suitable suspension row. Check the anchor and equipment instructions. |
-| Single-leg squat | Assisted pistol squat or loaded progression | Supported pistol to a stable box. Use assistance and a range you control. |
-| Horizontal push | Dumbbell bench press | Push-up, elevated or progressively loaded as appropriate |
-| Vertical pull | Assisted pull-up or lat pulldown | Pull-up on a rated, securely fitted bar or high-anchor band pulldown. A row is a temporary compromise, not the same pattern. |
-| Vertical push | Dumbbell overhead press | Dumbbell press or a controlled pike push-up progression |
+| Hip hinge | Loaded Romanian deadlift: deliberate complement | Suitable weights and space; available load may limit progression |
+| Horizontal pull | Bodyweight row on rated suspension or suitable bar | Safe anchor required; cable/band row can be an alternative |
+| Single-leg squat | Supported pistol progression, then less assistance or added load | Stable support/box where needed |
+| Horizontal push | Suitable push-up progression | Dumbbell bench press can be an alternative |
+| Vertical pull | Suitable assisted/bodyweight/weighted pull-up | Secure rated bar; pulldown can be an alternative |
+| Vertical push | Suitable pike-push-up progression | Dumbbell press can be an alternative |
 
-A home setup needs a safe pulling option. Do not improvise a hanging anchor from furniture or a door handle. If the required pattern cannot be performed safely, choose a temporary alternative and acknowledge the gap rather than pretending the movements are identical.
+Do not improvise hanging anchors from furniture or door handles. If a pattern cannot be performed safely, acknowledge a temporary compromise rather than treating every substitute as identical.
 
-For loaded movements, start with a load that permits approximately **6–10 controlled repetitions** before technical failure. For bodyweight movements, adjust leverage, assistance or range to find a manageable version. New equipment or an unfamiliar movement calls for practice before hard working sets.
+Core uses **two working sets per exercise**, with the next complete repetition no longer possible at the intended range, posture and control: technical failure. End at the last clean repetition. Do not attempt an unsafe failed lift, force pain or continue after losing position. Practice unfamiliar movements before hard sets; reduce load/dose or leave clean repetitions available when needed. Stop for concerning symptoms such as chest pain, faintness or unusual severe breathlessness and seek appropriate help.
 
-**Technical failure means the next complete repetition would no longer meet your intended range, posture and control.** End the set at the last clean repetition. Do not attempt a repetition you expect to fail under a bar, continue an RDL after losing position, or force a painful range. Use appropriate safeties or assistance. Pain, dizziness or loss of balance is a reason to stop, not a target to train through.
+**Why this small dose and stopping rule?** Two high-effort sets keep the session simple. Technical failure lets the repetition count respond to the day without estimating repetitions in reserve or forcing a preset daily total. You still judge readiness, rest and safe execution, and use the simple load/variation progression. Recent single-set research suggests modest muscle-growth advantages can occur with failure, without a clear strength advantage; it does not prove technical failure is universally best or validate this exact routine. The [training reference](training/system.md#strength-s1-and-s2) explains the low-volume evidence and its limits.
 
-Core uses **two working sets per exercise to technical failure**. Warm-up and ramp-up sets do not count. This is LOOP's chosen default for a small, repeatable strength session; research does not establish that failure is necessary or that two sets are optimal for every goal.[1] When fatigue or unfamiliarity makes the default unsafe, reduce the load, leave repetitions in reserve, shorten the session or rest. Learning the movement comes first.
+### 3. Complete the next suitable session
 
-### 3. Complete your first session
+Returning after a layoff? Rebuild tolerance with familiar work before treating the defaults as targets. These are options for an experienced trainee, not an entry test.
 
-If you are starting a fresh rotation, begin with C1 when you are ready for hard conditioning. If returning from a layoff, use a familiar easy session and rebuild tolerance before treating the full doses below as targets. These are Core defaults, not a fitness test you must pass on day one.
+#### C1 · Choose one interval format
 
-#### C1 · Choose one interval variant
+| Option | Work / easy recovery | Default total including 4/3 minutes |
+|---|---|---|
+| C1.1 · Sprint intervals | 7 × 30 sec maximal, 3 min between | 28:30 |
+| C1.2 · Aerobic intervals | 5 × 3 min controlled hard, 2 min between | 30 min |
+| C1.3 · Threshold intervals | 3 × 6 min controlled sustained effort, 3 min between | 31 min |
 
-C1 offers three different training emphases. Choose one variant for the C1 step; these are alternatives, not three extra sessions to complete before strength.
+Choose one, not all three before moving on. The first emphasizes repeated sprint effort, the second sustained hard aerobic work, the third sustainable threshold-related practice. They overlap; the names do not prove your individual physiological threshold.
 
-| Variant | Purpose | Work and recovery | Target RPE work / recovery | Total with 4/3 warm-up and cool-down |
-|---|---|---|---|---|
-| C1.1 · SIT | Repeated maximal sprint efforts with substantial recovery; sprint-specific effort with potential aerobic adaptations | 7 × 30 seconds maximal, 3 minutes easy between efforts | 10 / 2 | 28:30 |
-| C1.2 · Aerobic HIIT | Develop aerobic power through sustained, controlled hard efforts | 5 × 3 minutes hard, 2 minutes recovery between efforts | 7 / 3 | 30 min |
-| C1.3 · Threshold intervals | Practise controlled, sustained effort near your individual threshold | 3 × 6 minutes, 3 minutes recovery between efforts | 6 / 3 | 31 min |
+The default includes four minutes progressive warm-up and three minutes easy cool-down; readiness can need more. Extend preparation when necessary, particularly before maximal sprinting. No timer establishes that you are safe or ready. SIT is not an automatic next level for someone unfamiliar with sprinting. Counts can be adapted within the [running-workout bounds](running-workouts.md#pass-och-statistik); work/recovery lengths remain fixed and there is no recovery after the final effort. The [reference's conditioning section](training/system.md#c1-one-interval-option-per-c1-step) explains why these formats and practical doses were chosen without treating the bounds as physiological thresholds.
 
-The table shows the default counts. You can choose a different repetition count while keeping the planned main set, including recovery, between **10 and 60 minutes**: SIT 4–18 efforts, aerobic HIIT 3–12, threshold 2–7. Work/recovery lengths and RPE stay fixed. These limits are product choices, not a recommendation to use the largest dose or evidence that every allowed SIT count has been validated. There is no planned recovery after the last work effort. Begin with **4 minutes of progressive warm-up** and finish with **3 minutes easy**. These are simple starting defaults, not scientifically established warm-up and cool-down doses for every person. Extend warm-up and cool-down when needed, especially before maximal SIT; a timer reaching zero does not establish readiness. Shorten or stop if safe movement or control is lost.
-
-RPE means **Rating of Perceived Exertion**: how hard an effort feels on this app's 1–10 scale. These values describe intended effort, not measured heart rate or a laboratory threshold. SIT explicitly asks for maximal effort, whereas aerobic HIIT and threshold intervals ask for repeatable, controlled effort. SIT is not the automatic next step for someone unfamiliar with sprinting or returning from a layoff. Use a familiar activity and appropriate conditions; do not treat maximal-effort research in trained or young participants as proof of suitability for everyone.
-
-Do not chase heart-rate zones during a short effort while the pulse response catches up. High-zone time is a follow-up aim, not a pass/fail target or reason to extend the workout. Preserve the threshold variant's controlled purpose even when less time is recorded in zones 4–5.
-
-The [variant evidence and limits](running-workouts.md#research-basis-and-transfer-limits) explain the primary research behind each purpose and where LOOP makes a programming choice. Research supports the training families, not a guarantee from these exact repetitions, RPE values or warm-up and cool-down lengths. The running app's [delivery boundary](loop-cx.md) remains separate; already recorded plans are unchanged. Cycling and rowing belong to Core but are not supplied as complete app modes by this guide.
+Heart-rate zone intent is not a measured result. Do not accelerate a short effort to chase a lagging pulse, extend a workout to fill high-zone minutes or assume missing data means zero effort. Exact official zone targets are still a product decision; this draft invents none.
 
 #### S1 + M · Hinge, row, squat, push
 
-Warm up generally, then rehearse the movements with easier loads. When suitable, the Core includes **3 × 3 standing long jumps before strength work**. Rest enough to keep each landing controlled. Omit or scale jumps when unfamiliar, fatigued, painful or without a suitable landing area; they are not a conditioning challenge.
+Warm up, rehearse and ramp the load. When appropriate, include 3 × 3 standing long jumps before strength; omit/scale when unfamiliar, fatigued, painful or without safe landings.
 
-Perform two rounds in this order:
-
-1. Romanian deadlift.
-2. Horizontal pull.
-3. Supported pistol squat or an appropriate pistol progression, each leg.
-4. Horizontal push.
-
-Do one working set per exercise per round: **two working sets for each exercise, and two per leg for the squat**. About 60 seconds between exercises is a starting point, not a ceiling. Take longer when breathing, grip or concentration would otherwise compromise the next set. Allow 15–30 seconds or more to switch legs if needed.
+Do two rounds: **RDL → horizontal pull → pistol progression → horizontal push**. One working set of each per round gives two per exercise, and two per leg for the squat. Rest around 60 seconds as a starting point, longer when quality requires it. Pause between legs as needed. The circuit is not against a conditioning clock.
 
 #### C2 · Easy conditioning
 
-Choose **20–120 minutes in five-minute steps** of comfortable, steady movement; **45 minutes** is the default. The fixed target is **RPE 4**, a programme effort guideline rather than a measured heart-rate zone. Running is useful when tolerated, with cycling or rowing as Core alternatives. Build tolerance if even the shorter duration is currently too much; do not force completion through concerning symptoms.
+Default: **45 minutes**, with a personal range of 20–120 in five-minute steps. No separate warm-up/cool-down phases. Keep conversation comfortable and adapt to current tolerance. Zone 2 is an intended easy emphasis; a talk cue is not an exact conversion to a personal device zone or laboratory threshold. Do not force last week's pace in today's conditions.
 
-Use an effort at which conversation remains comfortable. Ease off when maintaining conversation becomes difficult. A wearable can supply context, but is not required. A talk test is a practical effort cue, **not an exact conversion to WHOOP zone 2 or an individually measured physiological threshold**.[2] Do not force a pace just because it was easy last week.
+Running is useful when tolerated; Core also permits rowing/cycling. Those alternatives are not thereby implemented as full modes in the running app.
 
 #### S2 + M · Squat, pull, hinge, press
 
-Warm up and rehearse. If suitable, use **3 × 3 controlled vertical jumps** before strength work, with the same quality and safety limits as S1.
+Warm up and rehearse. When appropriate, use 3 × 3 controlled vertical jumps with the same quality/safety limits.
 
-Perform two rounds:
+Do two rounds: **pistol progression → vertical pull → RDL → vertical push**. Use the same set/rest/technical-failure rules. Repeating the hinge/squat supplies another exposure; changing pull/push direction broadens the work.
 
-1. Supported pistol squat or appropriate progression, each leg.
-2. Vertical pull.
-3. Romanian deadlift.
-4. Vertical push.
+#### M · A short mixed finish after either strength session
 
-Use the same working-set, technical-failure and rest principles as S1. The hinge and single-leg squat recur deliberately; the pull and push change direction. A pistol progression prioritizes unilateral control and strength rather than maximizing the load of a bilateral squat.
+Use roughly **10–15 minutes** of manageable varied conditioning after strength: for example 1–2 minutes locomotion, a controllable 40–60 m carry, optionally up to five quality jumps and a 30–45 sec hang without grip failure. Shorten, support or omit parts when needed; do not improvise unsafe equipment.
 
-#### M · A mixed finish after either strength session
+**Why after strength?** Protect the main strength work and avoid another separate session. That saves administration, not fatigue: shorten/omit M when recovery or strength quality suffers. It is not a third heavy strength round. Avoid technical lifts, local failure and turning every finish into a race.
 
-Spend approximately **10–15 minutes** moving between simple activities at a manageable conditioning effort. For example:
+### 4. Continue and adapt
 
-- Easy running or another suitable locomotion: 1–2 minutes.
-- Farmer carry: 40–60 metres with a load you can control.
-- Optional: up to five controlled jumps, only while landing quality remains good.
-- Dead hang: 30–45 seconds, ending before grip failure; shorten it or use supported feet as needed.
+Record the version/load, clean repetitions and one useful note; then note the next step. Progress when the same work becomes easier with comparable quality. Loaded strength uses a pragmatic 6–10-repetition range; a small increase can follow when both sets reach roughly 8–10 clean repetitions. For bodyweight, progress when both sets reach 20. A shorter movement is not automatically progress.
 
-Repeat at a sustainable pace. Adapt space and equipment: march or step in place instead of running; carry a suitable load along a clear route. If there is no safe hanging bar, omit the hang rather than inventing an unsafe anchor. Distances and durations are starting examples, not targets that override control.
-
-M is conditioning with varied movement, not another heavy strength circuit. Avoid difficult lifts under fatigue, local muscular failure and turning every finish into a competition. Shorten or skip M when the strength session has already taken what you can recover from. Combining strength and conditioning is broadly compatible with strength and muscle development, but explosive development can be more sensitive to how sessions are combined; this does not validate this exact finisher.[3]
-
-### 4. Continue and adapt to life
-
-Record the session, exercise version, load and clean repetitions, plus one useful note if needed. Then note the next step. You do not need a dashboard to make the next decision.
-
-For loaded strength exercises, increase load by a small available increment when **both working sets reach roughly 8–10 clean repetitions** at technical failure. Expect repetitions to drop after increasing. For bodyweight exercises, progress when **both sets reach 20 clean repetitions**, choosing a modest increase in difficulty or load. Keep range and control comparable; a shorter movement is not automatically progress.
-
-One difficult day is not a trend. Sleep, stress, food, illness and previous training all influence performance. When life gets demanding, keep the sequence but adjust the dose: take a rest day, choose a lighter load, reduce sets, shorten conditioning or omit M. Resume normal doses as recovery allows. Do not repay training debt with a harder next session.
-
-If a smaller version is all you can manage, it can preserve continuity. It is not automatically equivalent to the full session. If your available time stays low, reassess whether the accumulated training still supports your aims.
+One difficult day is not a trend. Sleep, stress, food, illness and previous work affect performance. Rest, reduce load/dose, shorten conditioning or omit M when needed. A smaller session can preserve continuity without being equivalent to a full one. If limited time persists, review the actual accumulated dose rather than relying on the rotation's label.
 
 ## Learn more, when useful
 
-### Enough training for what?
+### What does LOOP deliberately leave out?
 
-LOOP aims at general capability. A specialist goal can require more specific practice, volume or planning. It does not promise readiness for a particular race or obstacle event. Racing plugins are outside this first guide.
+It does not optimize every quality separately or schedule every life event. Few stable rules reduce decisions, but give up some precision. Experienced users must still judge load, technique and recovery. This is not an individualized rehabilitation or competition plan.
 
-Public-health guidance gives useful context: WHO recommends at least 150 minutes of moderate aerobic activity or 75 minutes vigorous activity weekly, or an equivalent combination, plus muscle-strengthening activity on at least two days.[4] Everyday walking and other activity contribute too. These are population recommendations, not a personalized prescription or a new weekly LOOP quota. A slowly completed rotation does not automatically meet them.
+Pistol progressions favor unilateral control/balance/range even when these limit loading. A heavy bilateral squat may better serve maximal knee-dominant strength. RDL gives a clear loadable hinge without requiring floor deadlifting. Neither choice is universally superior. The [system's exercise rationale](training/system.md#exercise-order-and-exposure) makes these compromises explicit.
 
-### Strength: useful effort, safe limits
+Core builds a general base, not guaranteed OCR readiness: obstacles, running impact and terrain need actual practice. A temporary [10K adaptation](training/plugins/10k.md) or event-specific work may replace existing load rather than being piled on top. Those texts are references, not newly delivered app features.
 
-Consistency, sufficient challenge and progression matter. Home training, bands and bodyweight can be useful; equipment alone does not determine the result. Different goals and training histories can call for different volumes and loads.[1] Core deliberately chooses a simple default over individually optimized programming. If maximal strength or muscle growth becomes the main goal, review that tradeoff instead of assuming the smallest dose is always best.
+### How much is enough?
 
-### Recovery is more than a score
+For health context, WHO recommends adults accumulate at least 150 minutes moderate or 75 minutes vigorous activity weekly, or an equivalent mix, plus muscle strengthening on at least two days. This is population guidance, not a new LOOP schedule or proof that any rotation meets it. Everyday activity also counts. See [WHO guidance](https://www.who.int/initiatives/behealthy/physical-activity).
 
-Protect enough time to sleep, eat sufficiently and vary your food. For adults, the AASM/SRS consensus supports regularly obtaining at least seven hours of sleep; individual needs and circumstances vary.[5] A wearable score is one input, not permission to ignore symptoms or a command to cancel every imperfect day.
+Resistance training is useful across equipment choices; training to failure is not universally required. Concurrent conditioning/strength can be compatible, but explosive adaptations may be more sensitive to the combination. These findings inform design; they do not validate the exact LOOP set count or finisher. See the [system's evidence and limits](training/system.md#evidence-and-limits).
 
-Keep ordinary daily movement. Core's 7,000-step reference is a practical habit cue, not a medical threshold or a requirement to compensate for a missed workout. Use mobility work when a movement or daily task needs it; a separate daily routine is optional. No supplement or subscription is required to start.
+### Can competition belong in a sustainable system?
 
-This guide assumes prior training experience. It cannot assess an injury or medical condition. Persistent pain, concerning symptoms or uncertainty about safe exercise needs individual advice. Stop exercise for chest pain, faintness or unusual severe breathlessness and seek appropriate medical help.
+Yes, when it is wanted and serves the person rather than controlling every session. A voluntary race or self-comparison can supply a concrete challenge, feedback and variety. It can also add pressure or encourage too much intensity. Choosing an ordinary easy session is equally legitimate.
 
-## Sources and limits
+Ghost is an optional separate race, not a fifth Core step, an effort target for C2 or a health score. A previous route/reference can make self-comparison interesting without promising that a faster time means better health. Weather, terrain, recovery and GPS/reference quality affect the result. Stop/opt out when the challenge no longer helps. This guide adds no compulsory frequency or automatic change to the rotation.
 
-The explanations above are intended to be bundled offline. The links below open external sources and require internet. Research supports general principles; it does not certify LOOP's exact rotation, set count, jump dose or mixed finish. Simon approved this content as an implementation reference on 13 November 2026. Future changes to Core defaults require a separate review.
+**Why compare with yourself?** Your own route and execution can make progress concrete without a leaderboard ranking people with different histories or opportunities. Ghost can establish a first valid baseline, then use year best or personal best under its route rules; it does not offer arbitrary target ghosts. Practising and choosing the challenge matters more than always winning. This personal-mastery emphasis is a design preference, not proof that self-competition suits everyone. Sustainable participation has value even when no record changes.
 
-1. [ACSM resistance training guidance update, 2026](https://acsm.org/resistance-training-guidelines-update-2026/) and [position stand, DOI 10.1249/MSS.0000000000003897](https://doi.org/10.1249/MSS.0000000000003897). Broad evidence on resistance training, equipment, effort and programming; failure is not a universal requirement.
-2. [CDC: Measuring physical activity intensity](https://www.cdc.gov/physical-activity-basics/measuring/index.html). Talk test and relative effort; no device-specific zone equivalence is inferred.
-3. [Schumann et al., 2022: Compatibility of concurrent aerobic and strength training](https://pubmed.ncbi.nlm.nih.gov/34757594/). Systematic review and meta-analysis; not a test of LOOP or its M format.
-4. [WHO: Physical activity recommendations](https://www.who.int/initiatives/behealthy/physical-activity/). Population-level activity guidance.
-5. [AASM/SRS: Adult sleep duration consensus methodology, 2015](https://aasm.org/resources/pdf/adultsleepdurationmethods.pdf). General adult sleep guidance, not an athlete-specific recovery prescription.
+Short VR cycling research gives some support for the possibility that self-competition can be enjoyable; a later study in older adults did not detect the same enjoyment advantage. Neither proves outdoor Ghost benefits, lasting adherence or universal superiority over competing with others. LOOP's preference for voluntary personal mastery is a design choice. The [reference's generic self-competition rationale](training/system.md#voluntary-challenge-and-self-competition) separates evidence from that choice without describing any particular feature.
+
+### Recovery without another score to obey
+
+Eat sufficiently, vary food and protect sleep opportunities. A wearable is context, not permission to ignore symptoms or an automatic command to cancel training. Keep everyday movement; the 7,000-step system reference is a habit cue, not a medical threshold or training debt. Mobility and supplements are optional, not requirements to begin. Read [health and recovery](training/health-recovery.md) or the [optional mobility resource](training/mobility.md) when useful.
+
+## Sources and content status
+
+All explanatory text is intended for offline bundling. Internal references should be bundled too; external research links require internet and remain optional. This revised draft supersedes neither the existing reader implementation hold nor the need for content/design review.
+
+- [LOOP training reference](training/system.md): independent prescriptions, physiological rationale, near-claim citations and numbered bibliography. Publication/migration details are separate from the reference.
+- [ACSM resistance-training position stand, 2026](https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/): adaptable programming; not proof of exact LOOP defaults.
+- [CDC intensity guidance](https://www.cdc.gov/physical-activity-basics/measuring/index.html): practical talk cues, not commercial-zone equivalence.
+- [Schumann et al., 2022](https://link.springer.com/article/10.1007/s40279-021-01587-7): concurrent-training transfer limits.
+- [Palmieri and Deutsch, 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11548122/): short VR cycling study, not Ghost-running validation.
+
+The prior guide's approval belongs to its recorded revision. New explanations and the migration draft await their own review. Historical plans/raw data/exports are not rewritten, and no new numerical zone default is supplied.
