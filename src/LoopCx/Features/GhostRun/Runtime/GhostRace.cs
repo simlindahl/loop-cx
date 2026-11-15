@@ -120,6 +120,7 @@ public sealed class GhostRace
     private string? reason;
     private long observedBoot, lastSupportedBoot;
     private bool available = true;
+    private bool interruptionPending;
 
     public GhostRace(Guid id, GhostRoute route, GhostMode mode, GhostAttempt? reference, GhostComparisonProfile profile,
         GhostStartPosition position, long receivedBoot, DateTimeOffset utc, string zoneId, TimeSpan offset, Guid? consentRevision)
@@ -155,7 +156,7 @@ public sealed class GhostRace
         get
         {
             var current = clock.Current;
-            var supported = Ended || available && observedBoot - lastSupportedBoot <= profile.MaximumStartAge.TotalMilliseconds;
+            var supported = current.State == GhostClockState.Finished || available && observedBoot - lastSupportedBoot <= profile.MaximumStartAge.TotalMilliseconds;
             var match = supported ? matcher.Current : matcher.Current with { State = RouteMatchState.Uncertain, Metres = null, Problem = RouteMatchProblem.Gap };
             return new(id, route.Name, route.Key, mode, current, pauseReason, match,
                 playback?.PositionAt(current.RaceElapsed), playback?.Compare(current.RaceElapsed, match.Metres) ?? new(null, null),
@@ -186,10 +187,11 @@ public sealed class GhostRace
         trainingDistance.Interrupt(TimeSpan.FromMilliseconds(now), "Training pause boundary");
         candidateDistance = null;
     }
-    public void Unavailable() { available = false; motion.Unavailable(); trainingDistance.Unavailable("GPS unavailable"); candidateDistance = null; }
+    public void Unavailable() { interruptionPending = true; available = false; motion.Unavailable(); trainingDistance.Unavailable("GPS unavailable"); candidateDistance = null; }
     public void End(long now)
     {
         if (Ended) return;
+        Observe(now);
         clock.EndAttempt(TimeSpan.FromMilliseconds(now));
         reason = clock.Current.RaceElapsed == TimeSpan.Zero ? "Explicit End at zero elapsed; no archive attempt or record." : "Attempt ended before a verified route finish.";
     }
@@ -200,7 +202,7 @@ public sealed class GhostRace
         var measured = point.MonotonicNanoseconds / 1000000;
         var fix = new RecordedRouteFix(TimeSpan.FromMilliseconds(measured - startedBoot),
             DateTimeOffset.FromUnixTimeMilliseconds(point.UtcMilliseconds), point.Latitude, point.Longitude, point.Accuracy,
-            RecordedRunSection.Main, measured > receivedBoot || receivedBoot - measured > profile.MaximumStartAge.TotalMilliseconds);
+            RecordedRunSection.Main, interruptionPending || !sourceAvailable || measured > receivedBoot || receivedBoot - measured > profile.MaximumStartAge.TotalMilliseconds);
         raw.Add(fix);
         if (!sourceAvailable || measured < startedBoot || measured > receivedBoot
             || receivedBoot - measured > profile.MaximumStartAge.TotalMilliseconds)
@@ -211,6 +213,7 @@ public sealed class GhostRace
         available = true;
         lastSupportedBoot = measured;
         var matched = matcher.Observe(fix);
+        if (matched.State == RouteMatchState.Tracking) interruptionPending = false;
         if (fix.Elapsed > progress[^1].Elapsed)
             progress.Add(new(fix.Elapsed, matched.Metres ?? progress[^1].Metres, matched.Metres is not null));
         var distanceFix = new DistanceFix(TimeSpan.FromMilliseconds(measured), point.Latitude, point.Longitude, point.Accuracy);

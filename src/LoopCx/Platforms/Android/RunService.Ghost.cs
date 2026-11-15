@@ -13,32 +13,24 @@ public sealed partial class RunService
     public sealed record GhostStartRequest(RouteKey Route, GhostMode Mode, GhostStartPosition Position);
 
     private static readonly object GhostStartGate = new();
-    private static (Guid Id, TaskCompletionSource<string?> Completion)? pendingGhostStart;
+    private static (Guid Id, GhostStartAdmission Admission)? pendingGhostStart;
 
     public static async Task<string?> StartGhostAsync(GhostStartRequest request, CancellationToken cancellation)
     {
         var requestId = Guid.NewGuid();
-        var completion = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var admission = new GhostStartAdmission(cancellation);
         lock (GhostStartGate)
         {
             if (pendingGhostStart is not null) throw new InvalidOperationException("A Ghost start is already being checked.");
-            pendingGhostStart = (requestId, completion);
+            pendingGhostStart = (requestId, admission);
         }
-        using var registration = cancellation.Register(() => Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
-        {
-            lock (GhostStartGate)
-            {
-                if (pendingGhostStart?.Id != requestId) return;
-                pendingGhostStart = null;
-                completion.TrySetCanceled(cancellation);
-            }
-        }));
         try
         {
+            cancellation.ThrowIfCancellationRequested();
             global::Android.App.Application.Context.StartForegroundService(
                 new Intent(global::Android.App.Application.Context, typeof(RunService)).SetAction("start-ghost")
                     .PutExtra("ghost-request-id", requestId.ToString()).PutExtra("ghost-start", JsonSerializer.Serialize(request)));
-            return await completion.Task;
+            return await admission.Completion;
         }
         finally
         {
@@ -47,7 +39,12 @@ public sealed partial class RunService
     }
     private static bool HasGhostStartRequest(Intent? intent)
     {
-        lock (GhostStartGate) return pendingGhostStart is { } pending && intent?.GetStringExtra("ghost-request-id") == pending.Id.ToString();
+        lock (GhostStartGate) return pendingGhostStart is { } pending && pending.Admission.Pending && intent?.GetStringExtra("ghost-request-id") == pending.Id.ToString();
+    }
+    private static bool AcceptGhostStart(Intent? intent)
+    {
+        lock (GhostStartGate) return pendingGhostStart is { } pending
+            && intent?.GetStringExtra("ghost-request-id") == pending.Id.ToString() && pending.Admission.TryAccept();
     }
     private static void CompleteGhostStart(Intent? intent, string? error)
     {
@@ -55,7 +52,7 @@ public sealed partial class RunService
         {
             if (pendingGhostStart is not { } pending || intent?.GetStringExtra("ghost-request-id") != pending.Id.ToString()) return;
             pendingGhostStart = null;
-            pending.Completion.TrySetResult(error);
+            pending.Admission.Complete(error);
         }
     }
 
@@ -76,6 +73,11 @@ public sealed partial class RunService
                 Changed?.Invoke();
                 return StartCommandResult.NotSticky;
             }
+            GhostRace candidate;
+            GhostRaceCheckpoint initial;
+            Handler? preparedHandler = null;
+            RunHeartRate preparedHeartRate;
+            string preparedHeartRateMetadata;
             try
             {
                 var request = JsonSerializer.Deserialize<GhostStartRequest>(intent?.GetStringExtra("ghost-start") ?? "")
@@ -97,30 +99,40 @@ public sealed partial class RunService
                     route.Policy.MaximumGap.TotalSeconds * route.Policy.MaximumSpeedMetresPerSecond, 100000),
                     MovementPolicy.Pilot.MaximumAge, route.Policy.MaximumGap, heartRateConfiguration, MovementPolicy.Pilot, DistancePolicy.Pilot);
                 // Constructor validates actual post-request fresh GPS and correct start before publishing/committing ownership.
-                var candidate = new GhostRace(Guid.NewGuid(), route.Route, request.Mode, reference, profile,
+                candidate = new GhostRace(Guid.NewGuid(), route.Route, request.Mode, reference, profile,
                     request.Position, now, utc, zone.Id, offset, revision);
-                ghost = candidate;
-                var initial = ghost.Checkpoint(1, now);
-                id = initial.Id; started = initial.StartedUtc; startedMonotonic = initial.StartedBootMilliseconds;
-                lastTick = now;
-                handler = new Handler(Looper.MainLooper!);
-                heartRate = new(heartRateConfiguration, savedHeartRate.ConfigurationError);
-                heartRateMetadata = JsonSerializer.Serialize(savedHeartRate with { Configuration = heartRateConfiguration });
-                StartError = null;
+                initial = candidate.Checkpoint(1, now);
+                preparedHandler = new Handler(Looper.MainLooper!);
+                preparedHeartRate = new(heartRateConfiguration, savedHeartRate.ConfigurationError);
+                preparedHeartRateMetadata = JsonSerializer.Serialize(savedHeartRate with { Configuration = heartRateConfiguration });
                 ((NotificationManager)GetSystemService(NotificationService)!).CreateNotificationChannel(
                     new NotificationChannel(ChannelId, "Running session", NotificationImportance.Low));
-                Snapshot = GhostSnapshot();
-                StartEligibleForeground();
+                var checking = new Notification.Builder(this, ChannelId).SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
+                    .SetContentTitle("Ghost Run · checking start").SetContentText("Checking your start request. The race has not started.").Build();
+                StartEligibleForeground(initial: checking);
+                if (SystemClock.ElapsedRealtime() - request.Position.MeasuredBootMilliseconds > profile.MaximumStartAge.TotalMilliseconds)
+                    throw new InvalidDataException("GPS uncertain. Wait for a fresh position at the route start.");
             }
             catch (Exception issue) when (issue is IOException or InvalidDataException or ArgumentException or JsonException
                 or Java.Lang.RuntimeException)
             {
                 StartError = issue is InvalidDataException ? issue.Message : "Ghost Run could not start. Existing recordings were preserved.";
-                ghost = null; Snapshot = null;
+                preparedHandler?.Dispose();
                 CompleteGhostStart(intent, StartError);
                 Changed?.Invoke(); StopSelf();
                 return StartCommandResult.NotSticky;
             }
+            // This is the only acceptance point. A prior cancellation prevents any owner/start row;
+            // a later cancellation cannot invalidate the accepted identity or its save buffer.
+            if (!AcceptGhostStart(intent)) { preparedHandler.Dispose(); StopSelf(); return StartCommandResult.NotSticky; }
+            ghost = candidate;
+            id = initial.Id; started = initial.StartedUtc; startedMonotonic = initial.StartedBootMilliseconds;
+            lastTick = initial.ObservedBootMilliseconds;
+            handler = preparedHandler;
+            heartRate = preparedHeartRate;
+            heartRateMetadata = preparedHeartRateMetadata;
+            StartError = null;
+            Snapshot = GhostSnapshot();
             CompleteGhostStart(intent, null);
             // Ownership is established. Later native setup/update failures must not discard a frozen save batch.
             tick = Tick;

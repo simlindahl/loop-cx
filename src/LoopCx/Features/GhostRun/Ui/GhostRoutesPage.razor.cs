@@ -60,7 +60,7 @@ public partial class GhostRoutesPage
             var position = await AndroidGhostPosition.Acquire(operation.Token);
             if (disposed || operation.IsCancellationRequested) return;
             var failure = await RunService.StartGhostAsync(new(selected.Route.Key, mode, position), operation.Token);
-            if (disposed || operation.IsCancellationRequested) return;
+            if (disposed) return;
             if (failure is not null) error = failure;
             else await OnStarted.InvokeAsync();
         }

@@ -579,11 +579,11 @@ public sealed partial class RunService : Service, ILocationListener
             (!OperatingSystem.IsAndroidVersionAtLeast(28) || manager.IsLocationEnabled);
     }
 
-    private void StartEligibleForeground(bool connectedDevice = false, bool timerOnly = false)
+    private void StartEligibleForeground(bool connectedDevice = false, bool timerOnly = false, Notification? initial = null)
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(29))
         {
-            StartForeground(NotificationId, BuildNotification());
+            StartForeground(NotificationId, initial ?? BuildNotification());
 
             return;
         }
@@ -595,7 +595,7 @@ public sealed partial class RunService : Service, ILocationListener
         if (connectedDeviceRequested && OperatingSystem.IsAndroidVersionAtLeast(31) && CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
             type |= ForegroundService.TypeConnectedDevice;
 
-        StartForeground(NotificationId, BuildNotification(), type);
+        StartForeground(NotificationId, initial ?? BuildNotification(), type);
     }
 
     private void RefreshLocationSubscription()

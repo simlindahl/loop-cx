@@ -79,6 +79,55 @@ internal static class GhostServiceChecks
         Require(automatic.Snapshot.PauseReason == PauseReason.Manual && automatic.Snapshot.Clock.TrainingPaused
             && automatic.Snapshot.Match.Metres > 0,
             "Manual lock takes precedence over Auto while actual GPS and race progress continue.");
+        var benchmark = new GhostAttempt(Guid.NewGuid(), sourceId, key, utc.ToOffset(S(3600)), "Europe/Stockholm",
+            S(20), AttemptQuality.Verified, route.RuleVersion, Enumerable.Range(0, 21).Select(second => new GhostPoint(S(second), length * second / 20)).ToArray());
+        GhostRace Compared() => new(Guid.NewGuid(), route, GhostMode.PersonalBest, benchmark, profile,
+            start, 100000, utc, "Europe/Stockholm", S(3600), consent);
+        RunSaveLocation Position(double second, double? longitude = null) => new(utc.AddSeconds(second).ToUnixTimeMilliseconds(),
+            (100000 + (long)(second * 1000)) * 1000000, 0, longitude ?? second * .00001, .1);
+        var providerBreak = Compared();
+        for (var second = 1; second <= 19; second++) providerBreak.Location(Position(second), 100000 + second * 1000);
+        Require(providerBreak.Snapshot.Gap.SecondsAhead is not null, "The pre-break fixture has an actually supported comparison.");
+        providerBreak.Unavailable();
+        providerBreak.Location(Position(18.5), 119100); // An out-of-order delivery must not consume the interruption.
+        providerBreak.Location(Position(20), 120000); // Fresh, within max gap, but across the explicit interruption.
+        Require(!providerBreak.Ended && providerBreak.Snapshot.Match.Metres is null
+            && providerBreak.Checkpoint(1, 120000).Raw[^1].GapBefore,
+            "Provider loss is retained in raw evidence and prevents bridging a short interval straight to a verified finish.");
+        providerBreak.Location(Position(21, .00019), 121000); // Re-enter the actually covered prefix.
+        Require(providerBreak.Snapshot.Match.State == RouteMatchState.Tracking, "Existing gap re-entry can restore support without blanket disqualification.");
+        providerBreak.Location(Position(22, .0002), 122000);
+        Require(providerBreak.Ended && providerBreak.Snapshot.Clock.State == GhostClockState.Finished,
+            "Only supported re-entry followed by the ordered finish can complete the interrupted route.");
+        var staleEnd = Compared(); staleEnd.Location(Position(1), 101000);
+        Require(staleEnd.Snapshot.Gap.SecondsAhead is not null, "The stale-End fixture starts with a real comparison.");
+        staleEnd.End(105000); // No intermediate stale UI/timer observation.
+        Require(staleEnd.Snapshot.Match.Metres is null && staleEnd.Snapshot.Gap == new GhostGap(null, null),
+            "Explicit End cannot resurrect a comparison whose last support expired without an intermediate tick.");
+        var offEnd = Compared(); offEnd.Location(Position(1), 101000); offEnd.Unavailable(); offEnd.End(102000);
+        Require(offEnd.Snapshot.Match.Metres is null && offEnd.Snapshot.Gap == new GhostGap(null, null),
+            "Explicit End retains unavailable position and comparison.");
+        race.Unavailable();
+        Require(race.Snapshot.Match.State == RouteMatchState.Finished && race.Snapshot.Match.Metres == length,
+            "An actually verified finish retains its already frozen finish evidence.");
+        using (var cancelled = new CancellationTokenSource())
+        using (var admission = new GhostStartAdmission(cancelled.Token))
+        {
+            Require(admission.Pending, "The service preflight may initially observe a pending request.");
+            Task.Run(cancelled.Cancel).GetAwaiter().GetResult(); // No main-loop pumping is available here.
+            Require(!admission.TryAccept() && admission.Completion.IsCanceled,
+                "Cancellation on another thread wins immediately, including the preflight-to-acceptance gap, with no queued UI invalidation.");
+        }
+        using (var late = new CancellationTokenSource())
+        using (var admission = new GhostStartAdmission(late.Token))
+        {
+            Require(admission.TryAccept(), "The service can accept an uncancelled prepared request once.");
+            Task.Run(late.Cancel).GetAwaiter().GetResult();
+            admission.Complete(null);
+            Require(!admission.TryAccept() && !admission.Completion.IsCanceled
+                && admission.Completion.GetAwaiter().GetResult() is null,
+                "Cancellation after acceptance cannot discard the established owner or hide its successful response.");
+        }
         var ended = New(); ended.End(102000);
         Require(ended.Checkpoint(2, 102000).Attempt().Quality == AttemptQuality.Incomplete, "Explicit End never becomes a record.");
         var zero = New(); zero.End(100000);
