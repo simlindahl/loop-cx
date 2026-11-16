@@ -197,6 +197,26 @@ internal static class GhostServiceChecks
             "Paused race GPS cannot feed a stale training-distance observation back into measured pace.");
         paceRun.Resume(108000);
         Require(paceRun.LivePace?.SecondsPerKilometre is null && paceRun.LivePace?.Quality == "acquiring", "Resume starts fresh measured-pace acquisition.");
+        double DelayedMeasuredDistance(long delay)
+        {
+            var value = Compared();
+            RunSaveLocation Sample(long milliseconds, double longitude) => Position(milliseconds / 1000d, longitude);
+            value.Location(Sample(100, 0), 100100 + delay);
+            value.Location(Sample(1100, .00004), 101100 + delay);
+            value.Pause(102000);
+            value.Location(Sample(3000, .00006), 103000);
+            value.Resume(104000);
+            value.Location(Sample(4100, .00008), 104100 + delay);
+            value.Location(Sample(5100, .00012), 105100 + delay);
+            value.End(106000);
+            var measured = value.Checkpoint(1, 106000).MeasuredTrainingDistance!;
+            Require(value.Snapshot.Clock.TrainingActive == S(4) && measured.TotalMeasuredMetres > 8,
+                "Actual delayed Ghost samples retain both measured edges across pause/resume without double time adjustment.");
+            return measured.TotalMeasuredMetres;
+        }
+        Require(Math.Abs(DelayedMeasuredDistance(0) - DelayedMeasuredDistance(500)) < .000001
+            && Math.Abs(DelayedMeasuredDistance(500) - DelayedMeasuredDistance(800)) < .000001,
+            "Varying receipt delay does not change accepted training distance or turn an early valid sample negative.");
         var legacyProfile = profile with { LivePace = null };
         var legacyProfileJson = JsonSerializer.Serialize(legacyProfile);
         Require(!legacyProfileJson.Contains("LivePace", StringComparison.Ordinal)

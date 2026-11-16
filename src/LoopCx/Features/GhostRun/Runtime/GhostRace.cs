@@ -274,7 +274,7 @@ public sealed class GhostRace
             trainingDistance.Unavailable("Unobserved training finish tail");
             measuredPace?.Reset();
         }
-        var moved = assessed && trainingDistance.Observe(distanceFix,
+        var moved = assessed && trainingDistance.ObserveAtSampleActiveTime(distanceFix,
             TimeSpan.FromMilliseconds(receivedBoot), clock.TrainingActiveAt(TimeSpan.FromMilliseconds(measured)));
         if (assessed) measuredPace?.Observe(trainingDistance.Observation, trainingDistance.AcceptedEdge, TimeSpan.FromMilliseconds(receivedBoot));
         // Ghost has one main movement scope, not a Core session/template or target.
