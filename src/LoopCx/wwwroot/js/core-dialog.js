@@ -1,6 +1,7 @@
 const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 const motionEffects = new Set();
 const nodeEffects = new WeakMap();
+const effectOwners = new WeakMap();
 const liveEffects = new Map();
 const exitCopies = new Set();
 const motionEase = 'cubic-bezier(.2,0,0,1)';
@@ -99,14 +100,16 @@ function syncLiveMetrics() {
         moving ? Math.max(900, Math.min(1800, pace * 4)) : null, direction);
 }
 function effect(node, frames, duration, delay = 0) {
-    if (!node || reducedMotion() || !node.getClientRects().length) return;
+    if (!node || document.hidden || reducedMotion() || !node.getClientRects().length) return;
     listenForMotion();
     nodeEffects.get(node)?.cancel();
     const animation = node.animate(frames, { duration, delay, easing: motionEase });
     nodeEffects.set(node, animation);
+    effectOwners.set(animation, node.closest('[data-motion-owner]')?.dataset.motionOwner);
     motionEffects.add(animation);
     const release = () => {
         motionEffects.delete(animation);
+        effectOwners.delete(animation);
         if (nodeEffects.get(node) === animation) nodeEffects.delete(node);
     };
     animation.finished.then(release, release);
@@ -143,8 +146,16 @@ function leaveVisual(node) {
     const remove = () => { copy.remove(); exitCopies.delete(copy); };
     if (animation) animation.finished.then(remove, remove); else remove();
 }
-export function leaveSurface() {
-    leaveVisual(document.querySelector('main h2'));
+export function leaveSurface(root = document.querySelector('main')) {
+    clearMotion();
+    leaveVisual(root?.querySelector('h2'));
+}
+export function disposeSurface(owner) {
+    // Exit copies belong to the shared navigation owner and expire after 120 ms.
+    // Only effects on this detached child are cancelled; the new destination stays active.
+    motionEffects.forEach(animation => {
+        if (owner && effectOwners.get(animation) === owner) animation.cancel();
+    });
 }
 export function leaveDisclosure() {
     leaveVisual(document.getElementById('target-fields'));
@@ -153,10 +164,15 @@ export function syncMotion(saved) {
     listenForMotion();
     syncLiveMetrics();
     const main = document.querySelector('main[data-motion-surface]');
-    const surface = main?.dataset.motionSurface;
-    if (surface !== lastSurface) {
+    const destination = main?.querySelector('[data-motion-destination]');
+    const scope = destination ?? main;
+    const surface = destination ? `${main.dataset.motionSurface}:${destination.dataset.motionDestination}` : main?.dataset.motionSurface;
+    if (destination?.dataset.motionReady !== 'false' && surface !== lastSurface) {
+        motionEffects.forEach(animation => {
+            if (!exitCopies.has(animation.effect?.target)) animation.cancel();
+        });
         // One effect per real group, at most three. No per-row or per-tick replay.
-        [...main.querySelectorAll('[data-motion-group]')].slice(0, 3).forEach((node, index) => enter(node, 220, index * 24));
+        [...(scope?.querySelectorAll('[data-motion-group]') ?? [])].slice(0, 3).forEach((node, index) => enter(node, 220, index * 24));
         lastSurface = surface;
     }
     const phase = document.getElementById('phase-heading');
