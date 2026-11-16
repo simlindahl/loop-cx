@@ -62,21 +62,51 @@ public sealed partial class RunService
         }
     }
 
-    private StartCommandResult HandleGhostCommand(Intent? intent, string? command)
+    private bool ghostCheckingForeground;
+
+    private void PromoteGhostCheckingForeground()
+    {
+        ((NotificationManager)GetSystemService(NotificationService)!).CreateNotificationChannel(
+            new NotificationChannel(ChannelId, "Running session", NotificationImportance.Low));
+        var checking = new Notification.Builder(this, ChannelId).SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
+            .SetContentTitle("Ghost Run · checking start").SetContentText("Checking your start request. The race has not started.").Build();
+        ghostCheckingForeground = true;
+        StartEligibleForeground(initial: checking);
+    }
+
+    private void RejectGhostStart(Intent? intent, string error, int startId)
+    {
+        if (ghost is null && session is null)
+        {
+            StartError = error;
+            try
+            {
+                if (ghostCheckingForeground) StopForeground(StopForegroundFlags.Remove);
+            }
+            catch (Java.Lang.RuntimeException) { }
+            finally
+            {
+                ghostCheckingForeground = false;
+                StopSelfResult(startId);
+            }
+        }
+        // Cleanup must precede arbitrary UI subscribers/admission continuations.
+        CompleteGhostStart(intent, error);
+        Changed?.Invoke();
+    }
+
+    private StartCommandResult HandleGhostCommand(Intent? intent, string? command, int startId)
     {
         if (command == "start-ghost" && (!HasGhostStartRequest(intent) || ghost is not null))
         {
-            CompleteGhostStart(intent, "A recording is already active, or this start request was cancelled.");
-            if (ghost is null && session is null) StopSelf();
+            RejectGhostStart(intent, "A recording is already active, or this start request was cancelled.", startId);
             return StartCommandResult.NotSticky;
         }
         if (ghost is null)
         {
             if (session is not null || Snapshot is { Storage.State: not "saved" })
             {
-                StartError = "Finish saving the current recording before starting a Ghost Run.";
-                CompleteGhostStart(intent, StartError);
-                Changed?.Invoke();
+                RejectGhostStart(intent, "Finish saving the current recording before starting a Ghost Run.", startId);
                 return StartCommandResult.NotSticky;
             }
             GhostRace candidate;
@@ -111,27 +141,27 @@ public sealed partial class RunService
                 preparedHandler = new Handler(Looper.MainLooper!);
                 preparedHeartRate = new(heartRateConfiguration, savedHeartRate.ConfigurationError);
                 preparedHeartRateMetadata = JsonSerializer.Serialize(savedHeartRate with { Configuration = heartRateConfiguration });
-                ((NotificationManager)GetSystemService(NotificationService)!).CreateNotificationChannel(
-                    new NotificationChannel(ChannelId, "Running session", NotificationImportance.Low));
-                var checking = new Notification.Builder(this, ChannelId).SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
-                    .SetContentTitle("Ghost Run · checking start").SetContentText("Checking your start request. The race has not started.").Build();
-                StartEligibleForeground(initial: checking);
                 if (SystemClock.ElapsedRealtime() - request.Position.MeasuredBootMilliseconds > profile.MaximumStartAge.TotalMilliseconds)
                     throw new InvalidDataException("GPS uncertain. Wait for a fresh position at the route start.");
             }
             catch (Exception issue) when (issue is IOException or InvalidDataException or ArgumentException or JsonException
-                or Java.Lang.RuntimeException)
+                or Java.Lang.RuntimeException or global::Android.Database.Sqlite.SQLiteException)
             {
-                StartError = issue is InvalidDataException ? issue.Message : "Ghost Run could not start. Existing recordings were preserved.";
+                var error = issue is InvalidDataException ? issue.Message : "Ghost Run could not start. Existing recordings were preserved.";
                 preparedHandler?.Dispose();
-                CompleteGhostStart(intent, StartError);
-                Changed?.Invoke(); StopSelf();
+                RejectGhostStart(intent, error, startId);
                 return StartCommandResult.NotSticky;
             }
             // This is the only acceptance point. A prior cancellation prevents any owner/start row;
             // a later cancellation cannot invalidate the accepted identity or its save buffer.
-            if (!AcceptGhostStart(intent)) { preparedHandler.Dispose(); StopSelf(); return StartCommandResult.NotSticky; }
+            if (!AcceptGhostStart(intent))
+            {
+                preparedHandler.Dispose();
+                RejectGhostStart(intent, "This start request was cancelled.", startId);
+                return StartCommandResult.NotSticky;
+            }
             ghost = candidate;
+            ghostCheckingForeground = false; // The accepted owner now retains the existing foreground lifecycle.
             id = initial.Id; started = initial.StartedUtc; startedMonotonic = initial.StartedBootMilliseconds;
             lastTick = initial.ObservedBootMilliseconds;
             handler = preparedHandler;

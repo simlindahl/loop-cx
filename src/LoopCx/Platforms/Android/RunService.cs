@@ -95,15 +95,6 @@ public sealed partial class RunService : Service, ILocationListener
     private bool finishExportScheduled;
     private bool journalAvailable;
 
-    public override void OnCreate()
-    {
-        base.OnCreate();
-        try { journal = RunJournal.Shared; journalAvailable = true; }
-        catch (Exception error) when (error is IOException or global::Android.Database.Sqlite.SQLiteException)
-        {
-            ReportStorageOpenFailure();
-        }
-    }
     private Handler? handler;
     private Action? tick;
     private long lastTick;
@@ -129,20 +120,38 @@ public sealed partial class RunService : Service, ILocationListener
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
+        var command = intent?.Action;
+        if (command == "start-ghost" && ghost is null && session is null)
+        {
+            try { PromoteGhostCheckingForeground(); }
+            catch (Java.Lang.RuntimeException)
+            {
+                RejectGhostStart(intent, "Ghost Run could not start. Existing recordings were preserved.", startId);
+                return StartCommandResult.NotSticky;
+            }
+        }
         if (!journalAvailable)
         {
-            CompleteGhostStart(intent, "Local storage could not be opened. The race has not started.");
-            Changed?.Invoke();
-            StopSelf();
-            return StartCommandResult.NotSticky;
+            try { journal = RunJournal.Shared; journalAvailable = true; }
+            catch (Exception error) when (error is IOException or global::Android.Database.Sqlite.SQLiteException)
+            {
+                if (command == "start-ghost")
+                    RejectGhostStart(intent, "Local storage could not be opened. The race has not started.", startId);
+                else
+                {
+                    StopSelfResult(startId);
+                    ReportStorageOpenFailure();
+                }
+                return StartCommandResult.NotSticky;
+            }
         }
-        var command = intent?.Action;
         if (intent?.GetStringExtra(GhostOwnerExtra) is { } expectedGhost && (ghost is null || expectedGhost != id.ToString()))
         {
-            if (ghost is null && session is null) StopSelf();
+            if (command == "start-ghost") RejectGhostStart(intent, "This start request is no longer current.", startId);
+            else if (ghost is null && session is null) StopSelfResult(startId);
             return StartCommandResult.NotSticky;
         }
-        if (command == "start-ghost" || ghost is not null) return HandleGhostCommand(intent, command);
+        if (command == "start-ghost" || ghost is not null) return HandleGhostCommand(intent, command, startId);
 #if DEBUG
         if (command == "native-probe" && OperatingSystem.IsAndroidVersionAtLeast(33))
         {
