@@ -47,6 +47,8 @@ Identify the actual reviewable seam, files or recorded checkpoint available now,
 
 Lead with the exact current head, review status and next action; move superseded checkpoint details below an explicit historical label. When persistence or file formats change, name their independent versions briefly so a database or AI-file change is not mistaken for a checkpoint or Health Connect mapping change.
 
+For changed frozen facts, identify the affected payload/provenance and hash, the observable regression that distinguishes the changed facts, and the ordinary CI command that executes it. When a focused selector exists, confirm its checks are also registered in that command's default runner. Keep this short trace in the current handoff; it refines existing verification rather than adding a report, framework or approval gate.
+
 At the first stable checkpoint, schedule the existing developer/requirements source review before packaging or expensive CI where feasible. Inspect first service-entry ordering when lifecycle wiring changes, and one affected stored-value parse, display and unchanged-Save roundtrip when persistence changes. Use the actual changed representation boundary rather than a generic checklist. Source/host inspection does not prove Android startup; retain actual native acceptance and all final independent reviews and required checks. This moves existing work earlier, without adding an approval gate or another report.
 
 For an asynchronous persistence change, state what a missing callback and a native commit failure mean, and provide a focused failure check before packaging. A local timeout does not prove remote cancellation.
@@ -78,6 +80,22 @@ Before readiness, reconcile current decisions, review scope and Waiting/next-act
 The 14 November export/CI micro-retrospective follow-up in [#68](https://github.com/simlindahl/loop-cx/issues/68) retains historical table-shape assertions and adds the callback/commit-failure precision to the existing handoff above. The developer and QA own the focused checks; the lead owns the handoff. Effects on owner overview remain unverified.
 
 Record this project's completed retrospectives in this section through the normal documentation workflow. Each concise dated entry states participating roles, evidence, keep/change decisions, one to three concrete actions with owners, the owning file or workflow, state, expected observable benefit and the next relevant follow-up point. Link actions with remaining work to the existing Project rather than creating another board. At follow-up, record the observed effect and whether the team kept, adjusted or reverted the improvement; label unmeasured effects explicitly.
+
+### 2026-11-16 · Daily follow-up: frozen facts and the ordinary test path
+
+The lead collected direct feedback from all five specialists: fullstack developer, requirements analyst, QA engineer, UX designer and architect. The developer observed repeated checkout CRLF and formatter limitations, and corrected a new focused test that was initially absent from the default runner. Requirements clarified unknown terminal offsets versus contradictory recorded facts; QA identified lost policy/terminal provenance and positive distance with zero active time. Architecture kept mapping2/client2 and typed finality separate from unchanged Core replay; UX supplied notification comparison and save-status copy before packaging. The lead selected the narrow trace below from these inputs; this is not a claim of unanimous endorsement or measured productivity improvement.
+
+Keep the previous selected-state and resource-diagnosis actions. Early UX notification copy was applied at the source stage only; no native notification acceptance follows. The later SDK package's actual managed/native resource IDs matched, but no reduction in failures or time has been measured. Frozen independent source review, actual native readback, original-owner terminal observation and labelled historical evidence remain in force. Recurring CRLF and formatter issues are observed friction, not authority for a configuration/plugin change or blanket clean-build gate.
+
+| Action | Owner and existing destination | Follow-up |
+|---|---|---|
+| Trace changed frozen facts through observable regression into the default CI entry | Developer records payload/provenance/hash, regression and ordinary command in the [current handoff](#current-review-handoff); QA checks coverage and default-runner registration; lead retains the exact scope in review assignments | Apply at the next affected source checkpoint after product work resumes, especially when a focused selector exists. Check whether a changed fact can still escape the frozen hash or ordinary runner. Expected benefit: catch omissions before packaging; effect remains unmeasured. |
+
+The lead is applying the existing delivered/current-focus/owner-decision reporting pattern and keeps routine CI and copy coordination internal. Clear sentences, normal spacing and readable handoffs remain the team's responsibility, not additional work for the product owner. The explicit decision on positive Incomplete HC eligibility remains a separate product input; this process record does not implement it or broaden any acceptance.
+
+A proposal has been put to Simon for one reminder after 30 active working minutes on the same unchanged blocking owner decision, excluding 22:00–06:30, intentional holds, deferred matters and optional feedback. That proposal is pending; no monitor or reminder mechanism has been implemented or activated. The explicit product-development pause is respected: existing app work stays preserved, and this daily process-documentation task resumes no notification/HC implementation, build, push or device action.
+
+Changes in this entry follow normal independent review and merge. Reusable plugins remain unchanged: the correction concerns this repository's runner registration and handoff application. No new PO feedback, metrics, full-team consensus or acceptance is inferred.
 
 ### 2026-11-16 · Selected-state sharing and packaged resources
 
