@@ -90,7 +90,13 @@ public sealed class RunJournal : SQLiteOpenHelper
 
     public void Commit(RunSaveBatch batch)
     {
-        try { CommitTransaction(batch); }
+        try
+        {
+            CommitTransaction(batch);
+#if DEBUG
+            FailGhostProbe(batch.Latest.Id, afterCommit: true);
+#endif
+        }
         catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
         catch (Exception error) when (error is InvalidDataException or JsonException or ArgumentException)
         { throw new RunSaveReadException("Frozen recording or archive evidence is inconsistent. Nothing was overwritten.", error); }
@@ -113,6 +119,25 @@ public sealed class RunJournal : SQLiteOpenHelper
         return new(name, false, new PreservingCorruptionHandler());
     }
     internal int ProbeCorruptionCallbacks => corruptionHandler.Calls;
+    private Guid ghostProbeId;
+    private string? ghostProbeFault;
+
+    internal void ArmGhostTransactionProbe(Guid id, string fault)
+    {
+        // Only a private, explicitly named scratch helper can inject these fixed one-shot faults.
+        if (id == Guid.Empty || fault is not ("archive-abort" or "lost-return")
+            || DatabaseName is null || !DatabaseName.StartsWith("run-save-corrupt-probe-", StringComparison.Ordinal))
+            throw new ArgumentException("Ghost transaction faults require an owned scratch journal.");
+        ghostProbeId = id;
+        ghostProbeFault = fault;
+    }
+
+    private void FailGhostProbe(Guid id, bool afterCommit)
+    {
+        if (id != ghostProbeId || ghostProbeFault != (afterCommit ? "lost-return" : "archive-abort")) return;
+        ghostProbeFault = null; // Consume before throwing; Retry keeps the original frozen batch.
+        throw new IOException(afterCommit ? "Synthetic lost return after EndTransaction" : "Synthetic abort after Ghost archive write");
+    }
 
     internal void SetRecoveryFailureForProbe(Guid id, bool enabled)
     {
@@ -131,6 +156,17 @@ public sealed class RunJournal : SQLiteOpenHelper
             db.ExecSQL($"CREATE TEMP TRIGGER loop_recovery_probe_failure BEFORE UPDATE OF recovery_saved_utc ON runs WHEN OLD.id = '{id}' BEGIN SELECT RAISE(ABORT, 'isolated recovery save failure'); END");
     }
 
+    internal void SetGhostSaveFailureForProbe(Guid runId, Guid sourceId, bool enabled)
+    {
+        if (RunService.Snapshot is not { ActivityKind: "ghost" } owner || owner.Id != runId)
+            throw new ArgumentException("Only the current Ghost owner may arm its save fault.");
+        using var source = ReadableDatabase!.RawQuery("SELECT template_metadata FROM runs WHERE id = ? AND status = 'finished'", [sourceId.ToString()])!;
+        if (!source.MoveToFirst()) throw new ArgumentException("Missing synthetic C2 source.");
+        var template = JsonSerializer.Deserialize<CoreTemplate>(source.GetString(0) ?? "null");
+        if (template?.TemplateId != "C2" || template.Source != GhostSyntheticSourceFixture.Label)
+            throw new ArgumentException("Only the explicitly labelled synthetic C2 source is eligible.");
+        SetSaveFailureForProbe(runId, enabled);
+    }
     internal void SetSaveFailureForProbe(Guid runId, bool enabled)
     {
         var db = WritableDatabase!;
@@ -226,7 +262,13 @@ public sealed class RunJournal : SQLiteOpenHelper
                 recorded.Put("elapsed_ms", recordedEvent.ElapsedMilliseconds); recorded.Put("checkpoint", recordedEvent.Checkpoint);
                 db.InsertOrThrow("run_events", null, recorded);
             }
-            if (ghost is not null) new AndroidGhostArchive(db, transactionOwned: true).CommitRace(ghost);
+            if (ghost is not null)
+            {
+                new AndroidGhostArchive(db, transactionOwned: true).CommitRace(ghost);
+#if DEBUG
+                FailGhostProbe(state.Id, afterCommit: false);
+#endif
+            }
             else if (state.Finished)
             {
                 using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)")!;

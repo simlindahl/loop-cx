@@ -160,6 +160,22 @@ public sealed partial class RunService
             }
             return StartCommandResult.NotSticky;
         }
+#if DEBUG
+        if (command is "storage-failure-on" or "storage-failure-off")
+        {
+            if (NativeGhostIntegratedProbe.Allowed && intent?.GetStringExtra(GhostOwnerExtra) == id.ToString())
+            {
+                try
+                {
+                    journal.SetGhostSaveFailureForProbe(id, ghost!.Route.SourceRunId, command == "storage-failure-on");
+                    global::Android.Util.Log.Info("LoopGhost", "Owned synthetic Ghost save hook configured.");
+                }
+                catch (Exception error) when (error is IOException or ArgumentException or JsonException or global::Android.Database.Sqlite.SQLiteException)
+                { global::Android.Util.Log.Warn("LoopGhost", "Owned synthetic Ghost save hook was not configured."); }
+            }
+            return StartCommandResult.NotSticky; // Setup only: no clock advance/checkpoint/navigation.
+        }
+#endif
         var at = SystemClock.ElapsedRealtime();
         ghost.Observe(at);
         string? effective = null;

@@ -48,6 +48,26 @@ internal static class GhostStoredSourceChecks
             return new(id, utc.ToString("O"), utc.AddSeconds(40).ToString("O"), 40000, "finished", JsonSerializer.SerializeToElement(plan),
                 JsonSerializer.SerializeToElement(CoreTemplate.C2), null, checkpoint, "disabled_synthetic", [], points, []);
         }
+        var fixture = LoopCx.GhostSyntheticSourceFixture.Create(Guid.Parse("91919191-9191-9191-9191-919191919191"));
+        var fixtureState = fixture.Latest;
+        using var fixturePlan = JsonDocument.Parse(fixtureState.OriginalPlan);
+        using var fixtureTemplate = JsonDocument.Parse(fixtureState.TemplateMetadata);
+        using var fixtureCheckpoint = JsonDocument.Parse(fixtureState.Checkpoint);
+        var fixtureSource = new ExportJournalSnapshot(fixtureState.Id, fixtureState.StartedUtc.ToString("O"), fixtureState.ObservedUtc.ToString("O"),
+            fixtureState.ElapsedMilliseconds, "finished", fixturePlan.RootElement.Clone(), fixtureTemplate.RootElement.Clone(), null,
+            fixtureCheckpoint.RootElement.Clone(), "disabled_synthetic",
+            fixture.Events.Select((item, index) => new ExportEvent(index + 1, item.Command, item.ObservedUtc.ToString("O"), item.ElapsedMilliseconds,
+                JsonSerializer.Deserialize<JsonElement>(item.Checkpoint))).ToArray(),
+            fixture.Locations.Select((point, index) => new ExportLocation(index + 1, point.UtcMilliseconds, point.MonotonicNanoseconds,
+                point.Latitude, point.Longitude, point.Accuracy)
+            { Provenance = point.Provenance }).ToArray(), []);
+        var fixtureCapture = GhostStoredSource.Capture(fixtureSource, "Synthetic fixture route");
+        Require(fixtureCapture.Attempt.Quality == AttemptQuality.InsufficientEvidence && fixtureCapture.Attempt.Elapsed == TimeSpan.FromMinutes(20)
+            && fixtureSource.Locations.Count == 300 && !fixtureCapture.Attempt.Points[0].Known && !fixtureCapture.Attempt.Points[^1].Known,
+            "The actual native C2 seed has coherent full Main/boot/UTC/provenance but honest unknown tails/no fabricated benchmark.");
+        _ = StoredRunProjection.Detail(fixtureSource, null);
+        Require(JsonSerializer.Serialize(fixture) == JsonSerializer.Serialize(LoopCx.GhostSyntheticSourceFixture.Create(fixtureState.Id)),
+            "The native fixture freezes exact deterministic checkpoint/raw/event bytes for identical retry.");
         var source = Source(true, true);
         var before = ExportRunV2.Project(source);
 

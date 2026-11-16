@@ -99,6 +99,18 @@ public sealed partial class MainActivity : MauiAppCompatActivity
             { global::Android.Util.Log.Warn("LoopRun", "Isolated recovery failure hook was not configured."); }
             return;
         }
+        var integratedSeed = intent?.GetStringExtra("loop-ghost-integrated-seed");
+        var integratedMode = intent?.GetStringExtra("loop-ghost-integrated-mode");
+        intent?.RemoveExtra("loop-ghost-integrated-seed");
+        intent?.RemoveExtra("loop-ghost-integrated-mode");
+        if (integratedSeed is not null)
+        {
+            if (Guid.TryParse(integratedSeed, out var ownedSeed) && ownedSeed != Guid.Empty
+                && integratedMode is "source" or "transactions" or "verify"
+                && NativeGhostIntegratedProbe.Allowed)
+                _ = Task.Run(() => NativeGhostIntegratedProbe.Run(ownedSeed, integratedMode));
+            return;
+        }
         var archiveSeed = intent?.GetStringExtra("loop-ghost-archive-seed");
         intent?.RemoveExtra("loop-ghost-archive-seed");
         if (archiveSeed is not null && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")
@@ -208,7 +220,10 @@ public sealed partial class MainActivity : MauiAppCompatActivity
             if ((int)Build.VERSION.SdkInt == 35 && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64"
                 && Build.Model == "sdk_gphone64_x86_64" && Build.SupportedAbis?.FirstOrDefault() == "x86_64"
                 && Build.Fingerprint?.StartsWith("google/sdk_gphone64_x86_64/", StringComparison.Ordinal) == true)
-                RunService.Command(command);
+            {
+                if (RunService.Snapshot is { ActivityKind: "ghost" } owner) RunService.CommandGhost(command, owner.Id);
+                else RunService.Command(command);
+            }
             return;
         }
         if (command == "hr-source-failure" && Build.Hardware == "ranchu" && Build.Product == "sdk_gphone64_x86_64")

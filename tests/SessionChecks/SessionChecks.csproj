@@ -35,5 +35,6 @@
     <Compile Include="../../src/LoopCx/Features/History/InterruptedRun.cs" Link="History/InterruptedRun.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunNotificationEntry.cs" Link="RunNotificationEntry.cs" />
     <Compile Include="../../src/LoopCx/Features/HealthConnectExport/*.cs" Link="HealthConnectExport/%(Filename)%(Extension)" />
+    <Compile Include="../../src/LoopCx/Platforms/Android/NativeGhostIntegratedProbe.cs" Link="NativeGhostIntegratedProbe.cs" />
   </ItemGroup>
 </Project>
