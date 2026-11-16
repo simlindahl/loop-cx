@@ -1,0 +1,1165 @@
+{
+  "schemaVersion": 3,
+  "activityKind": "ghost",
+  "units": {
+    "distance": "metres",
+    "coordinates": "decimal-degrees",
+    "heartRate": "beats-per-minute",
+    "utc": "ISO-8601",
+    "gpsUtc": "unix-milliseconds",
+    "observedElapsed": "milliseconds",
+    "gpsBootMonotonic": "nanoseconds",
+    "hrBootReceiptMonotonic": "100-nanosecond-ticks",
+    "checkpointDuration": "TimeSpan-constant-format",
+    "pace": "seconds-per-kilometre",
+    "ghostBootMonotonic": "milliseconds",
+    "pauseBootMonotonic": "TimeSpan-constant-format",
+    "raceProgressElapsed": "TimeSpan-constant-format"
+  },
+  "run": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "startedUtc": "2025-01-01T12:00:00+00:00",
+    "lastObservedUtc": "2025-01-01T12:00:12.5000000+00:00",
+    "observedElapsedMilliseconds": 12500,
+    "status": "incomplete",
+    "originalPlan": [],
+    "template": {
+      "ActivityKind": "ghost"
+    },
+    "heartRateSetup": {
+      "Configuration": {
+        "Version": 1,
+        "DeviceAddress": "02:00:00:00:00:01",
+        "Policy": {
+          "Version": 1,
+          "MaximumGap": "00:00:05"
+        },
+        "Zones": [],
+        "ReserveProfile": null,
+        "DeviceName": "Synthetic HR fixture"
+      },
+      "ConfigurationError": null
+    },
+    "checkpoint": {
+      "ActivityKind": "ghost",
+      "GhostCheckpointVersion": 1,
+      "Id": "11111111-1111-4111-8111-111111111111",
+      "SaveRevision": 4,
+      "StartedUtc": "2025-01-01T12:00:00+00:00",
+      "StartedLocal": "2025-01-01T12:00:00+00:00",
+      "TimeZoneId": "UTC",
+      "HealthConnectConsentRevision": null,
+      "StartedBootMilliseconds": 100000,
+      "ObservedBootMilliseconds": 112500,
+      "Route": {
+        "Key": {
+          "Id": "22222222-2222-4222-8222-222222222222",
+          "Version": "44444444-4444-4444-8444-444444444444"
+        },
+        "Name": "Synthetic example route",
+        "SourceRunId": "55555555-5555-4555-8555-555555555555",
+        "RuleVersion": "stored-main-source-v2-pilot",
+        "Geometry": [
+          {
+            "Latitude": 0,
+            "Longitude": 0,
+            "Metres": 0
+          },
+          {
+            "Latitude": 0,
+            "Longitude": 0.0001,
+            "Metres": 11.11950802335329
+          }
+        ],
+        "LengthMetres": 11.11950802335329
+      },
+      "Mode": 1,
+      "Reference": {
+        "Id": "33333333-3333-4333-8333-333333333333",
+        "SourceRunId": "66666666-6666-4666-8666-666666666666",
+        "Route": {
+          "Id": "22222222-2222-4222-8222-222222222222",
+          "Version": "44444444-4444-4444-8444-444444444444"
+        },
+        "StartedLocal": "2024-12-31T12:00:00+00:00",
+        "TimeZoneId": "UTC",
+        "SavedLocalYear": 2024,
+        "Elapsed": "00:00:10",
+        "Quality": 0,
+        "RuleVersion": "stored-main-source-v2-pilot",
+        "Points": [
+          {
+            "Elapsed": "00:00:00",
+            "Metres": 0,
+            "Known": true
+          },
+          {
+            "Elapsed": "00:00:05",
+            "Metres": 5.559754011676645,
+            "Known": true
+          },
+          {
+            "Elapsed": "00:00:10",
+            "Metres": 11.11950802335329,
+            "Known": true
+          }
+        ]
+      },
+      "Profile": {
+        "Version": "ghost-service-pilot-v1",
+        "Matching": {
+          "RuleVersion": "stored-main-source-v2-pilot",
+          "CorridorMetres": 5,
+          "GateMetres": 1,
+          "MaximumAccuracyMetres": 1,
+          "MaximumGap": "00:00:10",
+          "MaximumSpeedMetresPerSecond": 12,
+          "MaximumStepMetres": 120,
+          "ProjectionExtentMetres": 100000
+        },
+        "MaximumStartAge": "00:00:03",
+        "MaximumInterpolationGap": "00:00:10",
+        "HeartRate": {
+          "Version": 1,
+          "DeviceAddress": "02:00:00:00:00:01",
+          "Policy": {
+            "Version": 1,
+            "MaximumGap": "00:00:05"
+          },
+          "Zones": [],
+          "ReserveProfile": null,
+          "DeviceName": "Synthetic HR fixture"
+        },
+        "Motion": {
+          "Version": "timed-motion-pilot-v1",
+          "MaximumAccuracyMetres": 5,
+          "MaximumGap": "00:00:03",
+          "MaximumAge": "00:00:03",
+          "StationaryRadiusMetres": 2,
+          "MinimumResumeMetres": 3,
+          "MaximumSpeedMetresPerSecond": 12
+        },
+        "TrainingDistance": {
+          "Version": "ordinary-gps-pilot-v1",
+          "MaximumAccuracyMetres": 30,
+          "MaximumGap": "00:00:10",
+          "MaximumAge": "00:00:10",
+          "MaximumSpeedMetresPerSecond": 12,
+          "MinimumMovementMetres": 3
+        },
+        "LivePace": {
+          "Version": "trusted-edge-live-pace-pilot-v1",
+          "Window": "00:00:10",
+          "MinimumSupport": "00:00:03",
+          "MaximumAge": "00:00:03"
+        }
+      },
+      "Snapshot": {
+        "Id": "11111111-1111-4111-8111-111111111111",
+        "RouteName": "Synthetic example route",
+        "Route": {
+          "Id": "22222222-2222-4222-8222-222222222222",
+          "Version": "44444444-4444-4444-8444-444444444444"
+        },
+        "Mode": 1,
+        "Clock": {
+          "RaceElapsed": "00:00:12",
+          "TrainingActive": "00:00:10",
+          "TrainingPaused": false,
+          "State": 2
+        },
+        "PauseReason": 0,
+        "Match": {
+          "Route": {
+            "Id": "22222222-2222-4222-8222-222222222222",
+            "Version": "44444444-4444-4444-8444-444444444444"
+          },
+          "RuleVersion": "stored-main-source-v2-pilot",
+          "State": 2,
+          "Metres": null,
+          "NextVertex": 1,
+          "StartedAt": "00:00:00",
+          "FinishedAt": null,
+          "Problem": 4
+        },
+        "GhostMetres": 11.11950802335329,
+        "Gap": {
+          "MetresAhead": null,
+          "SecondsAhead": null
+        },
+        "ReferenceId": "33333333-3333-4333-8333-333333333333",
+        "ReferenceElapsed": "00:00:10",
+        "FrozenYear": 2025,
+        "QualityReason": "Attempt ended before a verified route finish."
+      },
+      "Pauses": [
+        {
+          "StartedAt": "00:01:45",
+          "EndedAt": "00:01:47"
+        }
+      ],
+      "Progress": [
+        {
+          "Elapsed": "00:00:00",
+          "Metres": 0.0,
+          "Known": true
+        },
+        {
+          "Elapsed": "00:00:02",
+          "Metres": 2.223901604670658,
+          "Known": true
+        },
+        {
+          "Elapsed": "00:00:06",
+          "Metres": 6.671704814011974,
+          "Known": true
+        }
+      ],
+      "Raw": [
+        {
+          "Elapsed": "00:00:00",
+          "Utc": "2025-01-01T12:00:00+00:00",
+          "Latitude": 0,
+          "Longitude": 0.0,
+          "AccuracyMetres": 1,
+          "Section": 1,
+          "GapBefore": false
+        },
+        {
+          "Elapsed": "00:00:02",
+          "Utc": "2025-01-01T12:00:02+00:00",
+          "Latitude": 0,
+          "Longitude": 2e-05,
+          "AccuracyMetres": 1,
+          "Section": 1,
+          "GapBefore": false
+        },
+        {
+          "Elapsed": "00:00:06",
+          "Utc": "2025-01-01T12:00:06+00:00",
+          "Latitude": 0,
+          "Longitude": 6.000000000000001e-05,
+          "AccuracyMetres": 1,
+          "Section": 1,
+          "GapBefore": false
+        }
+      ],
+      "ArchiveDisposition": "attempt",
+      "TerminalKind": "explicit-end",
+      "MeasuredTrainingDistance": {
+        "Policy": {
+          "Version": "ordinary-gps-pilot-v1",
+          "MaximumAccuracyMetres": 30,
+          "MaximumGap": "00:00:10",
+          "MaximumAge": "00:00:10",
+          "MaximumSpeedMetresPerSecond": 12,
+          "MinimumMovementMetres": 3
+        },
+        "TotalMeasuredMetres": 0,
+        "MainMeasuredMetres": 0,
+        "MainHasGaps": true,
+        "Status": "Phase boundary",
+        "Splits": [
+          {
+            "Number": 1,
+            "MeasuredMetres": 0,
+            "ActiveTime": "00:00:10",
+            "HasGaps": true,
+            "PaceSecondsPerKilometre": null
+          }
+        ]
+      },
+      "TerminalContext": {
+        "Version": 1,
+        "ObservedUtc": "2025-01-01T12:00:12.5000000+00:00",
+        "ObservedBootMilliseconds": 112500,
+        "ObservedZoneId": "UTC",
+        "ObservedUtcOffsetSeconds": 0,
+        "StartDerivedEffectiveUtc": "2025-01-01T12:00:12+00:00",
+        "EffectiveUtcOffsetSeconds": 0,
+        "Provenance": "terminal-observed-zone-rules-v1"
+      }
+    },
+    "exportStatus": null,
+    "events": [
+      {
+        "sequence": 20,
+        "command": "start",
+        "observedUtc": "2025-01-01T12:00:00+00:00",
+        "observedElapsedMilliseconds": 0,
+        "checkpoint": {
+          "ActivityKind": "ghost",
+          "GhostCheckpointVersion": 1,
+          "Id": "11111111-1111-4111-8111-111111111111",
+          "SaveRevision": 1,
+          "StartedUtc": "2025-01-01T12:00:00+00:00",
+          "StartedLocal": "2025-01-01T12:00:00+00:00",
+          "TimeZoneId": "UTC",
+          "HealthConnectConsentRevision": null,
+          "StartedBootMilliseconds": 100000,
+          "ObservedBootMilliseconds": 100000,
+          "Route": {
+            "Key": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Name": "Synthetic example route",
+            "SourceRunId": "55555555-5555-4555-8555-555555555555",
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Geometry": [
+              {
+                "Latitude": 0,
+                "Longitude": 0,
+                "Metres": 0
+              },
+              {
+                "Latitude": 0,
+                "Longitude": 0.0001,
+                "Metres": 11.11950802335329
+              }
+            ],
+            "LengthMetres": 11.11950802335329
+          },
+          "Mode": 1,
+          "Reference": {
+            "Id": "33333333-3333-4333-8333-333333333333",
+            "SourceRunId": "66666666-6666-4666-8666-666666666666",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "StartedLocal": "2024-12-31T12:00:00+00:00",
+            "TimeZoneId": "UTC",
+            "SavedLocalYear": 2024,
+            "Elapsed": "00:00:10",
+            "Quality": 0,
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Points": [
+              {
+                "Elapsed": "00:00:00",
+                "Metres": 0,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:05",
+                "Metres": 5.559754011676645,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:10",
+                "Metres": 11.11950802335329,
+                "Known": true
+              }
+            ]
+          },
+          "Profile": {
+            "Version": "ghost-service-pilot-v1",
+            "Matching": {
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "CorridorMetres": 5,
+              "GateMetres": 1,
+              "MaximumAccuracyMetres": 1,
+              "MaximumGap": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MaximumStepMetres": 120,
+              "ProjectionExtentMetres": 100000
+            },
+            "MaximumStartAge": "00:00:03",
+            "MaximumInterpolationGap": "00:00:10",
+            "HeartRate": {
+              "Version": 1,
+              "DeviceAddress": "02:00:00:00:00:01",
+              "Policy": {
+                "Version": 1,
+                "MaximumGap": "00:00:05"
+              },
+              "Zones": [],
+              "ReserveProfile": null,
+              "DeviceName": "Synthetic HR fixture"
+            },
+            "Motion": {
+              "Version": "timed-motion-pilot-v1",
+              "MaximumAccuracyMetres": 5,
+              "MaximumGap": "00:00:03",
+              "MaximumAge": "00:00:03",
+              "StationaryRadiusMetres": 2,
+              "MinimumResumeMetres": 3,
+              "MaximumSpeedMetresPerSecond": 12
+            },
+            "TrainingDistance": {
+              "Version": "ordinary-gps-pilot-v1",
+              "MaximumAccuracyMetres": 30,
+              "MaximumGap": "00:00:10",
+              "MaximumAge": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MinimumMovementMetres": 3
+            },
+            "LivePace": {
+              "Version": "trusted-edge-live-pace-pilot-v1",
+              "Window": "00:00:10",
+              "MinimumSupport": "00:00:03",
+              "MaximumAge": "00:00:03"
+            }
+          },
+          "Snapshot": {
+            "Id": "11111111-1111-4111-8111-111111111111",
+            "RouteName": "Synthetic example route",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Mode": 1,
+            "Clock": {
+              "RaceElapsed": "00:00:00",
+              "TrainingActive": "00:00:00",
+              "TrainingPaused": false,
+              "State": 0
+            },
+            "PauseReason": 0,
+            "Match": {
+              "Route": {
+                "Id": "22222222-2222-4222-8222-222222222222",
+                "Version": "44444444-4444-4444-8444-444444444444"
+              },
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "State": 1,
+              "Metres": 0,
+              "NextVertex": 1,
+              "StartedAt": "00:00:00",
+              "FinishedAt": null,
+              "Problem": null
+            },
+            "GhostMetres": 0,
+            "Gap": {
+              "MetresAhead": 0,
+              "SecondsAhead": 0
+            },
+            "ReferenceId": "33333333-3333-4333-8333-333333333333",
+            "ReferenceElapsed": "00:00:10",
+            "FrozenYear": 2025,
+            "QualityReason": null
+          },
+          "Pauses": [],
+          "Progress": [
+            {
+              "Elapsed": "00:00:00",
+              "Metres": 0.0,
+              "Known": true
+            }
+          ],
+          "Raw": [
+            {
+              "Elapsed": "00:00:00",
+              "Utc": "2025-01-01T12:00:00+00:00",
+              "Latitude": 0,
+              "Longitude": 0.0,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            }
+          ],
+          "ArchiveDisposition": "not-terminal",
+          "TerminalKind": null
+        }
+      },
+      {
+        "sequence": 21,
+        "command": "pause",
+        "observedUtc": "2025-01-01T12:00:05+00:00",
+        "observedElapsedMilliseconds": 5000,
+        "checkpoint": {
+          "ActivityKind": "ghost",
+          "GhostCheckpointVersion": 1,
+          "Id": "11111111-1111-4111-8111-111111111111",
+          "SaveRevision": 2,
+          "StartedUtc": "2025-01-01T12:00:00+00:00",
+          "StartedLocal": "2025-01-01T12:00:00+00:00",
+          "TimeZoneId": "UTC",
+          "HealthConnectConsentRevision": null,
+          "StartedBootMilliseconds": 100000,
+          "ObservedBootMilliseconds": 105000,
+          "Route": {
+            "Key": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Name": "Synthetic example route",
+            "SourceRunId": "55555555-5555-4555-8555-555555555555",
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Geometry": [
+              {
+                "Latitude": 0,
+                "Longitude": 0,
+                "Metres": 0
+              },
+              {
+                "Latitude": 0,
+                "Longitude": 0.0001,
+                "Metres": 11.11950802335329
+              }
+            ],
+            "LengthMetres": 11.11950802335329
+          },
+          "Mode": 1,
+          "Reference": {
+            "Id": "33333333-3333-4333-8333-333333333333",
+            "SourceRunId": "66666666-6666-4666-8666-666666666666",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "StartedLocal": "2024-12-31T12:00:00+00:00",
+            "TimeZoneId": "UTC",
+            "SavedLocalYear": 2024,
+            "Elapsed": "00:00:10",
+            "Quality": 0,
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Points": [
+              {
+                "Elapsed": "00:00:00",
+                "Metres": 0,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:05",
+                "Metres": 5.559754011676645,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:10",
+                "Metres": 11.11950802335329,
+                "Known": true
+              }
+            ]
+          },
+          "Profile": {
+            "Version": "ghost-service-pilot-v1",
+            "Matching": {
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "CorridorMetres": 5,
+              "GateMetres": 1,
+              "MaximumAccuracyMetres": 1,
+              "MaximumGap": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MaximumStepMetres": 120,
+              "ProjectionExtentMetres": 100000
+            },
+            "MaximumStartAge": "00:00:03",
+            "MaximumInterpolationGap": "00:00:10",
+            "HeartRate": {
+              "Version": 1,
+              "DeviceAddress": "02:00:00:00:00:01",
+              "Policy": {
+                "Version": 1,
+                "MaximumGap": "00:00:05"
+              },
+              "Zones": [],
+              "ReserveProfile": null,
+              "DeviceName": "Synthetic HR fixture"
+            },
+            "Motion": {
+              "Version": "timed-motion-pilot-v1",
+              "MaximumAccuracyMetres": 5,
+              "MaximumGap": "00:00:03",
+              "MaximumAge": "00:00:03",
+              "StationaryRadiusMetres": 2,
+              "MinimumResumeMetres": 3,
+              "MaximumSpeedMetresPerSecond": 12
+            },
+            "TrainingDistance": {
+              "Version": "ordinary-gps-pilot-v1",
+              "MaximumAccuracyMetres": 30,
+              "MaximumGap": "00:00:10",
+              "MaximumAge": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MinimumMovementMetres": 3
+            },
+            "LivePace": {
+              "Version": "trusted-edge-live-pace-pilot-v1",
+              "Window": "00:00:10",
+              "MinimumSupport": "00:00:03",
+              "MaximumAge": "00:00:03"
+            }
+          },
+          "Snapshot": {
+            "Id": "11111111-1111-4111-8111-111111111111",
+            "RouteName": "Synthetic example route",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Mode": 1,
+            "Clock": {
+              "RaceElapsed": "00:00:05",
+              "TrainingActive": "00:00:05",
+              "TrainingPaused": true,
+              "State": 0
+            },
+            "PauseReason": 1,
+            "Match": {
+              "Route": {
+                "Id": "22222222-2222-4222-8222-222222222222",
+                "Version": "44444444-4444-4444-8444-444444444444"
+              },
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "State": 1,
+              "Metres": 2.223901604670658,
+              "NextVertex": 1,
+              "StartedAt": "00:00:00",
+              "FinishedAt": null,
+              "Problem": null
+            },
+            "GhostMetres": 5.559754011676645,
+            "Gap": {
+              "MetresAhead": -3.335852407005987,
+              "SecondsAhead": -3
+            },
+            "ReferenceId": "33333333-3333-4333-8333-333333333333",
+            "ReferenceElapsed": "00:00:10",
+            "FrozenYear": 2025,
+            "QualityReason": null
+          },
+          "Pauses": [
+            {
+              "StartedAt": "00:01:45",
+              "EndedAt": null
+            }
+          ],
+          "Progress": [
+            {
+              "Elapsed": "00:00:00",
+              "Metres": 0.0,
+              "Known": true
+            },
+            {
+              "Elapsed": "00:00:02",
+              "Metres": 2.223901604670658,
+              "Known": true
+            }
+          ],
+          "Raw": [
+            {
+              "Elapsed": "00:00:00",
+              "Utc": "2025-01-01T12:00:00+00:00",
+              "Latitude": 0,
+              "Longitude": 0.0,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            },
+            {
+              "Elapsed": "00:00:02",
+              "Utc": "2025-01-01T12:00:02+00:00",
+              "Latitude": 0,
+              "Longitude": 2e-05,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            }
+          ],
+          "ArchiveDisposition": "not-terminal",
+          "TerminalKind": null
+        }
+      },
+      {
+        "sequence": 22,
+        "command": "resume",
+        "observedUtc": "2025-01-01T12:00:07+00:00",
+        "observedElapsedMilliseconds": 7000,
+        "checkpoint": {
+          "ActivityKind": "ghost",
+          "GhostCheckpointVersion": 1,
+          "Id": "11111111-1111-4111-8111-111111111111",
+          "SaveRevision": 3,
+          "StartedUtc": "2025-01-01T12:00:00+00:00",
+          "StartedLocal": "2025-01-01T12:00:00+00:00",
+          "TimeZoneId": "UTC",
+          "HealthConnectConsentRevision": null,
+          "StartedBootMilliseconds": 100000,
+          "ObservedBootMilliseconds": 107000,
+          "Route": {
+            "Key": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Name": "Synthetic example route",
+            "SourceRunId": "55555555-5555-4555-8555-555555555555",
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Geometry": [
+              {
+                "Latitude": 0,
+                "Longitude": 0,
+                "Metres": 0
+              },
+              {
+                "Latitude": 0,
+                "Longitude": 0.0001,
+                "Metres": 11.11950802335329
+              }
+            ],
+            "LengthMetres": 11.11950802335329
+          },
+          "Mode": 1,
+          "Reference": {
+            "Id": "33333333-3333-4333-8333-333333333333",
+            "SourceRunId": "66666666-6666-4666-8666-666666666666",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "StartedLocal": "2024-12-31T12:00:00+00:00",
+            "TimeZoneId": "UTC",
+            "SavedLocalYear": 2024,
+            "Elapsed": "00:00:10",
+            "Quality": 0,
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Points": [
+              {
+                "Elapsed": "00:00:00",
+                "Metres": 0,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:05",
+                "Metres": 5.559754011676645,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:10",
+                "Metres": 11.11950802335329,
+                "Known": true
+              }
+            ]
+          },
+          "Profile": {
+            "Version": "ghost-service-pilot-v1",
+            "Matching": {
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "CorridorMetres": 5,
+              "GateMetres": 1,
+              "MaximumAccuracyMetres": 1,
+              "MaximumGap": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MaximumStepMetres": 120,
+              "ProjectionExtentMetres": 100000
+            },
+            "MaximumStartAge": "00:00:03",
+            "MaximumInterpolationGap": "00:00:10",
+            "HeartRate": {
+              "Version": 1,
+              "DeviceAddress": "02:00:00:00:00:01",
+              "Policy": {
+                "Version": 1,
+                "MaximumGap": "00:00:05"
+              },
+              "Zones": [],
+              "ReserveProfile": null,
+              "DeviceName": "Synthetic HR fixture"
+            },
+            "Motion": {
+              "Version": "timed-motion-pilot-v1",
+              "MaximumAccuracyMetres": 5,
+              "MaximumGap": "00:00:03",
+              "MaximumAge": "00:00:03",
+              "StationaryRadiusMetres": 2,
+              "MinimumResumeMetres": 3,
+              "MaximumSpeedMetresPerSecond": 12
+            },
+            "TrainingDistance": {
+              "Version": "ordinary-gps-pilot-v1",
+              "MaximumAccuracyMetres": 30,
+              "MaximumGap": "00:00:10",
+              "MaximumAge": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MinimumMovementMetres": 3
+            },
+            "LivePace": {
+              "Version": "trusted-edge-live-pace-pilot-v1",
+              "Window": "00:00:10",
+              "MinimumSupport": "00:00:03",
+              "MaximumAge": "00:00:03"
+            }
+          },
+          "Snapshot": {
+            "Id": "11111111-1111-4111-8111-111111111111",
+            "RouteName": "Synthetic example route",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Mode": 1,
+            "Clock": {
+              "RaceElapsed": "00:00:07",
+              "TrainingActive": "00:00:05",
+              "TrainingPaused": false,
+              "State": 0
+            },
+            "PauseReason": 0,
+            "Match": {
+              "Route": {
+                "Id": "22222222-2222-4222-8222-222222222222",
+                "Version": "44444444-4444-4444-8444-444444444444"
+              },
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "State": 1,
+              "Metres": 6.671704814011974,
+              "NextVertex": 1,
+              "StartedAt": "00:00:00",
+              "FinishedAt": null,
+              "Problem": null
+            },
+            "GhostMetres": 7.783655616347303,
+            "Gap": {
+              "MetresAhead": -1.111950802335329,
+              "SecondsAhead": -1
+            },
+            "ReferenceId": "33333333-3333-4333-8333-333333333333",
+            "ReferenceElapsed": "00:00:10",
+            "FrozenYear": 2025,
+            "QualityReason": null
+          },
+          "Pauses": [
+            {
+              "StartedAt": "00:01:45",
+              "EndedAt": "00:01:47"
+            }
+          ],
+          "Progress": [
+            {
+              "Elapsed": "00:00:00",
+              "Metres": 0.0,
+              "Known": true
+            },
+            {
+              "Elapsed": "00:00:02",
+              "Metres": 2.223901604670658,
+              "Known": true
+            },
+            {
+              "Elapsed": "00:00:06",
+              "Metres": 6.671704814011974,
+              "Known": true
+            }
+          ],
+          "Raw": [
+            {
+              "Elapsed": "00:00:00",
+              "Utc": "2025-01-01T12:00:00+00:00",
+              "Latitude": 0,
+              "Longitude": 0.0,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            },
+            {
+              "Elapsed": "00:00:02",
+              "Utc": "2025-01-01T12:00:02+00:00",
+              "Latitude": 0,
+              "Longitude": 2e-05,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            },
+            {
+              "Elapsed": "00:00:06",
+              "Utc": "2025-01-01T12:00:06+00:00",
+              "Latitude": 0,
+              "Longitude": 6.000000000000001e-05,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            }
+          ],
+          "ArchiveDisposition": "not-terminal",
+          "TerminalKind": null
+        }
+      },
+      {
+        "sequence": 23,
+        "command": "end-attempt",
+        "observedUtc": "2025-01-01T12:00:12.5000000+00:00",
+        "observedElapsedMilliseconds": 12500,
+        "checkpoint": {
+          "ActivityKind": "ghost",
+          "GhostCheckpointVersion": 1,
+          "Id": "11111111-1111-4111-8111-111111111111",
+          "SaveRevision": 4,
+          "StartedUtc": "2025-01-01T12:00:00+00:00",
+          "StartedLocal": "2025-01-01T12:00:00+00:00",
+          "TimeZoneId": "UTC",
+          "HealthConnectConsentRevision": null,
+          "StartedBootMilliseconds": 100000,
+          "ObservedBootMilliseconds": 112500,
+          "Route": {
+            "Key": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Name": "Synthetic example route",
+            "SourceRunId": "55555555-5555-4555-8555-555555555555",
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Geometry": [
+              {
+                "Latitude": 0,
+                "Longitude": 0,
+                "Metres": 0
+              },
+              {
+                "Latitude": 0,
+                "Longitude": 0.0001,
+                "Metres": 11.11950802335329
+              }
+            ],
+            "LengthMetres": 11.11950802335329
+          },
+          "Mode": 1,
+          "Reference": {
+            "Id": "33333333-3333-4333-8333-333333333333",
+            "SourceRunId": "66666666-6666-4666-8666-666666666666",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "StartedLocal": "2024-12-31T12:00:00+00:00",
+            "TimeZoneId": "UTC",
+            "SavedLocalYear": 2024,
+            "Elapsed": "00:00:10",
+            "Quality": 0,
+            "RuleVersion": "stored-main-source-v2-pilot",
+            "Points": [
+              {
+                "Elapsed": "00:00:00",
+                "Metres": 0,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:05",
+                "Metres": 5.559754011676645,
+                "Known": true
+              },
+              {
+                "Elapsed": "00:00:10",
+                "Metres": 11.11950802335329,
+                "Known": true
+              }
+            ]
+          },
+          "Profile": {
+            "Version": "ghost-service-pilot-v1",
+            "Matching": {
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "CorridorMetres": 5,
+              "GateMetres": 1,
+              "MaximumAccuracyMetres": 1,
+              "MaximumGap": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MaximumStepMetres": 120,
+              "ProjectionExtentMetres": 100000
+            },
+            "MaximumStartAge": "00:00:03",
+            "MaximumInterpolationGap": "00:00:10",
+            "HeartRate": {
+              "Version": 1,
+              "DeviceAddress": "02:00:00:00:00:01",
+              "Policy": {
+                "Version": 1,
+                "MaximumGap": "00:00:05"
+              },
+              "Zones": [],
+              "ReserveProfile": null,
+              "DeviceName": "Synthetic HR fixture"
+            },
+            "Motion": {
+              "Version": "timed-motion-pilot-v1",
+              "MaximumAccuracyMetres": 5,
+              "MaximumGap": "00:00:03",
+              "MaximumAge": "00:00:03",
+              "StationaryRadiusMetres": 2,
+              "MinimumResumeMetres": 3,
+              "MaximumSpeedMetresPerSecond": 12
+            },
+            "TrainingDistance": {
+              "Version": "ordinary-gps-pilot-v1",
+              "MaximumAccuracyMetres": 30,
+              "MaximumGap": "00:00:10",
+              "MaximumAge": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MinimumMovementMetres": 3
+            },
+            "LivePace": {
+              "Version": "trusted-edge-live-pace-pilot-v1",
+              "Window": "00:00:10",
+              "MinimumSupport": "00:00:03",
+              "MaximumAge": "00:00:03"
+            }
+          },
+          "Snapshot": {
+            "Id": "11111111-1111-4111-8111-111111111111",
+            "RouteName": "Synthetic example route",
+            "Route": {
+              "Id": "22222222-2222-4222-8222-222222222222",
+              "Version": "44444444-4444-4444-8444-444444444444"
+            },
+            "Mode": 1,
+            "Clock": {
+              "RaceElapsed": "00:00:12",
+              "TrainingActive": "00:00:10",
+              "TrainingPaused": false,
+              "State": 2
+            },
+            "PauseReason": 0,
+            "Match": {
+              "Route": {
+                "Id": "22222222-2222-4222-8222-222222222222",
+                "Version": "44444444-4444-4444-8444-444444444444"
+              },
+              "RuleVersion": "stored-main-source-v2-pilot",
+              "State": 2,
+              "Metres": null,
+              "NextVertex": 1,
+              "StartedAt": "00:00:00",
+              "FinishedAt": null,
+              "Problem": 4
+            },
+            "GhostMetres": 11.11950802335329,
+            "Gap": {
+              "MetresAhead": null,
+              "SecondsAhead": null
+            },
+            "ReferenceId": "33333333-3333-4333-8333-333333333333",
+            "ReferenceElapsed": "00:00:10",
+            "FrozenYear": 2025,
+            "QualityReason": "Attempt ended before a verified route finish."
+          },
+          "Pauses": [
+            {
+              "StartedAt": "00:01:45",
+              "EndedAt": "00:01:47"
+            }
+          ],
+          "Progress": [
+            {
+              "Elapsed": "00:00:00",
+              "Metres": 0.0,
+              "Known": true
+            },
+            {
+              "Elapsed": "00:00:02",
+              "Metres": 2.223901604670658,
+              "Known": true
+            },
+            {
+              "Elapsed": "00:00:06",
+              "Metres": 6.671704814011974,
+              "Known": true
+            }
+          ],
+          "Raw": [
+            {
+              "Elapsed": "00:00:00",
+              "Utc": "2025-01-01T12:00:00+00:00",
+              "Latitude": 0,
+              "Longitude": 0.0,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            },
+            {
+              "Elapsed": "00:00:02",
+              "Utc": "2025-01-01T12:00:02+00:00",
+              "Latitude": 0,
+              "Longitude": 2e-05,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            },
+            {
+              "Elapsed": "00:00:06",
+              "Utc": "2025-01-01T12:00:06+00:00",
+              "Latitude": 0,
+              "Longitude": 6.000000000000001e-05,
+              "AccuracyMetres": 1,
+              "Section": 1,
+              "GapBefore": false
+            }
+          ],
+          "ArchiveDisposition": "attempt",
+          "TerminalKind": "explicit-end",
+          "MeasuredTrainingDistance": {
+            "Policy": {
+              "Version": "ordinary-gps-pilot-v1",
+              "MaximumAccuracyMetres": 30,
+              "MaximumGap": "00:00:10",
+              "MaximumAge": "00:00:10",
+              "MaximumSpeedMetresPerSecond": 12,
+              "MinimumMovementMetres": 3
+            },
+            "TotalMeasuredMetres": 0,
+            "MainMeasuredMetres": 0,
+            "MainHasGaps": true,
+            "Status": "Phase boundary",
+            "Splits": [
+              {
+                "Number": 1,
+                "MeasuredMetres": 0,
+                "ActiveTime": "00:00:10",
+                "HasGaps": true,
+                "PaceSecondsPerKilometre": null
+              }
+            ]
+          },
+          "TerminalContext": {
+            "Version": 1,
+            "ObservedUtc": "2025-01-01T12:00:12.5000000+00:00",
+            "ObservedBootMilliseconds": 112500,
+            "ObservedZoneId": "UTC",
+            "ObservedUtcOffsetSeconds": 0,
+            "StartDerivedEffectiveUtc": "2025-01-01T12:00:12+00:00",
+            "EffectiveUtcOffsetSeconds": 0,
+            "Provenance": "terminal-observed-zone-rules-v1"
+          }
+        }
+      }
+    ],
+    "locations": [
+      {
+        "snapshotOrder": 5001,
+        "utcMilliseconds": 1735732800000,
+        "bootMonotonicNanoseconds": 100000000000,
+        "latitudeDegrees": 0,
+        "longitudeDegrees": 0.0,
+        "accuracyMetres": 1,
+        "provenance": null
+      },
+      {
+        "snapshotOrder": 5002,
+        "utcMilliseconds": 1735732802000,
+        "bootMonotonicNanoseconds": 102000000000,
+        "latitudeDegrees": 0,
+        "longitudeDegrees": 2e-05,
+        "accuracyMetres": 1,
+        "provenance": null
+      },
+      {
+        "snapshotOrder": 5003,
+        "utcMilliseconds": 1735732806000,
+        "bootMonotonicNanoseconds": 106000000000,
+        "latitudeDegrees": 0,
+        "longitudeDegrees": 6.000000000000001e-05,
+        "accuracyMetres": 1,
+        "provenance": null
+      }
+    ],
+    "heartRate": [
+      {
+        "sequence": 31,
+        "receiptUtc": "2025-01-01T12:00:06.2000000+00:00",
+        "bootReceiptMonotonicTicks": 1062000000,
+        "bpm": 120,
+        "quality": "valid"
+      }
+    ],
+    "localSavedPartUtc": null
+  },
+  "snapshotConsistency": "transactional-storage; raw GPS may precede the last derived checkpoint"
+}

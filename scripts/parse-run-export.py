@@ -200,11 +200,179 @@ def validate_points(version, run):
             chain = None
 
 
+def utc_ticks(value):
+    parsed = datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("UTC/civil provenance requires a recorded offset")
+    fraction = re.search(r"\.(\d{1,7})(?:Z|[+-]\d{2}:\d{2})$", value)
+    remainder = int(fraction[1].ljust(7, "0")[-1]) if fraction else 0
+    delta = parsed.astimezone(datetime.timezone.utc) - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+    return ((delta.days * 86400 + delta.seconds) * TICKS + delta.microseconds * 10 + remainder)
+
+
+def ghost_checkpoint(cp):
+    def require(ok, message):
+        if not ok:
+            raise ValueError(message)
+    def number(value):
+        return type(value) in (int, float) and math.isfinite(value)
+    def identity(value):
+        parsed = uuid.UUID(value)
+        require(parsed.int != 0, "Empty Ghost identity")
+        return parsed
+    require(cp["ActivityKind"] == "ghost" and type(cp["GhostCheckpointVersion"]) is int and cp["GhostCheckpointVersion"] == 1,
+            "Unsupported Ghost checkpoint")
+    route, view, profile = cp["Route"], cp["Snapshot"], cp["Profile"]
+    key = lambda k: (identity(k["Id"]), identity(k["Version"]))
+    require(identity(cp["Id"]) == identity(view["Id"]) and key(route["Key"]) == key(view["Route"]), "Ghost snapshot identity mismatch")
+    identity(route["SourceRunId"])
+    require(type(cp["Mode"]) is int and cp["Mode"] in (0, 1) and cp["Mode"] == view["Mode"], "Invalid Ghost mode")
+    require(type(cp["SaveRevision"]) is int and cp["SaveRevision"] > 0, "Invalid Ghost revision")
+    require(utc_ticks(cp["StartedLocal"]) == utc_ticks(cp["StartedUtc"]) and cp["TimeZoneId"], "Ghost frozen civil start mismatch")
+    require(view["FrozenYear"] == datetime.datetime.fromisoformat(cp["StartedLocal"]).year, "Frozen year mismatch")
+    vertices = route["Geometry"]
+    require(len(vertices) >= 2, "Missing ordered route geometry")
+    previous = -1
+    for index, vertex in enumerate(vertices):
+        require(number(vertex["Latitude"]) and -90 <= vertex["Latitude"] <= 90 and number(vertex["Longitude"]) and -180 <= vertex["Longitude"] <= 180,
+                "Invalid frozen geometry")
+        require(number(vertex["Metres"]) and (vertex["Metres"] == 0 if index == 0 else vertex["Metres"] > previous), "Invalid route chainage")
+        previous = vertex["Metres"]
+    length = route["LengthMetres"]
+    require(number(length) and length == previous and length > 0, "Frozen route length mismatch")
+    require(profile["Version"] == "ghost-service-pilot-v1" and profile["Matching"]["RuleVersion"] == route["RuleVersion"], "Unsupported frozen Ghost policy")
+    matching = profile["Matching"]
+    require(all(number(matching[name]) and matching[name] > 0 for name in ["CorridorMetres","GateMetres","MaximumAccuracyMetres","MaximumSpeedMetresPerSecond","MaximumStepMetres","ProjectionExtentMetres"])
+            and duration_ticks(matching["MaximumGap"]) > 0 and matching["MaximumAccuracyMetres"] <= min(matching["CorridorMetres"],matching["GateMetres"]), "Invalid frozen matcher policy")
+    require(duration_ticks(profile["MaximumStartAge"]) > 0 and duration_ticks(profile["MaximumInterpolationGap"]) > 0, "Invalid support policy")
+    clock = view["Clock"]
+    require(type(clock["State"]) is int and clock["State"] in range(4), "Invalid race state")
+    race, active = duration_ticks(clock["RaceElapsed"]), duration_ticks(clock["TrainingActive"])
+    start, observed = cp["StartedBootMilliseconds"], cp["ObservedBootMilliseconds"]
+    require(type(start) is int and type(observed) is int and 0 <= start <= observed and 0 <= active <= race <= (observed-start)*10000,
+            "Unsupported race clock domain")
+    end, through, paused = start*10000 + race, start*10000, 0
+    intervals = []
+    for pause in cp["Pauses"]:
+        a = duration_ticks(pause["StartedAt"])
+        b = None if pause["EndedAt"] is None else duration_ticks(pause["EndedAt"])
+        require(start*10000 <= a <= observed*10000 and (b is None or a <= b <= observed*10000), "Invalid boot pause interval")
+        intervals.append((a, b))
+    for a, b in sorted(intervals, key=lambda item:item[0]):
+        a, b = max(a, through), min(end, b if b is not None else end)
+        if b > a:
+            paused += b-a
+            through = b
+    require(active == race-paused and type(clock["TrainingPaused"]) is bool and clock["TrainingPaused"] == any(a <= end and (b is None or b > end) for a,b in intervals),
+            "Training clock disagrees with recorded pause union")
+    expected = ("not-terminal", None) if clock["State"] == 0 else (("zero-elapsed-incomplete", "explicit-end") if clock["State"] == 2 and race == 0 else
+               ("attempt", {1:"matched-finish",2:"explicit-end",3:"interrupted"}[clock["State"]]))
+    require((cp["ArchiveDisposition"],cp["TerminalKind"]) == expected, "Ghost disposition mismatch")
+    match = view["Match"]
+    require(key(match["Route"]) == key(route["Key"]) and match["RuleVersion"] == route["RuleVersion"], "Matcher identity mismatch")
+    if clock["State"] == 1:
+        require(race > 0 and match["State"] == 3 and duration_ticks(match["FinishedAt"]) == race, "Finished requires actual matched finish")
+    def progress(points, elapsed):
+        previous = -1
+        require(bool(points), "Missing frozen progress")
+        for point in points:
+            at = duration_ticks(point["Elapsed"])
+            require(previous < at <= elapsed and number(point["Metres"]) and 0 <= point["Metres"] <= length and type(point["Known"]) is bool,
+                    "Invalid frozen progress order/support")
+            previous = at
+    progress(cp["Progress"], race)
+    reference = cp["Reference"]
+    if reference is None:
+        require(view["ReferenceId"] is None and view["ReferenceElapsed"] is None, "Invented reference")
+    else:
+        identity(reference["SourceRunId"])
+        elapsed = duration_ticks(reference["Elapsed"])
+        require(identity(reference["Id"]) == identity(view["ReferenceId"]) and key(reference["Route"]) == key(route["Key"])
+                and elapsed > 0 and elapsed == duration_ticks(view["ReferenceElapsed"]) and reference["RuleVersion"] == route["RuleVersion"]
+                and type(reference["Quality"]) is int and reference["Quality"] == 0 and reference["TimeZoneId"], "Frozen reference mismatch")
+        utc_ticks(reference["StartedLocal"])
+        require(reference["SavedLocalYear"] == datetime.datetime.fromisoformat(reference["StartedLocal"]).year, "Reference civil year mismatch")
+        progress(reference["Points"], elapsed)
+        first,last = reference["Points"][0],reference["Points"][-1]
+        require(first["Known"] and first["Metres"] == 0 and duration_ticks(first["Elapsed"]) == 0 and last["Known"]
+                and last["Metres"] == length and duration_ticks(last["Elapsed"]) == elapsed, "Reference lacks recorded complete endpoints")
+        # Unknown internal comparison intervals remain unknown; no blanket all-Known gate.
+    measured = cp.get("MeasuredTrainingDistance")
+    if measured is not None:
+        require(measured["Policy"] == profile["TrainingDistance"] and number(measured["TotalMeasuredMetres"])
+                and number(measured["MainMeasuredMetres"]) and 0 <= measured["MainMeasuredMetres"] <= measured["TotalMeasuredMetres"], "Frozen measured distance mismatch")
+        require(type(measured["MainHasGaps"]) is bool, "Missing measured-distance coverage")
+        for split in measured["Splits"]:
+            require(number(split["MeasuredMetres"]) and split["MeasuredMetres"] >= 0 and type(split["HasGaps"]) is bool, "Invalid stored distance split")
+            duration_ticks(split["ActiveTime"])
+    terminal = cp.get("TerminalContext")
+    if terminal is not None:
+        require(clock["State"] != 0 and type(terminal["Version"]) is int and terminal["Version"] == 1
+                and terminal["Provenance"] == "terminal-observed-zone-rules-v1" and terminal["ObservedBootMilliseconds"] == observed
+                and terminal["ObservedZoneId"] and utc_ticks(terminal["StartDerivedEffectiveUtc"]) == utc_ticks(cp["StartedUtc"])+race,
+                "Terminal provenance mismatch")
+        for field in ["ObservedUtcOffsetSeconds","EffectiveUtcOffsetSeconds"]:
+            require(type(terminal[field]) is int and -50400 <= terminal[field] <= 50400 and terminal[field] % 60 == 0, "Invalid frozen terminal offset")
+    for raw in cp["Raw"]:
+        at = raw["Elapsed"]
+        duration_ticks(at[1:] if at.startswith("-") else at)
+        utc_ticks(raw["Utc"])
+        require(number(raw["Latitude"]) and -90 <= raw["Latitude"] <= 90 and number(raw["Longitude"]) and -180 <= raw["Longitude"] <= 180
+                and type(raw["GapBefore"]) is bool, "Malformed original Ghost callback")
+    return race, active
+
+
+def read_ghost_export(document):
+    units = dict(UNITS, ghostBootMonotonic="milliseconds",pauseBootMonotonic="TimeSpan-constant-format",raceProgressElapsed="TimeSpan-constant-format")
+    if document.get("activityKind") != "ghost" or document.get("units") != units:
+        raise ValueError("Unsupported Ghost identity/units")
+    run = document["run"];cp = run["checkpoint"]
+    race,active = ghost_checkpoint(cp)
+    for field in ["startedUtc","lastObservedUtc"]:
+        if datetime.datetime.fromisoformat(run[field].replace("Z","+00:00")).utcoffset() != datetime.timedelta(0):
+            raise ValueError("Ghost UTC receipt requires UTC offset")
+        utc_ticks(run[field])
+    if uuid.UUID(run["id"]) != uuid.UUID(cp["Id"]) or utc_ticks(run["startedUtc"]) != utc_ticks(cp["StartedUtc"]) or run["originalPlan"] != []:
+        raise ValueError("Ghost row identity/plan mismatch")
+    if type(run["observedElapsedMilliseconds"]) is not int or run["observedElapsedMilliseconds"] != cp["ObservedBootMilliseconds"]-cp["StartedBootMilliseconds"]:
+        raise ValueError("Ghost row observation clock mismatch")
+    marker = run["localSavedPartUtc"]
+    state = cp["Snapshot"]["Clock"]["State"]
+    if run["status"] == "interrupted":
+        if state not in (0,3) or marker is None:
+            raise ValueError("Interrupted prefix lacks explicit saved-part confirmation")
+        utc_ticks(marker)
+    elif run["status"] not in ("finished","incomplete") or state != {"finished":1,"incomplete":2}[run["status"]] or marker is not None or race <= 0:
+        raise ValueError("Unconfirmed/invalid Ghost terminal source")
+    if cp.get("TerminalContext") is not None and utc_ticks(run["lastObservedUtc"]) != utc_ticks(cp["TerminalContext"]["ObservedUtc"]):
+        raise ValueError("Terminal receipt differs from row")
+    validate_points(2,run)
+    for key, order in [("events","sequence"),("heartRate","sequence"),("locations","snapshotOrder") ]:
+        sequences=[row[order] for row in run[key]]
+        if any(type(n) is not int or n < 0 for n in sequences) or any(a>=b for a,b in zip(sequences,sequences[1:])):
+            raise ValueError("Original receipt/event order changed")
+    for event in run["events"]:
+        prior=event["checkpoint"];ghost_checkpoint(prior)
+        if datetime.datetime.fromisoformat(event["observedUtc"].replace("Z","+00:00")).utcoffset() != datetime.timedelta(0):
+            raise ValueError("Event receipt requires UTC offset")
+        if prior.get("TerminalContext") is not None and utc_ticks(prior["TerminalContext"]["ObservedUtc"]) != utc_ticks(event["observedUtc"]):
+            raise ValueError("Event terminal receipt mismatch")
+        if uuid.UUID(prior["Id"]) != uuid.UUID(cp["Id"]) or prior["StartedBootMilliseconds"] != cp["StartedBootMilliseconds"] or prior["ObservedBootMilliseconds"]-prior["StartedBootMilliseconds"] != event["observedElapsedMilliseconds"] or prior["SaveRevision"] > cp["SaveRevision"]:
+            raise ValueError("Historical event identity/clock mismatch")
+        if any(prior[name] != cp[name] for name in ["Route","Reference","Profile","StartedLocal","TimeZoneId","Mode","HealthConnectConsentRevision"]):
+            raise ValueError("Historical frozen reference/policy changed")
+    return {"schemaVersion":3,"activityKind":"ghost","id":run["id"],"status":run["status"],"raceElapsedTicks":race,
+            "trainingActiveTicks":active,"localSavedPartUtc":marker,"checkpoint":cp,"frozenReference":cp["Reference"],
+            "measuredTrainingDistance":cp.get("MeasuredTrainingDistance"),"terminalContext":cp.get("TerminalContext"),
+            "heartRateAggregates":None,"locations":run["locations"],"heartRate":run["heartRate"],"events":run["events"]}
+
 def read_export(path):
     def reject_constant(value):
         raise ValueError("Nonfinite JSON number: " + value)
 
     document = json.loads(Path(path).read_text(encoding="utf-8"), parse_constant=reject_constant)
+    if type(document.get("schemaVersion")) is int and document["schemaVersion"] == 3:
+        return read_ghost_export(document)
     if type(document.get("schemaVersion")) is not int or document["schemaVersion"] not in (1, 2) or document.get("units") != UNITS:
         raise ValueError("Unsupported export version or units")
     run = document["run"]

@@ -16,13 +16,34 @@ schema = json.loads((root / "docs/export/run-v1.schema.json").read_text(encoding
 Draft202012Validator.check_schema(schema)
 validator = Draft202012Validator(schema, format_checker=FormatChecker())
 validators = {1: validator, 2: Draft202012Validator(json.loads((root / "docs/export/run-v2.schema.json").read_text(encoding="utf-8")), format_checker=FormatChecker())}
-paths = [root / "docs/export/sample-v1.json", root / "docs/export/sample-current-v1.json", root / "docs/export/sample-current-v2.json"] + [Path(value) for value in sys.argv[1:]]
+validators[3] = Draft202012Validator(json.loads((root / "docs/export/run-v3.schema.json").read_text(encoding="utf-8")), format_checker=FormatChecker())
+paths = [root / "docs/export/sample-v1.json", root / "docs/export/sample-current-v1.json", root / "docs/export/sample-current-v2.json", root / "docs/export/sample-ghost-v3.json"] + [Path(value) for value in sys.argv[1:]]
 for path in paths:
     document = json.loads(path.read_text(encoding="utf-8"))
     validator = validators[document["schemaVersion"]]
     validator.validate(document)
     reconstructed = consumer.read_export(path)
     run = document["run"]
+    if document["schemaVersion"] == 3:
+        assert reconstructed["checkpoint"] == run["checkpoint"] and reconstructed["frozenReference"] == run["checkpoint"]["Reference"]
+        assert reconstructed["locations"] == run["locations"] and reconstructed["heartRate"] == run["heartRate"]
+        assert reconstructed["heartRateAggregates"] is None
+        mutations = [lambda d:d.update(schemaVersion=True), lambda d:d.update(activityKind="core"),
+                     lambda d:d["run"]["checkpoint"]["Snapshot"]["Clock"].update(TrainingActive="00:00:11"),
+                     lambda d:d["run"]["checkpoint"].update(ObservedBootMilliseconds=99999),
+                     lambda d:d["run"].update(id="99999999-9999-4999-8999-999999999999"),
+                     lambda d:d["run"].update(status="interrupted",localSavedPartUtc=None)]
+        if run["checkpoint"]["Reference"] is not None:
+            mutations.append(lambda d:d["run"]["checkpoint"]["Reference"]["Route"].update(Id="99999999-9999-4999-8999-999999999999"))
+        for mutate in mutations:
+            bad=copy.deepcopy(document); mutate(bad)
+            with tempfile.TemporaryDirectory() as temporary:
+                target=Path(temporary)/"bad-ghost.json";target.write_text(json.dumps(bad),encoding="utf-8",newline="\n")
+                try: consumer.read_export(target)
+                except (ValueError,KeyError,TypeError): pass
+                else: raise AssertionError("Independent Ghost consumer accepted malformed/unsupported source")
+        print("PASS schema + independent Ghost reconstruction/negative identity-clock-confirmation:",path.name)
+        continue
     assert reconstructed["originalPlan"] == run["originalPlan"]
     assert reconstructed["terminalContext"] == run["checkpoint"].get("TerminalContext")
     known_checkpoint = "SchemaVersion" in run["checkpoint"]

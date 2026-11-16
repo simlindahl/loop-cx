@@ -136,3 +136,64 @@ with TemporaryDirectory(prefix="loop-ghost-archive-") as temporary:
 
 print("PASS: real SQLite archive, route/profile/source constraints, immutable evidence, local year and frozen nullable race reference.")
 print("PASS: failed finalization rolls back atomically; reopening preserves UTF-8, raw/progress payloads and reference; integrity checks pass.")
+
+# Exercise the production marker SQL with real host SQLite; typed Ghost guards are SessionChecks.
+import re
+journal_source = (ROOT / "src/LoopCx/Platforms/Android/RunJournal.cs").read_text(encoding="utf-8")
+marker_statements = set(re.findall(r'"(UPDATE runs SET recovery_saved_utc[^"\n]+)"', journal_source))
+assert len(marker_statements) == 1
+marker_sql = marker_statements.pop()
+create_runs = re.search(r'"(CREATE TABLE runs [^"\n]+)"', journal_source)[1]
+add_marker = re.search(r'"(ALTER TABLE runs ADD COLUMN recovery_saved_utc TEXT)"', journal_source)[1]
+example = json.loads((ROOT / "docs/export/sample-ghost-v3.json").read_text(encoding="utf-8"))
+owned = example["run"]["id"]
+prefix = example["run"]["events"][0]["checkpoint"]
+frozen = json.dumps(prefix, ensure_ascii=False)
+with TemporaryDirectory() as temporary:
+    path = Path(temporary) / "ghost-recovery.db"
+    db = connect(path)
+    db.execute(create_runs)
+    db.execute(add_marker)
+    db.execute(re.search(r'"(CREATE TABLE locations [^"\n]+)"', journal_source)[1])
+    db.execute(re.search(r'"(CREATE TABLE export_queue [^"\n]+)"', journal_source)[1])
+    db.execute("INSERT INTO locations VALUES (?,?,?,?,?,?,?)",(owned,1735732800000,100000000000,0,0,1,None))
+    db.execute("INSERT INTO export_queue VALUES (?,?,?,?)",("other-owned-core","action_required","frozen attempt","unchanged"))
+    db.executescript(SCHEMA.read_text(encoding="utf-8"))
+    db.execute("INSERT INTO runs VALUES (?,?,?,?,?,?,?,?,?)", (owned,"2025-01-01T12:00:00+00:00","2025-01-01T12:00:00+00:00",0,"interrupted","[]",frozen,'{"ActivityKind":"ghost"}',None))
+    db.commit()
+    route(db)
+    attempt(db)
+    db.commit()
+    tables = ["locations","export_queue","ghost_routes","ghost_attempts","ghost_race_starts"]
+    preserved = {table:db.execute("SELECT * FROM "+table).fetchall() for table in tables}
+    before = db.execute("SELECT * FROM runs").fetchall()
+    db.execute("CREATE TEMP TRIGGER own_ack_abort BEFORE UPDATE OF recovery_saved_utc ON runs BEGIN SELECT RAISE(ABORT,'owned marker failure'); END")
+    try:
+        with db:
+            db.execute(marker_sql, ("2025-01-01T12:01:00.0000000+00:00",owned))
+        raise AssertionError("Marker abort unexpectedly committed")
+    except sqlite3.IntegrityError:
+        pass
+    assert db.execute("SELECT * FROM runs").fetchall() == before
+    db.execute("DROP TRIGGER own_ack_abort")
+    acknowledgement = "2025-01-01T12:01:00.0000000+00:00"
+    try:
+        with db:
+            assert db.execute(marker_sql,(acknowledgement,owned)).rowcount == 1
+        raise IOError("Synthetic loss AFTER host SQLite commit")
+    except IOError:
+        pass
+    # A retry reads the existing marker, not a later wall clock or another inserted run.
+    assert db.execute("SELECT recovery_saved_utc FROM runs WHERE id=?",(owned,)).fetchone() == (acknowledgement,)
+    assert db.execute(marker_sql,("2099-01-01T00:00:00.0000000+00:00",owned)).rowcount == 0
+    db.commit()
+    after = db.execute("SELECT * FROM runs").fetchall()
+    assert after[0][:-1] == before[0][:-1] and after[0][-1] == acknowledgement
+    assert {table:db.execute("SELECT * FROM "+table).fetchall() for table in tables} == preserved
+    db.close()
+    db = connect(path)
+    assert db.execute("SELECT * FROM runs").fetchall() == after
+    assert {table:db.execute("SELECT * FROM "+table).fetchall() for table in tables} == preserved
+    assert db.execute("PRAGMA integrity_check").fetchone() == ("ok",)
+    db.close()
+print("PASS: actual marker SQL host SQLite abort/rollback, committed lost return, unchanged prefix/idempotent marker/cold reopen; no attempt added. Native API remains separate.")

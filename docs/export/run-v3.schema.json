@@ -1,0 +1,1588 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/simlindahl/loop-cx/blob/main/docs/export/run-v3.schema.json",
+  "title": "LOOP Cx Ghost JSON version3 \u00b7 candidate implementation; native acceptance pending",
+  "$comment": "Shape only. Owning integration contract requires cross-field identity/clock/order checks and confirmed interrupted eligibility. No Core schema/parser or HC version change.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 3
+    },
+    "activityKind": {
+      "const": "ghost"
+    },
+    "units": {
+      "type": "object",
+      "properties": {
+        "distance": {
+          "const": "metres"
+        },
+        "coordinates": {
+          "const": "decimal-degrees"
+        },
+        "heartRate": {
+          "const": "beats-per-minute"
+        },
+        "utc": {
+          "const": "ISO-8601"
+        },
+        "gpsUtc": {
+          "const": "unix-milliseconds"
+        },
+        "observedElapsed": {
+          "const": "milliseconds"
+        },
+        "gpsBootMonotonic": {
+          "const": "nanoseconds"
+        },
+        "hrBootReceiptMonotonic": {
+          "const": "100-nanosecond-ticks"
+        },
+        "checkpointDuration": {
+          "const": "TimeSpan-constant-format"
+        },
+        "pace": {
+          "const": "seconds-per-kilometre"
+        },
+        "ghostBootMonotonic": {
+          "const": "milliseconds"
+        },
+        "pauseBootMonotonic": {
+          "const": "TimeSpan-constant-format"
+        },
+        "raceProgressElapsed": {
+          "const": "TimeSpan-constant-format"
+        }
+      },
+      "required": [
+        "distance",
+        "coordinates",
+        "heartRate",
+        "utc",
+        "gpsUtc",
+        "observedElapsed",
+        "gpsBootMonotonic",
+        "hrBootReceiptMonotonic",
+        "checkpointDuration",
+        "pace",
+        "ghostBootMonotonic",
+        "pauseBootMonotonic",
+        "raceProgressElapsed"
+      ],
+      "additionalProperties": false
+    },
+    "run": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "startedUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastObservedUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "observedElapsedMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "enum": [
+            "finished",
+            "incomplete",
+            "interrupted"
+          ]
+        },
+        "originalPlan": {
+          "const": []
+        },
+        "template": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "ActivityKind": {
+                  "const": "ghost"
+                }
+              },
+              "required": [
+                "ActivityKind"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "heartRateSetup": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/hrSetup"
+            }
+          ]
+        },
+        "checkpoint": {
+          "$ref": "#/$defs/ghostCheckpoint"
+        },
+        "exportStatus": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "command": {
+                "type": "string"
+              },
+              "observedUtc": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "observedElapsedMilliseconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "checkpoint": {
+                "$ref": "#/$defs/ghostCheckpoint"
+              }
+            },
+            "required": [
+              "sequence",
+              "command",
+              "observedUtc",
+              "observedElapsedMilliseconds",
+              "checkpoint"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "snapshotOrder": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "utcMilliseconds": {
+                "type": "integer"
+              },
+              "bootMonotonicNanoseconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "latitudeDegrees": {
+                "type": "number"
+              },
+              "longitudeDegrees": {
+                "type": "number"
+              },
+              "accuracyMetres": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "provenance": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "version": {
+                    "const": 1
+                  },
+                  "runId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "pointId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "outcome": {
+                    "enum": [
+                      "valid",
+                      "rejected",
+                      "ignored",
+                      "not-assessed"
+                    ]
+                  },
+                  "drawablePredecessor": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1
+                  },
+                  "breakReason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "version",
+                  "runId",
+                  "pointId",
+                  "outcome",
+                  "drawablePredecessor",
+                  "breakReason"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "snapshotOrder",
+              "utcMilliseconds",
+              "bootMonotonicNanoseconds",
+              "latitudeDegrees",
+              "longitudeDegrees",
+              "accuracyMetres"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "heartRate": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "receiptUtc": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "bootReceiptMonotonicTicks": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "bpm": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "quality": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sequence",
+              "receiptUtc",
+              "bootReceiptMonotonicTicks",
+              "bpm",
+              "quality"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "localSavedPartUtc": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "startedUtc",
+        "lastObservedUtc",
+        "observedElapsedMilliseconds",
+        "status",
+        "originalPlan",
+        "template",
+        "heartRateSetup",
+        "checkpoint",
+        "exportStatus",
+        "events",
+        "locations",
+        "heartRate",
+        "localSavedPartUtc"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "interrupted"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "localSavedPartUtc": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "localSavedPartUtc": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "finished"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checkpoint": {
+                "properties": {
+                  "Snapshot": {
+                    "properties": {
+                      "Clock": {
+                        "properties": {
+                          "State": {
+                            "const": 1
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "ArchiveDisposition": {
+                    "const": "attempt"
+                  },
+                  "TerminalKind": {
+                    "const": "matched-finish"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "incomplete"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checkpoint": {
+                "properties": {
+                  "Snapshot": {
+                    "properties": {
+                      "Clock": {
+                        "properties": {
+                          "State": {
+                            "const": 2
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "ArchiveDisposition": {
+                    "const": "attempt"
+                  },
+                  "TerminalKind": {
+                    "const": "explicit-end"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "interrupted"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checkpoint": {
+                "properties": {
+                  "Snapshot": {
+                    "properties": {
+                      "Clock": {
+                        "properties": {
+                          "State": {
+                            "enum": [
+                              0,
+                              3
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "snapshotConsistency": {
+      "const": "transactional-storage; raw GPS may precede the last derived checkpoint"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "activityKind",
+    "units",
+    "run",
+    "snapshotConsistency"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "duration": {
+      "type": "string",
+      "pattern": "^(?:[0-9]+\\.)?[0-2][0-9]:[0-5][0-9]:[0-5][0-9](?:\\.[0-9]{1,7})?$"
+    },
+    "signedDuration": {
+      "type": "string",
+      "pattern": "^-?(?:[0-9]+\\.)?[0-2][0-9]:[0-5][0-9]:[0-5][0-9](?:\\.[0-9]{1,7})?$"
+    },
+    "routeKey": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "Version": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "Id",
+        "Version"
+      ],
+      "additionalProperties": false
+    },
+    "vertex": {
+      "type": "object",
+      "properties": {
+        "Latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "Longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "Metres": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "Latitude",
+        "Longitude",
+        "Metres"
+      ],
+      "additionalProperties": false
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "Key": {
+          "$ref": "#/$defs/routeKey"
+        },
+        "Name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "SourceRunId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "RuleVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "Geometry": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vertex"
+          },
+          "minItems": 2
+        },
+        "LengthMetres": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "Key",
+        "Name",
+        "SourceRunId",
+        "RuleVersion",
+        "Geometry",
+        "LengthMetres"
+      ],
+      "additionalProperties": false
+    },
+    "progress": {
+      "type": "object",
+      "properties": {
+        "Elapsed": {
+          "$ref": "#/$defs/duration"
+        },
+        "Metres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "Known": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "Elapsed",
+        "Metres",
+        "Known"
+      ],
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "SourceRunId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "Route": {
+          "$ref": "#/$defs/routeKey"
+        },
+        "StartedLocal": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "TimeZoneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "SavedLocalYear": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "Elapsed": {
+          "$ref": "#/$defs/duration"
+        },
+        "Quality": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "RuleVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "Points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/progress"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "Id",
+        "SourceRunId",
+        "Route",
+        "StartedLocal",
+        "TimeZoneId",
+        "SavedLocalYear",
+        "Elapsed",
+        "Quality",
+        "RuleVersion",
+        "Points"
+      ],
+      "additionalProperties": false
+    },
+    "distancePolicy": {
+      "type": "object",
+      "properties": {
+        "Version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "MaximumAccuracyMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MaximumGap": {
+          "$ref": "#/$defs/duration"
+        },
+        "MaximumAge": {
+          "$ref": "#/$defs/duration"
+        },
+        "MaximumSpeedMetresPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MinimumMovementMetres": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "Version",
+        "MaximumAccuracyMetres",
+        "MaximumGap",
+        "MaximumAge",
+        "MaximumSpeedMetresPerSecond",
+        "MinimumMovementMetres"
+      ],
+      "additionalProperties": false
+    },
+    "motionPolicy": {
+      "type": "object",
+      "properties": {
+        "Version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "MaximumAccuracyMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MaximumGap": {
+          "$ref": "#/$defs/duration"
+        },
+        "MaximumAge": {
+          "$ref": "#/$defs/duration"
+        },
+        "StationaryRadiusMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MinimumResumeMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MaximumSpeedMetresPerSecond": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "Version",
+        "MaximumAccuracyMetres",
+        "MaximumGap",
+        "MaximumAge",
+        "StationaryRadiusMetres",
+        "MinimumResumeMetres",
+        "MaximumSpeedMetresPerSecond"
+      ],
+      "additionalProperties": false
+    },
+    "matchingPolicy": {
+      "type": "object",
+      "properties": {
+        "RuleVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "CorridorMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "GateMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MaximumAccuracyMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MaximumGap": {
+          "$ref": "#/$defs/duration"
+        },
+        "MaximumSpeedMetresPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MaximumStepMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ProjectionExtentMetres": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "RuleVersion",
+        "CorridorMetres",
+        "GateMetres",
+        "MaximumAccuracyMetres",
+        "MaximumGap",
+        "MaximumSpeedMetresPerSecond",
+        "MaximumStepMetres",
+        "ProjectionExtentMetres"
+      ],
+      "additionalProperties": false
+    },
+    "livePacePolicy": {
+      "type": "object",
+      "properties": {
+        "Version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "Window": {
+          "$ref": "#/$defs/duration"
+        },
+        "MinimumSupport": {
+          "$ref": "#/$defs/duration"
+        },
+        "MaximumAge": {
+          "$ref": "#/$defs/duration"
+        }
+      },
+      "required": [
+        "Version",
+        "Window",
+        "MinimumSupport",
+        "MaximumAge"
+      ],
+      "additionalProperties": false
+    },
+    "hrSetup": {
+      "type": "object",
+      "required": [
+        "Configuration",
+        "ConfigurationError"
+      ],
+      "properties": {
+        "ConfigurationError": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Configuration": {
+          "type": "object",
+          "required": [
+            "Version",
+            "DeviceAddress",
+            "Policy",
+            "Zones"
+          ],
+          "properties": {
+            "Version": {
+              "const": 1
+            },
+            "DeviceAddress": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "Policy": {
+              "type": "object",
+              "required": [
+                "Version",
+                "MaximumGap"
+              ],
+              "properties": {
+                "Version": {
+                  "const": 1
+                },
+                "MaximumGap": {
+                  "$ref": "#/$defs/duration"
+                }
+              }
+            },
+            "Zones": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/personalZone"
+              },
+              "minItems": 0,
+              "maxItems": 5
+            }
+          }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "Version": {
+          "const": "ghost-service-pilot-v1"
+        },
+        "Matching": {
+          "$ref": "#/$defs/matchingPolicy"
+        },
+        "MaximumStartAge": {
+          "$ref": "#/$defs/duration"
+        },
+        "MaximumInterpolationGap": {
+          "$ref": "#/$defs/duration"
+        },
+        "HeartRate": {
+          "type": "object",
+          "required": [
+            "Version",
+            "DeviceAddress",
+            "Policy",
+            "Zones"
+          ],
+          "properties": {
+            "Version": {
+              "const": 1
+            },
+            "DeviceAddress": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "Policy": {
+              "type": "object",
+              "required": [
+                "Version",
+                "MaximumGap"
+              ],
+              "properties": {
+                "Version": {
+                  "const": 1
+                },
+                "MaximumGap": {
+                  "$ref": "#/$defs/duration"
+                }
+              }
+            },
+            "Zones": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/personalZone"
+              },
+              "minItems": 0,
+              "maxItems": 5
+            }
+          }
+        },
+        "Motion": {
+          "$ref": "#/$defs/motionPolicy"
+        },
+        "TrainingDistance": {
+          "$ref": "#/$defs/distancePolicy"
+        },
+        "LivePace": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/livePacePolicy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "Version",
+        "Matching",
+        "MaximumStartAge",
+        "MaximumInterpolationGap",
+        "HeartRate",
+        "Motion",
+        "TrainingDistance"
+      ],
+      "additionalProperties": false
+    },
+    "clock": {
+      "type": "object",
+      "properties": {
+        "RaceElapsed": {
+          "$ref": "#/$defs/duration"
+        },
+        "TrainingActive": {
+          "$ref": "#/$defs/duration"
+        },
+        "TrainingPaused": {
+          "type": "boolean"
+        },
+        "State": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "description": "Running=0, Finished=1, Incomplete=2, Interrupted=3; retain stored state."
+        }
+      },
+      "required": [
+        "RaceElapsed",
+        "TrainingActive",
+        "TrainingPaused",
+        "State"
+      ],
+      "additionalProperties": false
+    },
+    "match": {
+      "type": "object",
+      "properties": {
+        "Route": {
+          "$ref": "#/$defs/routeKey"
+        },
+        "RuleVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "State": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "Metres": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "NextVertex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "StartedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/duration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "FinishedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/duration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "Problem": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "Route",
+        "RuleVersion",
+        "State",
+        "Metres",
+        "NextVertex",
+        "StartedAt",
+        "FinishedAt",
+        "Problem"
+      ],
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "RouteName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "Route": {
+          "$ref": "#/$defs/routeKey"
+        },
+        "Mode": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "Clock": {
+          "$ref": "#/$defs/clock"
+        },
+        "PauseReason": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "Match": {
+          "$ref": "#/$defs/match"
+        },
+        "GhostMetres": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "Gap": {
+          "type": "object",
+          "properties": {
+            "MetresAhead": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "SecondsAhead": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "MetresAhead",
+            "SecondsAhead"
+          ],
+          "additionalProperties": false
+        },
+        "ReferenceId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ReferenceElapsed": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/duration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "FrozenYear": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "QualityReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "Id",
+        "RouteName",
+        "Route",
+        "Mode",
+        "Clock",
+        "PauseReason",
+        "Match",
+        "GhostMetres",
+        "Gap",
+        "ReferenceId",
+        "ReferenceElapsed",
+        "FrozenYear",
+        "QualityReason"
+      ],
+      "additionalProperties": false
+    },
+    "pause": {
+      "type": "object",
+      "properties": {
+        "StartedAt": {
+          "$ref": "#/$defs/duration"
+        },
+        "EndedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/duration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "StartedAt",
+        "EndedAt"
+      ],
+      "additionalProperties": false
+    },
+    "rawFix": {
+      "type": "object",
+      "properties": {
+        "Elapsed": {
+          "$ref": "#/$defs/signedDuration"
+        },
+        "Utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "Longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "AccuracyMetres": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "Section": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "GapBefore": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "Elapsed",
+        "Utc",
+        "Latitude",
+        "Longitude",
+        "AccuracyMetres",
+        "Section",
+        "GapBefore"
+      ],
+      "additionalProperties": false
+    },
+    "distanceSplit": {
+      "type": "object",
+      "properties": {
+        "Number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "MeasuredMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ActiveTime": {
+          "$ref": "#/$defs/duration"
+        },
+        "HasGaps": {
+          "type": "boolean"
+        },
+        "PaceSecondsPerKilometre": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "Number",
+        "MeasuredMetres",
+        "ActiveTime",
+        "HasGaps",
+        "PaceSecondsPerKilometre"
+      ],
+      "additionalProperties": false
+    },
+    "measuredDistance": {
+      "type": "object",
+      "properties": {
+        "Policy": {
+          "$ref": "#/$defs/distancePolicy"
+        },
+        "TotalMeasuredMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MainMeasuredMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "MainHasGaps": {
+          "type": "boolean"
+        },
+        "Status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "Splits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/distanceSplit"
+          }
+        }
+      },
+      "required": [
+        "Policy",
+        "TotalMeasuredMetres",
+        "MainMeasuredMetres",
+        "MainHasGaps",
+        "Status",
+        "Splits"
+      ],
+      "additionalProperties": false
+    },
+    "terminalContext": {
+      "type": "object",
+      "properties": {
+        "Version": {
+          "type": "integer",
+          "const": 1
+        },
+        "ObservedUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ObservedBootMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ObservedZoneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ObservedUtcOffsetSeconds": {
+          "type": "integer",
+          "minimum": -50400,
+          "maximum": 50400,
+          "multipleOf": 60
+        },
+        "StartDerivedEffectiveUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "EffectiveUtcOffsetSeconds": {
+          "type": "integer",
+          "minimum": -50400,
+          "maximum": 50400,
+          "multipleOf": 60
+        },
+        "Provenance": {
+          "const": "terminal-observed-zone-rules-v1"
+        }
+      },
+      "required": [
+        "Version",
+        "ObservedUtc",
+        "ObservedBootMilliseconds",
+        "ObservedZoneId",
+        "ObservedUtcOffsetSeconds",
+        "StartDerivedEffectiveUtc",
+        "EffectiveUtcOffsetSeconds",
+        "Provenance"
+      ],
+      "additionalProperties": false
+    },
+    "ghostCheckpoint": {
+      "type": "object",
+      "properties": {
+        "ActivityKind": {
+          "const": "ghost"
+        },
+        "GhostCheckpointVersion": {
+          "type": "integer",
+          "const": 1
+        },
+        "Id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "SaveRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "StartedUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "StartedLocal": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "TimeZoneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "HealthConnectConsentRevision": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "StartedBootMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ObservedBootMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "Route": {
+          "$ref": "#/$defs/route"
+        },
+        "Mode": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "Reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "Profile": {
+          "$ref": "#/$defs/profile"
+        },
+        "Snapshot": {
+          "$ref": "#/$defs/snapshot"
+        },
+        "Pauses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pause"
+          }
+        },
+        "Progress": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/progress"
+          },
+          "minItems": 1
+        },
+        "Raw": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rawFix"
+          }
+        },
+        "ArchiveDisposition": {
+          "enum": [
+            "not-terminal",
+            "attempt",
+            "zero-elapsed-incomplete"
+          ]
+        },
+        "TerminalKind": {
+          "anyOf": [
+            {
+              "enum": [
+                "matched-finish",
+                "explicit-end",
+                "interrupted"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "MeasuredTrainingDistance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/measuredDistance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "TerminalContext": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/terminalContext"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "ActivityKind",
+        "GhostCheckpointVersion",
+        "Id",
+        "SaveRevision",
+        "StartedUtc",
+        "StartedLocal",
+        "TimeZoneId",
+        "HealthConnectConsentRevision",
+        "StartedBootMilliseconds",
+        "ObservedBootMilliseconds",
+        "Route",
+        "Mode",
+        "Reference",
+        "Profile",
+        "Snapshot",
+        "Pauses",
+        "Progress",
+        "Raw",
+        "ArchiveDisposition",
+        "TerminalKind"
+      ],
+      "additionalProperties": false
+    },
+    "personalZone": {
+      "type": "object",
+      "required": [
+        "Number",
+        "MinimumBpm",
+        "MaximumBpm"
+      ],
+      "properties": {
+        "Number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "MinimumBpm": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "MaximumBpm": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
