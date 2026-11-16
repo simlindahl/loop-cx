@@ -55,7 +55,7 @@ public static class GhostHCWritePlanner
             foreach (var pause in value.Pauses)
             {
                 if (pause.StartedAt < previousEnd || pause.StartedAt < bootStart || pause.StartedAt > bootObserved
-                    || pause.EndedAt is { } resumed && (resumed < pause.StartedAt || resumed > bootObserved))
+                    || (pause.EndedAt is { } resumed && (resumed < pause.StartedAt || resumed > bootObserved)))
                 {
                     throw new InvalidDataException("Ghost pauses must be ordered nonoverlapping boot intervals.");
                 }
@@ -89,7 +89,16 @@ public static class GhostHCWritePlanner
 
             var offset = checked((int)value.StartedLocal.Offset.TotalSeconds);
             var endOffset = context?.EffectiveUtcOffsetSeconds;
-            const string terminal = "Ghost mapping 2; terminal kind matched-finish; outcome Finished; finalized positive race window.";
+            var terminal = "Ghost mapping 2; finalized positive race window. Frozen terminal evidence: " + JsonSerializer.Serialize(new
+            {
+                value.TerminalKind,
+                Outcome = clock.State.ToString(),
+                value.StartedUtc,
+                value.StartedLocal,
+                value.TimeZoneId,
+                value.StartedBootMilliseconds,
+                TerminalContext = context
+            });
             var records = new List<HCPlannedRecord>
             {
                 new(Id(value.Id, "session"), 2, HCRecordKind.RunningSession, start, end, offset, endOffset,
@@ -98,8 +107,17 @@ public static class GhostHCWritePlanner
 
             if (value.MeasuredTrainingDistance is { } distance)
             {
+                if (distance.TotalMeasuredMetres > 0 && clock.TrainingActive == TimeSpan.Zero)
+                    throw new InvalidDataException("Positive accepted training distance contradicts zero active training time.");
+
+                var distanceProvenance = JsonSerializer.Serialize(new
+                {
+                    distance.Policy,
+                    distance.MainHasGaps,
+                    SplitGaps = distance.Splits.Select(split => new { split.Number, split.HasGaps }).ToArray()
+                });
                 records.Add(new(Id(value.Id, "distance"), 2, HCRecordKind.Distance, start, end, offset, endOffset, [],
-                    distance.TotalMeasuredMetres, [], terminal + (distance.MainHasGaps || distance.Splits.Any(split => split.HasGaps)
+                    distance.TotalMeasuredMetres, [], terminal + " Frozen distance evidence: " + distanceProvenance + (distance.MainHasGaps || distance.Splits.Any(split => split.HasGaps)
                         ? " Accepted partial training distance; coverage gaps remain unknown; no gap-fill."
                         : " Accepted training distance; paused movement excluded; no extrapolation.")));
             }
@@ -120,7 +138,7 @@ public static class GhostHCWritePlanner
                 var utcInside = receipt >= start && receipt <= end;
                 var bootInside = boot >= bootStart && boot <= bootEnd;
 
-                if (utcInside != bootInside || utcInside && (receipt - start - (boot - bootStart)).Duration() > TimeSpan.FromSeconds(1))
+                if (utcInside != bootInside || (utcInside && (receipt - start - (boot - bootStart)).Duration() > TimeSpan.FromSeconds(1)))
                     throw new InvalidDataException("HR receipt UTC and boot window membership or clocks disagree.");
 
                 if (!utcInside) continue;
@@ -148,7 +166,10 @@ public static class GhostHCWritePlanner
                     Array.AsReadOnly(samples.OrderBy(sample => sample.ReceiptUtc).ThenBy(sample => sample.SourceSequence).ToArray()),
                     terminal + " Original valid GATT receipts; 1000 ms anchored clock guard; no acquisition-time or aggregate claim."));
             }
-            else warnings.Add("No valid raw HR receipts in the race window; HR record omitted.");
+            else
+            {
+                warnings.Add("No valid raw HR receipts in the race window; HR record omitted.");
+            }
 
             var frozen = Array.AsReadOnly(records.ToArray());
             var frozenWarnings = Array.AsReadOnly(warnings.ToArray());

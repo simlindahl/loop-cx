@@ -61,8 +61,75 @@ internal static class GhostHCChecks
             && original == JsonSerializer.Serialize(source) && GhostHCWritePlanner.Create(source, false).Plan!.PayloadHash == plan.PayloadHash,
             "Typed terminal meaning and source bytes remain immutable and deterministic.");
 
+        CheckProvenanceAndZeroActive(source, checkpoint);
         CheckOptionalAndFailures(source, checkpoint, Hr);
         Console.WriteLine("PASS: pure Ghost HC mapping2/client2, actual matched-finish/pause clocks, optional distance/offsets and dual-clock HR boundaries.");
+    }
+
+    private static void CheckProvenanceAndZeroActive(ExportJournalSnapshot source, GhostRaceCheckpoint checkpoint)
+    {
+        // Arrange
+        var policy = checkpoint.Profile.TrainingDistance;
+        var distance = new DistanceState(policy, 123, 5, true, "Gap", [new(1, 5, S(5), true)]);
+        var original = checkpoint with { MeasuredTrainingDistance = distance };
+        var alternatePolicy = policy with { MaximumAccuracyMetres = policy.MaximumAccuracyMetres + 1 };
+        var alternate = original with
+        {
+            Profile = original.Profile with { TrainingDistance = alternatePolicy },
+            MeasuredTrainingDistance = distance with { Policy = alternatePolicy }
+        };
+        ExportJournalSnapshot With(GhostRaceCheckpoint value)
+        {
+            return source with { Checkpoint = JsonSerializer.SerializeToElement(value) };
+        }
+
+        var originalSource = With(original);
+        var originalBytes = JsonSerializer.Serialize(originalSource);
+        var laterObserved = original with
+        {
+            ObservedBootMilliseconds = original.ObservedBootMilliseconds + 100,
+            TerminalContext = original.TerminalContext! with
+            {
+                ObservedUtc = original.TerminalContext.ObservedUtc.AddMilliseconds(100),
+                ObservedBootMilliseconds = original.ObservedBootMilliseconds + 100
+            }
+        };
+        var laterSource = With(laterObserved) with
+        {
+            LastObservedUtc = laterObserved.TerminalContext!.ObservedUtc.ToString("O", CultureInfo.InvariantCulture),
+            ObservedElapsedMilliseconds = source.ObservedElapsedMilliseconds + 100
+        };
+        var fullPause = original with
+        {
+            Pauses = [new(S(100), null)],
+            Snapshot = original.Snapshot with { Clock = original.Snapshot.Clock with { TrainingActive = TimeSpan.Zero, TrainingPaused = true } }
+        };
+
+        // Act
+        var first = GhostHCWritePlanner.Create(originalSource, false).Plan!;
+        var repeated = GhostHCWritePlanner.Create(originalSource, false).Plan!;
+        var changed = GhostHCWritePlanner.Create(With(alternate), false).Plan!;
+        var observedPlan = GhostHCWritePlanner.Create(laterSource, false).Plan!;
+        var changedGaps = GhostHCWritePlanner.Create(With(original with
+        {
+            MeasuredTrainingDistance = distance with { Splits = [new(1, 5, S(5), false)] }
+        }), false).Plan!;
+
+        // Assert
+        Require(first.PayloadHash == repeated.PayloadHash && first.PayloadHash != changed.PayloadHash
+            && first.Records.Single(record => record.Kind == HCRecordKind.Distance).Provenance != changed.Records.Single(record => record.Kind == HCRecordKind.Distance).Provenance
+            && first.PayloadHash != changedGaps.PayloadHash && originalBytes == JsonSerializer.Serialize(originalSource),
+            "Coherent policy or individual gap changes affect frozen provenance/hash; identical replay is stable and source unchanged.");
+        Require(observedPlan.Records[0].EndUtc == first.Records[0].EndUtc
+            && observedPlan.Records[0].Provenance != first.Records[0].Provenance && observedPlan.PayloadHash != first.PayloadHash,
+            "Different actual terminal observations retain a separate frozen provenance/hash even with the same effective end.");
+        Reject(With(fullPause));
+        Require(GhostHCWritePlanner.Create(With(fullPause with
+        {
+            MeasuredTrainingDistance = distance with { TotalMeasuredMetres = 0, MainMeasuredMetres = 0, Splits = [] }
+        }), false).Plan is not null
+            && GhostHCWritePlanner.Create(With(fullPause with { MeasuredTrainingDistance = null }), false).Plan is not null,
+            "Zero active training rejects positive measured distance, while supported zero and absence remain distinct valid cases.");
     }
 
     private static void CheckOptionalAndFailures(ExportJournalSnapshot source, GhostRaceCheckpoint checkpoint,
