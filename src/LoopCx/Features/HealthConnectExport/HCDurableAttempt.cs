@@ -6,6 +6,17 @@ public sealed record HCDurableAttempt(int Version, HCWritePlanV1 FrozenPlan, Gui
 {
     public void Validate(bool simulation)
     {
+        ValidateMapping(simulation, 1);
+    }
+
+    public void ValidateGhost(ExportRun.ExportJournalSnapshot source, bool debugBuild)
+    {
+        ValidateMapping(false, 2);
+        _ = GhostHCWritePlanner.RequireFrozenSource(source, FrozenPlan, debugBuild);
+    }
+
+    private void ValidateMapping(bool simulation, int mappingVersion)
+    {
         if (Version != 1 || FrozenPlan is null || Token == Guid.Empty || AttemptCount <= 0 || Simulation != simulation
             || State is not ("in_flight" or "pending" or "action_required" or "acknowledged" or "simulated_complete"))
         {
@@ -13,7 +24,7 @@ public sealed record HCDurableAttempt(int Version, HCWritePlanV1 FrozenPlan, Gui
         }
 
         var plan = FrozenPlan;
-        if (plan.Source is null || plan.Records is null || plan.Warnings is null || plan.MappingVersion != 1 || plan.RunId == Guid.Empty
+        if (plan.Source is null || plan.Records is null || plan.Warnings is null || plan.MappingVersion != mappingVersion || plan.RunId == Guid.Empty
             || !plan.Source.Finished || plan.Records.Count == 0 || plan.Records.Any(static record => record is null)
             || !plan.HasValidHash() || plan.Records.Count(static record => record.Kind == HCRecordKind.RunningSession) != 1
             || plan.Records[0].Kind != HCRecordKind.RunningSession
@@ -46,6 +57,28 @@ public sealed record HCDurableAttempt(int Version, HCWritePlanV1 FrozenPlan, Gui
         attempt.Validate(simulation);
 
         return attempt;
+    }
+
+    public static HCDurableAttempt BeginGhost(ExportRun.ExportJournalSnapshot source, HCWritePlanV1 plan,
+        HCDurableAttempt? previous, bool debugBuild)
+    {
+        _ = GhostHCWritePlanner.RequireFrozenSource(source, plan, debugBuild);
+        previous?.ValidateGhost(source, debugBuild);
+        var attempt = new HCDurableAttempt(1, previous?.FrozenPlan ?? plan, Guid.NewGuid(),
+            checked((previous?.AttemptCount ?? 0) + 1), "in_flight", false);
+        attempt.ValidateGhost(source, debugBuild);
+
+        return attempt;
+    }
+
+    public HCDurableAttempt? CompleteGhost(ExportRun.ExportJournalSnapshot source, Guid token, string hash,
+        IReadOnlyList<HCRecordReceipt> receipts, bool debugBuild)
+    {
+        ValidateGhost(source, debugBuild);
+        if (Token != token || FrozenPlan.PayloadHash != hash || State != "in_flight") return null;
+        ValidateReceipts(FrozenPlan, receipts);
+
+        return this with { State = "acknowledged", Receipts = [.. receipts] };
     }
 
     public static void ValidateReceipts(HCWritePlanV1 plan, IReadOnlyList<HCRecordReceipt>? receipts)

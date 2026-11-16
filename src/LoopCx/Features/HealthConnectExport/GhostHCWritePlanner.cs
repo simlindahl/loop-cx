@@ -5,9 +5,35 @@ using LoopCx.Features.GhostRun;
 
 namespace LoopCx.Features.HealthConnectExport;
 
-// Pure mapping-2 prerequisite. This does not enable outbox replay or provider delivery.
+// Pure mapping-2 projection and selected-source binding; provider authority remains in the Android dispatcher.
 public static class GhostHCWritePlanner
 {
+    public static string DeliveryStatus(ExportJournalSnapshot source, HCDurableAttempt? attempt)
+    {
+        if (source.ExportStatus != "exported")
+        {
+            if (source.ExportStatus is not ("pending" or "action_required" or "disabled_synthetic")) return "local_only";
+            var eligible = Create(source, false);
+            return eligible.Plan is null ? eligible.State : source.ExportStatus;
+        }
+        try
+        {
+            if (attempt?.State != "acknowledged") return "action_required";
+            attempt.ValidateGhost(source, false);
+            return "exported";
+        }
+        catch (InvalidDataException) { return "action_required"; }
+    }
+
+    public static HCWritePlanV1 RequireFrozenSource(ExportJournalSnapshot source, HCWritePlanV1 frozen, bool debugBuild)
+    {
+        var projected = Create(source, debugBuild);
+        return projected.Plan is not { } plan || !frozen.HasValidHash() || plan.RunId != frozen.RunId
+            || plan.PayloadHash != frozen.PayloadHash
+            ? throw new InvalidDataException("The selected Ghost source and frozen delivery payload disagree.")
+            : plan;
+    }
+
     public static HCPlanResult Create(ExportJournalSnapshot source, bool debugBuild)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -98,6 +124,7 @@ public static class GhostHCWritePlanner
             var terminal = "Ghost mapping 2; finalized positive race window. Frozen terminal evidence: " + JsonSerializer.Serialize(new
             {
                 value.TerminalKind,
+                value.HealthConnectConsentRevision,
                 value.Origin,
                 Outcome = clock.State.ToString(),
                 value.StartedUtc,

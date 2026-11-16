@@ -98,7 +98,8 @@ internal static class NativeGhostIntegratedProbe
                 var stored = journal.ReadGhostRun(raceId) ?? throw new InvalidDataException("Missing prior terminal race.");
                 Require(stored.Status == "incomplete" && stored.Checkpoint.Snapshot.Clock.RaceElapsed == TimeSpan.FromSeconds(2), "Terminal survives reopen");
                 Require(Count(db, "runs", "id", raceId) == 1 && Count(db, "ghost_race_starts", "race_id", raceId) == 1
-                    && Count(db, "ghost_attempts", "source_run_id", raceId) == 1 && Count(db, "run_events", "run_id", raceId) == 2 && Count(db, "locations", "run_id", raceId) == 1,
+                    && Count(db, "ghost_attempts", "source_run_id", raceId) == 1 && Count(db, "run_events", "run_id", raceId) == 2 && Count(db, "locations", "run_id", raceId) == 1
+                    && Count(db, "export_queue", "run_id", raceId) == 1,
                     "Reopened exactly-once joint evidence");
                 return new
                 {
@@ -141,6 +142,7 @@ internal static class NativeGhostIntegratedProbe
                         && Count(db, "ghost_race_starts", "race_id", raceId) == (committed || terminal ? 1 : 0)
                         && Count(db, "ghost_attempts", "source_run_id", raceId) == (committed && terminal ? 1 : 0)
                         && Count(db, "locations", "run_id", raceId) == (committed && terminal ? 1 : 0)
+                        && Count(db, "export_queue", "run_id", raceId) == (committed && terminal ? 1 : 0)
                         && Count(db, "run_events", "run_id", raceId) == (terminal ? (committed ? 2 : 1) : (committed ? 1 : 0)),
                         "Actual joint rollback/commit state");
                     if (!committed && terminal)
@@ -162,7 +164,8 @@ internal static class NativeGhostIntegratedProbe
             Capture(race.Checkpoint(2, 102000), "end-attempt");
             ExerciseStage(true);
             Require(journal.ReadGhostRun(raceId)?.Status == "incomplete", "Ordinary detached Ghost reader sees committed result");
-            Require(Count(db, "export_queue", "run_id", raceId) == 0, "No Core outbox entry");
+            using var queue = db.RawQuery("SELECT status FROM export_queue WHERE run_id = ?", [raceId.ToString()])!;
+            Require(queue.MoveToFirst() && queue.GetString(0) == "disabled_synthetic", "Synthetic Ghost queue intent never becomes dispatchable");
             return new
             {
                 Database = name,
@@ -205,7 +208,7 @@ internal static class GhostSyntheticSourceFixture
         var first = route.Geometry[0];
         return new(raceId, route, GhostMode.YearBest, null, profile,
             new(100000, 100000, Utc.ToUnixTimeMilliseconds(), first.Latitude, first.Longitude, 1),
-            100000, Utc, "UTC", TimeSpan.Zero, null, new(1, GhostOriginKind.SyntheticFixture));
+            100000, Utc, "UTC", TimeSpan.Zero, Guid.Parse("32323232-3232-3232-3232-323232323232"), new(1, GhostOriginKind.SyntheticFixture));
     }
     internal static RunSaveBatch Create(Guid id)
     {

@@ -2,10 +2,12 @@ using Android.Content;
 using Android.Database.Sqlite;
 using LoopCx.Features.HealthConnectExport;
 using System.Text.Json;
+using LoopCx.Features.ExportRun;
+using LoopCx.Features.GhostRun;
 
 namespace LoopCx;
 
-internal sealed record HCOutboxClaim(string State, HCDurableAttempt? Attempt, string? Error = null);
+internal sealed record HCOutboxClaim(string State, HCDurableAttempt? Attempt, string? Error = null, ExportJournalSnapshot? GhostSource = null);
 
 // One compact attempt in the existing queue. No transaction is held while a writer runs.
 internal sealed class AndroidHealthConnectOutbox
@@ -44,7 +46,8 @@ internal sealed class AndroidHealthConnectOutbox
             var status = row.GetString(0)!;
             var previous = row.IsNull(1) ? null : JsonSerializer.Deserialize<HCDurableAttempt>(row.GetString(1)!)
                 ?? throw new InvalidDataException("Stored attempt is null.");
-            previous?.Validate(simulation);
+            ExportJournalSnapshot? ghostSource = null;
+            if (simulation) previous?.Validate(true);
             HCWritePlanV1 plan;
             if (simulation)
             {
@@ -55,7 +58,14 @@ internal sealed class AndroidHealthConnectOutbox
             {
                 var snapshot = RunJournal.ReadExportSnapshot(database, runId);
                 if (!HCConsent.Eligible(snapshot.Checkpoint)) return new("local_only", null, "This recording started without Health Connect opt-in.");
-                var projected = HCWritePlanner.Create(snapshot, DebugBuild);
+                var isGhost = GhostRaceCheckpoint.IsGhost(snapshot.Checkpoint);
+                if (isGhost) ghostSource = snapshot;
+                if (previous is not null)
+                {
+                    if (isGhost) previous.ValidateGhost(snapshot, DebugBuild);
+                    else previous.Validate(false);
+                }
+                var projected = isGhost ? GhostHCWritePlanner.Create(snapshot, DebugBuild) : HCWritePlanner.Create(snapshot, DebugBuild);
                 if (projected.Plan is null)
                 {
                     SetStatus(runId, projected.State == "disabled_synthetic" ? projected.State : "action_required", projected.Reason);
@@ -72,9 +82,10 @@ internal sealed class AndroidHealthConnectOutbox
                 return new(previous.State, null);
             }
             if (!simulation && status == "exported") throw new InvalidDataException("Exported status lacks a durable acknowledgement.");
-            var attempt = HCDurableAttempt.Begin(plan, previous, simulation);
+            var attempt = ghostSource is not null ? HCDurableAttempt.BeginGhost(ghostSource, plan, previous, DebugBuild)
+                : HCDurableAttempt.Begin(plan, previous, simulation);
             Save(runId, attempt, simulation ? "disabled_synthetic" : "pending", null);
-            return new("claimed", attempt);
+            return new("claimed", attempt, GhostSource: ghostSource);
         }
         catch (Exception problem) when (problem is JsonException or InvalidDataException or ArgumentException or OverflowException or KeyNotFoundException)
         {
@@ -98,18 +109,34 @@ internal sealed class AndroidHealthConnectOutbox
 #endif
     private bool Complete(Guid runId, Guid token, string hash, IReadOnlyList<HCRecordReceipt> receipts) => Transaction(() =>
     {
-        var current = Current(runId, token, hash);
+        HCDurableAttempt? current;
+        try { current = Current(runId, token, hash); }
+        catch (Exception problem) when (problem is InvalidDataException or JsonException or ArgumentException)
+        {
+            SetStatus(runId, simulation ? "disabled_synthetic" : "action_required", problem.Message);
+            return false;
+        }
         if (current is null) return false;
         try
         {
             if (!simulation)
             {
-                var source = HCWritePlanner.Create(RunJournal.ReadExportSnapshot(database, runId), DebugBuild);
+                var snapshot = RunJournal.ReadExportSnapshot(database, runId);
+                var source = GhostRaceCheckpoint.IsGhost(snapshot.Checkpoint)
+                    ? GhostHCWritePlanner.Create(snapshot, DebugBuild) : HCWritePlanner.Create(snapshot, DebugBuild);
                 if (source.Plan is null || source.Plan.PayloadHash != hash)
                     throw new InvalidDataException("Source eligibility changed before acknowledgement.");
             }
-            HCDurableAttempt.ValidateReceipts(current.FrozenPlan, receipts);
-            var completed = current with { State = simulation ? "simulated_complete" : "acknowledged", Receipts = receipts.ToArray() };
+            HCDurableAttempt completed;
+            var selected = simulation ? null : RunJournal.ReadExportSnapshot(database, runId);
+            if (selected is not null && GhostRaceCheckpoint.IsGhost(selected.Checkpoint))
+                completed = current.CompleteGhost(selected, token, hash, receipts, DebugBuild)
+                    ?? throw new InvalidDataException("The Ghost acknowledgement no longer owns this attempt.");
+            else
+            {
+                HCDurableAttempt.ValidateReceipts(current.FrozenPlan, receipts);
+                completed = current with { State = simulation ? "simulated_complete" : "acknowledged", Receipts = receipts.ToArray() };
+            }
             Save(runId, completed, simulation ? "disabled_synthetic" : "exported", null);
             return true;
         }
@@ -134,8 +161,16 @@ internal sealed class AndroidHealthConnectOutbox
         using var row = database.RawQuery("SELECT attempt_json FROM export_queue WHERE run_id = ?", [runId.ToString()])!;
         if (!row.MoveToFirst() || row.IsNull(0)) return null;
         var attempt = JsonSerializer.Deserialize<HCDurableAttempt>(row.GetString(0)!) ?? throw new InvalidDataException("Missing attempt.");
-        attempt.Validate(simulation);
-        return attempt.Token == token && attempt.FrozenPlan.PayloadHash == hash && attempt.State == "in_flight" ? attempt : null;
+        if (attempt.FrozenPlan is null) throw new InvalidDataException("Missing frozen payload.");
+        if (attempt.Token != token || attempt.FrozenPlan.PayloadHash != hash || attempt.State != "in_flight") return null;
+        if (!simulation)
+        {
+            var snapshot = RunJournal.ReadExportSnapshot(database, runId);
+            if (GhostRaceCheckpoint.IsGhost(snapshot.Checkpoint)) attempt.ValidateGhost(snapshot, DebugBuild);
+            else attempt.Validate(false);
+        }
+        else attempt.Validate(true);
+        return attempt;
     }
     private void SetStatus(Guid id, string status, string? error)
     {

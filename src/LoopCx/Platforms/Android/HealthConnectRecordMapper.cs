@@ -31,6 +31,14 @@ internal static class HealthConnectRecordMapper
         }
     }
 
+    internal static HCNativeRecords CreateGhost(LoopCx.Features.ExportRun.ExportJournalSnapshot source, HCWritePlanV1 frozen, bool debugBuild)
+    {
+        try { _ = GhostHCWritePlanner.RequireFrozenSource(source, frozen, debugBuild); }
+        catch (InvalidDataException problem) { return new("action_required", problem.Message, []); }
+
+        return CreateGhost(source, debugBuild);
+    }
+
     internal static HCNativeRecords CreateGhost(LoopCx.Features.ExportRun.ExportJournalSnapshot source, bool debugBuild)
     {
         var projected = GhostHCWritePlanner.Create(source, debugBuild);

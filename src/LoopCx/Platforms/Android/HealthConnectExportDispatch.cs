@@ -22,8 +22,10 @@ internal static class HealthConnectExportDispatch
             try
             {
                 // This bounds local ownership only. The remote operation may still complete after timeout.
-                result = await new AndroidHealthConnectWriter(context.ApplicationContext!).WriteAsync(attempt.FrozenPlan)
-                    .WaitAsync(TimeSpan.FromSeconds(30));
+                var writer = new AndroidHealthConnectWriter(context.ApplicationContext!);
+                var operation = claim.GhostSource is { } ghostSource ? writer.WriteGhostAsync(ghostSource, attempt.FrozenPlan)
+                    : writer.WriteAsync(attempt.FrozenPlan);
+                result = await operation.WaitAsync(TimeSpan.FromSeconds(30));
             }
             catch (TimeoutException)
             {

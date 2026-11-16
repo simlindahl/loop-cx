@@ -35,6 +35,25 @@ public static class HCFakeReplay
     public static HCFakeAttempt Run(HCWritePlanV1 plan, HCFakeAttempt? previous, bool debugBuild,
         Func<bool> canWrite, Func<HCPlannedRecord, HCFakeWriteResult> fakeWriter)
     {
+        return RunMapping(plan, previous, debugBuild, canWrite, fakeWriter, 1);
+    }
+
+    public static HCFakeAttempt RunGhost(ExportRun.ExportJournalSnapshot source, HCWritePlanV1 plan,
+        HCFakeAttempt? previous, bool debugBuild, Func<bool> canWrite, Func<HCPlannedRecord, HCFakeWriteResult> fakeWriter)
+    {
+        try
+        {
+            _ = GhostHCWritePlanner.RequireFrozenSource(source, plan, debugBuild);
+            if (previous is not null) _ = GhostHCWritePlanner.RequireFrozenSource(source, previous.FrozenPlan, debugBuild);
+        }
+        catch (InvalidDataException problem) { return new(plan, "action_required", previous?.AttemptCount ?? 0, problem.Message); }
+
+        return RunMapping(plan, previous, debugBuild, canWrite, fakeWriter, 2);
+    }
+
+    private static HCFakeAttempt RunMapping(HCWritePlanV1 plan, HCFakeAttempt? previous, bool debugBuild,
+        Func<bool> canWrite, Func<HCPlannedRecord, HCFakeWriteResult> fakeWriter, int mappingVersion)
+    {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(canWrite);
         ArgumentNullException.ThrowIfNull(fakeWriter);
@@ -44,7 +63,7 @@ public static class HCFakeReplay
             || plan.Records.Count(static record => record.Kind == HCRecordKind.RunningSession) != 1
             || plan.Records.Select(static record => record.ClientRecordId).Distinct(StringComparer.Ordinal).Count() != plan.Records.Count
             || plan.Records.Any(record => record.ClientRecordVersion != plan.MappingVersion || !Enum.IsDefined(record.Kind) || record.EndUtc <= record.StartUtc)
-            || !plan.HasValidHash() || plan.MappingVersion != 1
+            || !plan.HasValidHash() || plan.MappingVersion != mappingVersion
             || (previous is not null && (!previous.FrozenPlan.HasValidHash() || previous.FrozenPlan.PayloadHash != plan.PayloadHash
                 || previous.AttemptCount is < 0 or int.MaxValue)))
         {
