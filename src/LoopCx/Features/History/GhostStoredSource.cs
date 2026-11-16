@@ -175,7 +175,7 @@ public static class GhostStoredSource
                 || matching[0].NextPhase != (index == plan.Length - 1 ? null : plan[index + 1].Kind)
                 || matching[0].EffectiveElapsedMilliseconds < 0
                 || matching[0].EffectiveElapsedMilliseconds > matching[0].ObservedElapsedMilliseconds
-                || matching[0].ObservedElapsedMilliseconds > observedMilliseconds
+                || matching[0].EffectiveElapsedMilliseconds > observedMilliseconds
                 || matching[0].StartAnchorDerivedEffectiveUtc.Offset != TimeSpan.Zero
                 || matching[0].StartAnchorDerivedEffectiveUtc != DateTimeOffset.Parse(startedUtc, CultureInfo.InvariantCulture).AddMilliseconds(matching[0].EffectiveElapsedMilliseconds))
                 throw new InvalidDataException("The saved Main boundary clock is inconsistent.");

@@ -223,7 +223,57 @@ internal static class GhostStoredSourceChecks
         const string legacy = "[{\"Elapsed\":\"00:00:00\",\"Utc\":\"2025-01-01T00:00:00+00:00\",\"Latitude\":59,\"Longitude\":18,\"AccuracyMetres\":5,\"Section\":1,\"GapBefore\":false}]";
         Require(JsonSerializer.Serialize(JsonSerializer.Deserialize<RecordedRouteFix[]>(legacy)) == legacy,
             "Legacy raw-array bytes must stay identical for existing InsertFrozen retry comparisons.");
+        CheckLaterBoundaryObservation(Source(false), utc);
         Console.WriteLine("PASS: stored Ghost full Main versus GPS span, unknown ends, positive eligibility, bound source/civil clocks, raw ignored retention and exact legacy/v2 codec bytes.");
+    }
+
+    private static void CheckLaterBoundaryObservation(ExportJournalSnapshot lateObservedSource, DateTimeOffset utc)
+    {
+        // Arrange
+        var lateObservedCheckpoint = JsonNode.Parse(lateObservedSource.Checkpoint.GetRawText())!;
+        lateObservedCheckpoint["PhaseBoundaries"]![0]!["ObservedElapsedMilliseconds"] = 40009;
+        lateObservedCheckpoint["PhaseBoundaries"]![0]!["ObservedUtc"] = utc.AddMilliseconds(40009).ToString("O");
+        lateObservedSource = lateObservedSource with
+        {
+            Checkpoint = JsonSerializer.SerializeToElement(lateObservedCheckpoint),
+            ObservedElapsedMilliseconds = 40001,
+            LastObservedUtc = utc.AddMilliseconds(40010).ToString("O")
+        };
+        var lateObservedBytes = ExportRunV2.Project(lateObservedSource);
+
+        // Act
+        var lateObservedCapture = GhostStoredSource.Capture(lateObservedSource, "Later boundary callback");
+        var lateObservedEnvelope = GhostSourceEvidenceCodec.Read(lateObservedCapture.RawJson);
+        var lateObservedRoute = StoredRouteProjection.Read(lateObservedSource.Id, lateObservedSource.Checkpoint,
+            lateObservedSource.ObservedElapsedMilliseconds, lateObservedSource.Locations);
+
+        // Assert
+        Require(lateObservedCapture.Attempt.Elapsed == TimeSpan.FromSeconds(40) && lateObservedRoute.Main.Supported
+            && lateObservedRoute.Main.Points.Count == 10 && lateObservedRoute.Main.Points[^1].SnapshotOrder == 10
+            && lateObservedEnvelope.Checkpoint.GetProperty("PhaseBoundaries")[0].GetProperty("ObservedElapsedMilliseconds").GetInt64() == 40009
+            && GhostSourceEvidenceCodec.Write(lateObservedEnvelope) == lateObservedCapture.RawJson
+            && ExportRunV2.Project(lateObservedSource) == lateObservedBytes,
+            "A later callback preserves immutable source and effective Main; History retains its half-open window and excludes the endpoint.");
+        foreach (var effectiveBeyondHorizon in new[] { false, true })
+        {
+            var badCheckpoint = JsonNode.Parse(lateObservedSource.Checkpoint.GetRawText())!;
+
+            if (effectiveBeyondHorizon)
+            {
+                badCheckpoint["PhaseBoundaries"]![0]!["EffectiveElapsedMilliseconds"] = 40002;
+                badCheckpoint["PhaseBoundaries"]![0]!["StartAnchorDerivedEffectiveUtc"] = utc.AddMilliseconds(40002).ToString("O");
+            }
+            else
+            {
+                badCheckpoint["PhaseBoundaries"]![0]!["ObservedElapsedMilliseconds"] = 39999;
+            }
+
+            var badSource = lateObservedSource with { Checkpoint = JsonSerializer.SerializeToElement(badCheckpoint) };
+            Reject(() => GhostStoredSource.Capture(badSource, "Contradictory boundary"),
+                "An effective boundary beyond the processed horizon or observed before it cannot supply a Ghost route.");
+            Require(!StoredRouteProjection.Read(lateObservedSource.Id, badSource.Checkpoint, badSource.ObservedElapsedMilliseconds, badSource.Locations).Main.Supported,
+                "History cannot infer Main membership from the same contradictory boundary.");
+        }
     }
 
     private static void Reject(Action action, string message)

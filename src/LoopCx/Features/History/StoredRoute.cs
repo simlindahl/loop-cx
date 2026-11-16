@@ -89,7 +89,7 @@ public static class StoredRouteProjection
             var receipt = Integer(Field(fact, "ObservedElapsedMilliseconds"));
             var flag = Field(fact, "Synthetic");
             if (index != ends.Count || index >= completed.GetArrayLength() || index >= phases.Length || effective is null || receipt is null
-                || effective < previousEffective || receipt < previousReceipt || receipt < effective || receipt > observed
+                || effective < previousEffective || receipt < previousReceipt || receipt < effective || effective > observed
                 || Integer(Field(fact, "PreviousPhase")) != phases[index.Value]
                 || flag.ValueKind is not (JsonValueKind.True or JsonValueKind.False)) return false;
             var last = index == phases.Length - 1;
