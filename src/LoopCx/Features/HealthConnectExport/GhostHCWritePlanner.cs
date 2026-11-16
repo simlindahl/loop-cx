@@ -29,14 +29,14 @@ public static class GhostHCWritePlanner
             if (!HCConsent.Eligible(source.Checkpoint))
                 return new("local_only", "This recording started without Health Connect opt-in.", null);
 
-            // End eligibility remains an owner decision, not a Finished-only product policy.
-            if (source.Status == "incomplete" && clock.State == GhostClockState.Incomplete)
-                return new("policy_unresolved", "Health Connect eligibility for explicit End is not decided.", null);
+            var matchedFinish = source.Status == "finished" && clock.State == GhostClockState.Finished
+                && value.TerminalKind == "matched-finish";
+            var explicitEnd = source.Status == "incomplete" && clock.State == GhostClockState.Incomplete
+                && value.TerminalKind == "explicit-end";
 
-            if (source.Status != "finished" || clock.State != GhostClockState.Finished
-                || value.TerminalKind != "matched-finish" || clock.RaceElapsed <= TimeSpan.Zero)
+            if ((!matchedFinish && !explicitEnd) || clock.RaceElapsed <= TimeSpan.Zero)
             {
-                throw new InvalidDataException("The preparatory mapping requires an actual positive matched finish.");
+                throw new InvalidDataException("Mapping requires a positive matched finish or an explicitly ended Incomplete race with a known end.");
             }
 
             var start = value.StartedUtc;
@@ -173,7 +173,7 @@ public static class GhostHCWritePlanner
 
             var frozen = Array.AsReadOnly(records.ToArray());
             var frozenWarnings = Array.AsReadOnly(warnings.ToArray());
-            // In mapping 2 this means finalized window, after typed matched-finish validation above.
+            // In mapping 2 this means finalized window, after typed matched-finish or explicit-end validation above.
             var gate = new HCSourceGate(true, false, false);
 
             return new("ready", null, new(2, value.Id, gate, frozen, frozenWarnings,

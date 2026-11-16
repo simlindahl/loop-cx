@@ -200,3 +200,8 @@ The [portable approved reference](mockups/history-details/index.html) changes on
 ## Compact interval dose copy · 15 November 2026
 
 Simon explicitly requested ordinary dose summaries such as `4 × 6:3 min` instead of separate work/recovery counts. Apply work:recovery notation to ordinary Core/shortcut summaries and matching maintained reference copy; same-unit minutes use `5 × 3:2 min`, mixed-unit SIT uses `7 × 30 sec:3 min`. This supersedes only that summary wording, not layout, planned N−1 recovery, durations, saved facts or detailed scientific phase explanations. The [workout owner](../knowledge/running-workouts.md#compact-interval-dose-presentation) records the rule. Earlier reviewed reference hashes retain their historical identity.
+
+<a id="ghost-hc-explicit-end-eligibility"></a>
+## Ghost HC eligibility for an explicitly ended Incomplete race
+
+This entry records the owner's previously received approval in [issue 18](https://github.com/simlindahl/loop-cx/issues/18); it does not assign a new approval date. A positive-duration Ghost race explicitly ended with a known actual end is eligible for HC mapping while remaining Incomplete and creating no race record. Use actual accepted training distance and raw HR, frozen start consent and current required grants. Unknown-end Interrupted remains local/JSON, including after local saved-part confirmation; zero elapsed does not create a positive HC session. The [integration owner](../knowledge/integrations-data.md#ghost-health-connect-pure-projection) owns typed finality and frozen clock/measurement rules. This decision adds no provider execution authority or new UI/layout, and does not establish SDK/provider/physical acceptance.
