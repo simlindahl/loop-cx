@@ -1,5 +1,12 @@
 using LoopCx.Features.ActiveRun;
 
+if (args.Length == 1 && args[0] == "--ghost-hc-checks")
+{
+    GhostHCChecks.Run();
+    HCWritePlanChecks.Run([]);
+    return;
+}
+
 static void Require(bool condition, string message)
 {
     if (!condition) throw new InvalidOperationException(message);
