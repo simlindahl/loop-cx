@@ -42,6 +42,8 @@ jobs:
           java-version: '21'
       - run: dotnet workload install maui-android
       - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
+      - name: Compile strict Release configuration
+        run: dotnet build src/LoopCx/LoopCx.csproj -c Release -t:Compile -p:RuntimeIdentifier=android-x64 -p:TreatWarningsAsErrors=true
       - run: dotnet build src/LoopCx -c Debug -p:AndroidPackageFormats=apk -p:RuntimeIdentifier=android-x64
       - name: Verify packaged scoped stylesheet and font license
         run: python3 scripts/android-ui-smoke.py --check-package
