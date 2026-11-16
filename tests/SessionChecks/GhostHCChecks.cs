@@ -61,6 +61,25 @@ internal static class GhostHCChecks
             && original == JsonSerializer.Serialize(source) && GhostHCWritePlanner.Create(source, false).Plan!.PayloadHash == plan.PayloadHash,
             "Typed terminal meaning and source bytes remain immutable and deterministic.");
 
+#if DEBUG
+        var fixture = GhostHCConstructionFixture.Plan();
+        GhostHCConstructionFixture.Validate(fixture);
+        _ = GhostRaceCheckpoint.Read(GhostHCConstructionFixture.Source().Checkpoint.GetRawText());
+        var alteredRecords = fixture.Records.Select((record, index) => index == 0 ? record with { ClientRecordVersion = 3 } : record).ToArray();
+        var altered = fixture with
+        {
+            Records = alteredRecords,
+            PayloadHash = HCWritePlanV1.Hash(2, fixture.RunId, fixture.Source, alteredRecords, fixture.Warnings)
+        };
+        var rejected = false;
+
+        try { GhostHCConstructionFixture.Validate(altered); }
+        catch (InvalidDataException) { rejected = true; }
+
+        Require(rejected && GhostHCWritePlanner.Create(GhostHCConstructionFixture.Source(), true).State == "disabled_synthetic",
+            "Only the fixed synthetic SDK fixture is accepted; a rehashed metadata mutation and ordinary Debug projection cannot bypass guards.");
+        Console.WriteLine("Ghost SDK fixed fixture SHA256: " + fixture.PayloadHash);
+#endif
         CheckProvenanceAndZeroActive(source, checkpoint);
         CheckOptionalAndFailures(source, checkpoint, Hr);
         Console.WriteLine("PASS: pure Ghost HC mapping2/client2, actual matched-finish/pause clocks, optional distance/offsets and dual-clock HR boundaries.");

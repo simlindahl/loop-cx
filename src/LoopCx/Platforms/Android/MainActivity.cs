@@ -178,6 +178,11 @@ public sealed partial class MainActivity : MauiAppCompatActivity
             HealthConnectOutboxProbe.Run(this);
             return;
         }
+        if (probe == "ghost-health-records" && OperatingSystem.IsAndroidVersionAtLeast(35))
+        {
+            HealthConnectRecordMapper.RunGhostConstructionProbe(this);
+            return;
+        }
         if (probe == "health-records" && OperatingSystem.IsAndroidVersionAtLeast(34))
         {
             HealthConnectRecordMapper.RunIsolatedProbe(this);
