@@ -47,8 +47,8 @@
             @if (State.Paused) { <p>Training counters are paused. Your race clock, ghost and route GPS continue.</p> }
             @if (State.Phase != "Finished")
             {
-                <button type="button" class="primary" @onclick='() => RunService.CommandGhost(State.Paused ? "resume" : "pause", State.Id)'>@(State.Paused ? "Resume training" : "Pause training")</button>
-                @if (race.PauseReason == PauseReason.Automatic) { <button type="button" @onclick='() => RunService.CommandGhost("pause", State.Id)'>Pause manually</button> }
+                <button id="@($"ghost-training-toggle-{State.Id}")" type="button" class="primary" @onclick='() => RunService.CommandGhost(State.Paused ? "resume" : "pause", State.Id)'>@(State.Paused ? "Resume training" : "Pause training")</button>
+                @if (race.PauseReason == PauseReason.Automatic) { <button type="button" @onclick="() => OnPauseManually.InvokeAsync(State.Id)">Pause manually</button> }
                 <button id="ghost-end-attempt" type="button" @onclick="() => OnEndRequest.InvokeAsync(State.Id)">End attempt</button>
             }
         }

@@ -20,6 +20,7 @@ public partial class StartRunPage
     private bool showGhostCatalogue;
     private bool pageVisible = true, visibilityBound, disposed;
     private Guid ghostCatalogueKey, ghostEndOwner;
+    private Guid? ghostManualFocusOwner;
     private LoopCx.Features.GhostRun.RouteKey? ghostInitialRoute;
     private LoopCx.Features.GhostRun.Ui.GhostRoutesPage? ghostCatalogue;
     private Guid? historyInitialRun;
@@ -205,6 +206,18 @@ public partial class StartRunPage
             ? "Target not set · intended effort is not a measurement"
             : target.Mode == CoreTargetMode.Pace ? $"Target pace {Clock(value.Value)} min/km · intended effort"
             : $"Target Zone {value} · intended effort, not a measurement";
+    }
+
+    private bool VisibleGhostOwner(Guid owner) => !disposed && pageVisible && !showSettings && !showHistory && !showGhostCatalogue
+        && dialogMode is null && RunService.Snapshot is { Ghost: not null, Phase: not "Finished" } current && current.Id == owner;
+
+    private void PauseGhostManually(Guid owner)
+    {
+        if (!VisibleGhostOwner(owner) || RunService.Snapshot?.Ghost?.PauseReason != PauseReason.Automatic) return;
+
+        ghostManualFocusOwner = owner;
+        focusPending = $"ghost-training-toggle-{owner}";
+        RunService.CommandGhost("pause", owner);
     }
 
     private static void TogglePause() => RunService.Command(RunService.Snapshot?.Paused == true ? "resume" : "pause");
@@ -646,7 +659,15 @@ public partial class StartRunPage
             }
             if (managePending) { managePending = false; await module.InvokeVoidAsync("manage", reference); }
             if (openPending) { openPending = false; await module.InvokeVoidAsync("open", opener, reference); }
-            if (focusPending is { } focus) { focusPending = null; await module.InvokeVoidAsync("focus", focus); }
+            if (focusPending is { } focus)
+            {
+                focusPending = null;
+                var requestedOwner = ghostManualFocusOwner;
+                ghostManualFocusOwner = null;
+                if (!focus.StartsWith("ghost-training-toggle-", StringComparison.Ordinal)
+                    || requestedOwner is { } owner && focus == $"ghost-training-toggle-{owner}" && VisibleGhostOwner(owner))
+                    await module.InvokeVoidAsync("focus", focus);
+            }
             if (motionPending || resultPending)
             {
                 motionPending = false;

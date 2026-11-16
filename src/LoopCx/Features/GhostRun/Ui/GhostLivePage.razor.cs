@@ -12,6 +12,7 @@ public partial class GhostLivePage
     [Parameter] public EventCallback<Guid> OnViewRun { get; set; }
     [Parameter] public EventCallback OnTraining { get; set; }
     [Parameter] public EventCallback<Guid> OnEndRequest { get; set; }
+    [Parameter] public EventCallback<Guid> OnPauseManually { get; set; }
     private GhostStoredRun? result;
     private Guid? resultOwner;
     private bool attempted, reading, disposed;
