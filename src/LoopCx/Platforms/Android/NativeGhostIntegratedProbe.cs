@@ -67,8 +67,7 @@ internal static class NativeGhostIntegratedProbe
         foreach (var point in batch.Locations) buffer.Add(point);
         buffer.Capture(batch.Latest, batch.Events[0].Command, null);
         Require(buffer.Save(journal.Commit), "Synthetic C2 commit");
-        var source = RunJournal.ReadExportSnapshot(db, id, includeRoute: true);
-        var capture = GhostStoredSource.Capture(source, SourceLabel);
+        var capture = journal.PrepareGhostRoute(id, SourceLabel);
         Require(capture.Attempt.Quality == AttemptQuality.InsufficientEvidence, "Unknown tails cannot become a benchmark");
         Require(journal.ReadFinishedRuns().Finished.Any(row => row.Id == id), "Ordinary History sees the source");
         return new
@@ -76,7 +75,7 @@ internal static class NativeGhostIntegratedProbe
             SourceRunId = id,
             Label = SourceLabel,
             SyntheticStoredDurationMinutes = 20,
-            RawPoints = source.Locations.Count,
+            RawPoints = GhostSourceEvidenceCodec.Read(capture.RawJson).Locations.Count,
             NormalHistorySource = true,
             AttemptQuality = capture.Attempt.Quality.ToString(),
             NaturalTimerEvidence = false,
@@ -114,7 +113,7 @@ internal static class NativeGhostIntegratedProbe
             using (var prior = db.RawQuery("SELECT id FROM runs WHERE id = ?", [raceId.ToString()])!)
                 Require(!prior.MoveToFirst(), "Use a fresh transaction seed; verify mode reads existing evidence");
             _ = SeedSource(journal, sourceId);
-            var captured = GhostStoredSource.Capture(RunJournal.ReadExportSnapshot(db, sourceId, includeRoute: true), SourceLabel);
+            var captured = journal.PrepareGhostRoute(sourceId, SourceLabel);
             var archive = new AndroidGhostArchive(journal);
             _ = archive.SaveStoredSource(captured);
             Require(archive.SaveStoredSource(captured) == GhostArchiveWrite.AlreadyStored, "Identical source-v2 archive retry");
