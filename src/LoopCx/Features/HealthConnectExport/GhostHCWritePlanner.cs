@@ -26,6 +26,12 @@ public static class GhostHCWritePlanner
                 throw new InvalidDataException("Selected source and frozen Ghost clocks disagree.");
             }
 
+            if (value.Origin is null)
+                return new("local_only", "The recording's creation origin is unknown; no production origin was inferred.", null);
+
+            if (value.Origin.Kind != GhostOriginKind.NormalService)
+                return new("disabled_synthetic", "Debug or synthetic creation origin is not eligible.", null);
+
             if (!HCConsent.Eligible(source.Checkpoint))
                 return new("local_only", "This recording started without Health Connect opt-in.", null);
 
@@ -92,6 +98,7 @@ public static class GhostHCWritePlanner
             var terminal = "Ghost mapping 2; finalized positive race window. Frozen terminal evidence: " + JsonSerializer.Serialize(new
             {
                 value.TerminalKind,
+                value.Origin,
                 Outcome = clock.State.ToString(),
                 value.StartedUtc,
                 value.StartedLocal,

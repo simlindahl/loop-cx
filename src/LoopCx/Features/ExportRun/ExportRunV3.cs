@@ -53,7 +53,8 @@ public sealed record ExportRunV3(int SchemaVersion, string ActivityKind, IReadOn
                 || historical.ObservedBootMilliseconds - historical.StartedBootMilliseconds != item.ObservedElapsedMilliseconds
                 || historical.SaveRevision > state.SaveRevision
                 || !FrozenEventFields
-                    .All(name => JsonElement.DeepEquals(item.Checkpoint.GetProperty(name), source.Checkpoint.GetProperty(name))))
+                    .All(name => JsonElement.DeepEquals(item.Checkpoint.GetProperty(name), source.Checkpoint.GetProperty(name)))
+                || !SameOptionalOrigin(item.Checkpoint, source.Checkpoint))
                 throw new InvalidDataException("An event must retain the same frozen Ghost identity/reference/policy at its own observation.");
         }
         var run = new ExportGhostSnapshotV3(source.Id, source.StartedUtc, source.LastObservedUtc, source.ObservedElapsedMilliseconds,
@@ -62,6 +63,14 @@ public sealed record ExportRunV3(int SchemaVersion, string ActivityKind, IReadOn
                 point.BootMonotonicNanoseconds, point.LatitudeDegrees, point.LongitudeDegrees, point.AccuracyMetres, point.Provenance)).ToArray(),
             source.HeartRate, source.Status == "interrupted" ? savedPartUtc : null);
         return JsonSerializer.Serialize(new ExportRunV3(3, "ghost", Version3Units, run), ExportRunV1.JsonOptions);
+    }
+
+    private static bool SameOptionalOrigin(JsonElement historical, JsonElement latest)
+    {
+        var before = historical.TryGetProperty("Origin", out var prior);
+        var after = latest.TryGetProperty("Origin", out var current);
+
+        return before == after && (!before || JsonElement.DeepEquals(prior, current));
     }
 
     private static void ValidateClock(GhostRaceCheckpoint value)

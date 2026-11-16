@@ -57,7 +57,7 @@ internal static class GhostHCConstructionFixture
             S(3), S(3), HeartRateConfiguration.Empty, MovementPolicy.Pilot, DistancePolicy.Pilot, LivePacePolicy.Pilot);
         var race = new GhostRace(Id, route, GhostMode.YearBest, null, profile,
             new(99900, 100000, Start.ToUnixTimeMilliseconds(), 0, 0, .1), 100000, Start, "UTC", TimeSpan.Zero,
-            Guid.Parse("a9a9a9a9-a9a9-49a9-89a9-a9a9a9a9a9a9"));
+            Guid.Parse("a9a9a9a9-a9a9-49a9-89a9-a9a9a9a9a9a9"), new(1, GhostOriginKind.SyntheticFixture));
 
         for (var second = 1; second <= 20; second++)
         {

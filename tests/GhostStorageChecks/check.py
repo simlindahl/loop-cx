@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import json
 import sqlite3
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "storage/ghost/schema-1.sql"
@@ -145,7 +146,7 @@ assert len(marker_statements) == 1
 marker_sql = marker_statements.pop()
 create_runs = re.search(r'"(CREATE TABLE runs [^"\n]+)"', journal_source)[1]
 add_marker = re.search(r'"(ALTER TABLE runs ADD COLUMN recovery_saved_utc TEXT)"', journal_source)[1]
-example = json.loads((ROOT / "docs/export/sample-ghost-v3.json").read_text(encoding="utf-8"))
+example = json.loads((Path(sys.argv[1]) if len(sys.argv) == 2 else ROOT / "docs/export/sample-ghost-v3.json").read_text(encoding="utf-8"))
 owned = example["run"]["id"]
 prefix = example["run"]["events"][0]["checkpoint"]
 frozen = json.dumps(prefix, ensure_ascii=False)
@@ -193,6 +194,7 @@ with TemporaryDirectory() as temporary:
     db.close()
     db = connect(path)
     assert db.execute("SELECT * FROM runs").fetchall() == after
+    assert json.loads(db.execute("SELECT checkpoint FROM runs WHERE id=?",(owned,)).fetchone()[0]).get("Origin") == prefix.get("Origin")
     assert {table:db.execute("SELECT * FROM "+table).fetchall() for table in tables} == preserved
     assert db.execute("PRAGMA integrity_check").fetchone() == ("ok",)
     db.close()

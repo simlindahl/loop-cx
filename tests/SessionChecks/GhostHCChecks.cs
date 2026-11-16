@@ -18,7 +18,7 @@ internal static class GhostHCChecks
         var profile = new GhostComparisonProfile("ghost-service-pilot-v1", new(route.RuleVersion, .5, .5, .1, S(3), 4, 5, 500),
             S(3), S(3), HeartRateConfiguration.Empty, MovementPolicy.Pilot, DistancePolicy.Pilot, LivePacePolicy.Pilot);
         var race = new GhostRace(Guid.Parse("12121212-1212-1212-1212-121212121212"), route, GhostMode.YearBest, null, profile,
-            new(99900, 100000, utc.ToUnixTimeMilliseconds(), 0, 0, .1), 100000, utc, "UTC", TimeSpan.Zero, Guid.NewGuid());
+            new(99900, 100000, utc.ToUnixTimeMilliseconds(), 0, 0, .1), 100000, utc, "UTC", TimeSpan.Zero, Guid.NewGuid(), new(1, GhostOriginKind.NormalService));
 
         for (var second = 1; second <= 20; second++)
         {
@@ -81,8 +81,16 @@ internal static class GhostHCChecks
             "Only the fixed synthetic SDK fixture is accepted; a rehashed metadata mutation and ordinary Debug projection cannot bypass guards.");
         Console.WriteLine("Ghost SDK fixed fixture SHA256: " + fixture.PayloadHash);
 #endif
-        Require(plan.PayloadHash == "37fb46df437563c98bd426360cb9ea391cd42bc3b6330a6619e70132d49422f2",
-            "The pre-End implementation's exact matched-Finished payload hash remains unchanged.");
+        Require(plan.PayloadHash != "37fb46df437563c98bd426360cb9ea391cd42bc3b6330a6619e70132d49422f2"
+            && GhostHCWritePlanner.Create(source with { Checkpoint = JsonSerializer.SerializeToElement(checkpoint with { Origin = null }), ExportStatus = "pending" }, false).State == "local_only",
+            "Historical no-origin Ghost evidence now stays local-only; new origin intentionally binds a different hash without changing Core1.");
+        foreach (var kind in new[] { GhostOriginKind.DebugService, GhostOriginKind.SyntheticFixture })
+        {
+            var savedOrigin = source with { Checkpoint = JsonSerializer.SerializeToElement(checkpoint with { Origin = new(1, kind) }), ExportStatus = "pending" };
+            var coldOrigin = JsonSerializer.Deserialize<ExportJournalSnapshot>(JsonSerializer.Serialize(savedOrigin))!;
+            Require(GhostHCWritePlanner.Create(coldOrigin, false).State == "disabled_synthetic",
+                "A later Release/queue read after serialized reopen cannot relabel debug or synthetic creation origin.");
+        }
         ExplicitEndPreservesItsKnownWindowAndIncompleteOutcome();
         CheckProvenanceAndZeroActive(source, checkpoint);
         CheckOptionalAndFailures(source, checkpoint, Hr);
@@ -101,7 +109,7 @@ internal static class GhostHCChecks
         GhostRace NewRace()
         {
             return new(Guid.NewGuid(), route, GhostMode.YearBest, null, profile,
-            new(99900, 100000, start.ToUnixTimeMilliseconds(), 0, 0, .1), 100000, start, "UTC", TimeSpan.Zero, Guid.NewGuid());
+            new(99900, 100000, start.ToUnixTimeMilliseconds(), 0, 0, .1), 100000, start, "UTC", TimeSpan.Zero, Guid.NewGuid(), new(1, GhostOriginKind.NormalService));
         }
 
         var race = NewRace();

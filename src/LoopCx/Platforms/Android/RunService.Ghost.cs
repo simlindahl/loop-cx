@@ -136,7 +136,7 @@ public sealed partial class RunService
                     MovementPolicy.Pilot.MaximumAge, route.Policy.MaximumGap, heartRateConfiguration, MovementPolicy.Pilot, DistancePolicy.Pilot, LivePacePolicy.Pilot);
                 // Constructor validates actual post-request fresh GPS and correct start before publishing/committing ownership.
                 candidate = new GhostRace(Guid.NewGuid(), route.Route, request.Mode, reference, profile,
-                    request.Position, now, utc, zone.Id, offset, revision);
+                    request.Position, now, utc, zone.Id, offset, revision, GhostRecordingOrigin.ForService());
                 initial = candidate.Checkpoint(1, now);
                 preparedHandler = new Handler(Looper.MainLooper!);
                 preparedHeartRate = new(heartRateConfiguration, savedHeartRate.ConfigurationError);

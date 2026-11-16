@@ -42,12 +42,41 @@ internal static class GhostSharingChecks
         var legacyJson = RunJsonSharing.Project(legacy, null, null);
         Require(!JsonDocument.Parse(legacyJson).RootElement.GetProperty("run").GetProperty("checkpoint").TryGetProperty("MeasuredTrainingDistance", out _),
             "Absent legacy measured facts remain absent, never default zero or current policy.");
+        static void SetOrigin(JsonNode cp)
+        {
+            cp["Origin"] = JsonSerializer.SerializeToNode(new GhostRecordingOrigin(1, GhostOriginKind.SyntheticFixture));
+        }
+
+        var originSource = Change(source, SetOrigin) with
+        {
+            Events = [.. source.Events.Select(item => item with { Checkpoint = Edit(item.Checkpoint, SetOrigin) })]
+        };
+        var originJson = RunJsonSharing.Project(originSource, null, null);
+        var explicitNull = Change(source, cp => cp["Origin"] = null) with
+        {
+            Events = [.. source.Events.Select(item => item with { Checkpoint = Edit(item.Checkpoint, cp => cp["Origin"] = null) })]
+        };
+        Require(JsonDocument.Parse(RunJsonSharing.Project(explicitNull, null, null)).RootElement.GetProperty("run").GetProperty("checkpoint").GetProperty("Origin").ValueKind == JsonValueKind.Null,
+            "Explicit null legacy origin stays null and distinct from absent event fields.");
+        Require(JsonDocument.Parse(originJson).RootElement.GetProperty("run").GetProperty("checkpoint").GetProperty("Origin").GetProperty("Kind").GetInt32() == 3,
+            "AI3 preserves actual optional creation origin without changing legacy files.");
+        Reject(() => RunJsonSharing.Project(Change(originSource, cp => cp["Origin"]!["Version"] = 99), null, null));
+        Reject(() => RunJsonSharing.Project(Change(originSource, cp => cp["Origin"]!["Kind"] = 99), null, null));
+        Reject(() => RunJsonSharing.Project(originSource with
+        {
+            Events = [.. originSource.Events.Select((item, index) => index == 0 ? item with { Checkpoint = Edit(item.Checkpoint, cp => cp.AsObject().Remove("Origin")) } : item)]
+        }, null, null));
+        Reject(() => RunJsonSharing.Project(originSource with
+        {
+            Events = [.. originSource.Events.Select((item, index) => index == 0 ? item with { Checkpoint = Edit(item.Checkpoint, cp => cp["Origin"]!["Kind"] = 2) } : item)]
+        }, null, null));
         if (arguments.Length == 2 && arguments[0] == "--export-ghost-ai3-samples")
         {
             Directory.CreateDirectory(arguments[1]);
             File.WriteAllText(Path.Combine(arguments[1], "incomplete.json"), json, new System.Text.UTF8Encoding(false));
             File.WriteAllText(Path.Combine(arguments[1], "interrupted.json"), partialJson, new System.Text.UTF8Encoding(false));
             File.WriteAllText(Path.Combine(arguments[1], "legacy.json"), legacyJson, new System.Text.UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(arguments[1], "origin.json"), originJson, new System.Text.UTF8Encoding(false));
         }
         Console.WriteLine("PASS: actual Ghost AI3 projection/eligibility, full frozen reference, pause-union clock, explicit interrupted acknowledgement and absent legacy facts.");
     }
@@ -61,6 +90,7 @@ internal static class GhostSharingChecks
         var node = JsonNode.Parse(cp.GetRawText())!; change(node); return JsonSerializer.SerializeToElement(node);
     }
     private static ExportJournalSnapshot Change(ExportJournalSnapshot source, Action<JsonNode> change) => source with { Checkpoint = Edit(source.Checkpoint, change) };
+
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
     private static void Reject(Action action)
     {
