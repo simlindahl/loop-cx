@@ -7,7 +7,8 @@ namespace LoopCx.Features.GhostRun;
 public sealed record GhostStoredRun(Guid Id, string Status, GhostRaceCheckpoint Checkpoint)
 {
     public GhostRecords? Records { get; init; }
-    public static GhostStoredRun Read(Guid id, string status, string json)
+    public DateTimeOffset? SavedLocally { get; init; }
+    public static GhostStoredRun Read(Guid id, string status, string json, string? savedPartUtc = null)
     {
         var checkpoint = GhostRaceCheckpoint.Read(json);
         var clock = checkpoint.Snapshot.Clock.State;
@@ -18,7 +19,15 @@ public sealed record GhostStoredRun(Guid Id, string Status, GhostRaceCheckpoint 
             "interrupted" => clock is not (GhostClockState.Running or GhostClockState.Interrupted),
             _ => true
         })) throw new InvalidDataException("Stored Ghost identity/status disagrees with its checkpoint.");
-        return new(id, status, checkpoint);
+        DateTimeOffset? saved = null;
+        if (savedPartUtc is not null)
+        {
+            if (status != "interrupted" || !DateTimeOffset.TryParseExact(savedPartUtc, "O", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var acknowledgement))
+                throw new LoopCx.Features.ActiveRun.RunSaveReadException("The Ghost saved-part acknowledgement is unreadable. No repair was attempted.");
+            saved = acknowledgement;
+        }
+        return new(id, status, checkpoint) { SavedLocally = saved };
     }
 }
 

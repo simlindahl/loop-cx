@@ -376,7 +376,7 @@ public sealed class RunJournal : SQLiteOpenHelper
                     using var document = JsonDocument.Parse(interrupted.GetString(4)!);
                     if (GhostRaceCheckpoint.IsGhost(document.RootElement))
                     {
-                        ghosts.Add(GhostStoredRun.Read(Guid.Parse(interrupted.GetString(0)!), "interrupted", interrupted.GetString(4)!));
+                        ghosts.Add(GhostStoredRun.Read(Guid.Parse(interrupted.GetString(0)!), "interrupted", interrupted.GetString(4)!, interrupted.IsNull(6) ? null : interrupted.GetString(6)));
                         interruptedCount--;
                         continue;
                     }
@@ -438,18 +438,54 @@ public sealed class RunJournal : SQLiteOpenHelper
         catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
     }
 
+    public GhostStoredRun SaveGhostRecordedPart(Guid id)
+    {
+        InterruptedRunProjection.EnsureNoActiveOwner(id, RunService.Snapshot?.Id);
+        try
+        {
+            var db = WritableDatabase!;
+            db.BeginTransaction();
+            try
+            {
+                GhostStoredRun prefix;
+                try
+                {
+                    using var row = db.RawQuery("SELECT status, checkpoint, recovery_saved_utc FROM runs WHERE id = ?", [id.ToString()])!;
+                    if (!row.MoveToFirst() || row.GetString(0) != "interrupted") throw new RunSaveReadException("The Ghost recording is not interrupted.");
+                    prefix = GhostStoredRun.Read(id, "interrupted", row.GetString(1)!, row.IsNull(2) ? null : row.GetString(2));
+                }
+                catch (SQLiteException error) when (error is SQLiteDiskIOException or SQLiteAccessPermException)
+                { throw new RunSaveReadException("The recorded Ghost prefix could not be read. No repair was attempted.", error); }
+                catch (Exception error) when (error is JsonException or InvalidDataException or ArgumentException)
+                { throw new RunSaveReadException("The recorded Ghost prefix is unreadable. No data was changed.", error); }
+                if (prefix.SavedLocally is null)
+                {
+                    var acknowledged = DateTimeOffset.UtcNow;
+                    using var marker = db.CompileStatement("UPDATE runs SET recovery_saved_utc = ? WHERE id = ? AND status = 'interrupted' AND recovery_saved_utc IS NULL")!;
+                    marker.BindString(1, acknowledged.ToString("O"));
+                    marker.BindString(2, id.ToString());
+                    if (marker.ExecuteUpdateDelete() != 1) throw new RunSaveReadException("The recording changed. No data was overwritten.");
+                    prefix = prefix with { SavedLocally = acknowledged };
+                }
+                db.SetTransactionSuccessful();
+                return prefix;
+            }
+            finally { db.EndTransaction(); }
+        }
+        catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
+    }
     public GhostStoredRun? ReadGhostRun(Guid id)
     {
         var db = ReadableDatabase!;
         db.BeginTransactionNonExclusive();
         try
         {
-            using var row = db.RawQuery("SELECT status, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
+            using var row = db.RawQuery("SELECT status, checkpoint, recovery_saved_utc FROM runs WHERE id = ?", [id.ToString()])!;
             if (!row.MoveToFirst()) throw new KeyNotFoundException("The recorded run no longer exists.");
             using var document = JsonDocument.Parse(row.GetString(1)!);
             if (!GhostRaceCheckpoint.IsGhost(document.RootElement)) { db.SetTransactionSuccessful(); return null; }
             if (row.GetString(0) == "recording") throw new InvalidDataException("The Ghost recording is still owned by the service.");
-            var stored = GhostStoredRun.Read(id, row.GetString(0)!, row.GetString(1)!);
+            var stored = GhostStoredRun.Read(id, row.GetString(0)!, row.GetString(1)!, row.IsNull(2) ? null : row.GetString(2));
             using var archive = db.RawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='ghost_schema'", null)!;
             if (!archive.MoveToFirst()) throw new InvalidDataException("The recorded Ghost archive is missing. No repair was attempted.");
             var records = new AndroidGhostArchive(db, transactionOwned: true).ReadRecords(stored.Checkpoint.Route.Key, stored.Checkpoint.StartedLocal.Year);

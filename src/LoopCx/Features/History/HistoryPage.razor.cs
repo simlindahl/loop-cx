@@ -92,6 +92,11 @@ public partial class HistoryPage
     private readonly string layoutOwner = Guid.NewGuid().ToString("N");
     private Guid? sharingRun;
     private bool preparingShare;
+    private bool sharingGhost;
+    private bool GhostShareEligible => ghostResult is { } run
+        && !(RunService.Snapshot is { } owner && owner.Id == run.Id && owner.Storage?.State != "saved")
+        && (run.Status == "finished" || run.Status == "incomplete" && run.Checkpoint.Snapshot.Clock.RaceElapsed > TimeSpan.Zero
+            || run.Status == "interrupted" && run.SavedLocally is not null);
     private long shareRequest;
     private string? shareMessage;
 
@@ -178,6 +183,29 @@ public partial class HistoryPage
         }
         finally { busy = false; }
     }
+    private async Task SaveGhostRecordedPart()
+    {
+        if (busy || ghostResult is not { Status: "interrupted", SavedLocally: null } selected || recoveryUnavailable) return;
+        busy = true;
+        error = null;
+        try
+        {
+            var saved = await Task.Run(() => RunJournal.Shared.SaveGhostRecordedPart(selected.Id));
+            if (disposed || ghostResult?.Id != selected.Id) return;
+            ghostResult = saved with { Records = selected.Records };
+            recoveryFailed = false;
+            focusPending = "history-heading";
+        }
+        catch (Exception issue) when (ReadError(issue))
+        {
+            recoveryFailed = true;
+            recoveryUnavailable = issue is not IOException || issue is RunSaveReadException;
+            error = recoveryUnavailable ? "This recording is unavailable. No data was repaired or overwritten."
+                : "Could not save the recorded part. Save is not confirmed. Try again.";
+            focusPending = recoveryUnavailable ? "history-heading" : "recovery-save";
+        }
+        finally { busy = false; }
+    }
     private async Task Open(Guid id)
     {
         if (busy) return;
@@ -226,9 +254,10 @@ public partial class HistoryPage
     private void ShowShare()
     {
         if (busy || preparingShare) return;
-        var selected = partial is { SavedLocally: not null } recovered ? recovered.Summary.Id : detail?.Summary.Id;
+        var selected = GhostShareEligible ? ghostResult!.Id : partial is { SavedLocally: not null } recovered ? recovered.Summary.Id : detail?.Summary.Id;
         if (selected is null) return;
 
+        sharingGhost = ghostResult is not null;
         sharingRun = selected;
         shareMessage = null;
         error = null;
@@ -282,7 +311,7 @@ public partial class HistoryPage
             else await CloseGhostRoutes();
             return;
         }
-        if (ghostResult is not null) { var ghostId = ghostResult.Id; await ShowList(); focusPending = $"history-{ghostId}"; return; }
+
         if (detailDestination is { } destination)
         {
             detailDestination = null;
@@ -302,6 +331,7 @@ public partial class HistoryPage
 
             return;
         }
+        if (ghostResult is not null) { var ghostId = ghostResult.Id; await ShowList(); focusPending = $"history-{ghostId}"; return; }
         var selectedId = partial?.Summary.Id ?? detail?.Summary.Id;
         if (selectedId is { } id)
         {

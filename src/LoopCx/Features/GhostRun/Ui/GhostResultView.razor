@@ -23,7 +23,10 @@
         <p>Records shown are the current stored ranking. Your race’s selected opponent stays unchanged.</p>
     }
     else { <p>Record status unavailable.</p> }
-    <p>Saved locally. Ghost Run export mapping is not available yet. No Health Connect write is confirmed.</p>
+    @if (Stored.Status != "interrupted" || Stored.SavedLocally is not null)
+    { <p>Saved locally. Health Connect mapping for Ghost Run is not available yet. No Health Connect write is confirmed.</p> }
+    else
+    { <p>Recorded prefix only. Save the recorded part to confirm it locally. The actual stop time is unknown.</p> }
     <button type="button" class="primary" @onclick="() => OnRoute.InvokeAsync(Stored.Checkpoint.Route.Key)">View route</button>
 </section>
 

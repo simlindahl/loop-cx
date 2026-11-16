@@ -7,21 +7,23 @@
     }
     else
     {
-    <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null ? "Training" : "History")</button>
+    <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null && ghostResult is null ? "Training" : "History")</button>
     <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : ghostResult is not null ? "Ghost Run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
     @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
-    @if (ghostResult is { } ghostStored)
-    {
-        <LoopCx.Features.GhostRun.Ui.GhostResultView Stored="ghostStored" OnRoute="OnGhostRoute" />
-    }
-    else if (sharingRun is not null)
+    @if (sharingRun is not null)
     {
         <p>A UTF-8 JSON file.</p>
-        <p>Includes the frozen plan and targets, phases, splits, heart rate, route coordinates, point assessment and continuity, pauses and data gaps. Older point quality may be unknown.</p>
+        @if (sharingGhost)
+        {
+            <p>Includes frozen route geometry and rules, race and training time, pauses, data gaps and original GPS and heart-rate receipts. Missing measurements remain unknown.</p>
+            <p>If selected, the full frozen comparison from a previous run is included: its identity, start and local zone, benchmark time and progress curve. That run’s separate raw GPS and heart rate are not fetched.</p>
+        }
+        else
+        { <p>Includes the frozen plan and targets, phases, splits, heart rate, route coordinates, point assessment and continuity, pauses and data gaps. Older point quality may be unknown.</p> }
         <dl>
             <div><dt>Filename</dt><dd>@LoopCx.Features.ExportRun.RunJsonSharing.FileName</dd></div>
-            <div><dt>Schema</dt><dd>Version 2 · units explicit</dd></div>
+            <div><dt>Schema</dt><dd>Version @(sharingGhost ? "3 · Ghost" : "2") · units explicit</dd></div>
         </dl>
         <aside class="share-notice">
             <strong>Contains your route</strong>
@@ -30,6 +32,18 @@
         @if (preparingShare) { <p role="status">Preparing JSON file…</p> }
         @if (shareMessage is not null) { <p role="status">@shareMessage</p> }
         <button id="share-open" type="button" class="primary" disabled="@preparingShare" aria-busy="@preparingShare" @onclick="OpenShareSheet">Open Android share sheet</button>
+    }
+    else if (ghostResult is { } ghostStored)
+    {
+        <LoopCx.Features.GhostRun.Ui.GhostResultView Stored="ghostStored" OnRoute="OnGhostRoute" />
+        @if (ghostStored.Status == "interrupted" && ghostStored.SavedLocally is null && !recoveryUnavailable)
+        {
+            <button id="recovery-save" type="button" class="primary" disabled="@busy" aria-busy="@busy" @onclick="SaveGhostRecordedPart">@(recoveryFailed ? "Retry save" : "Save recorded part")</button>
+        }
+        @if (ghostStored.Status == "interrupted" && ghostStored.SavedLocally is not null)
+        { <p role="status">Partial recording saved locally. The actual stop time is unknown.</p> }
+        @if (GhostShareEligible)
+        { <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button> }
     }
     else if (partial is { } recorded)
     {

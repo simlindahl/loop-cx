@@ -18,6 +18,9 @@ public static class RunJsonSharing
             throw new InvalidDataException("A current recording or unconfirmed final save cannot be shared.");
         }
 
+        if (LoopCx.Features.GhostRun.GhostRaceCheckpoint.IsGhost(snapshot.Checkpoint))
+            return ExportRunV3.Project(snapshot, recoverySavedUtc);
+
         var confirmedPartial = snapshot.Status == "interrupted" && recoverySavedUtc is not null
             && DateTimeOffset.TryParseExact(recoverySavedUtc, "O", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
         if (snapshot.Status != "finished" && !confirmedPartial)

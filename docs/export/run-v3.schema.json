@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/simlindahl/loop-cx/blob/main/docs/export/run-v3.schema.json",
-  "title": "LOOP Cx Ghost JSON version3 \u00b7 contract, runtime not implemented",
+  "title": "LOOP Cx Ghost JSON version3 \u00b7 candidate implementation; native acceptance pending",
   "$comment": "Shape only. Owning integration contract requires cross-field identity/clock/order checks and confirmed interrupted eligibility. No Core schema/parser or HC version change.",
   "type": "object",
   "properties": {
