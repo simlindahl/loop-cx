@@ -17,6 +17,12 @@ public partial class StartRunPage
     private bool managing;
     private bool showSettings;
     private bool showHistory;
+    private bool showGhostCatalogue;
+    private bool pageVisible = true, visibilityBound, disposed;
+    private Guid ghostCatalogueKey, ghostEndOwner;
+    private Guid? ghostManualFocusOwner;
+    private LoopCx.Features.GhostRun.RouteKey? ghostInitialRoute;
+    private LoopCx.Features.GhostRun.Ui.GhostRoutesPage? ghostCatalogue;
     private Guid? historyInitialRun;
     private LoopCx.Features.History.HistoryPage? historyPage;
     private LoopCx.Features.Settings.SettingsPage? settingsPage;
@@ -78,8 +84,8 @@ public partial class StartRunPage
         else focusPending = "audio-interval";
     }
 
-    private string MotionSurface => showHistory ? "history" : showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
-    private string MotionKey => $"{MotionSurface}:{RunService.Snapshot?.Id}:{RunService.Snapshot?.Phase}:{RunService.Snapshot?.Motion?.PauseReason}";
+    private string MotionSurface => showGhostCatalogue ? "ghost-catalogue" : showHistory ? "history" : showSettings ? "settings" : managing ? "manage" : RunService.Snapshot is null ? "training" : "run";
+    private string MotionKey => $"{MotionSurface}:{RunService.Snapshot?.Id}:{RunService.Snapshot?.Phase}:{RunService.Snapshot?.Ghost?.PauseReason ?? RunService.Snapshot?.Motion?.PauseReason}";
 
     private CoreStartRequest SelectedC1 => statePreferences.SelectedC1;
     private CoreProtocol SelectedProtocol => CoreProtocols.Find(statePreferences.SelectedProtocol);
@@ -88,6 +94,7 @@ public partial class StartRunPage
     private bool ValidCount => CountValue >= DraftProtocol.MinimumCount && CountValue <= DraftProtocol.MaximumCount;
     private string DialogTitle => dialogMode switch
     {
+        "end-ghost" => "End this attempt?",
         "audio" => "Audio coaching",
         "variant" => "Choose C1",
         "target" => $"Personalise · {draftRequest.ProtocolId}",
@@ -116,6 +123,7 @@ public partial class StartRunPage
         if (!HealthConnectSettings.ConsumeOpen()) return;
         if (settingsPage is not null) { await settingsPage.ShowHealth(); return; }
         if (dialogMode is not null) await CloseDialog();
+        showGhostCatalogue = false;
         showHistory = false;
         historyPage = null;
         showSettings = false;
@@ -128,6 +136,7 @@ public partial class StartRunPage
     {
         if (!RunNotificationEntry.Consume(RunService.Snapshot?.Id)) return;
         if (dialogMode is not null) await CloseDialog();
+        showGhostCatalogue = false;
         showHistory = false;
         historyPage = null;
         showSettings = false;
@@ -139,8 +148,13 @@ public partial class StartRunPage
         StateHasChanged();
     });
 
-    private void Refresh() => _ = InvokeAsync(() =>
+    private void Refresh() => _ = InvokeAsync(async () =>
     {
+        if (dialogMode == "end-ghost" && (RunService.Snapshot?.Id != ghostEndOwner || RunService.Snapshot.Phase == "Finished"))
+        {
+            await CloseDialog();
+            focusPending = "phase-heading";
+        }
         motionPending = true;
         StateHasChanged();
     });
@@ -194,6 +208,18 @@ public partial class StartRunPage
             : $"Target Zone {value} · intended effort, not a measurement";
     }
 
+    private bool VisibleGhostOwner(Guid owner) => !disposed && pageVisible && !showSettings && !showHistory && !showGhostCatalogue
+        && dialogMode is null && RunService.Snapshot is { Ghost: not null, Phase: not "Finished" } current && current.Id == owner;
+
+    private void PauseGhostManually(Guid owner)
+    {
+        if (!VisibleGhostOwner(owner) || RunService.Snapshot?.Ghost?.PauseReason != PauseReason.Automatic) return;
+
+        ghostManualFocusOwner = owner;
+        focusPending = $"ghost-training-toggle-{owner}";
+        RunService.CommandGhost("pause", owner);
+    }
+
     private static void TogglePause() => RunService.Command(RunService.Snapshot?.Paused == true ? "resume" : "pause");
 
     private void BackToTraining()
@@ -209,6 +235,7 @@ public partial class StartRunPage
             if (historyPage is not null) await historyPage.ShowList();
             return;
         }
+        showGhostCatalogue = false;
         showSettings = false;
         settingsPage = null;
         historyInitialRun = runId;
@@ -216,9 +243,43 @@ public partial class StartRunPage
         CoreDialogNavigation.Close = () => _ = InvokeAsync(() => historyPage?.GoBack() ?? Task.CompletedTask);
     }
 
+    private void OpenGhostCatalogue(LoopCx.Features.GhostRun.RouteKey? route)
+    {
+        showHistory = false; historyPage = null;
+        showSettings = false; settingsPage = null;
+        showGhostCatalogue = true; ghostInitialRoute = route; ghostCatalogueKey = Guid.NewGuid();
+        CoreDialogNavigation.Close = () => _ = InvokeAsync(() => ghostCatalogue?.GoBack() ?? Task.CompletedTask);
+    }
+    private void CloseGhostCatalogue()
+    {
+        showGhostCatalogue = false; ghostCatalogue = null; ghostInitialRoute = null;
+        ReloadPreferences();
+        CoreDialogNavigation.Close = null;
+        focusPending = RunService.Snapshot is null ? "ghost-open" : "phase-heading";
+    }
+    private void OpenGhostEnd(Guid expected)
+    {
+        if (RunService.Snapshot is not { Ghost: not null, Phase: not "Finished" } owner || owner.Id != expected) return;
+        ghostEndOwner = owner.Id;
+        Open("end-ghost", "ghost-end-attempt");
+    }
+    private async Task ConfirmGhostEnd()
+    {
+        if (RunService.Snapshot is { Ghost: not null, Phase: not "Finished" } owner && owner.Id == ghostEndOwner)
+            RunService.CommandGhost("end-ghost", ghostEndOwner);
+        await CloseDialog();
+    }
+    [JSInvokable]
+    public Task PageVisibilityChanged(bool visible)
+    {
+        if (!disposed) { pageVisible = visible; StateHasChanged(); }
+        return Task.CompletedTask;
+    }
+
     private void ShowTraining()
     {
         ReloadPreferences();
+        showGhostCatalogue = false;
         showHistory = false;
         historyPage = null;
         showSettings = false;
@@ -292,6 +353,7 @@ public partial class StartRunPage
     private void OpenSettingsDestinationCore(bool health)
     {
         initialHealthSettings = health;
+        showGhostCatalogue = false;
         showHistory = false;
         historyPage = null;
         showSettings = true;
@@ -589,6 +651,7 @@ public partial class StartRunPage
         {
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
             reference ??= DotNetObjectReference.Create(this);
+            if (!visibilityBound) { visibilityBound = true; pageVisible = await module.InvokeAsync<bool>("bindVisibility", reference); }
             if (systemMotionPending)
             {
                 systemMotionPending = false;
@@ -596,7 +659,15 @@ public partial class StartRunPage
             }
             if (managePending) { managePending = false; await module.InvokeVoidAsync("manage", reference); }
             if (openPending) { openPending = false; await module.InvokeVoidAsync("open", opener, reference); }
-            if (focusPending is { } focus) { focusPending = null; await module.InvokeVoidAsync("focus", focus); }
+            if (focusPending is { } focus)
+            {
+                focusPending = null;
+                var requestedOwner = ghostManualFocusOwner;
+                ghostManualFocusOwner = null;
+                if (!focus.StartsWith("ghost-training-toggle-", StringComparison.Ordinal)
+                    || requestedOwner is { } owner && focus == $"ghost-training-toggle-{owner}" && VisibleGhostOwner(owner))
+                    await module.InvokeVoidAsync("focus", focus);
+            }
             if (motionPending || resultPending)
             {
                 motionPending = false;
@@ -616,6 +687,7 @@ public partial class StartRunPage
     public async Task CloseDialog()
     {
         CoreDialogNavigation.Close = managing ? () => _ = InvokeAsync(CloseManage)
+            : showGhostCatalogue ? () => _ = InvokeAsync(() => ghostCatalogue?.GoBack() ?? Task.CompletedTask)
             : showHistory ? () => _ = InvokeAsync(() => historyPage?.GoBack() ?? Task.CompletedTask)
             : showSettings ? () => _ = InvokeAsync(() => settingsPage?.GoBack() ?? Task.CompletedTask) : null;
         if (module is not null) await module.InvokeVoidAsync("close");
@@ -627,6 +699,7 @@ public partial class StartRunPage
 
     public async ValueTask DisposeAsync()
     {
+        disposed = true;
         RunService.Changed -= Refresh;
         RunNotificationEntry.Changed -= OpenNotificationRun;
         HealthConnectSettings.OpenRequested -= OpenHealthSettings;

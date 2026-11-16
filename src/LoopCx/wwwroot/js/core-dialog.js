@@ -5,6 +5,7 @@ const liveEffects = new Map();
 const exitCopies = new Set();
 const motionEase = 'cubic-bezier(.2,0,0,1)';
 let listening = false;
+let visibilityOwner;
 let systemMotion;
 let lastSurface;
 let lastState;
@@ -42,12 +43,25 @@ function listenForMotion() {
     window.addEventListener('pagehide', livePageHidden);
     listening = true;
 }
+export function bindVisibility(owner) {
+    visibilityOwner = owner;
+    listenForMotion();
+    return !document.hidden;
+}
+function notifyVisibility(visible) {
+    const owner = visibilityOwner;
+    owner?.invokeMethodAsync('PageVisibilityChanged', visible).catch(() => {
+        if (visibilityOwner === owner) visibilityOwner = undefined;
+    });
+}
 function livePageHidden() {
+    notifyVisibility(false);
     document.documentElement.dataset.systemMotion = 'pending';
     clearMotion();
 }
 function liveVisibilityChanged() {
     if (document.hidden) livePageHidden();
+    else notifyVisibility(true);
     // Return waits for the native preference refresh and the next real rendered snapshot.
 }
 function syncLiveEffect(key, node, frames, duration, identity) {
@@ -160,6 +174,7 @@ export function syncMotion(saved) {
     }
 }
 export function dispose() {
+    visibilityOwner = undefined;
     clearMotion();
     motionPreference.removeEventListener('change', mediaMotionChanged);
     document.removeEventListener('visibilitychange', liveVisibilityChanged);

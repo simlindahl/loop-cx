@@ -3,6 +3,7 @@ using Android.Content;
 using Android.Database.Sqlite;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
+using LoopCx.Features.GhostRun;
 using LoopCx.Features.History;
 
 namespace LoopCx;
@@ -89,8 +90,16 @@ public sealed class RunJournal : SQLiteOpenHelper
 
     public void Commit(RunSaveBatch batch)
     {
-        try { CommitTransaction(batch); }
+        try
+        {
+            CommitTransaction(batch);
+#if DEBUG
+            FailGhostProbe(batch.Latest.Id, afterCommit: true);
+#endif
+        }
         catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
+        catch (Exception error) when (error is InvalidDataException or JsonException or ArgumentException)
+        { throw new RunSaveReadException("Frozen recording or archive evidence is inconsistent. Nothing was overwritten.", error); }
     }
 
     internal static IOException ClassifyNativeFailure(SQLiteException error) => error switch
@@ -110,6 +119,25 @@ public sealed class RunJournal : SQLiteOpenHelper
         return new(name, false, new PreservingCorruptionHandler());
     }
     internal int ProbeCorruptionCallbacks => corruptionHandler.Calls;
+    private Guid ghostProbeId;
+    private string? ghostProbeFault;
+
+    internal void ArmGhostTransactionProbe(Guid id, string fault)
+    {
+        // Only a private, explicitly named scratch helper can inject these fixed one-shot faults.
+        if (id == Guid.Empty || fault is not ("archive-abort" or "lost-return")
+            || DatabaseName is null || !DatabaseName.StartsWith("run-save-corrupt-probe-", StringComparison.Ordinal))
+            throw new ArgumentException("Ghost transaction faults require an owned scratch journal.");
+        ghostProbeId = id;
+        ghostProbeFault = fault;
+    }
+
+    private void FailGhostProbe(Guid id, bool afterCommit)
+    {
+        if (id != ghostProbeId || ghostProbeFault != (afterCommit ? "lost-return" : "archive-abort")) return;
+        ghostProbeFault = null; // Consume before throwing; Retry keeps the original frozen batch.
+        throw new IOException(afterCommit ? "Synthetic lost return after EndTransaction" : "Synthetic abort after Ghost archive write");
+    }
 
     internal void SetRecoveryFailureForProbe(Guid id, bool enabled)
     {
@@ -128,6 +156,17 @@ public sealed class RunJournal : SQLiteOpenHelper
             db.ExecSQL($"CREATE TEMP TRIGGER loop_recovery_probe_failure BEFORE UPDATE OF recovery_saved_utc ON runs WHEN OLD.id = '{id}' BEGIN SELECT RAISE(ABORT, 'isolated recovery save failure'); END");
     }
 
+    internal void SetGhostSaveFailureForProbe(Guid runId, Guid sourceId, bool enabled)
+    {
+        if (RunService.Snapshot is not { ActivityKind: "ghost" } owner || owner.Id != runId)
+            throw new ArgumentException("Only the current Ghost owner may arm its save fault.");
+        using var source = ReadableDatabase!.RawQuery("SELECT template_metadata FROM runs WHERE id = ? AND status = 'finished'", [sourceId.ToString()])!;
+        if (!source.MoveToFirst()) throw new ArgumentException("Missing synthetic C2 source.");
+        var template = JsonSerializer.Deserialize<CoreTemplate>(source.GetString(0) ?? "null");
+        if (template?.TemplateId != "C2" || template.Source != GhostSyntheticSourceFixture.Label)
+            throw new ArgumentException("Only the explicitly labelled synthetic C2 source is eligible.");
+        SetSaveFailureForProbe(runId, enabled);
+    }
     internal void SetSaveFailureForProbe(Guid runId, bool enabled)
     {
         var db = WritableDatabase!;
@@ -140,6 +179,25 @@ public sealed class RunJournal : SQLiteOpenHelper
     private void CommitTransaction(RunSaveBatch batch)
     {
         var state = batch.Latest;
+        GhostRaceCheckpoint? ghost = null;
+        try
+        {
+            using var document = JsonDocument.Parse(state.Checkpoint);
+            if (GhostRaceCheckpoint.IsGhost(document.RootElement))
+            {
+                ghost = GhostRaceCheckpoint.Read(state.Checkpoint);
+                if (state.Id != ghost.Id || state.StartedUtc != ghost.StartedUtc || state.Revision != ghost.SaveRevision
+                    || state.Finished != (ghost.Snapshot.Clock.State != GhostClockState.Running) || state.OriginalPlan != "[]")
+                    throw new InvalidDataException("Ghost journal identity or terminal facts disagree.");
+                if (ghost.TerminalContext is { } terminal && terminal.ObservedUtc != state.ObservedUtc)
+                    throw new InvalidDataException("Ghost terminal observation and frozen save receipt disagree.");
+                if (ghost.ArchiveDisposition == "zero-elapsed-incomplete" && !batch.Events.Any(item => item.Command == "end-attempt" && item.Checkpoint == state.Checkpoint))
+                    throw new InvalidDataException("Zero elapsed requires the exact recorded explicit End event in this terminal batch.");
+            }
+            else ExportRunV1.RequireCore(document.RootElement);
+        }
+        catch (Exception error) when (error is JsonException or InvalidDataException or ArgumentException)
+        { throw new RunSaveReadException("The pending checkpoint is unsupported. No overwrite was attempted.", error); }
         var db = WritableDatabase!;
         db.BeginTransaction();
         try
@@ -167,7 +225,7 @@ public sealed class RunJournal : SQLiteOpenHelper
             values.Put("started_utc", state.StartedUtc.ToString("O"));
             values.Put("observed_utc", state.ObservedUtc.ToString("O"));
             values.Put("elapsed_ms", state.ElapsedMilliseconds);
-            values.Put("status", state.Finished ? "finished" : "recording");
+            values.Put("status", ghost?.Snapshot.Clock.State == GhostClockState.Incomplete ? "incomplete" : state.Finished ? "finished" : "recording");
             values.Put("initial_plan", state.OriginalPlan);
             values.Put("template_metadata", state.TemplateMetadata);
             if (state.HeartRateMetadata is not null) values.Put("heart_rate_metadata", state.HeartRateMetadata);
@@ -204,7 +262,14 @@ public sealed class RunJournal : SQLiteOpenHelper
                 recorded.Put("elapsed_ms", recordedEvent.ElapsedMilliseconds); recorded.Put("checkpoint", recordedEvent.Checkpoint);
                 db.InsertOrThrow("run_events", null, recorded);
             }
-            if (state.Finished)
+            if (ghost is not null)
+            {
+                new AndroidGhostArchive(db, transactionOwned: true).CommitRace(ghost);
+#if DEBUG
+                FailGhostProbe(state.Id, afterCommit: false);
+#endif
+            }
+            else if (state.Finished)
             {
                 using var queued = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)")!;
                 queued.BindString(1, state.Id.ToString());
@@ -278,13 +343,25 @@ public sealed class RunJournal : SQLiteOpenHelper
         var db = ReadableDatabase!;
         var rows = new List<StoredRunRow>();
         var unreadable = 0;
+        var ghosts = new List<GhostStoredRun>();
         db.BeginTransactionNonExclusive();
         try
         {
-            using var cursor = db.RawQuery("SELECT r.id, r.started_utc, r.status, r.template_metadata, r.checkpoint, q.status, q.attempt_json FROM runs r LEFT JOIN export_queue q ON q.run_id = r.id WHERE r.status = 'finished' ORDER BY julianday(r.started_utc) DESC, r.id", null)!;
+            using var cursor = db.RawQuery("SELECT r.id, r.started_utc, r.status, r.template_metadata, r.checkpoint, q.status, q.attempt_json FROM runs r LEFT JOIN export_queue q ON q.run_id = r.id WHERE r.status IN ('finished', 'incomplete') ORDER BY julianday(r.started_utc) DESC, r.id", null)!;
             while (cursor.MoveToNext())
             {
                 if (!Guid.TryParse(cursor.GetString(0), out var id)) { unreadable++; continue; }
+                try
+                {
+                    using var document = JsonDocument.Parse(cursor.GetString(4)!);
+                    if (GhostRaceCheckpoint.IsGhost(document.RootElement))
+                    {
+                        ghosts.Add(GhostStoredRun.Read(id, cursor.GetString(2)!, cursor.GetString(4)!));
+                        continue;
+                    }
+                }
+                catch (Exception issue) when (issue is JsonException or InvalidDataException or ArgumentException)
+                { unreadable++; continue; }
                 rows.Add(new(id, cursor.GetString(1)!, cursor.GetString(2)!, cursor.IsNull(3) ? null : cursor.GetString(3),
                     cursor.GetString(4)!, cursor.IsNull(5) ? null : cursor.GetString(5), cursor.IsNull(6) ? null : cursor.GetString(6)));
             }
@@ -294,11 +371,21 @@ public sealed class RunJournal : SQLiteOpenHelper
             while (interrupted.MoveToNext())
             {
                 interruptedCount++;
-                try { partials.Add(ReadInterrupted(interrupted)); }
+                try
+                {
+                    using var document = JsonDocument.Parse(interrupted.GetString(4)!);
+                    if (GhostRaceCheckpoint.IsGhost(document.RootElement))
+                    {
+                        ghosts.Add(GhostStoredRun.Read(Guid.Parse(interrupted.GetString(0)!), "interrupted", interrupted.GetString(4)!));
+                        interruptedCount--;
+                        continue;
+                    }
+                    partials.Add(ReadInterrupted(interrupted));
+                }
                 catch (Exception issue) when (InterruptedRunProjection.IsUnreadableRow(issue))
                 { unreadable++; }
             }
-            var result = new StoredRunArchive(rows, interruptedCount, unreadable, partials);
+            var result = new StoredRunArchive(rows, interruptedCount, unreadable, partials) { Ghost = ghosts.AsReadOnly() };
             db.SetTransactionSuccessful();
             return result;
         }
@@ -351,6 +438,27 @@ public sealed class RunJournal : SQLiteOpenHelper
         catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
     }
 
+    public GhostStoredRun? ReadGhostRun(Guid id)
+    {
+        var db = ReadableDatabase!;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            using var row = db.RawQuery("SELECT status, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
+            if (!row.MoveToFirst()) throw new KeyNotFoundException("The recorded run no longer exists.");
+            using var document = JsonDocument.Parse(row.GetString(1)!);
+            if (!GhostRaceCheckpoint.IsGhost(document.RootElement)) { db.SetTransactionSuccessful(); return null; }
+            if (row.GetString(0) == "recording") throw new InvalidDataException("The Ghost recording is still owned by the service.");
+            var stored = GhostStoredRun.Read(id, row.GetString(0)!, row.GetString(1)!);
+            using var archive = db.RawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='ghost_schema'", null)!;
+            if (!archive.MoveToFirst()) throw new InvalidDataException("The recorded Ghost archive is missing. No repair was attempted.");
+            var records = new AndroidGhostArchive(db, transactionOwned: true).ReadRecords(stored.Checkpoint.Route.Key, stored.Checkpoint.StartedLocal.Year);
+            db.SetTransactionSuccessful();
+            return stored with { Records = records };
+        }
+        finally { db.EndTransaction(); }
+    }
+
     public StoredRunDetail ReadFinishedRun(Guid id)
     {
         var db = ReadableDatabase!;
@@ -401,6 +509,29 @@ public sealed class RunJournal : SQLiteOpenHelper
             });
         }
         return locations;
+    }
+
+    public GhostArchiveWrite SaveGhostRoute(StoredGhostCapture captured)
+    {
+        try { return new AndroidGhostArchive(this).SaveStoredSource(captured); }
+        catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
+    }
+
+    public StoredGhostCapture PrepareGhostRoute(Guid id, string name)
+    {
+        ExportJournalSnapshot source;
+        var db = ReadableDatabase!;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            source = ReadExportSnapshot(db, id, includeRoute: true);
+            var owner = RunService.Snapshot;
+            if (owner?.Id == id && (owner.Phase != "Finished" || owner.Storage?.State != "saved"))
+                throw new InvalidDataException("The source final save is not confirmed.");
+            db.SetTransactionSuccessful();
+        }
+        finally { db.EndTransaction(); }
+        return GhostStoredSource.Capture(source, name);
     }
 
     public StoredRoute ReadRoute(Guid id)

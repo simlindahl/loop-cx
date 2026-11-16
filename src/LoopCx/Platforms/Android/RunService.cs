@@ -5,17 +5,23 @@ using Android.Locations;
 using Android.OS;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
+using LoopCx.Features.GhostRun;
 
 namespace LoopCx;
 
 public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long ActiveSeconds,
-    long RemainingSeconds, int Locations, string GpsStatus, string TemplateId, DistanceState? Distance = null, MotionState? Motion = null, RunStatisticsState? Statistics = null, CoreTemplate? FrozenTemplate = null,
+    long? RemainingSeconds, int Locations, string GpsStatus, string? TemplateId, DistanceState? Distance = null, MotionState? Motion = null, RunStatisticsState? Statistics = null, CoreTemplate? FrozenTemplate = null,
     int? TargetRpe = null, int? WorkRepetition = null, int? WorkRepetitions = null, HeartRateState? HeartRate = null, LivePaceState? LivePace = null,
-    RunSaveStatus? Storage = null);
+    RunSaveStatus? Storage = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore] public string ActivityKind { get; init; } = "core";
+    [System.Text.Json.Serialization.JsonIgnore] public GhostRaceSnapshot? Ghost { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore] public GhostRoute? GhostRoute { get; init; }
+}
 
 [Property("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE", Value = "User-started ongoing timed workout phases and visible controls while screen is locked, when GPS is unavailable or declined.")]
 [Service(Exported = false, ForegroundServiceType = ForegroundService.TypeLocation | ForegroundService.TypeConnectedDevice | ForegroundService.TypeSpecialUse)]
-public sealed class RunService : Service, ILocationListener
+public sealed partial class RunService : Service, ILocationListener
 {
     private AndroidRunAudio? audio;
     private RunAudioPolicy? audioPolicy;
@@ -89,15 +95,6 @@ public sealed class RunService : Service, ILocationListener
     private bool finishExportScheduled;
     private bool journalAvailable;
 
-    public override void OnCreate()
-    {
-        base.OnCreate();
-        try { journal = RunJournal.Shared; journalAvailable = true; }
-        catch (Exception error) when (error is IOException or global::Android.Database.Sqlite.SQLiteException)
-        {
-            ReportStorageOpenFailure();
-        }
-    }
     private Handler? handler;
     private Action? tick;
     private long lastTick;
@@ -123,13 +120,38 @@ public sealed class RunService : Service, ILocationListener
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
+        var command = intent?.Action;
+        if (command == "start-ghost" && ghost is null && session is null)
+        {
+            try { PromoteGhostCheckingForeground(); }
+            catch (Java.Lang.RuntimeException)
+            {
+                RejectGhostStart(intent, "Ghost Run could not start. Existing recordings were preserved.", startId);
+                return StartCommandResult.NotSticky;
+            }
+        }
         if (!journalAvailable)
         {
-            Changed?.Invoke();
-            StopSelf();
+            try { journal = RunJournal.Shared; journalAvailable = true; }
+            catch (Exception error) when (error is IOException or global::Android.Database.Sqlite.SQLiteException)
+            {
+                if (command == "start-ghost")
+                    RejectGhostStart(intent, "Local storage could not be opened. The race has not started.", startId);
+                else
+                {
+                    StopSelfResult(startId);
+                    ReportStorageOpenFailure();
+                }
+                return StartCommandResult.NotSticky;
+            }
+        }
+        if (intent?.GetStringExtra(GhostOwnerExtra) is { } expectedGhost && (ghost is null || expectedGhost != id.ToString()))
+        {
+            if (command == "start-ghost") RejectGhostStart(intent, "This start request is no longer current.", startId);
+            else if (ghost is null && session is null) StopSelfResult(startId);
             return StartCommandResult.NotSticky;
         }
-        var command = intent?.Action;
+        if (command == "start-ghost" || ghost is not null) return HandleGhostCommand(intent, command, startId);
 #if DEBUG
         if (command == "native-probe" && OperatingSystem.IsAndroidVersionAtLeast(33))
         {
@@ -410,6 +432,7 @@ public sealed class RunService : Service, ILocationListener
 
     private void Tick()
     {
+        if (ghost is not null) { TickGhost(); return; }
         if (!session!.IsFinished) AdvanceClock();
         Publish();
         if (!session.IsFinished) handler!.PostDelayed(tick!, 1000);
@@ -520,7 +543,7 @@ public sealed class RunService : Service, ILocationListener
 
     private void StartHeartRateSource()
     {
-        if (session is null || session.IsFinished || heartRateConfiguration.DeviceAddress is not { } address) return;
+        if ((ghost is null ? session is null || session.IsFinished : ghost.Ended) || heartRateConfiguration.DeviceAddress is not { } address) return;
 
         var expectedRunId = id;
 
@@ -542,6 +565,14 @@ public sealed class RunService : Service, ILocationListener
 
     private void ReceiveHeartRate(Guid expectedRunId, HeartRateObservation observation)
     {
+        if (ghost is not null)
+        {
+            if (ghost.Ended || expectedRunId != id) return;
+            ghost.Observe(SystemClock.ElapsedRealtime());
+            heartRate!.Observe(observation);
+            PublishGhost(observation: observation);
+            return;
+        }
         if (session is null || session.IsFinished || expectedRunId != id) return;
 
         AdvanceClock();
@@ -563,11 +594,11 @@ public sealed class RunService : Service, ILocationListener
             (!OperatingSystem.IsAndroidVersionAtLeast(28) || manager.IsLocationEnabled);
     }
 
-    private void StartEligibleForeground(bool connectedDevice = false, bool timerOnly = false)
+    private void StartEligibleForeground(bool connectedDevice = false, bool timerOnly = false, Notification? initial = null)
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(29))
         {
-            StartForeground(NotificationId, BuildNotification());
+            StartForeground(NotificationId, initial ?? BuildNotification());
 
             return;
         }
@@ -579,7 +610,7 @@ public sealed class RunService : Service, ILocationListener
         if (connectedDeviceRequested && OperatingSystem.IsAndroidVersionAtLeast(31) && CheckSelfPermission(global::Android.Manifest.Permission.BluetoothConnect) == Permission.Granted)
             type |= ForegroundService.TypeConnectedDevice;
 
-        StartForeground(NotificationId, BuildNotification(), type);
+        StartForeground(NotificationId, initial ?? BuildNotification(), type);
     }
 
     private void RefreshLocationSubscription()
@@ -615,6 +646,7 @@ public sealed class RunService : Service, ILocationListener
 
         if (!available)
         {
+            ghost?.Unavailable();
             gpsStatus = "GPS unavailable · allow location in Android settings";
             livePace.Reset();
             paceTrend.Reset(TimeSpan.FromMilliseconds(lastTick));
@@ -651,7 +683,8 @@ public sealed class RunService : Service, ILocationListener
         var pendingOpen = PendingIntent.GetActivity(this, 0, open, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var pauseReason = !state.Paused ? PauseReason.None
             : state.Motion?.PauseReason == PauseReason.Automatic ? PauseReason.Automatic : PauseReason.Manual;
-        var text = RunNotificationText.Create(state.Phase, state.RemainingSeconds, pauseReason,
+        if (state.Ghost is { } race) return BuildGhostNotification(state, race, pendingOpen);
+        var text = RunNotificationText.Create(state.Phase, state.RemainingSeconds!.Value, pauseReason,
             state.HeartRate?.CurrentBpm, state.LivePace?.SecondsPerKilometre);
         var builder = new Notification.Builder(this, ChannelId)
             .SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
@@ -693,6 +726,7 @@ public sealed class RunService : Service, ILocationListener
 
     public void OnLocationChanged(global::Android.Locations.Location location)
     {
+        if (ghost is not null) { GhostLocation(location); return; }
         if (session is null || session.IsFinished || session.PauseReason == PauseReason.Manual) return;
 
         var raw = new RunSaveLocation(location.Time, location.ElapsedRealtimeNanos, location.Latitude, location.Longitude,
@@ -763,6 +797,11 @@ public sealed class RunService : Service, ILocationListener
 
     public void OnProviderDisabled(string provider)
     {
+        if (ghost is not null)
+        {
+            if (!ghost.Ended) { ghost.Unavailable(); RefreshLocationSubscription(); PublishGhost(); }
+            return;
+        }
         if (session is null || session.IsFinished) return;
 
         RefreshLocationSubscription();
@@ -771,6 +810,11 @@ public sealed class RunService : Service, ILocationListener
 
     public void OnProviderEnabled(string provider)
     {
+        if (ghost is not null)
+        {
+            if (!ghost.Ended) { ghost.Unavailable(); RefreshLocationSubscription(); PublishGhost(); }
+            return;
+        }
         if (session is null || session.IsFinished) return;
 
         RefreshLocationSubscription();

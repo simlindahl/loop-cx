@@ -11,8 +11,32 @@ namespace LoopCx.Features.History;
 public partial class HistoryPage
 {
     [Parameter] public EventCallback OnTraining { get; set; }
+    [Parameter] public EventCallback<LoopCx.Features.GhostRun.RouteKey> OnGhostRoute { get; set; }
     [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
+    private readonly List<LoopCx.Features.GhostRun.GhostStoredRun> ghostRuns = [];
+    private LoopCx.Features.GhostRun.GhostStoredRun? ghostResult;
+    private IEnumerable<object> HistoryEntries => runs.Cast<object>().Concat(ghostRuns).OrderByDescending(item => item switch
+    {
+        StoredRunSummary core => core.StartedUtc ?? DateTimeOffset.MinValue,
+        LoopCx.Features.GhostRun.GhostStoredRun race => race.Checkpoint.StartedUtc,
+        _ => DateTimeOffset.MinValue
+    }).ThenBy(item => item is StoredRunSummary core ? core.Id : ((LoopCx.Features.GhostRun.GhostStoredRun)item).Id);
+    private bool ghostOpen;
+    private LoopCx.Features.GhostRun.Ui.GhostRoutesPage? ghostPage;
+    private void OpenGhostRoutes()
+    {
+        if (busy || detail?.IsContinuousGhostSource != true) return;
+        ghostOpen = true;
+        focusPending = null;
+    }
+    private Task CloseGhostRoutes()
+    {
+        ghostOpen = false;
+        focusPending = "history-ghost";
+        return Task.CompletedTask;
+    }
+
     private readonly List<StoredRunSummary> runs = [];
     private StoredRunDetail? detail;
     private string? detailDestination;
@@ -79,7 +103,7 @@ public partial class HistoryPage
     }
     private void RefreshHealthConnect() => _ = InvokeAsync(async () =>
     {
-        if (disposed || busy || sharingRun is not null || partial is not null) return;
+        if (disposed || busy || ghostOpen || ghostResult is not null || sharingRun is not null || partial is not null) return;
         if (detail is { } selected) await Open(selected.Summary.Id);
         else await ShowList();
         StateHasChanged();
@@ -92,6 +116,7 @@ public partial class HistoryPage
         error = null;
         detail = null;
         detailDestination = null;
+        ghostOpen = false;
         partial = null;
         sharingRun = null;
         shareRequest++;
@@ -100,10 +125,13 @@ public partial class HistoryPage
         recoveryFailed = recoveryUnavailable = false;
         runs.Clear();
         partials.Clear();
+        ghostRuns.Clear();
+        ghostResult = null;
         try
         {
             var archive = await Task.Run(() => RunJournal.Shared.ReadFinishedRuns());
             if (disposed) return;
+            ghostRuns.AddRange(archive.Ghost);
             interrupted = archive.InterruptedCount;
             unreadable = archive.UnreadableCount;
             partials.AddRange(archive.Interrupted ?? []);
@@ -157,6 +185,15 @@ public partial class HistoryPage
         error = null;
         try
         {
+            var ghost = await Task.Run(() => RunJournal.Shared.ReadGhostRun(id));
+            if (disposed) return;
+            if (ghost is not null)
+            {
+                ghostResult = ghost;
+                detail = null;
+                focusPending = "history-heading";
+                return;
+            }
             var loaded = await Task.Run(() => RunJournal.Shared.ReadFinishedRun(id));
             if (disposed) return;
             detail = loaded;
@@ -239,6 +276,13 @@ public partial class HistoryPage
 
     public async Task GoBack()
     {
+        if (ghostOpen)
+        {
+            if (ghostPage is not null) await ghostPage.GoBack();
+            else await CloseGhostRoutes();
+            return;
+        }
+        if (ghostResult is not null) { var ghostId = ghostResult.Id; await ShowList(); focusPending = $"history-{ghostId}"; return; }
         if (detailDestination is { } destination)
         {
             detailDestination = null;

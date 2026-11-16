@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/LoopCx/Features/GhostRun/Ui/GhostRouteDrawing.cs" Link="GhostRouteDrawing.cs" />
+    <Compile Include="../../src/LoopCx/Features/History/GhostStoredSource.cs" Link="History/GhostStoredSource.cs" />
+    <Compile Include="../../src/LoopCx/Features/GhostRun/Runtime/*.cs" Link="GhostRun/Runtime/%(Filename)%(Extension)" />
+    <Compile Include="../../src/LoopCx/Features/GhostRun/*.cs" Link="GhostRun/%(Filename)%(Extension)" />
     <Compile Include="../../src/LoopCx/Features/History/StoredRoute.cs" Link="History/StoredRoute.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunPointProvenance.cs" Link="RunPointProvenance.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/CorePreferences.cs" Link="CorePreferences.cs" />
@@ -31,5 +35,6 @@
     <Compile Include="../../src/LoopCx/Features/History/InterruptedRun.cs" Link="History/InterruptedRun.cs" />
     <Compile Include="../../src/LoopCx/Features/ActiveRun/RunNotificationEntry.cs" Link="RunNotificationEntry.cs" />
     <Compile Include="../../src/LoopCx/Features/HealthConnectExport/*.cs" Link="HealthConnectExport/%(Filename)%(Extension)" />
+    <Compile Include="../../src/LoopCx/Platforms/Android/NativeGhostIntegratedProbe.cs" Link="NativeGhostIntegratedProbe.cs" />
   </ItemGroup>
 </Project>

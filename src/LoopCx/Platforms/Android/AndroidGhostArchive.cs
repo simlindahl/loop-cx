@@ -1,8 +1,9 @@
-using Android.Content;
-using Android.Database.Sqlite;
 using System.Globalization;
 using System.Text.Json;
+using Android.Content;
+using Android.Database.Sqlite;
 using LoopCx.Features.GhostRun;
+using LoopCx.Features.History;
 
 namespace LoopCx;
 
@@ -10,6 +11,7 @@ namespace LoopCx;
 public sealed class AndroidGhostArchive
 {
     private readonly SQLiteDatabase db;
+    private readonly bool transactionOwned;
 
     public AndroidGhostArchive(RunJournal journal)
     {
@@ -18,10 +20,11 @@ public sealed class AndroidGhostArchive
     }
 
     // Isolated native storage tests may supply their own private scratch connection.
-    internal AndroidGhostArchive(SQLiteDatabase database)
+    internal AndroidGhostArchive(SQLiteDatabase database, bool transactionOwned = false)
     {
         ArgumentNullException.ThrowIfNull(database);
         db = database;
+        this.transactionOwned = transactionOwned;
     }
 
     private void EnsureSchema()
@@ -56,6 +59,12 @@ public sealed class AndroidGhostArchive
 
     private T InArchive<T>(Func<T> operation)
     {
+        if (transactionOwned)
+        {
+            if (!db.InTransaction()) throw new InvalidOperationException("The journal must own the Ghost transaction.");
+            EnsureSchema();
+            return operation();
+        }
         db.BeginTransaction();
         try
         {
@@ -88,6 +97,28 @@ public sealed class AndroidGhostArchive
         });
     }
 
+    public GhostArchiveWrite SaveStoredSource(StoredGhostCapture captured)
+    {
+        ArgumentNullException.ThrowIfNull(captured);
+        var evidence = GhostSourceEvidenceCodec.Read(captured.RawJson);
+        var attempt = captured.Attempt;
+        if (evidence.SourceRunId != captured.Geometry.Route.SourceRunId || evidence.SourceRunId != attempt.SourceRunId
+            || attempt.Route != captured.Geometry.Route.Key || attempt.RuleVersion != captured.Geometry.Policy.RuleVersion
+            || attempt.Elapsed.Ticks != (evidence.MainEndMilliseconds - evidence.MainStartMilliseconds) * TimeSpan.TicksPerMillisecond)
+            throw new ArgumentException("Stored source identity and full Main clock must agree.");
+        GhostSourceEvidenceCodec.ValidateAttempt(evidence, attempt);
+        ValidateReason(attempt, captured.QualityReason);
+        var routeValues = RouteValues(captured.Geometry.Route, captured.Geometry.Policy);
+        var attemptValues = AttemptValues(attempt, captured.QualityReason, captured.RawJson);
+        return InArchive(() =>
+        {
+            var route = InsertFrozen("ghost_routes", routeValues, "route_id=? AND version_id=?",
+                [attempt.Route.Id.ToString(), attempt.Route.Version.ToString()]);
+            var source = InsertAttempt(attempt, attemptValues);
+            return route || source ? GhostArchiveWrite.Inserted : GhostArchiveWrite.AlreadyStored;
+        });
+    }
+
     public GhostArchiveWrite SaveAttempt(GhostAttempt attempt, string? qualityReason, IReadOnlyList<RecordedRouteFix> raw)
     {
         ArgumentNullException.ThrowIfNull(attempt);
@@ -100,6 +131,45 @@ public sealed class AndroidGhostArchive
             if (route.Route.RuleVersion != attempt.RuleVersion) throw new ArgumentException("The attempt uses another route rule version.");
             var inserted = InsertAttempt(attempt, values);
             return inserted ? GhostArchiveWrite.Inserted : GhostArchiveWrite.AlreadyStored;
+        });
+    }
+
+    // Only RunJournal's actual start/final checkpoint transaction uses this entry.
+    internal void CommitRace(GhostRaceCheckpoint race)
+    {
+        if (!transactionOwned || !db.InTransaction()) throw new InvalidOperationException("Race writes require the journal transaction.");
+        InArchive(() =>
+        {
+            _ = ReadRouteCore(race.Route.Key) ?? throw new InvalidDataException("The frozen race route is unavailable.");
+            var reference = race.Reference;
+            var values = new Dictionary<string, object?>
+            {
+                ["race_id"] = race.Id.ToString(),
+                ["route_id"] = race.Route.Key.Id.ToString(),
+                ["version_id"] = race.Route.Key.Version.ToString(),
+                ["rule_version"] = race.Route.RuleVersion,
+                ["started_local"] = race.StartedLocal.ToString("O"),
+                ["frozen_year"] = race.StartedLocal.Year,
+                ["mode"] = race.Mode.ToString(),
+                ["reference_attempt_id"] = reference?.Id.ToString(),
+                ["reference_elapsed_ticks"] = reference?.Elapsed.Ticks,
+                ["reference_quality"] = reference?.Quality.ToString(),
+                ["frozen_profile_json"] = JsonSerializer.Serialize(race.Profile)
+            };
+            InsertFrozen("ghost_race_starts", values, "race_id=?", [race.Id.ToString()]);
+            if (race.ArchiveDisposition == "zero-elapsed-incomplete")
+            {
+                if (race.TerminalKind != "explicit-end" || race.Snapshot.Clock.State != GhostClockState.Incomplete || race.Snapshot.Clock.RaceElapsed != TimeSpan.Zero)
+                    throw new InvalidDataException("Only an explicit zero-elapsed incomplete End can omit an archive attempt.");
+            }
+            else if (race.Snapshot.Clock.State != GhostClockState.Running)
+            {
+                var attempt = race.Attempt();
+                var reason = attempt.Quality == AttemptQuality.Verified ? null : race.Snapshot.QualityReason ?? "The recorded route finish is not verified.";
+                ValidateReason(attempt, reason);
+                InsertAttempt(attempt, AttemptValues(attempt, reason, race.Raw));
+            }
+            return true;
         });
     }
 
@@ -154,7 +224,10 @@ public sealed class AndroidGhostArchive
         ["policy_json"] = JsonSerializer.Serialize(policy)
     };
 
-    private static Dictionary<string, object?> AttemptValues(GhostAttempt attempt, string? reason, IReadOnlyList<RecordedRouteFix> raw) => new()
+    private static Dictionary<string, object?> AttemptValues(GhostAttempt attempt, string? reason, IReadOnlyList<RecordedRouteFix> raw) =>
+        AttemptValues(attempt, reason, JsonSerializer.Serialize(raw));
+
+    private static Dictionary<string, object?> AttemptValues(GhostAttempt attempt, string? reason, string rawJson) => new()
     {
         ["attempt_id"] = attempt.Id.ToString(),
         ["source_run_id"] = attempt.SourceRunId.ToString(),
@@ -169,7 +242,7 @@ public sealed class AndroidGhostArchive
         ["quality"] = attempt.Quality.ToString(),
         ["quality_reason"] = reason,
         ["progress_json"] = JsonSerializer.Serialize(attempt.Points),
-        ["raw_json"] = JsonSerializer.Serialize(raw)
+        ["raw_json"] = rawJson
     };
 
     public IReadOnlyList<ArchivedGhostRoute> ReadRoutes() => InArchive(() =>
@@ -209,12 +282,27 @@ public sealed class AndroidGhostArchive
         {
             var startedLocal = DateTimeOffset.Parse(rows.GetString(3)!, CultureInfo.InvariantCulture);
             var points = JsonSerializer.Deserialize<GhostPoint[]>(rows.GetString(10)!) ?? throw new InvalidDataException("Missing archived progress.");
-            var raw = JsonSerializer.Deserialize<RecordedRouteFix[]>(rows.GetString(11)!) ?? throw new InvalidDataException("Missing archived raw evidence.");
+            var rawJson = rows.GetString(11)!;
+            using var rawDocument = JsonDocument.Parse(rawJson);
+            JsonElement? storedSource = null;
+            RecordedRouteFix[] raw;
+            if (rawDocument.RootElement.ValueKind == JsonValueKind.Array)
+                raw = JsonSerializer.Deserialize<RecordedRouteFix[]>(rawJson) ?? throw new InvalidDataException("Missing archived raw evidence.");
+            else
+            {
+                var evidence = GhostSourceEvidenceCodec.Read(rawJson);
+                if (evidence.SourceRunId != Guid.Parse(rows.GetString(1)!)
+                    || (decimal)(evidence.MainEndMilliseconds - evidence.MainStartMilliseconds) * TimeSpan.TicksPerMillisecond != rows.GetLong(7))
+                    throw new InvalidDataException("Archived source identity or Main elapsed disagrees.");
+                storedSource = rawDocument.RootElement.Clone();
+                raw = []; // The complete v2 callback envelope is explicitly separate, never presented as legacy raw.
+            }
             var attempt = new GhostAttempt(Guid.Parse(rows.GetString(0)!), Guid.Parse(rows.GetString(1)!), key, startedLocal,
                 rows.GetString(5)!, TimeSpan.FromTicks(rows.GetLong(7)), Enum.Parse<AttemptQuality>(rows.GetString(8)!), rows.GetString(2)!, points);
             if (attempt.SavedLocalYear != rows.GetInt(4) || startedLocal.UtcDateTime.Ticks != rows.GetLong(6))
                 throw new InvalidDataException("Archived start-zone provenance disagrees.");
-            result.Add(new(attempt, rows.IsNull(9) ? null : rows.GetString(9), Array.AsReadOnly(raw)));
+            if (storedSource is not null) GhostSourceEvidenceCodec.ValidateAttempt(GhostSourceEvidenceCodec.Read(rawJson), attempt);
+            result.Add(new(attempt, rows.IsNull(9) ? null : rows.GetString(9), Array.AsReadOnly(raw)) { StoredSourceV2 = storedSource });
         }
 
         return result.AsReadOnly();

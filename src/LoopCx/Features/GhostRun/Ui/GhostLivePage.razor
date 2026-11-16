@@ -1,0 +1,56 @@
+@using LoopCx.Features.ActiveRun
+@implements IDisposable
+@if (State.Ghost is { } race)
+{
+    <section aria-labelledby="phase-heading">
+        <button type="button" @onclick="() => OnCatalogue.InvokeAsync()">← Ghost Run</button>
+        <p>Ghost Run · @race.RouteName</p>
+        <h2 id="phase-heading" tabindex="-1" data-motion-state="@($"{State.Id}:{race.PauseReason}:{race.Match.State}:{State.Phase}")">@Heading</h2>
+        @if (State.Storage?.Error is not null)
+        {
+            <aside role="alert"><strong>Recent recording could not be saved.</strong><p>Recent data may be lost if the app closes.</p>
+                @if (State.Storage.CanRetry) { <button type="button" @onclick='() => RunService.CommandGhost("retry-saving", State.Id)'>Retry saving</button> }
+                else { <p>Local storage is unavailable. Saving cannot be retried in this recording.</p> }
+            </aside>
+        }
+        @if (RunService.StartError is { } deviceError) { <p role="status">@deviceError</p> }
+        @if (State.Storage?.State == "saved")
+        {
+            <p role="status">Ghost Run saved locally.</p>
+            @if (result is not null) { <GhostResultView Stored="result" JustSaved="true" OnRoute="OnRoute" /> }
+            else if (reading) { <p role="status">Loading saved result…</p> }
+            else { <p role="alert">The result details could not be read. Your confirmed save is unchanged.</p><button type="button" @onclick="ReadResult">Retry reading result</button> }
+            <button type="button" @onclick="() => OnViewRun.InvokeAsync(State.Id)">View run</button>
+            <button type="button" @onclick="() => OnTraining.InvokeAsync()">Back to training</button>
+        }
+        else
+        {
+            <p>Opponent · @(race.ReferenceElapsed is { } elapsed ? $"{(race.Mode == GhostMode.YearBest ? "Year best" : "Personal best")} · {Time(elapsed)}" : $"No ghost · first time in {race.FrozenYear}")</p>
+            @if (race.ReferenceId is not null)
+            {
+                <p class="ghost-gap">@(race.Gap.SecondsAhead is { } seconds ? Gap(seconds, "s") : "Gap unavailable")</p>
+                <p>@(race.Gap.MetresAhead is { } metres ? "≈ " + Gap(metres, "m") + " along route" : "No lead or deficit is inferred.")</p>
+            }
+            else { <p>No ghost this time. Follow the complete recorded route to set a verified result.</p> }
+            @if (State.GhostRoute is { } route && route.Key == race.Route)
+            { <GhostRouteView Route="route" RunnerMetres="race.Match.Metres" GhostMetres="race.GhostMetres" Live="true" Active="Visible" /> }
+            <dl>
+                <div><dt>Race time / route progress</dt><dd>@Time(race.Clock.RaceElapsed) / @(race.Match.Metres is { } progress ? (progress / 1000).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " km" : "Unavailable")</dd></div>
+                <div><dt>Training active</dt><dd>@Time(race.Clock.TrainingActive)</dd></div>
+                <div><dt>Current training pace <small>min/km</small></dt><dd>@if (State.LivePace?.SecondsPerKilometre is { } pace) { @Time(TimeSpan.FromSeconds(Math.Round(pace))) } else { <span role="img" aria-label="Unavailable">—</span> }</dd></div>
+                <div><dt>Heart rate <small>bpm</small></dt><dd>@if (State.HeartRate?.CurrentBpm is { } bpm) { @bpm } else { <span role="img" aria-label="Unavailable">—</span> }</dd></div>
+            </dl>
+            <p>Training pace: @(State.LivePace?.Quality ?? "unavailable"). Heart rate: @(State.HeartRate?.Quality ?? "unavailable").</p>
+            <p>GPS: @State.GpsStatus</p>
+            @if (race.Match.Problem == RouteMatchProblem.OffRoute) { <p>Rejoin where you left the route. Skipping a section cannot earn a record. Race time and your ghost continue.</p> }
+            else if (race.Match.Metres is null) { <p>Waiting for a reliable route position. The race clock continues.</p> }
+            @if (State.Paused) { <p>Training counters are paused. Your race clock, ghost and route GPS continue.</p> }
+            @if (State.Phase != "Finished")
+            {
+                <button id="@($"ghost-training-toggle-{State.Id}")" type="button" class="primary" @onclick='() => RunService.CommandGhost(State.Paused ? "resume" : "pause", State.Id)'>@(State.Paused ? "Resume training" : "Pause training")</button>
+                @if (race.PauseReason == PauseReason.Automatic) { <button type="button" @onclick="() => OnPauseManually.InvokeAsync(State.Id)">Pause manually</button> }
+                <button id="ghost-end-attempt" type="button" @onclick="() => OnEndRequest.InvokeAsync(State.Id)">End attempt</button>
+            }
+        }
+    </section>
+}

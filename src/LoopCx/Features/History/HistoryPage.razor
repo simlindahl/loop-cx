@@ -1,11 +1,21 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
-<section @ref="historyContent" class="history-content" aria-labelledby="history-heading">
+<section @ref="historyContent" class="history-content" aria-labelledby="@(ghostOpen ? "ghost-heading" : "history-heading")">
+    @if (ghostOpen && detail is { } ghostSource)
+    {
+        <LoopCx.Features.GhostRun.Ui.GhostRoutesPage @ref="ghostPage" SourceRunId="ghostSource.Summary.Id" OnBack="CloseGhostRoutes" OnStarted="OnTraining" />
+    }
+    else
+    {
     <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null ? "Training" : "History")</button>
-    <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : detail is null ? "History" : detail.Summary.Name)</h2>
+    <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : ghostResult is not null ? "Ghost Run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
     @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
-    @if (sharingRun is not null)
+    @if (ghostResult is { } ghostStored)
+    {
+        <LoopCx.Features.GhostRun.Ui.GhostResultView Stored="ghostStored" OnRoute="OnGhostRoute" />
+    }
+    else if (sharingRun is not null)
     {
         <p>A UTF-8 JSON file.</p>
         <p>Includes the frozen plan and targets, phases, splits, heart rate, route coordinates, point assessment and continuity, pauses and data gaps. Older point quality may be unknown.</p>
@@ -39,7 +49,7 @@
         {
             <p role="status">Partial recording saved locally.</p>
             <p>Not exported to Health Connect. A supported recorded end time is required for export.</p>
-            <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>
+        <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>
         }
     }
     else if (detail is { } stored && detailDestination is not null)
@@ -158,21 +168,32 @@
             <p>@Coverage(run.Main)</p>
             <p>@ZoneSummary(run.Zones)</p>
         </details>
+        @if (run.IsContinuousGhostSource) { <button id="history-ghost" type="button" @onclick="OpenGhostRoutes">Save route to Ghost Run</button> }
         <button id="history-share" type="button" class="primary" @onclick="ShowShare">Share workout data</button>
     }
     else if (!busy)
     {
         <p>Your work, kept local.</p>
-        @foreach (var item in runs)
+        @foreach (var entry in HistoryEntries)
         {
+            if (entry is LoopCx.Features.GhostRun.GhostStoredRun ghostEntry)
+            {
+            <button id="@($"history-{ghostEntry.Id}")" class="history-row" type="button" @onclick="() => Open(ghostEntry.Id)">
+                <span class="history-label">Ghost Run · @ghostEntry.Checkpoint.Route.Name<small>@ghostEntry.Status · stored race recording</small></span>
+                <span class="history-value">@Time(ghostEntry.Checkpoint.Snapshot.Clock.RaceElapsed)</span><span class="history-chevron" aria-hidden="true">›</span>
+            </button>
+            }
+            else if (entry is StoredRunSummary item)
+            {
             var distance = Distance(item.Total);
             <button id="@($"history-{item.Id}")" class="history-row" type="button" @onclick="() => Open(item.Id)">
                 <span class="history-label">@item.Name<small>@Started(item) · @Time(item.TotalActive) total active · @item.ExportLabel</small></span>
                 <span class="history-value">@(distance == "Unavailable" ? distance : distance + " km")</span>
                 <span class="history-chevron" aria-hidden="true">›</span>
             </button>
+            }
         }
-        @if (runs.Count == 0 && error is null && unreadable == 0)
+        @if (runs.Count == 0 && ghostRuns.Count == 0 && error is null && unreadable == 0)
         {
             <p>@(interrupted > 0 ? "No completed runs are available here. Interrupted recordings are stored separately." : "No completed runs yet.")</p>
         }
@@ -190,5 +211,6 @@
             }
         }
         @if (unreadable > 0) { <p role="alert">Some stored recordings could not be read. No data was changed.</p> }
+    }
     }
 </section>

@@ -51,6 +51,10 @@ At the first stable checkpoint, schedule the existing developer/requirements sou
 
 For an asynchronous persistence change, state what a missing callback and a native commit failure mean, and provide a focused failure check before packaging. A local timeout does not prove remote cancellation.
 
+For a changed sensor or callback boundary, state its actual decision/event order and the ownership invariant in the same handoff. Use a focused adjacent ordering case when it can violate that invariant, such as an older or duplicated GPS delivery after a provider interruption; do not add a universal test matrix. Distinguish pre-acceptance cancellation from an established owner whose ID and frozen Retry batch must survive later native setup failure.
+
+For changed UI, name the screen states this candidate actually connects and the representative Android state to inspect first. A partial screen is not the whole approved flow. Keep the current original run handle and latest observed result with the existing verification evidence; an inaccessible handle proves neither successful exit nor failed app behavior.
+
 Before assigning the next step, the lead checks the matching role's current status. Use `followup_task` to activate a completed role when work must resume; `send_message` alone does not start it. Report work as started only after actual activation or other current execution evidence. Keep this coordination in the existing handoff, not another report.
 
 When the head or base changes, update that handoff and reassess affected evidence under the existing merge rules. Keep earlier results as labelled historical evidence rather than presenting them as current. After merge, reconcile the live issue and Project Next step with delivered scope and remaining acceptance; do not let an old candidate description remain the current status.
@@ -72,6 +76,21 @@ Before readiness, reconcile current decisions, review scope and Waiting/next-act
 The 14 November export/CI micro-retrospective follow-up in [#68](https://github.com/simlindahl/loop-cx/issues/68) retains historical table-shape assertions and adds the callback/commit-failure precision to the existing handoff above. The developer and QA own the focused checks; the lead owns the handoff. Effects on owner overview remain unverified.
 
 Record this project's completed retrospectives in this section through the normal documentation workflow. Each concise dated entry states participating roles, evidence, keep/change decisions, one to three concrete actions with owners, the owning file or workflow, state, expected observable benefit and the next relevant follow-up point. Link actions with remaining work to the existing Project rather than creating another board. At follow-up, record the observed effect and whether the team kept, adjusted or reverted the improvement; label unmeasured effects explicitly.
+
+### 2026-11-16 · Event order and truthful integrated states
+
+All five separate specialists and the lead supplied direct input after the early Ghost service review in [#18](https://github.com/simlindahl/loop-cx/issues/18). The lead selected the two refinements below from their direct input and shared the consolidated findings with every participant. Simon's previously invited overview feedback remains pending; no new owner response or product approval is inferred.
+
+Keep frozen, independent source review before packaging and separate native acceptance. Reviews caught actual terminal-source, ownership/cancellation and GPS continuity defects before a Ghost package existed. Adjacent duplicate and stale-older delivery cases required several source revisions; the last runtime regression failed before and passed after correction in source checkpoint `f606f3a`. These are observed results, not measured productivity gains. UX also distinguished corrected local controls from the still-incomplete approved Ghost flow. The lead observed overly compressed internal handoff wording and continues applying the existing readable English and linked-prefix rules.
+
+The earlier long #2 observation handles disappeared without terminal receipts while the Android recording continued. The native outcome was recovered from primary evidence; the cause of observer loss remains unknown. Keep the existing original-owner/terminal and no-restart-on-observation-timeout rules. This incident does not justify a new scheduler, a claimed cause or a blanket process-lifetime guarantee.
+
+| Action | Owner and existing destination | Implementation and follow-up |
+|---|---|---|
+| A · Describe changed event order and ownership with an adjacent failure case | Developer and requirements, independently assessed by QA; [current review handoff](#current-review-handoff) | The handoff instruction above is refined in this candidate. The actual Ghost order regressions and immediate start-admission boundary already provide bounded examples. Check the next Ghost measurement/UI handoff for a clear order and retained post-acceptance owner; no universal matrix or extra review gate. Expected benefit: catch adjacent ordering defects earlier. |
+| B · Name delivered UI states and the first representative Android state | Lead and developer with UX/QA; [current review handoff](#current-review-handoff) | Instruction refined in this candidate. Apply to the next Ghost Training/ready/live/result handoff, distinguishing connected states, later scope and native observations. Retain the original verification handle and actual observation under the existing evidence rules; do not turn missing observer status into an app result. Expected benefit: less ambiguity about what is ready to test. |
+
+The refinements are applied on the feature branch and await normal independent review and delivery with its documentation; they are not merged instructions yet. Full Ghost UI/audio/export/native/physical acceptance remains open. Follow-up is the next relevant Ghost UI/source handoff and first native run; effectiveness remains unmeasured. [#68](https://github.com/simlindahl/loop-cx/issues/68) retains pending feedback and follow-up. The reusable Dev Team roles and workflow need no change for these project-specific refinements.
 
 ### 2026-11-15 · Current handoffs and scoped native evidence
 

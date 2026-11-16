@@ -1,0 +1,43 @@
+<figure class="route-view">
+    <svg viewBox="@ViewBox" role="img" aria-label="Recorded route with fixed start, finish and direction. Runner and ghost markers use supported route positions only." focusable="false">
+        <polyline class="route-line" points="@drawing.Line" />
+        <circle class="route-start" cx="@drawing.Start.XText" cy="@drawing.Start.YText" r="8" />
+        <path class="route-finish" d="M0 0V-17H13V-7H0" transform="@($"translate({drawing.Finish.Position})")" />
+        <path class="route-direction" d="M0 -6L-5 5H5Z" transform="@Transform(direction, drawing.HeadingAt(Route.LengthMetres * .3))" />
+        @if (ghostPoint is { } opponent) { <circle class="ghost-marker" cx="@opponent.XText" cy="@opponent.YText" r="10" /> }
+        @if (runnerPoint is { } runner) { <path class="runner-marker" d="M0 -9L-7 7H7Z" transform="@Transform(runner, drawing.HeadingAt(RunnerMetres!.Value))" /> }
+    </svg>
+    <figcaption>
+        <p>Local route view · background map unavailable.</p>
+        <p class="route-legend"><span>○ Start</span><span>⚑ Finish</span><span>▲ Recorded direction</span>@if (Live) { <span class="runner-key">▲ You</span><span>● Ghost</span> }</p>
+        @if (Live && RunnerMetres is null) { <p>Your route position is unavailable. The race clock continues.</p> }
+        @if (Live && GhostMetres is not null && !overview && ghostPoint is { } far && runnerPoint is { } near && (Math.Abs(far.X - near.X) > 80 || Math.Abs(far.Y - near.Y) > 60)) { <p>Ghost outside the current view.</p> }
+    </figcaption>
+    @if (Live && RunnerMetres is not null) { <button type="button" @onclick="ToggleOverview">@(overview ? "Recenter on you" : "Route overview")</button> }
+</figure>
+
+@code {
+    [Parameter, EditorRequired] public GhostRoute Route { get; set; } = null!;
+    [Parameter] public double? RunnerMetres { get; set; }
+    [Parameter] public double? GhostMetres { get; set; }
+    [Parameter] public bool Live { get; set; }
+    [Parameter] public bool Active { get; set; } = true;
+    private GhostRouteDrawing drawing = null!;
+    private GhostRoute? previous;
+    private RouteDrawingPoint? runnerPoint, ghostPoint;
+    private RouteDrawingPoint direction = null!;
+    private bool overview, rendered;
+    private string ViewBox => !Live || overview || runnerPoint is null ? "0 0 320 240"
+        : $"{(runnerPoint.X - 80).ToString(System.Globalization.CultureInfo.InvariantCulture)} {(runnerPoint.Y - 60).ToString(System.Globalization.CultureInfo.InvariantCulture)} 160 120";
+    private static string Transform(RouteDrawingPoint point, double degrees) => $"translate({point.Position}) rotate({degrees.ToString(System.Globalization.CultureInfo.InvariantCulture)})";
+    protected override void OnParametersSet()
+    {
+        if (!Active && rendered) return;
+        if (!ReferenceEquals(previous, Route)) { previous = Route; drawing = new(Route); direction = drawing.PointAt(Route.LengthMetres * .3)!; }
+        runnerPoint = drawing.PointAt(RunnerMetres);
+        ghostPoint = drawing.PointAt(GhostMetres);
+    }
+    protected override bool ShouldRender() => !rendered || Active;
+    protected override void OnAfterRender(bool firstRender) => rendered = true;
+    private void ToggleOverview() => overview = !overview;
+}

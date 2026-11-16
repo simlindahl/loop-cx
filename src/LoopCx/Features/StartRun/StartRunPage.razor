@@ -12,7 +12,15 @@
     }
     else if (showHistory)
     {
-        <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnHealthSettings="OpenHistoryHealthSettings" OnTraining="ShowTraining" />
+        <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnHealthSettings="OpenHistoryHealthSettings" OnTraining="ShowTraining" OnGhostRoute="route => OpenGhostCatalogue(route)" />
+    }
+    else if (showGhostCatalogue)
+    {
+        <LoopCx.Features.GhostRun.Ui.GhostRoutesPage @key="ghostCatalogueKey" @ref="ghostCatalogue" InitialRoute="ghostInitialRoute" OnBack="CloseGhostCatalogue" OnStarted="ShowTraining" />
+    }
+    else if (RunService.Snapshot is { Ghost: not null } ghostState)
+    {
+        <LoopCx.Features.GhostRun.Ui.GhostLivePage @key="ghostState.Id" State="ghostState" Visible="pageVisible" OnCatalogue="() => OpenGhostCatalogue(null)" OnRoute="route => OpenGhostCatalogue(route)" OnViewRun="id => OpenHistory(id)" OnTraining="BackToTraining" OnEndRequest="OpenGhostEnd" OnPauseManually="PauseGhostManually" />
     }
     else if (RunService.Snapshot is { } state)
     {
@@ -44,7 +52,7 @@
             }
             @if (state.Paused && state.TemplateId == "C1" && (state.Phase is "Work" or "Recovery")) { <p>Work @state.WorkRepetition of @state.WorkRepetitions</p> }
             <p class="countdown">
-<strong>@Clock(state.RemainingSeconds)</strong>
+<strong>@Clock(state.RemainingSeconds!.Value)</strong>
 <span>remaining · @Clock(state.ActiveSeconds) active</span>
 </p>
             <p class="status">@state.GpsStatus</p>
@@ -149,6 +157,7 @@
 <h2 id="start-heading" tabindex="-1">Start a run</h2>
 <button id="core-settings" type="button" @onclick="OpenSettingsDestination">Settings</button>
 </div>
+            <button id="ghost-open" type="button" @onclick="() => OpenGhostCatalogue(null)">Ghost Run · Your routes</button>
             <section class="workout" data-core-card data-motion-group aria-labelledby="c1-heading">
                 <div class="card-heading">
 <h3 id="c1-heading">C1 · Intervals</h3>
@@ -215,7 +224,13 @@
     <dialog id="core-dialog" aria-labelledby="core-dialog-title">
         <h2 id="core-dialog-title" tabindex="-1">@DialogTitle</h2>
         @if (dialogError is not null) { <p role="alert">@dialogError</p> }
-        @if (dialogMode == "audio")
+        @if (dialogMode == "end-ghost")
+        {
+            <h3>Incomplete route</h3><p>Your recording will be saved as incomplete. It cannot become a route record.</p>
+            <button type="button" class="primary" @onclick="ConfirmGhostEnd">End and save</button>
+            <button type="button" @onclick="CloseDialog">Keep racing</button>
+        }
+        else if (dialogMode == "audio")
         {
             <LoopCx.Features.Settings.AudioEditor Initial="draftAudio" Context="@($"Audio coaching · {draftName}")" Inherited="draftAudioInherited" OnSave="SaveShortcutAudio" OnCancel="CloseDialog" />
         }

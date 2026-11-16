@@ -1,0 +1,42 @@
+<section aria-labelledby="ghost-result-title">
+    <p>Ghost Run · @Stored.Checkpoint.Route.Name · @((Stored.Checkpoint.Route.LengthMetres / 1000).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)) km route</p>
+    <h3 id="ghost-result-title">@Title</h3>
+    <dl>
+        <div><dt>@(Stored.Status == "interrupted" ? "Last saved race time" : "Race time")</dt><dd>@Time(Race.Clock.RaceElapsed)</dd></div>
+        <div><dt>Training active</dt><dd>@Time(Race.Clock.TrainingActive)</dd></div>
+        <div><dt>Frozen opponent</dt><dd>@(Stored.Checkpoint.Reference is { } reference ? $"{ModeLabel} · {Time(reference.Elapsed)}" : "No ghost · first-time selection")</dd></div>
+        @if (Stored.Checkpoint.Reference is { } opponent && Stored.Status == "finished")
+        { <div><dt>Against the selected ghost</dt><dd>@Difference((opponent.Elapsed - Race.Clock.RaceElapsed).TotalSeconds)</dd></div> }
+    </dl>
+    @if (Stored.Status == "finished")
+    { <p>Full route verified under the frozen matching policy. Race time includes all stops and pauses.</p> }
+    else
+    {
+        <p>Not eligible for a record.</p>
+        <p>@(Stored.Status == "interrupted" ? "Only the last committed prefix is available. The actual stop time is unknown." : Race.QualityReason ?? "The complete route was not verified.")</p>
+    }
+    <h3>Current route records</h3>
+    @if (Stored.Records is { } records)
+    {
+        <dl><div><dt>Year best · @records.FrozenYear</dt><dd>@Record(records.YearBest)</dd></div><div><dt>Personal best</dt><dd>@Record(records.PersonalBest)</dd></div></dl>
+        @if (records.SameReference) { <p>One run holds both records.</p> }
+        <p>Records shown are the current stored ranking. Your race’s selected opponent stays unchanged.</p>
+    }
+    else { <p>Record status unavailable.</p> }
+    <p>Saved locally. Ghost Run export mapping is not available yet. No Health Connect write is confirmed.</p>
+    <button type="button" class="primary" @onclick="() => OnRoute.InvokeAsync(Stored.Checkpoint.Route.Key)">View route</button>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public GhostStoredRun Stored { get; set; } = null!;
+    [Parameter] public bool JustSaved { get; set; }
+    [Parameter] public EventCallback<RouteKey> OnRoute { get; set; }
+    private GhostRaceSnapshot Race => Stored.Checkpoint.Snapshot;
+    private string ModeLabel => Race.Mode == GhostMode.YearBest ? "Year best" : "Personal best";
+    private string Title => Stored.Status != "finished" ? Stored.Status == "interrupted" ? "Interrupted recording" : "Attempt saved"
+        : !JustSaved ? "Ghost Run result" : Stored.Records?.PersonalBest?.Id == Stored.Id ? "New personal best"
+        : Stored.Records?.YearBest?.Id == Stored.Id ? "New year best" : "Race finished";
+    private static string Time(TimeSpan time) => $"{(long)time.TotalMinutes}:{time.Seconds:00}";
+    private static string Record(GhostAttempt? attempt) => attempt is null ? "No verified result" : $"{Time(attempt.Elapsed)} · {attempt.StartedLocal.ToString("d MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)}";
+    private static string Difference(double seconds) => seconds == 0 ? "Same time" : $"{Math.Abs(seconds):0} sec {(seconds > 0 ? "faster" : "slower")}";
+}

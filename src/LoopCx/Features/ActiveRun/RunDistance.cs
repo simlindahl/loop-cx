@@ -111,7 +111,14 @@ public sealed class RunDistance
         Reject(reason);
     }
 
-    public bool Observe(DistanceFix fix, TimeSpan receivedAt, TimeSpan mainActiveAtReceipt)
+    public bool Observe(DistanceFix fix, TimeSpan receivedAt, TimeSpan mainActiveAtReceipt) =>
+        ObserveCore(fix, receivedAt, mainActiveAtReceipt, activeTimeIsAtSample: false);
+
+    // Callers with a historical pause-union clock already know the sample's active time.
+    public bool ObserveAtSampleActiveTime(DistanceFix fix, TimeSpan receivedAt, TimeSpan mainActiveAtSample) =>
+        ObserveCore(fix, receivedAt, mainActiveAtSample, activeTimeIsAtSample: true);
+
+    private bool ObserveCore(DistanceFix fix, TimeSpan receivedAt, TimeSpan activeTime, bool activeTimeIsAtSample)
     {
         ArgumentNullException.ThrowIfNull(fix);
         Observation = new(false, null, fix.MonotonicTime);
@@ -141,7 +148,7 @@ public sealed class RunDistance
             Reject("Uncertain GPS");
             return false;
         }
-        var sampleMainTime = IsMain(phase) ? mainActiveAtReceipt - (receivedAt - fix.MonotonicTime) : mainActiveAtReceipt;
+        var sampleMainTime = IsMain(phase) && !activeTimeIsAtSample ? activeTime - (receivedAt - fix.MonotonicTime) : activeTime;
         if (sampleMainTime < TimeSpan.Zero) { Reject("Ambiguous active time"); return false; }
         if (gap) Reject("GPS gap");
         if (previousValid is { } previousFix &&
