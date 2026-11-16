@@ -10,7 +10,13 @@ namespace LoopCx;
 public sealed partial class RunService
 {
     private GhostRace? ghost;
+    private GhostTerminalContext? ghostTerminalContext;
+    private bool ghostTerminalZoneCaptured;
     public sealed record GhostStartRequest(RouteKey Route, GhostMode Mode, GhostStartPosition Position);
+
+    private const string GhostOwnerExtra = "ghost-run-id";
+    public static void CommandGhost(string command, Guid owner) => global::Android.App.Application.Context.StartService(
+        new Intent(global::Android.App.Application.Context, typeof(RunService)).SetAction(command).PutExtra(GhostOwnerExtra, owner.ToString()));
 
     private static readonly object GhostStartGate = new();
     private static (Guid Id, GhostStartAdmission Admission)? pendingGhostStart;
@@ -97,7 +103,7 @@ public sealed partial class RunService
                 var profile = new GhostComparisonProfile("ghost-service-pilot-v1", new(route.Route.RuleVersion,
                     accuracy, accuracy, accuracy, route.Policy.MaximumGap, route.Policy.MaximumSpeedMetresPerSecond,
                     route.Policy.MaximumGap.TotalSeconds * route.Policy.MaximumSpeedMetresPerSecond, 100000),
-                    MovementPolicy.Pilot.MaximumAge, route.Policy.MaximumGap, heartRateConfiguration, MovementPolicy.Pilot, DistancePolicy.Pilot);
+                    MovementPolicy.Pilot.MaximumAge, route.Policy.MaximumGap, heartRateConfiguration, MovementPolicy.Pilot, DistancePolicy.Pilot, LivePacePolicy.Pilot);
                 // Constructor validates actual post-request fresh GPS and correct start before publishing/committing ownership.
                 candidate = new GhostRace(Guid.NewGuid(), route.Route, request.Mode, reference, profile,
                     request.Position, now, utc, zone.Id, offset, revision);
@@ -173,8 +179,8 @@ public sealed partial class RunService
         var race = ghost!.Snapshot;
         return new(id, ghost.Ended ? "Finished" : "GhostRun", race.Clock.TrainingPaused,
             (long)race.Clock.TrainingActive.TotalSeconds, null, locations, gpsStatus, null,
-            HeartRate: heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)), Storage: saveBuffer.Status)
-        { ActivityKind = "ghost", Ghost = race };
+            HeartRate: heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)), LivePace: ghost.LivePace, Storage: saveBuffer.Status)
+        { ActivityKind = "ghost", Ghost = race, GhostRoute = ghost.Route };
     }
     private void TickGhost()
     {
@@ -195,11 +201,20 @@ public sealed partial class RunService
     }
     private void PublishGhost(string? command = null, HeartRateObservation? observation = null, bool explicitRetry = false)
     {
+        if (ghost!.Ended) StopHeartRateSource();
         if (!terminalSaveCaptured)
         {
             var now = SystemClock.ElapsedRealtime();
+            var observedUtc = DateTimeOffset.UtcNow;
             var checkpoint = ghost!.Checkpoint(++saveRevision, now);
-            saveBuffer.Capture(new(id, saveRevision, started, DateTimeOffset.UtcNow, now - startedMonotonic,
+            if (ghost.Ended && !ghostTerminalZoneCaptured)
+            {
+                ghostTerminalZoneCaptured = true;
+                try { ghostTerminalContext = GhostTerminalContext.Capture(checkpoint, observedUtc, TimeZoneInfo.Local); }
+                catch (Exception issue) when (issue is TimeZoneNotFoundException or InvalidTimeZoneException or ArgumentException) { }
+            }
+            checkpoint = checkpoint with { TerminalContext = ghostTerminalContext };
+            saveBuffer.Capture(new(id, saveRevision, started, observedUtc, now - startedMonotonic,
                 ghost.Ended, "[]", "{\"ActivityKind\":\"ghost\"}", heartRateMetadata, JsonSerializer.Serialize(checkpoint)),
                 command ?? (ghost.Ended ? "finish" : null), observation);
             terminalSaveCaptured = ghost.Ended;
@@ -225,7 +240,7 @@ public sealed partial class RunService
             .SetVisibility(NotificationVisibility.Public);
         if (!ghost.Ended)
             builder.AddAction(new Notification.Action.Builder(null, state.Paused ? "Resume training" : "Pause training",
-                PendingIntent.GetService(this, 1, new Intent(this, typeof(RunService)).SetAction(state.Paused ? "resume" : "pause"),
+                PendingIntent.GetService(this, 1, new Intent(this, typeof(RunService)).SetAction(state.Paused ? "resume" : "pause").PutExtra(GhostOwnerExtra, state.Id.ToString()),
                     PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
         return builder.Build();
     }

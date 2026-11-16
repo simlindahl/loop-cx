@@ -153,6 +153,8 @@ public sealed class RunJournal : SQLiteOpenHelper
                 if (state.Id != ghost.Id || state.StartedUtc != ghost.StartedUtc || state.Revision != ghost.SaveRevision
                     || state.Finished != (ghost.Snapshot.Clock.State != GhostClockState.Running) || state.OriginalPlan != "[]")
                     throw new InvalidDataException("Ghost journal identity or terminal facts disagree.");
+                if (ghost.TerminalContext is { } terminal && terminal.ObservedUtc != state.ObservedUtc)
+                    throw new InvalidDataException("Ghost terminal observation and frozen save receipt disagree.");
                 if (ghost.ArchiveDisposition == "zero-elapsed-incomplete" && !batch.Events.Any(item => item.Command == "end-attempt" && item.Checkpoint == state.Checkpoint))
                     throw new InvalidDataException("Zero elapsed requires the exact recorded explicit End event in this terminal batch.");
             }
@@ -396,14 +398,23 @@ public sealed class RunJournal : SQLiteOpenHelper
 
     public GhostStoredRun? ReadGhostRun(Guid id)
     {
-        using var row = ReadableDatabase!.RawQuery("SELECT status, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
-        if (!row.MoveToFirst()) throw new KeyNotFoundException("The recorded run no longer exists.");
-        using var document = JsonDocument.Parse(row.GetString(1)!);
-        if (!GhostRaceCheckpoint.IsGhost(document.RootElement)) return null;
-        if (row.GetString(0) == "recording") throw new InvalidDataException("The Ghost recording is still owned by the service.");
-        var checkpoint = GhostRaceCheckpoint.Read(row.GetString(1)!);
-        if (checkpoint.Id != id) throw new InvalidDataException("The recorded Ghost identity disagrees.");
-        return GhostStoredRun.Read(id, row.GetString(0)!, row.GetString(1)!);
+        var db = ReadableDatabase!;
+        db.BeginTransactionNonExclusive();
+        try
+        {
+            using var row = db.RawQuery("SELECT status, checkpoint FROM runs WHERE id = ?", [id.ToString()])!;
+            if (!row.MoveToFirst()) throw new KeyNotFoundException("The recorded run no longer exists.");
+            using var document = JsonDocument.Parse(row.GetString(1)!);
+            if (!GhostRaceCheckpoint.IsGhost(document.RootElement)) { db.SetTransactionSuccessful(); return null; }
+            if (row.GetString(0) == "recording") throw new InvalidDataException("The Ghost recording is still owned by the service.");
+            var stored = GhostStoredRun.Read(id, row.GetString(0)!, row.GetString(1)!);
+            using var archive = db.RawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='ghost_schema'", null)!;
+            if (!archive.MoveToFirst()) throw new InvalidDataException("The recorded Ghost archive is missing. No repair was attempted.");
+            var records = new AndroidGhostArchive(db, transactionOwned: true).ReadRecords(stored.Checkpoint.Route.Key, stored.Checkpoint.StartedLocal.Year);
+            db.SetTransactionSuccessful();
+            return stored with { Records = records };
+        }
+        finally { db.EndTransaction(); }
     }
 
     public StoredRunDetail ReadFinishedRun(Guid id)

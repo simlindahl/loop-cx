@@ -16,6 +16,7 @@ public sealed record RunSnapshot(Guid Id, string Phase, bool Paused, long Active
 {
     [System.Text.Json.Serialization.JsonIgnore] public string ActivityKind { get; init; } = "core";
     [System.Text.Json.Serialization.JsonIgnore] public GhostRaceSnapshot? Ghost { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore] public GhostRoute? GhostRoute { get; init; }
 }
 
 [Property("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE", Value = "User-started ongoing timed workout phases and visible controls while screen is locked, when GPS is unavailable or declined.")]
@@ -136,6 +137,11 @@ public sealed partial class RunService : Service, ILocationListener
             return StartCommandResult.NotSticky;
         }
         var command = intent?.Action;
+        if (intent?.GetStringExtra(GhostOwnerExtra) is { } expectedGhost && (ghost is null || expectedGhost != id.ToString()))
+        {
+            if (ghost is null && session is null) StopSelf();
+            return StartCommandResult.NotSticky;
+        }
         if (command == "start-ghost" || ghost is not null) return HandleGhostCommand(intent, command);
 #if DEBUG
         if (command == "native-probe" && OperatingSystem.IsAndroidVersionAtLeast(33))

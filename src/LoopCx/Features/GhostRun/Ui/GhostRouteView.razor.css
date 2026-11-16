@@ -1,0 +1,49 @@
+.route-view {
+    margin: 16px 0;
+}
+
+svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--cx-surface);
+    border: 1px solid var(--cx-line);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.route-line {
+    fill: none;
+    stroke: var(--cx-accent);
+    stroke-width: 5;
+    vector-effect: non-scaling-stroke;
+}
+
+.route-start, .route-finish {
+    fill: var(--cx-bg);
+    stroke: var(--cx-text);
+    stroke-width: 2;
+}
+
+.route-direction, .runner-marker {
+    fill: var(--cx-accent);
+    stroke: var(--cx-bg);
+    stroke-width: 2;
+}
+
+.ghost-marker {
+    fill: white;
+    fill-opacity: .8;
+    stroke: var(--cx-bg);
+    stroke-width: 3;
+}
+
+.route-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.runner-key {
+    color: var(--cx-accent);
+}

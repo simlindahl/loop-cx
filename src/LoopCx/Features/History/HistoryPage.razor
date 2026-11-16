@@ -13,17 +13,7 @@
     @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
     @if (ghostResult is { } ghostStored)
     {
-        var race = ghostStored.Checkpoint.Snapshot;
-        <p>@race.RouteName · Ghost Run</p>
-        <p>@(ghostStored.Status == "interrupted" ? "Interrupted recording · actual stop time unknown" : ghostStored.Status == "incomplete" ? "Incomplete attempt · saved locally" : "Finished · saved locally")</p>
-        <dl>
-            <div><dt>@(ghostStored.Status == "interrupted" ? "Last saved race time" : "Race time")</dt><dd>@Time(race.Clock.RaceElapsed)</dd></div>
-            <div><dt>Training active</dt><dd>@Time(race.Clock.TrainingActive)</dd></div>
-            <div><dt>Result</dt><dd>@(ghostStored.Status == "finished" ? race.Clock.State.ToString() : "Not a verified record")</dd></div>
-            <div><dt>Frozen reference</dt><dd>@(race.ReferenceElapsed is { } referenceTime ? Time(referenceTime) : "No ghost · first time")</dd></div>
-        </dl>
-        @if (race.QualityReason is not null) { <p>@race.QualityReason</p> }
-        <p>Saved locally. Ghost Run export mapping is not available yet. No Health Connect write is confirmed.</p>
+        <LoopCx.Features.GhostRun.Ui.GhostResultView Stored="ghostStored" OnRoute="OnGhostRoute" />
     }
     else if (sharingRun is not null)
     {

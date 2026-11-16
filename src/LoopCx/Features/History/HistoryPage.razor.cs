@@ -11,6 +11,7 @@ namespace LoopCx.Features.History;
 public partial class HistoryPage
 {
     [Parameter] public EventCallback OnTraining { get; set; }
+    [Parameter] public EventCallback<LoopCx.Features.GhostRun.RouteKey> OnGhostRoute { get; set; }
     [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
     private readonly List<LoopCx.Features.GhostRun.GhostStoredRun> ghostRuns = [];

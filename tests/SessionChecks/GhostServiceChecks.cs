@@ -1,7 +1,9 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using LoopCx.Features.ActiveRun;
 using LoopCx.Features.ExportRun;
 using LoopCx.Features.GhostRun;
+using LoopCx.Features.GhostRun.Ui;
 using LoopCx.Features.HealthConnectExport;
 using LoopCx.Features.History;
 
@@ -23,7 +25,7 @@ internal static class GhostServiceChecks
             [new(0, 0, 0), new(0, .0001, length / 2), new(0, .0002, length)]);
         var utc = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var profile = new GhostComparisonProfile("ghost-service-pilot-v1", new(route.RuleVersion, .5, .5, .1, S(3), 4, 5, 500),
-            S(3), S(3), HeartRateConfiguration.Empty, MovementPolicy.Pilot, DistancePolicy.Pilot);
+            S(3), S(3), HeartRateConfiguration.Empty, MovementPolicy.Pilot, DistancePolicy.Pilot, LivePacePolicy.Pilot);
         var start = new GhostStartPosition(99900, 100000, utc.ToUnixTimeMilliseconds(), 0, 0, .1);
         var consent = Guid.Parse("89898989-8989-8989-8989-898989898989");
         GhostRace New(GhostStartPosition? position = null) => new(Guid.NewGuid(), route, GhostMode.YearBest, null,
@@ -187,6 +189,50 @@ internal static class GhostServiceChecks
         var export = new ExportJournalSnapshot(checkpoint.Id, utc.ToString("O"), utc.AddSeconds(20.5).ToString("O"),
             20500, "finished", JsonSerializer.SerializeToElement(Array.Empty<object>()), null, null, document.RootElement.Clone(), null, [], [], []);
         Require(HCWritePlanner.Create(export, false).Plan is null, "Ghost never falls through to a Core HC write plan.");
+        var paceRun = Compared();
+        for (var second = 1; second <= 6; second++) paceRun.Location(Position(second), 100000 + second * 1000);
+        Require(paceRun.LivePace?.SecondsPerKilometre is > 0, "Ghost measured pace comes from the actual accepted training-distance edges.");
+        paceRun.Pause(106500); paceRun.Location(Position(7), 107000);
+        Require(paceRun.LivePace?.SecondsPerKilometre is null && paceRun.LivePace?.Quality == "paused",
+            "Paused race GPS cannot feed a stale training-distance observation back into measured pace.");
+        paceRun.Resume(108000);
+        Require(paceRun.LivePace?.SecondsPerKilometre is null && paceRun.LivePace?.Quality == "acquiring", "Resume starts fresh measured-pace acquisition.");
+        var legacyProfile = profile with { LivePace = null };
+        var legacyProfileJson = JsonSerializer.Serialize(legacyProfile);
+        Require(!legacyProfileJson.Contains("LivePace", StringComparison.Ordinal)
+            && JsonSerializer.Serialize(JsonSerializer.Deserialize<GhostComparisonProfile>(legacyProfileJson)) == legacyProfileJson,
+            "Missing legacy pace policy stays absent with exact old frozen-profile retry bytes.");
+        var withoutPolicy = new GhostRace(Guid.NewGuid(), route, GhostMode.YearBest, null, legacyProfile,
+            start, 100000, utc, "Europe/Stockholm", S(3600), consent);
+        Require(withoutPolicy.LivePace is null, "No current pace policy is silently invented for missing frozen metadata.");
+        var delayedDistance = Compared();
+        for (var second = 1; second <= 19; second++) delayedDistance.Location(Position(second), 100000 + second * 1000);
+        var prefixDistance = delayedDistance.Checkpoint(1, 119000).MeasuredTrainingDistance!.TotalMeasuredMetres;
+        delayedDistance.Location(Position(20, .000205), 120500);
+        var distanceCheckpoint = delayedDistance.Checkpoint(2, 120500);
+        Require(delayedDistance.Ended && distanceCheckpoint.MeasuredTrainingDistance!.TotalMeasuredMetres == prefixDistance
+            && distanceCheckpoint.MeasuredTrainingDistance.MainHasGaps && prefixDistance < route.LengthMetres,
+            "An interpolated finish before the crossing fix retains the actual training-distance prefix with unknown tail, never route length/proportional distance.");
+        var syntheticZone = TimeZoneInfo.CreateCustomTimeZone("Synthetic terminal zone", S(7200), "Synthetic", "Synthetic");
+        var terminal = GhostTerminalContext.Capture(distanceCheckpoint, utc.AddSeconds(20.5), syntheticZone);
+        var frozenTerminal = distanceCheckpoint with { TerminalContext = terminal };
+        var terminalJson = JsonSerializer.Serialize(frozenTerminal);
+        Require(GhostRaceCheckpoint.Read(terminalJson).TerminalContext == terminal
+            && terminal.StartDerivedEffectiveUtc == distanceCheckpoint.StartedUtc + distanceCheckpoint.Snapshot.Clock.RaceElapsed
+            && terminal.ObservedUtc != terminal.StartDerivedEffectiveUtc && terminal.EffectiveUtcOffsetSeconds == 7200,
+            "Terminal observation and derived effective finish/offset remain distinct frozen facts on codec/retry.");
+        var legacyCheckpoint = JsonNode.Parse(terminalJson)!;
+        legacyCheckpoint.AsObject().Remove("MeasuredTrainingDistance"); legacyCheckpoint.AsObject().Remove("TerminalContext");
+        legacyCheckpoint["Profile"]!.AsObject().Remove("LivePace");
+        var legacyRead = GhostRaceCheckpoint.Read(legacyCheckpoint.ToJsonString());
+        Require(legacyRead.MeasuredTrainingDistance is null && legacyRead.TerminalContext is null && legacyRead.Profile.LivePace is null,
+            "Old Ghost checkpoint1 keeps missing actual metrics/zone/policy unknown.");
+        Require(auto.TrainingActiveAt(S(115)) == S(10), "Historical sample-time training uses the same retrospective pause union, not receipt active time.");
+        var drawing = new GhostRouteDrawing(route);
+        Require(drawing.PointAt(0) == drawing.Start && drawing.PointAt(length) == drawing.Finish
+            && drawing.PointAt(null) is null && drawing.PointAt(length + 1) is null
+            && drawing.PointAt(length / 2)!.X > drawing.Start.X,
+            "Local geometry uses actual ordered chainage, preserves start/direction and hides unknown/out-of-route markers.");
         Console.WriteLine("PASS: actual Ghost race composition, fresh start guards, paused GPS/finish, delayed clipping, exact retro/tail, frozen consent/codec and Core/HC isolation.");
     }
 }

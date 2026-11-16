@@ -2,41 +2,60 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
 <section aria-labelledby="ghost-heading">
-    <button type="button" disabled="@saving" @onclick="GoBack">← @(selected is null ? "Run details" : "Your routes")</button>
+    <button type="button" disabled="@saving" @onclick="GoBack">← @(ready ? "Route details" : selected is not null ? "Ghost Run" : SourceRunId is not null && !catalogue ? "Run details" : "Training")</button>
     <p>Ghost Run · @(capture is not null && selected is null ? "Route capture" : "Route race")</p>
-    <h2 id="ghost-heading" tabindex="-1">@(selected?.Route.Name ?? (catalogue ? "Your routes" : "Save route to Ghost Run"))</h2>
+    <h2 id="ghost-heading" tabindex="-1">@(ready ? ReadyTitle : selected?.Route.Name ?? (catalogue ? "Ghost Run" : "Save route to Ghost Run"))</h2>
     @if (error is not null) { <p role="alert">@error</p> }
     @if (loading) { <p role="status">Loading stored route…</p> }
     @if (saving) { <p role="status">Saving route…</p> }
     @if (selected is { } stored)
     {
-        <h3>Race records</h3>
-        <dl>
-            <div><dt>Route</dt><dd>@Distance(stored.Route.LengthMetres) km · One direction</dd></div>
-            <div><dt>Year best · @year</dt><dd>@Record(records?.YearBest)</dd></div>
-            <div><dt>Personal best</dt><dd>@Record(records?.PersonalBest)</dd></div>
-        </dl>
-        <svg class="ghost-map" viewBox="0 0 320 240" role="img" aria-label="Recorded route geometry, from start to finish in recorded direction">
-            <polyline points="@Coordinates(stored.Route)" />
-        </svg>
-        <p>Recorded geometry · background map unavailable.</p>
-        @if (sourceReason is not null) { <p>@sourceReason</p> }
-        <fieldset disabled="@(acquiring is not null)">
-            <legend>Ghost reference</legend>
-            <label><input type="radio" name="ghost-mode" checked="@(mode == GhostMode.YearBest)" @onchange="() => mode = GhostMode.YearBest" /> Year best · @year</label>
-            <label><input type="radio" name="ghost-mode" checked="@(mode == GhostMode.PersonalBest)" @onchange="() => mode = GhostMode.PersonalBest" /> Personal best</label>
-        </fieldset>
-        <p>@(records?.ReferenceFor(mode) is null ? "Set first time without a ghost for this selection." : "Your selected record is frozen when the race starts.")</p>
-        <p>Race time keeps running during stops and pauses.</p>
-        @if (acquiring is not null) { <p role="status">Checking your actual GPS position at the start… Use Back to cancel.</p> }
-        <button type="button" class="primary" disabled="@(acquiring is not null)" @onclick="StartRace">Start Ghost Run</button>
+        <GhostRouteView Route="stored.Route" />
+        @if (ready)
+        {
+            @if (records?.ReferenceFor(mode) is { } opponent)
+            { <p>Ghost · @Record(opponent)</p> }
+            else { <p>No ghost this time. Complete the route to set a verified time for @year.</p> }
+            <p>Position checked when you start.</p>
+            <p>Follow the full route in the recorded direction.</p>
+            <p>Race time keeps running during stops and pauses.</p>
+            @if (acquiring is not null) { <p role="status">Checking your GPS position… Use Back to cancel.</p> }
+            @if (HasCurrentOwner) { <p>A recording is already active or waiting to be saved.</p><button type="button" @onclick="() => OnStarted.InvokeAsync()">Open current recording</button> }
+            else { <button type="button" class="primary" disabled="@(acquiring is not null)" @onclick="StartRace">Start Ghost Run</button> }
+        }
+        else
+        {
+            <h3>Race records</h3>
+            <dl>
+                <div><dt>Route</dt><dd>@Distance(stored.Route.LengthMetres) km · One direction</dd></div>
+                <div><dt>Year best · @year</dt><dd>@Record(records?.YearBest)</dd></div>
+                <div><dt>Personal best</dt><dd>@Record(records?.PersonalBest)</dd></div>
+            </dl>
+            @if (records?.SameReference == true)
+            {
+                <p>One run. Both records. Both options use the same recorded run.</p>
+                <button id="ghost-same" type="button" class="primary" @onclick="() => ChooseReference(GhostMode.YearBest)">Race this ghost</button>
+            }
+            else
+            {
+                @if (records?.YearBest is not null) { <button id="ghost-year" type="button" class="primary" @onclick="() => ChooseReference(GhostMode.YearBest)">Race year best</button> }
+                else
+                {
+                    <h3>Set your year best</h3><p>No verified result for @year. Set this year’s first time without a ghost.</p>
+                    <button id="ghost-first" type="button" class="primary" @onclick="() => ChooseReference(GhostMode.YearBest)">Set first time</button>
+                }
+                @if (records?.PersonalBest is not null) { <button id="ghost-personal" type="button" @onclick="() => ChooseReference(GhostMode.PersonalBest)">Race personal best</button> }
+            }
+            @if (sourceReason is not null) { <p>@sourceReason</p> }
+        }
     }
     else if (catalogue)
     {
-        @if (!loading && routes.Count == 0) { <p>Save a route after a continuous run.</p> }
+        @if (!loading && routes.Count == 0 && error is null) { <h3>Your first Ghost Run</h3><p>After a continuous run, save its main route here to race your year best or personal best.</p><button type="button" @onclick="() => OnBack.InvokeAsync()">Go to training</button> }
+        @if (!loading && error is not null) { <button type="button" @onclick="LoadCatalogue">Retry reading routes</button> }
         @foreach (var route in routes)
         {
-            <button class="route-row" type="button" @onclick="() => OpenRoute(route.Route.Key)"><span>@route.Route.Name<small>@Distance(route.Route.LengthMetres) km · Recorded direction</small></span><span aria-hidden="true">›</span></button>
+            <button id="@RouteButton(route.Route.Key)" class="route-row" type="button" @onclick="() => OpenRoute(route.Route.Key)"><span>@route.Route.Name<small>@Distance(route.Route.LengthMetres) km · Recorded direction</small></span><span aria-hidden="true">›</span></button>
         }
     }
     else if (capture is { } prepared)
@@ -48,7 +67,7 @@
             <ValidationMessage For="() => form.Name" />
             <dl><div><dt>Route</dt><dd>Completed continuous main set only</dd></div><div><dt>Start / finish</dt><dd>Fixed · Recorded direction</dd></div></dl>
             <aside><strong>First benchmark</strong><p>@(prepared.Attempt.Quality == AttemptQuality.Verified ? "This policy-verified source becomes your first result. Stops and pauses count towards race time." : "Stops and pauses count towards race time. This source is not a verified benchmark: " + prepared.QualityReason)</p></aside>
-            <svg class="ghost-map" viewBox="0 0 320 240" role="img" aria-label="Recorded main-route geometry; not a navigation map"><polyline points="@Coordinates(prepared.Geometry.Route)" /></svg>
+            <GhostRouteView Route="prepared.Geometry.Route" />
             <button type="submit" class="primary" disabled="@(saving || !canRetry)" aria-busy="@saving">@(frozenSave is null ? "Save route" : "Retry saving")</button>
             <button type="button" disabled="@saving" @onclick="GoBack">Cancel</button>
         </EditForm>

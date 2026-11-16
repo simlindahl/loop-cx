@@ -6,6 +6,7 @@ namespace LoopCx.Features.GhostRun;
 
 public sealed record GhostStoredRun(Guid Id, string Status, GhostRaceCheckpoint Checkpoint)
 {
+    public GhostRecords? Records { get; init; }
     public static GhostStoredRun Read(Guid id, string status, string json)
     {
         var checkpoint = GhostRaceCheckpoint.Read(json);
@@ -24,16 +25,32 @@ public sealed record GhostStoredRun(Guid Id, string Status, GhostRaceCheckpoint 
 public sealed record GhostStartPosition(long RequestedBootMilliseconds, long MeasuredBootMilliseconds,
     long UtcMilliseconds, double Latitude, double Longitude, double? Accuracy);
 public sealed record GhostComparisonProfile(string Version, RouteMatchPolicy Matching, TimeSpan MaximumStartAge,
-    TimeSpan MaximumInterpolationGap, HeartRateConfiguration HeartRate, MovementPolicy Motion, DistancePolicy TrainingDistance);
+    TimeSpan MaximumInterpolationGap, HeartRateConfiguration HeartRate, MovementPolicy Motion, DistancePolicy TrainingDistance,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LivePacePolicy? LivePace = null);
 public sealed record GhostRaceSnapshot(Guid Id, string RouteName, RouteKey Route, GhostMode Mode,
     GhostClockSnapshot Clock, PauseReason PauseReason, RouteMatchSnapshot Match, double? GhostMetres,
     GhostGap Gap, Guid? ReferenceId, TimeSpan? ReferenceElapsed, int FrozenYear, string? QualityReason);
+public sealed record GhostTerminalContext(int Version, DateTimeOffset ObservedUtc, long ObservedBootMilliseconds,
+    string ObservedZoneId, int ObservedUtcOffsetSeconds, DateTimeOffset StartDerivedEffectiveUtc,
+    int EffectiveUtcOffsetSeconds, string Provenance)
+{
+    public const string ObservedRules = "terminal-observed-zone-rules-v1";
+    public static GhostTerminalContext Capture(GhostRaceCheckpoint race, DateTimeOffset observedUtc, TimeZoneInfo zone)
+    {
+        var effective = race.StartedUtc + race.Snapshot.Clock.RaceElapsed;
+        return new(1, observedUtc, race.ObservedBootMilliseconds, zone.Id, (int)zone.GetUtcOffset(observedUtc).TotalSeconds,
+            effective, (int)zone.GetUtcOffset(effective).TotalSeconds, ObservedRules);
+    }
+}
+
 public sealed record GhostRaceCheckpoint(string ActivityKind, int GhostCheckpointVersion, Guid Id, long SaveRevision,
     DateTimeOffset StartedUtc, DateTimeOffset StartedLocal, string TimeZoneId, Guid? HealthConnectConsentRevision, long StartedBootMilliseconds,
     long ObservedBootMilliseconds, GhostRoute Route, GhostMode Mode, GhostAttempt? Reference,
     GhostComparisonProfile Profile, GhostRaceSnapshot Snapshot, IReadOnlyList<TrainingPause> Pauses,
     IReadOnlyList<GhostPoint> Progress, IReadOnlyList<RecordedRouteFix> Raw, string ArchiveDisposition, string? TerminalKind)
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public DistanceState? MeasuredTrainingDistance { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public GhostTerminalContext? TerminalContext { get; init; }
     private static readonly JsonSerializerOptions Options = new() { RespectRequiredConstructorParameters = true, UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
 
     public static bool IsGhost(JsonElement checkpoint) => checkpoint.TryGetProperty(nameof(ActivityKind), out var kind)
@@ -75,6 +92,19 @@ public sealed record GhostRaceCheckpoint(string ActivityKind, int GhostCheckpoin
             || state == GhostClockState.Finished && (value.Snapshot.Clock.RaceElapsed <= TimeSpan.Zero
                 || value.Snapshot.Match.State != RouteMatchState.Finished || value.Snapshot.Match.FinishedAt != value.Snapshot.Clock.RaceElapsed))
             throw new InvalidDataException("The terminal Ghost disposition or finish evidence is inconsistent.");
+        if (value.MeasuredTrainingDistance is { } distance && (distance.Policy != value.Profile.TrainingDistance
+            || !double.IsFinite(distance.TotalMeasuredMetres) || distance.TotalMeasuredMetres < 0
+            || !double.IsFinite(distance.MainMeasuredMetres) || distance.MainMeasuredMetres < 0
+            || distance.MainMeasuredMetres > distance.TotalMeasuredMetres || distance.Splits is null || distance.Splits.Any(split => split is null)))
+            throw new InvalidDataException("Frozen accepted training distance is inconsistent.");
+        if (value.TerminalContext is { } terminal && (state == GhostClockState.Running || terminal.Version != 1
+            || terminal.Provenance != GhostTerminalContext.ObservedRules || string.IsNullOrWhiteSpace(terminal.ObservedZoneId)
+            || terminal.ObservedUtc.Offset != TimeSpan.Zero || terminal.StartDerivedEffectiveUtc.Offset != TimeSpan.Zero
+            || terminal.ObservedBootMilliseconds != value.ObservedBootMilliseconds
+            || terminal.StartDerivedEffectiveUtc != value.StartedUtc + value.Snapshot.Clock.RaceElapsed
+            || terminal.ObservedUtcOffsetSeconds is < -50400 or > 50400 || terminal.EffectiveUtcOffsetSeconds is < -50400 or > 50400
+            || terminal.ObservedUtcOffsetSeconds % 60 != 0 || terminal.EffectiveUtcOffsetSeconds % 60 != 0))
+            throw new InvalidDataException("Frozen terminal clock/zone provenance is inconsistent.");
         _ = new OrderedRouteMatcher(value.Route, value.Profile.Matching);
         if (value.Reference is { } reference && (GhostReferences.Select(value.Route, [reference], value.StartedLocal.Year).PersonalBest?.Id != reference.Id
             || reference.Elapsed != value.Snapshot.ReferenceElapsed))
@@ -104,6 +134,7 @@ public sealed class GhostRace
     private readonly GhostPlayback? playback;
     private readonly RunMotion motion;
     private readonly RunDistance trainingDistance;
+    private readonly RunLivePace? measuredPace;
     private RunDistance.CandidateDistance? candidateDistance;
     private readonly List<GhostPoint> progress = [new(TimeSpan.Zero, 0)];
     private readonly List<RecordedRouteFix> raw = [];
@@ -133,7 +164,9 @@ public sealed class GhostRace
         var first = new RecordedRouteFix(TimeSpan.Zero, DateTimeOffset.FromUnixTimeMilliseconds(position.UtcMilliseconds),
             position.Latitude, position.Longitude, position.Accuracy, RecordedRunSection.Main);
         if (matcher.Start(first).State != RouteMatchState.Tracking)
-            throw new InvalidDataException("Move to the route start with reliable GPS before starting.");
+            throw new InvalidDataException(matcher.Current.Problem == RouteMatchProblem.MoveToStart
+                ? "Move to the start. Follow the recorded route direction."
+                : "GPS uncertain. Wait for a reliable position at the route start.");
         if (reference is not null && GhostReferences.Select(route, [reference], utc.Year).PersonalBest?.Id != reference.Id)
             throw new InvalidDataException("The selected reference no longer matches this route version.");
         this.id = id; this.route = route; this.mode = mode; this.reference = reference; this.profile = profile;
@@ -145,11 +178,14 @@ public sealed class GhostRace
         clock = new(TimeSpan.FromMilliseconds(startedBoot));
         motion = new(profile.Motion, TimeSpan.FromMilliseconds(startedBoot));
         trainingDistance = new(profile.TrainingDistance, TimeSpan.FromMilliseconds(startedBoot), RunPhase.Work);
+        measuredPace = profile.LivePace is { } pacePolicy ? new(pacePolicy) : null;
         playback = reference is null ? null : new(reference, profile.MaximumInterpolationGap);
         raw.Add(first);
         clock.Observe(TimeSpan.FromMilliseconds(receivedBoot));
     }
 
+    public GhostRoute Route => route;
+    public LivePaceState? LivePace => measuredPace?.Snapshot(TimeSpan.FromMilliseconds(observedBoot), clock.Current.TrainingPaused, Ended);
     public bool Ended => clock.Current.State != GhostClockState.Running;
     public GhostRaceSnapshot Snapshot
     {
@@ -175,6 +211,7 @@ public sealed class GhostRace
     {
         if (Ended) return;
         clock.PauseTraining(TimeSpan.FromMilliseconds(now)); pauseReason = PauseReason.Manual;
+        measuredPace?.Reset("paused");
         motion.Boundary(TimeSpan.FromMilliseconds(now));
         trainingDistance.Interrupt(TimeSpan.FromMilliseconds(now), "Training pause boundary");
         candidateDistance = null;
@@ -183,16 +220,19 @@ public sealed class GhostRace
     {
         if (Ended) return;
         clock.ResumeTraining(TimeSpan.FromMilliseconds(now)); pauseReason = PauseReason.None;
+        measuredPace?.Reset("acquiring");
         motion.Boundary(TimeSpan.FromMilliseconds(now));
         trainingDistance.Interrupt(TimeSpan.FromMilliseconds(now), "Training pause boundary");
         candidateDistance = null;
     }
-    public void Unavailable() { interruptionPending = true; available = false; motion.Unavailable(); trainingDistance.Unavailable("GPS unavailable"); candidateDistance = null; }
+    public void Unavailable() { measuredPace?.Reset(); interruptionPending = true; available = false; motion.Unavailable(); trainingDistance.Unavailable("GPS unavailable"); candidateDistance = null; }
     public void End(long now)
     {
         if (Ended) return;
         Observe(now);
         clock.EndAttempt(TimeSpan.FromMilliseconds(now));
+        trainingDistance.Unavailable("Unobserved training tail at End");
+        trainingDistance.Boundary(null, TimeSpan.FromMilliseconds(now), clock.Current.TrainingActive);
         reason = clock.Current.RaceElapsed == TimeSpan.Zero ? "Explicit End at zero elapsed; no archive attempt or record." : "Attempt ended before a verified route finish.";
     }
     public void Location(RunSaveLocation point, long receivedBoot, bool sourceAvailable = true)
@@ -228,8 +268,15 @@ public sealed class GhostRace
         if (fix.Elapsed > progress[^1].Elapsed)
             progress.Add(new(fix.Elapsed, matched.Metres ?? progress[^1].Metres, matched.Metres is not null));
         var distanceFix = new DistanceFix(TimeSpan.FromMilliseconds(measured), point.Latitude, point.Longitude, point.Accuracy);
-        var moved = !clock.Current.TrainingPaused && trainingDistance.Observe(distanceFix,
-            TimeSpan.FromMilliseconds(receivedBoot), clock.Current.TrainingActive);
+        var assessed = !clock.Current.TrainingPaused && (matched.FinishedAt is null || fix.Elapsed <= matched.FinishedAt);
+        if (!clock.Current.TrainingPaused && matched.FinishedAt is { } crossing && fix.Elapsed > crossing)
+        {
+            trainingDistance.Unavailable("Unobserved training finish tail");
+            measuredPace?.Reset();
+        }
+        var moved = assessed && trainingDistance.Observe(distanceFix,
+            TimeSpan.FromMilliseconds(receivedBoot), clock.TrainingActiveAt(TimeSpan.FromMilliseconds(measured)));
+        if (assessed) measuredPace?.Observe(trainingDistance.Observation, trainingDistance.AcceptedEdge, TimeSpan.FromMilliseconds(receivedBoot));
         // Ghost has one main movement scope, not a Core session/template or target.
         var decision = motion.Observe(new(TimeSpan.FromMilliseconds(measured), point.Latitude, point.Longitude, point.Accuracy),
             TimeSpan.FromMilliseconds(receivedBoot), 0, RunPhase.Work, pauseReason, moved);
@@ -239,6 +286,7 @@ public sealed class GhostRace
             clock.PauseTrainingAutomatically(motion.Event!.OnsetMonotonicTime!.Value,
                 motion.Event.ExcludedThroughMonotonicTime!.Value, TimeSpan.FromMilliseconds(receivedBoot));
             pauseReason = PauseReason.Automatic;
+            measuredPace?.Reset("paused");
             trainingDistance.ConfirmStandstill(candidate, TimeSpan.FromMilliseconds(receivedBoot),
                 TimeSpan.FromMilliseconds(receivedBoot) > motion.Event.ExcludedThroughMonotonicTime);
             candidateDistance = null;
@@ -249,10 +297,12 @@ public sealed class GhostRace
             clock.CompleteAt(TimeSpan.FromMilliseconds(startedBoot) + finish);
             progress.RemoveAll(sample => sample.Elapsed >= finish);
             progress.Add(new(finish, route.LengthMetres));
+            trainingDistance.Boundary(null, TimeSpan.FromMilliseconds(startedBoot) + finish, clock.Current.TrainingActive);
         }
     }
     public GhostRaceCheckpoint Checkpoint(long revision, long now) => new("ghost", 1, id, revision, startedUtc,
         startedLocal, zoneId, consentRevision, startedBoot, now, route, mode, reference, profile, Snapshot, clock.Pauses, progress.ToArray(), raw.ToArray(),
         !Ended ? "not-terminal" : clock.Current.State == GhostClockState.Incomplete && clock.Current.RaceElapsed == TimeSpan.Zero ? "zero-elapsed-incomplete" : "attempt",
-        !Ended ? null : clock.Current.State == GhostClockState.Finished ? "matched-finish" : clock.Current.State == GhostClockState.Incomplete ? "explicit-end" : "interrupted");
+        !Ended ? null : clock.Current.State == GhostClockState.Finished ? "matched-finish" : clock.Current.State == GhostClockState.Incomplete ? "explicit-end" : "interrupted")
+    { MeasuredTrainingDistance = trainingDistance.Snapshot };
 }

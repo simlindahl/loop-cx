@@ -12,37 +12,15 @@
     }
     else if (showHistory)
     {
-        <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnHealthSettings="OpenHistoryHealthSettings" OnTraining="ShowTraining" />
+        <LoopCx.Features.History.HistoryPage @ref="historyPage" InitialRun="historyInitialRun" OnHealthSettings="OpenHistoryHealthSettings" OnTraining="ShowTraining" OnGhostRoute="route => OpenGhostCatalogue(route)" />
     }
-    else if (RunService.Snapshot is { Ghost: { } race } ghostState)
+    else if (showGhostCatalogue)
     {
-        <section aria-labelledby="phase-heading">
-            <p>Ghost Run · @race.RouteName</p>
-            <h2 id="phase-heading" tabindex="-1">@(ghostState.Phase == "Finished" ? race.Clock.State.ToString() : race.PauseReason == PauseReason.Automatic ? "Training autopaused" : ghostState.Paused ? "Training paused" : "Ghost Run")</h2>
-            <p class="countdown"><strong>@Clock((long)race.Clock.RaceElapsed.TotalSeconds)</strong><span>race time · keeps running during pauses</span></p>
-            <p>Training active · @Clock((long)race.Clock.TrainingActive.TotalSeconds)</p>
-            <p>@ghostState.GpsStatus</p>
-            <dl><div><dt>Time difference</dt><dd>@(race.Gap.SecondsAhead is { } gap ? $"{Math.Abs(gap):0} sec {(gap < 0 ? "behind" : "ahead")}" : "Unavailable")</dd></div>
-                <div><dt>Distance difference</dt><dd>@(race.Gap.MetresAhead is { } metres ? $"{Math.Abs(metres):0} m {(metres < 0 ? "behind" : "ahead")}" : "Unavailable")</dd></div></dl>
-            @if (RunService.StartError is { } deviceError) { <p role="status">@deviceError</p> }
-            @if (ghostState.Storage?.Error is not null)
-            {
-                <p role="alert">Recent recording could not be saved. Recent data may be lost if the app closes.</p>
-                @if (ghostState.Storage.CanRetry) { <button type="button" @onclick='() => RunService.Command("retry-saving")'>Retry saving</button> }
-            }
-            @if (ghostState.Storage?.State == "saved")
-            {
-                <p role="status">Ghost Run saved locally.</p>
-                <button type="button" class="primary" @onclick="() => OpenHistory(ghostState.Id)">View run</button>
-                <button type="button" @onclick="BackToTraining">Back to training</button>
-            }
-            else if (ghostState.Phase != "Finished")
-            {
-                <button type="button" class="primary" @onclick='() => RunService.Command(ghostState.Paused ? "resume" : "pause")'>@(ghostState.Paused ? "Resume training" : "Pause training")</button>
-                @if (race.PauseReason == PauseReason.Automatic) { <button type="button" @onclick='() => RunService.Command("pause")'>Pause manually</button> }
-                <button type="button" @onclick='() => RunService.Command("end-ghost")'>End attempt</button>
-            }
-        </section>
+        <LoopCx.Features.GhostRun.Ui.GhostRoutesPage @key="ghostCatalogueKey" @ref="ghostCatalogue" InitialRoute="ghostInitialRoute" OnBack="CloseGhostCatalogue" OnStarted="ShowTraining" />
+    }
+    else if (RunService.Snapshot is { Ghost: not null } ghostState)
+    {
+        <LoopCx.Features.GhostRun.Ui.GhostLivePage @key="ghostState.Id" State="ghostState" Visible="pageVisible" OnCatalogue="() => OpenGhostCatalogue(null)" OnRoute="route => OpenGhostCatalogue(route)" OnViewRun="id => OpenHistory(id)" OnTraining="BackToTraining" OnEndRequest="OpenGhostEnd" />
     }
     else if (RunService.Snapshot is { } state)
     {
@@ -179,6 +157,7 @@
 <h2 id="start-heading" tabindex="-1">Start a run</h2>
 <button id="core-settings" type="button" @onclick="OpenSettingsDestination">Settings</button>
 </div>
+            <button id="ghost-open" type="button" @onclick="() => OpenGhostCatalogue(null)">Ghost Run · Your routes</button>
             <section class="workout" data-core-card data-motion-group aria-labelledby="c1-heading">
                 <div class="card-heading">
 <h3 id="c1-heading">C1 · Intervals</h3>
@@ -245,7 +224,13 @@
     <dialog id="core-dialog" aria-labelledby="core-dialog-title">
         <h2 id="core-dialog-title" tabindex="-1">@DialogTitle</h2>
         @if (dialogError is not null) { <p role="alert">@dialogError</p> }
-        @if (dialogMode == "audio")
+        @if (dialogMode == "end-ghost")
+        {
+            <h3>Incomplete route</h3><p>Your recording will be saved as incomplete. It cannot become a route record.</p>
+            <button type="button" class="primary" @onclick="ConfirmGhostEnd">End and save</button>
+            <button type="button" @onclick="CloseDialog">Keep racing</button>
+        }
+        else if (dialogMode == "audio")
         {
             <LoopCx.Features.Settings.AudioEditor Initial="draftAudio" Context="@($"Audio coaching · {draftName}")" Inherited="draftAudioInherited" OnSave="SaveShortcutAudio" OnCancel="CloseDialog" />
         }

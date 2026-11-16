@@ -22,25 +22,30 @@ public sealed class GhostRaceClock
 
     public IReadOnlyList<TrainingPause> Pauses => Array.AsReadOnly(pauses.ToArray());
 
-    public GhostClockSnapshot Current
+    public GhostClockSnapshot Current => At(endedAt ?? observedAt);
+
+    public TimeSpan TrainingActiveAt(TimeSpan monotonicFix)
     {
-        get
+        if (monotonicFix < startedAt || monotonicFix > observedAt)
+            throw new ArgumentOutOfRangeException(nameof(monotonicFix));
+        return At(endedAt is { } end && monotonicFix > end ? end : monotonicFix).TrainingActive;
+    }
+
+    private GhostClockSnapshot At(TimeSpan end)
+    {
+        var elapsed = end - startedAt;
+        var paused = TimeSpan.Zero;
+        var through = startedAt;
+        foreach (var pause in pauses.OrderBy(value => value.StartedAt))
         {
-            var end = endedAt ?? observedAt;
-            var elapsed = end - startedAt;
-            var paused = TimeSpan.Zero;
-            var through = startedAt;
-            foreach (var pause in pauses.OrderBy(value => value.StartedAt))
-            {
-                var from = pause.StartedAt > through ? pause.StartedAt : through;
-                var until = pause.EndedAt is { } resumed && resumed < end ? resumed : end;
-                if (until <= from) continue;
-                paused += until - from;
-                through = until;
-            }
-            var trainingPaused = pauses.Any(p => p.StartedAt <= end && (p.EndedAt is null || p.EndedAt > end));
-            return new(elapsed, elapsed - paused, trainingPaused, state);
+            var from = pause.StartedAt > through ? pause.StartedAt : through;
+            var until = pause.EndedAt is { } resumed && resumed < end ? resumed : end;
+            if (until <= from) continue;
+            paused += until - from;
+            through = until;
         }
+        var trainingPaused = pauses.Any(p => p.StartedAt <= end && (p.EndedAt is null || p.EndedAt > end));
+        return new(elapsed, elapsed - paused, trainingPaused, state);
     }
 
     public GhostClockSnapshot Observe(TimeSpan monotonicNow)

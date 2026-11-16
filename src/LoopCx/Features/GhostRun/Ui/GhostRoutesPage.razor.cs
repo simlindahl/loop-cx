@@ -10,11 +10,16 @@ namespace LoopCx.Features.GhostRun.Ui;
 
 public partial class GhostRoutesPage
 {
-    [Parameter] public Guid SourceRunId { get; set; }
+    [Parameter] public Guid? SourceRunId { get; set; }
+    [Parameter] public RouteKey? InitialRoute { get; set; }
     [Parameter] public EventCallback OnBack { get; set; }
     [Parameter] public EventCallback OnStarted { get; set; }
     private CancellationTokenSource? acquiring;
     private GhostMode mode;
+    private bool ready;
+    private string? focusTarget;
+    private static bool HasCurrentOwner => RunService.Snapshot is { } owner && (owner.Phase != "Finished" || owner.Storage?.State != "saved");
+    private string? referenceFocus;
     private readonly NameForm form = new();
     private readonly List<ArchivedGhostRoute> routes = [];
     private StoredGhostCapture? capture, frozenSave;
@@ -26,8 +31,17 @@ public partial class GhostRoutesPage
     private long request;
     private IJSObjectReference? focusModule;
 
+    private void OwnerChanged() => _ = InvokeAsync(() => { if (!disposed) StateHasChanged(); });
+
     protected override async Task OnInitializedAsync()
     {
+        RunService.Changed += OwnerChanged;
+        if (SourceRunId is null)
+        {
+            await LoadCatalogue();
+            if (InitialRoute is { } route && !disposed) await OpenRoute(route);
+            return;
+        }
         loading = true;
         var generation = ++request;
         RouteKey? existingKey = null;
@@ -36,7 +50,7 @@ public partial class GhostRoutesPage
             var existing = await Task.Run(() => new AndroidGhostArchive(RunJournal.Shared).ReadRoutes().FirstOrDefault(item => item.Route.SourceRunId == SourceRunId));
             if (disposed || generation != request) return;
             if (existing is not null) existingKey = existing.Route.Key;
-            var prepared = await Task.Run(() => RunJournal.Shared.PrepareGhostRoute(SourceRunId, "Route preview"));
+            var prepared = await Task.Run(() => RunJournal.Shared.PrepareGhostRoute(SourceRunId.Value, "Route preview"));
             if (!disposed && generation == request) capture = prepared;
         }
         catch (Exception issue) when (Expected(issue))
@@ -45,6 +59,32 @@ public partial class GhostRoutesPage
         }
         finally { if (generation == request) { loading = false; focusPending = true; } }
         if (existingKey is { } key && !disposed && generation == request) await OpenRoute(key);
+    }
+
+    private string ReadyTitle => error?.StartsWith("Move", StringComparison.Ordinal) == true ? "Move to the start" : error?.StartsWith("GPS", StringComparison.Ordinal) == true ? "GPS uncertain" : records?.ReferenceFor(mode) is null ? "Set first time" : mode == GhostMode.YearBest ? "Race year best" : "Race personal best";
+    private void ChooseReference(GhostMode choice)
+    {
+        mode = choice;
+        ready = true;
+        referenceFocus = records?.SameReference == true ? "ghost-same" : records?.ReferenceFor(choice) is null ? "ghost-first" : choice == GhostMode.YearBest ? "ghost-year" : "ghost-personal";
+        error = null;
+        focusPending = true;
+    }
+    private async Task LoadCatalogue()
+    {
+        if (saving) return;
+        loading = true;
+        catalogue = true;
+        var generation = ++request;
+        try
+        {
+            var list = await Task.Run(() => new AndroidGhostArchive(RunJournal.Shared).ReadRoutes());
+            if (disposed || generation != request) return;
+            routes.Clear(); routes.AddRange(list);
+            selected = null; ready = false; catalogue = true; error = null; focusPending = true;
+        }
+        catch (Exception issue) when (Expected(issue)) { if (!disposed && generation == request) error = "Your routes could not be read. Try reopening Ghost Run."; }
+        finally { if (generation == request) loading = false; }
     }
 
     private async Task StartRace()
@@ -100,6 +140,8 @@ public partial class GhostRoutesPage
         if (loading || saving) return;
         loading = true;
         error = null;
+        ready = false;
+        referenceFocus = null;
         year = DateTimeOffset.Now.Year;
         var generation = ++request;
         try
@@ -124,49 +166,36 @@ public partial class GhostRoutesPage
     {
         if (saving) return;
         acquiring?.Cancel();
-        if (selected is not null)
+        if (ready)
         {
-            loading = true;
-            var generation = ++request;
-            try
-            {
-                var list = await Task.Run(() => new AndroidGhostArchive(RunJournal.Shared).ReadRoutes());
-                if (disposed || generation != request) return;
-                routes.Clear(); routes.AddRange(list);
-                selected = null; catalogue = true; focusPending = true;
-            }
-            catch (Exception issue) when (Expected(issue)) { if (!disposed && generation == request) error = "Your routes could not be read."; }
-            finally { if (generation == request) loading = false; }
+            ready = false;
+            error = null;
+            focusTarget = referenceFocus;
+            focusPending = true;
+            return;
         }
+        if (selected is not null) { var key = selected.Route.Key; await LoadCatalogue(); focusTarget = RouteButton(key); }
         else { request++; await OnBack.InvokeAsync(); }
     }
 
+    private static string RouteButton(RouteKey key) => $"ghost-route-{key.Id:N}-{key.Version:N}";
     private static bool Expected(Exception issue) => issue is IOException or InvalidDataException or JsonException
         or ArgumentException or KeyNotFoundException or InvalidOperationException or TimeZoneNotFoundException or InvalidTimeZoneException
         or global::Android.Database.Sqlite.SQLiteException;
     private static string Distance(double metres) => (metres / 1000).ToString("0.00", CultureInfo.InvariantCulture);
     private static string Record(GhostAttempt? attempt) => attempt is null ? "No verified result" : $"{(long)attempt.Elapsed.TotalMinutes}:{attempt.Elapsed.Seconds:00} · {attempt.StartedLocal.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
-    private static string Coordinates(GhostRoute route)
-    {
-        var west = route.Geometry.Min(point => point.Longitude);
-        var east = route.Geometry.Max(point => point.Longitude);
-        var south = route.Geometry.Min(point => point.Latitude);
-        var north = route.Geometry.Max(point => point.Latitude);
-        return string.Join(" ", route.Geometry.Select(point =>
-            (20 + (point.Longitude - west) / Math.Max(east - west, 0.000001) * 280).ToString("0.##", CultureInfo.InvariantCulture) + "," +
-            (220 - (point.Latitude - south) / Math.Max(north - south, 0.000001) * 200).ToString("0.##", CultureInfo.InvariantCulture)));
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!focusPending || disposed) return;
         focusPending = false;
         focusModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
-        if (!disposed) await focusModule.InvokeVoidAsync("focus", "ghost-heading");
+        if (!disposed) await focusModule.InvokeVoidAsync("focus", focusTarget ?? "ghost-heading");
+        focusTarget = null;
     }
     public async ValueTask DisposeAsync()
     {
         disposed = true;
+        RunService.Changed -= OwnerChanged;
         acquiring?.Cancel();
         request++;
         if (focusModule is not null) await focusModule.DisposeAsync();
