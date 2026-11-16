@@ -91,10 +91,93 @@ internal static class GhostHCChecks
             Require(GhostHCWritePlanner.Create(coldOrigin, false).State == "disabled_synthetic",
                 "A later Release/queue read after serialized reopen cannot relabel debug or synthetic creation origin.");
         }
+        DurableGhostDelivery(source, checkpoint);
         ExplicitEndPreservesItsKnownWindowAndIncompleteOutcome();
         CheckProvenanceAndZeroActive(source, checkpoint);
         CheckOptionalAndFailures(source, checkpoint, Hr);
         Console.WriteLine("PASS: pure Ghost HC mapping2/client2, actual matched-finish/explicit-End/pause clocks, optional distance/offsets and dual-clock HR boundaries.");
+    }
+
+    private static void DurableGhostDelivery(ExportJournalSnapshot source, GhostRaceCheckpoint checkpoint)
+    {
+        // Arrange: the actual model-derived terminal fixture, not a caller-invented mapping2 plan.
+        static HCWritePlanV1 Ready(ExportJournalSnapshot selected)
+        {
+            return GhostHCWritePlanner.Create(selected, false).Plan
+            ?? throw new InvalidOperationException("Expected an eligible typed Ghost source.");
+        }
+
+        var plan = Ready(source);
+        var attempt = HCDurableAttempt.BeginGhost(source, plan, null, false);
+        var cold = JsonSerializer.Deserialize<HCDurableAttempt>(JsonSerializer.Serialize(attempt))!;
+        var receipts = plan.Records.Select((record, index) => new HCRecordReceipt(record.Kind,
+            record.ClientRecordId, record.ClientRecordVersion, $"owned-{index}")).ToArray();
+        var changedConsent = source with { Checkpoint = JsonSerializer.SerializeToElement(checkpoint with { HealthConnectConsentRevision = Guid.NewGuid() }) };
+        var noConsent = source with { Checkpoint = JsonSerializer.SerializeToElement(checkpoint with { HealthConnectConsentRevision = null }) };
+        var changedOrigin = source with { Checkpoint = JsonSerializer.SerializeToElement(checkpoint with { Origin = new(1, GhostOriginKind.SyntheticFixture) }) };
+
+        // Act
+        var calls = 0;
+        var uncertain = HCFakeReplay.RunGhost(source, plan, null, false, () => true, _ =>
+        {
+            calls++;
+            throw new IOException("Unknown remote outcome after possible acceptance.");
+        });
+        var seen = new List<string>();
+        var replay = HCFakeReplay.RunGhost(source, plan, uncertain, false, () => true, record =>
+        {
+            seen.Add(record.ClientRecordId);
+            return HCFakeWriteResult.Accepted;
+        });
+        var next = HCDurableAttempt.BeginGhost(source, plan, cold, false);
+        var acknowledged = next.CompleteGhost(source, next.Token, plan.PayloadHash, receipts, false);
+
+        // Assert
+        Require(Ready(changedConsent).PayloadHash != plan.PayloadHash && Ready(source).PayloadHash == plan.PayloadHash,
+            "Replacing one valid frozen consent revision changes provenance/hash; identical source stays stable.");
+        Require(calls == 1 && uncertain.State == "pending" && replay.State == "simulated_complete"
+            && seen.SequenceEqual(plan.Records.Select(record => record.ClientRecordId))
+            && next.Token != cold.Token && next.AttemptCount == 2 && next.FrozenPlan.PayloadHash == cold.FrozenPlan.PayloadHash,
+            "Unknown remote replay and serialized reopen retain exact ordered IDs/client2/payload while reclaiming only token/count.");
+        Require(acknowledged?.State == "acknowledged"
+            && next.CompleteGhost(source, cold.Token, plan.PayloadHash, receipts, false) is null
+            && next.CompleteGhost(source, next.Token, "stale", receipts, false) is null,
+            "Only current token/hash and complete ordered receipts can acknowledge the frozen source.");
+        Require(GhostHCWritePlanner.DeliveryStatus(source with { ExportStatus = "exported" }, null) == "action_required"
+            && GhostHCWritePlanner.DeliveryStatus(source with { ExportStatus = "exported" }, acknowledged) == "exported"
+            && GhostHCWritePlanner.DeliveryStatus(changedConsent with { ExportStatus = "exported" }, acknowledged) == "action_required",
+            "Stored status requires a source-bound actual acknowledged attempt; queue status alone cannot claim confirmed export.");
+        RejectData(() => (cold with { FrozenPlan = null! }).ValidateGhost(source, false));
+        RejectData(() => (cold with { Version = 99 }).ValidateGhost(source, false));
+        RejectData(() => cold.ValidateGhost(changedConsent, false));
+        RejectData(() => cold.ValidateGhost(noConsent, false));
+        RejectData(() => cold.ValidateGhost(changedOrigin, false));
+        RejectData(() => next.CompleteGhost(changedConsent, next.Token, plan.PayloadHash, receipts, false));
+        RejectData(() => next.CompleteGhost(source, next.Token, plan.PayloadHash, [.. receipts.Reverse()], false));
+        var alteredRecords = plan.Records.Select((record, index) => index == 0 ? record with { Provenance = "coherently rehashed caller data" } : record).ToArray();
+        var altered = plan with { Records = alteredRecords, PayloadHash = HCWritePlanV1.Hash(2, plan.RunId, plan.Source, alteredRecords, plan.Warnings) };
+        Require(altered.HasValidHash(), "The negative payload is coherently rehashed, not merely corrupt.");
+        RejectData(() => GhostHCWritePlanner.RequireFrozenSource(source, altered, false));
+        var blockedCalls = 0;
+        foreach (var blocked in new[] { changedConsent, noConsent, changedOrigin })
+        {
+            Require(HCFakeReplay.RunGhost(blocked, plan, uncertain, false, () => true, _ => { blockedCalls++; return HCFakeWriteResult.Accepted; }).State == "action_required",
+                "Source mutations cannot enter replay even with the old valid frozen payload.");
+        }
+
+        Require(HCFakeReplay.RunGhost(source, plan, null, false, () => false, _ => { blockedCalls++; return HCFakeWriteResult.Accepted; }).State == "action_required" && blockedCalls == 0,
+            "Off/missing write authority stops before a record write.");
+        var permissionChecks = 0;
+        Require(HCFakeReplay.RunGhost(source, plan, null, false, () => ++permissionChecks == 1, _ => HCFakeWriteResult.Accepted).State == "action_required",
+            "Revocation between records prevents subsequent writes without a complete ACK.");
+        Console.WriteLine("PASS: source-bound Ghost durable prepare/replay/write guard/ack, consent mutation, unknown remote retry, tokens and grants.");
+    }
+
+    private static void RejectData(Action action)
+    {
+        try { action(); }
+        catch (InvalidDataException) { return; }
+        throw new InvalidOperationException("A changed Ghost delivery source or acknowledgement was accepted.");
     }
 
     private static void ExplicitEndPreservesItsKnownWindowAndIncompleteOutcome()
@@ -143,6 +226,8 @@ internal static class GhostHCChecks
         var result = GhostHCWritePlanner.Create(source, false);
         var plan = result.Plan ?? throw new InvalidOperationException(result.Reason);
         var repeated = GhostHCWritePlanner.Create(source, false).Plan!;
+        var durable = HCDurableAttempt.BeginGhost(source, plan, null, false);
+        durable.ValidateGhost(source, false);
         var attempt = checkpoint.Attempt();
         var legacy = GhostHCWritePlanner.Create(Source(checkpoint with { TerminalContext = null }), false).Plan!;
 

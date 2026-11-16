@@ -7,6 +7,7 @@ namespace LoopCx.Features.GhostRun;
 public sealed record GhostStoredRun(Guid Id, string Status, GhostRaceCheckpoint Checkpoint)
 {
     public GhostRecords? Records { get; init; }
+    public string ExportStatus { get; init; } = "local_only";
     public DateTimeOffset? SavedLocally { get; init; }
     public static GhostStoredRun Read(Guid id, string status, string json, string? savedPartUtc = null)
     {

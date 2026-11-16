@@ -108,8 +108,19 @@ public partial class HistoryPage
     }
     private void RefreshHealthConnect() => _ = InvokeAsync(async () =>
     {
-        if (disposed || busy || ghostOpen || ghostResult is not null || sharingRun is not null || partial is not null) return;
-        if (detail is { } selected) await Open(selected.Summary.Id);
+        if (disposed || busy || ghostOpen || sharingRun is not null || partial is not null) return;
+        if (ghostResult is { } race)
+        {
+            try
+            {
+                var loaded = await Task.Run(() => RunJournal.Shared.ReadGhostRun(race.Id));
+                if (disposed || ghostResult?.Id != race.Id) return;
+                ghostResult = loaded;
+            }
+            catch (Exception problem) when (ReadError(problem))
+            { if (!disposed && ghostResult?.Id == race.Id) error = "Health Connect status could not be refreshed. Your recording remains local."; }
+        }
+        else if (detail is { } selected) await Open(selected.Summary.Id);
         else await ShowList();
         StateHasChanged();
     });
@@ -232,16 +243,27 @@ public partial class HistoryPage
     }
     private async Task RetryHealthConnect()
     {
-        if (busy || detail is not { } run) return;
-        var id = run.Summary.Id;
+        if (busy || (detail is null && ghostResult is null)) return;
+        var id = ghostResult?.Id ?? detail!.Summary.Id;
+        var ghostRetry = ghostResult is not null;
         busy = true;
         error = null;
         try
         {
             var result = await HealthConnectScheduling.RetryAsync(id);
-            if (disposed || detail?.Summary.Id != id) return;
-            detail = await Task.Run(() => RunJournal.Shared.ReadFinishedRun(id));
-            if (disposed) return;
+            if (disposed || (ghostRetry ? ghostResult?.Id : detail?.Summary.Id) != id) return;
+            if (ghostRetry)
+            {
+                var loaded = await Task.Run(() => RunJournal.Shared.ReadGhostRun(id));
+                if (disposed || ghostResult?.Id != id) return;
+                ghostResult = loaded;
+            }
+            else
+            {
+                var loaded = await Task.Run(() => RunJournal.Shared.ReadFinishedRun(id));
+                if (disposed || detail?.Summary.Id != id) return;
+                detail = loaded;
+            }
             if (result is "disabled" or "unavailable") error = "Enable Health Connect and review write access in Settings. Your run remains local.";
             else if (result == "busy") error = "An export attempt is already running. Retry after it completes.";
             focusPending = "history-heading";

@@ -265,6 +265,22 @@ public sealed class RunJournal : SQLiteOpenHelper
             if (ghost is not null)
             {
                 new AndroidGhostArchive(db, transactionOwned: true).CommitRace(ghost);
+                if (state.Finished && ghost.Snapshot.Clock.RaceElapsed > TimeSpan.Zero
+                    && ghost.TerminalKind is "matched-finish" or "explicit-end"
+                    && ghost.Origin is not null && ghost.HealthConnectConsentRevision is { } consent && consent != Guid.Empty)
+                {
+                    var projection = LoopCx.Features.HealthConnectExport.GhostHCWritePlanner.Create(ReadExportSnapshot(db, state.Id),
+#if DEBUG
+                        true
+#else
+                        false
+#endif
+                    );
+                    using var intent = db.CompileStatement("INSERT OR IGNORE INTO export_queue (run_id, status) VALUES (?, ?)")!;
+                    intent.BindString(1, state.Id.ToString());
+                    intent.BindString(2, projection.Plan is not null ? "pending" : projection.State == "disabled_synthetic" ? "disabled_synthetic" : "action_required");
+                    intent.ExecuteInsert();
+                }
 #if DEBUG
                 FailGhostProbe(state.Id, afterCommit: false);
 #endif
@@ -287,15 +303,22 @@ public sealed class RunJournal : SQLiteOpenHelper
     internal IReadOnlyList<Guid> ReadPendingHealthConnectRuns()
     {
         var result = new List<Guid>();
-        using var rows = ReadableDatabase!.RawQuery("SELECT q.run_id, r.checkpoint FROM export_queue q JOIN runs r ON r.id = q.run_id WHERE r.status = 'finished' AND q.status IN ('pending', 'action_required') ORDER BY r.started_utc, r.id", null)!;
+        using var rows = ReadableDatabase!.RawQuery("SELECT q.run_id, r.checkpoint FROM export_queue q JOIN runs r ON r.id = q.run_id WHERE r.status IN ('finished', 'incomplete') AND q.status IN ('pending', 'action_required') ORDER BY r.started_utc, r.id", null)!;
         while (rows.MoveToNext())
         {
             try
             {
                 using var checkpoint = JsonDocument.Parse(rows.GetString(1)!);
-                if (LoopCx.Features.HealthConnectExport.HCConsent.Eligible(checkpoint.RootElement)) result.Add(Guid.Parse(rows.GetString(0)!));
+                if (!LoopCx.Features.HealthConnectExport.HCConsent.Eligible(checkpoint.RootElement)) continue;
+                if (GhostRaceCheckpoint.IsGhost(checkpoint.RootElement))
+                {
+                    var ghost = GhostRaceCheckpoint.Read(checkpoint.RootElement.GetRawText());
+                    if (ghost.Origin?.Kind != GhostOriginKind.NormalService || ghost.Snapshot.Clock.RaceElapsed <= TimeSpan.Zero
+                        || ghost.TerminalKind is not ("matched-finish" or "explicit-end")) continue;
+                }
+                result.Add(Guid.Parse(rows.GetString(0)!));
             }
-            catch (Exception malformed) when (malformed is JsonException or FormatException) { }
+            catch (Exception malformed) when (malformed is JsonException or FormatException or InvalidDataException) { }
         }
         return result;
     }
@@ -489,8 +512,22 @@ public sealed class RunJournal : SQLiteOpenHelper
             using var archive = db.RawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='ghost_schema'", null)!;
             if (!archive.MoveToFirst()) throw new InvalidDataException("The recorded Ghost archive is missing. No repair was attempted.");
             var records = new AndroidGhostArchive(db, transactionOwned: true).ReadRecords(stored.Checkpoint.Route.Key, stored.Checkpoint.StartedLocal.Year);
+            using var queued = db.RawQuery("SELECT attempt_json FROM export_queue WHERE run_id = ?", [id.ToString()])!;
+            var exportStatus = "local_only";
+            if (queued.MoveToFirst())
+            {
+                try
+                {
+                    var snapshot = ReadExportSnapshot(db, id);
+                    var attempt = queued.IsNull(0) ? null
+                        : JsonSerializer.Deserialize<LoopCx.Features.HealthConnectExport.HCDurableAttempt>(queued.GetString(0)!);
+                    exportStatus = LoopCx.Features.HealthConnectExport.GhostHCWritePlanner.DeliveryStatus(snapshot, attempt);
+                }
+                catch (Exception problem) when (problem is JsonException or InvalidDataException or ArgumentException or FormatException or OverflowException)
+                { exportStatus = "action_required"; }
+            }
             db.SetTransactionSuccessful();
-            return stored with { Records = records };
+            return stored with { Records = records, ExportStatus = exportStatus };
         }
         finally { db.EndTransaction(); }
     }

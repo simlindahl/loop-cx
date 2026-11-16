@@ -274,7 +274,11 @@ public sealed partial class RunService
         if (ghost!.Ended)
         {
             StopHeartRateSource();
-            if (saveBuffer.Status.State == "saved") StopSelf();
+            if (saveBuffer.Status.State == "saved")
+            {
+                if (!finishExportScheduled) { finishExportScheduled = true; HealthConnectScheduling.Resume(); }
+                StopSelf();
+            }
         }
     }
     private Notification BuildGhostNotification(RunSnapshot state, GhostRaceSnapshot race, PendingIntent? open)

@@ -38,9 +38,15 @@ internal sealed class AndroidHealthConnectWriter(Context context)
         }
     }
 
-    internal async Task<Result> WriteAsync(HCWritePlanV1 plan)
+    internal Task<Result> WriteAsync(HCWritePlanV1 plan) => WriteAsync(plan, null);
+
+    internal Task<Result> WriteGhostAsync(LoopCx.Features.ExportRun.ExportJournalSnapshot source, HCWritePlanV1 plan)
+        => WriteAsync(plan, source);
+
+    private async Task<Result> WriteAsync(HCWritePlanV1 plan, LoopCx.Features.ExportRun.ExportJournalSnapshot? ghostSource)
     {
-        var built = HealthConnectRecordMapper.Create(plan, DebugBuild);
+        var built = ghostSource is null ? HealthConnectRecordMapper.Create(plan, DebugBuild)
+            : HealthConnectRecordMapper.CreateGhost(ghostSource, plan, DebugBuild);
         if (built.State != "constructed") return new(built.State, null, built.Reason);
         if (!HasAllPermissions(plan)) return new("action_required", null, "A required Health Connect WRITE grant is missing.");
         var manager = (HealthConnectManager?)context.GetSystemService(Context.HealthconnectService);
