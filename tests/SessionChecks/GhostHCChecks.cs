@@ -7,6 +7,7 @@ using LoopCx.Features.HealthConnectExport;
 
 internal static class GhostHCChecks
 {
+    private static readonly double[] EndReceiptSeconds = [0, 5, 10, 10.1];
     internal static void Run()
     {
         // Arrange
@@ -80,9 +81,96 @@ internal static class GhostHCChecks
             "Only the fixed synthetic SDK fixture is accepted; a rehashed metadata mutation and ordinary Debug projection cannot bypass guards.");
         Console.WriteLine("Ghost SDK fixed fixture SHA256: " + fixture.PayloadHash);
 #endif
+        Require(plan.PayloadHash == "37fb46df437563c98bd426360cb9ea391cd42bc3b6330a6619e70132d49422f2",
+            "The pre-End implementation's exact matched-Finished payload hash remains unchanged.");
+        ExplicitEndPreservesItsKnownWindowAndIncompleteOutcome();
         CheckProvenanceAndZeroActive(source, checkpoint);
         CheckOptionalAndFailures(source, checkpoint, Hr);
-        Console.WriteLine("PASS: pure Ghost HC mapping2/client2, actual matched-finish/pause clocks, optional distance/offsets and dual-clock HR boundaries.");
+        Console.WriteLine("PASS: pure Ghost HC mapping2/client2, actual matched-finish/explicit-End/pause clocks, optional distance/offsets and dual-clock HR boundaries.");
+    }
+
+    private static void ExplicitEndPreservesItsKnownWindowAndIncompleteOutcome()
+    {
+        // Arrange
+        var start = new DateTimeOffset(2025, 2, 1, 12, 0, 0, TimeSpan.Zero);
+        var route = new GhostRoute(new(Guid.Parse("15151515-1515-4515-8515-151515151515"), Guid.Parse("25252525-2525-4525-8525-252525252525")),
+            "Explicit End host fixture", Guid.NewGuid(), "explicit-end-host-v1",
+            [new(0, 0, 0), new(0, .0001, 11.11950802335329), new(0, .0002, 22.23901604670658)]);
+        var profile = new GhostComparisonProfile("ghost-service-pilot-v1", new(route.RuleVersion, .5, .5, .1, S(3), 4, 5, 500),
+            S(3), S(3), HeartRateConfiguration.Empty, MovementPolicy.Pilot, DistancePolicy.Pilot);
+        GhostRace NewRace()
+        {
+            return new(Guid.NewGuid(), route, GhostMode.YearBest, null, profile,
+            new(99900, 100000, start.ToUnixTimeMilliseconds(), 0, 0, .1), 100000, start, "UTC", TimeSpan.Zero, Guid.NewGuid());
+        }
+
+        var race = NewRace();
+
+        for (var second = 1; second <= 4; second++)
+        {
+            race.Location(new(start.AddSeconds(second).ToUnixTimeMilliseconds(), (100000 + (second * 1000L)) * 1000000,
+                0, second * .00001, .1), 100000 + (second * 1000L));
+        }
+
+        race.Pause(105000);
+        race.Resume(107000);
+        race.End(110000);
+        race.Observe(112000); // Save/observation after End must not extend its effective window.
+        var checkpoint = race.Checkpoint(1, 112000);
+        checkpoint = checkpoint with { TerminalContext = GhostTerminalContext.Capture(checkpoint, start.AddSeconds(12), TimeZoneInfo.Utc) };
+        ExportJournalSnapshot Source(GhostRaceCheckpoint value)
+        {
+            return new(value.Id, start.ToString("O", CultureInfo.InvariantCulture),
+            start.AddMilliseconds(value.ObservedBootMilliseconds - value.StartedBootMilliseconds).ToString("O", CultureInfo.InvariantCulture),
+            value.ObservedBootMilliseconds - value.StartedBootMilliseconds, "incomplete", JsonSerializer.SerializeToElement(Array.Empty<TimedPhase>()),
+            null, null, JsonSerializer.SerializeToElement(value), "local_only", [], [],
+            [.. EndReceiptSeconds.Select((second, index) => new ExportHeartRate(index + 1,
+                start.AddSeconds(second).ToString("O", CultureInfo.InvariantCulture), S(100 + second).Ticks, 100 + index, "valid"))]);
+        }
+
+        var source = Source(checkpoint);
+        var original = JsonSerializer.Serialize(source);
+
+        // Act
+        var result = GhostHCWritePlanner.Create(source, false);
+        var plan = result.Plan ?? throw new InvalidOperationException(result.Reason);
+        var repeated = GhostHCWritePlanner.Create(source, false).Plan!;
+        var attempt = checkpoint.Attempt();
+        var legacy = GhostHCWritePlanner.Create(Source(checkpoint with { TerminalContext = null }), false).Plan!;
+
+        // Assert
+        Require(plan.MappingVersion == 2 && plan.Records.All(record => record.ClientRecordVersion == 2)
+            && plan.Records[0].EndUtc == start.AddSeconds(10) && plan.Records[0].Pauses.Single() == new HCPause(start.AddSeconds(5), start.AddSeconds(7))
+            && checkpoint.Snapshot.Clock.TrainingActive == S(8), "Actual explicit End maps its known positive window and pause union, not a later save receipt.");
+        Require(attempt.Quality == AttemptQuality.Incomplete && GhostReferences.Select(route, [attempt], start.Year).PersonalBest is null
+            && plan.Records.All(record => record.Provenance!.Contains("explicit-end", StringComparison.Ordinal)
+                && record.Provenance.Contains("Incomplete", StringComparison.Ordinal)), "Export retains Incomplete and cannot create a Ghost record or fabricate matched-finish provenance.");
+        Require(plan.Records.Single(record => record.Kind == HCRecordKind.Distance).AcceptedMetres == checkpoint.MeasuredTrainingDistance!.TotalMeasuredMetres
+            && checkpoint.MeasuredTrainingDistance.TotalMeasuredMetres > 0
+            && plan.Records.Single(record => record.Kind == HCRecordKind.HeartRate).HeartRateSamples.Select(sample => sample.SourceSequence).SequenceEqual([1L, 2L, 3L]),
+            "Actual accepted distance and valid paused/endpoint HR survive; post-End receipts are not included.");
+        Require(original == JsonSerializer.Serialize(source) && repeated.PayloadHash == plan.PayloadHash
+            && repeated.Records.Select(record => record.ClientRecordId).SequenceEqual(plan.Records.Select(record => record.ClientRecordId))
+            && legacy.Records.All(record => record.EndOffsetSeconds is null), "Projection and repeated preparation preserve the source, deterministic IDs/hash and unknown legacy offset.");
+        Require(GhostHCWritePlanner.Create(Source(checkpoint with { HealthConnectConsentRevision = null }), false).State == "local_only"
+            && GhostHCWritePlanner.Create(source, true).State == "disabled_synthetic"
+            && GhostHCWritePlanner.Create(source with { ExportStatus = "disabled_synthetic" }, false).Plan is null,
+            "Known End does not bypass actual start consent or DEBUG/synthetic gates.");
+        Reject(source with { Status = "finished" });
+        Reject(source with { Id = Guid.NewGuid() });
+        Reject(source with { StartedUtc = start.AddSeconds(1).ToString("O", CultureInfo.InvariantCulture) });
+        Reject(source with { ObservedElapsedMilliseconds = 11999 });
+        Reject(Source(checkpoint with { TerminalKind = "matched-finish" }));
+        Reject(Source(checkpoint with { TerminalContext = checkpoint.TerminalContext! with { StartDerivedEffectiveUtc = start.AddSeconds(11) } }));
+        Reject(Source(checkpoint with { Snapshot = checkpoint.Snapshot with { Clock = checkpoint.Snapshot.Clock with { TrainingActive = S(9) } } }));
+        var zero = NewRace();
+        zero.End(100000);
+        Reject(Source(zero.Checkpoint(1, 100000)));
+        var running = NewRace();
+        running.Observe(101000);
+        var interrupted = Source(running.Checkpoint(1, 101000)) with { Status = "interrupted" };
+        Require(GhostHCWritePlanner.Create(interrupted, false).Plan is null,
+            "An interrupted committed prefix has no actual end and remains without an HC plan; local saved-part confirmation cannot create terminal facts.");
     }
 
     private static void CheckProvenanceAndZeroActive(ExportJournalSnapshot source, GhostRaceCheckpoint checkpoint)
