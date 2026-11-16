@@ -32,6 +32,8 @@ Record the expected and observed state and the input method in that checkpoint. 
 
 Bind a run-specific observation to the current run ID and affected view or callback. A previous last log entry or whole-page accessibility count does not establish the current state. Distinguish ordinary Activity/journal startup and any migration from the narrower scope of an inner scratch probe.
 
+For an ordinary-entry crash reporting a missing MAUI fragment/container resource ID, compare the failing APK's actual resource table and container layout with its actual packaged managed resource-designer constants, and compare a known accepted package where available. A designtime R.txt is only a clue. Establish whether IDs are inconsistent before choosing a targeted generated-output rebuild or source correction; preserve the failed package and verify any replacement's actual resource consistency. Do not discard Activity state or impose a universal clean-build requirement without evidence.
+
 For a changed visual control, reuse actual markup/assets in the existing geometry fixture and inspect the visible glyph's bounds as well as its container. Simplified markup can miss SVG baseline or reflow behavior. Keep browser results scoped to what they demonstrate; actual native acceptance remains separate.
 
 ## USB phone installation
