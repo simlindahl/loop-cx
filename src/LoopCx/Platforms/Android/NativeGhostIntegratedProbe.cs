@@ -119,13 +119,8 @@ internal static class NativeGhostIntegratedProbe
             _ = archive.SaveStoredSource(captured);
             Require(archive.SaveStoredSource(captured) == GhostArchiveWrite.AlreadyStored, "Identical source-v2 archive retry");
             var route = captured.Geometry.Route;
-            var profile = new GhostComparisonProfile("synthetic-joint-probe-v1",
-                new(route.RuleVersion, 5, 10, 2, TimeSpan.FromSeconds(3), 4, 5, 500), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3),
-                HeartRateConfiguration.Empty, MovementPolicy.Pilot, DistancePolicy.Pilot, LivePacePolicy.Pilot);
             var first = route.Geometry[0];
-            var race = new GhostRace(raceId, route, GhostMode.YearBest, null, profile,
-                new(100000, 100000, Utc.ToUnixTimeMilliseconds(), first.Latitude, first.Longitude, 1),
-                100000, Utc, "UTC", TimeSpan.Zero, null);
+            var race = GhostSyntheticSourceFixture.CreateRace(route, raceId);
             var buffer = new RunSaveBuffer();
             void Capture(GhostRaceCheckpoint state, string command) => buffer.Capture(new(raceId, state.SaveRevision, state.StartedUtc,
                 Utc.AddMilliseconds(state.ObservedBootMilliseconds - 100000), state.ObservedBootMilliseconds - 100000,
@@ -203,6 +198,16 @@ internal static class GhostSyntheticSourceFixture
     internal static readonly DateTimeOffset Utc = new(2025, 1, 1, 12, 0, 0, TimeSpan.Zero);
     internal const string Label = "Synthetic Ghost C2 probe";
 
+    internal static GhostRace CreateRace(GhostRoute route, Guid raceId)
+    {
+        var profile = new GhostComparisonProfile("ghost-service-pilot-v1",
+            new(route.RuleVersion, 5, 10, 2, TimeSpan.FromSeconds(3), 4, 5, 500), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3),
+            HeartRateConfiguration.Empty, MovementPolicy.Pilot, DistancePolicy.Pilot, LivePacePolicy.Pilot);
+        var first = route.Geometry[0];
+        return new(raceId, route, GhostMode.YearBest, null, profile,
+            new(100000, 100000, Utc.ToUnixTimeMilliseconds(), first.Latitude, first.Longitude, 1),
+            100000, Utc, "UTC", TimeSpan.Zero, null);
+    }
     internal static RunSaveBatch Create(Guid id)
     {
         if (id == Guid.Empty) throw new ArgumentException("Use a nonempty owned synthetic identity.");

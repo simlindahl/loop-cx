@@ -66,6 +66,12 @@ internal static class GhostStoredSourceChecks
             && fixtureSource.Locations.Count == 300 && !fixtureCapture.Attempt.Points[0].Known && !fixtureCapture.Attempt.Points[^1].Known,
             "The actual native C2 seed has coherent full Main/boot/UTC/provenance but honest unknown tails/no fabricated benchmark.");
         _ = StoredRunProjection.Detail(fixtureSource, null);
+        var probeRace = LoopCx.GhostSyntheticSourceFixture.CreateRace(fixtureCapture.Geometry.Route, Guid.NewGuid());
+        _ = GhostRaceCheckpoint.Read(JsonSerializer.Serialize(probeRace.Checkpoint(1, 100000)));
+        probeRace.End(102000);
+        var probeTerminal = GhostRaceCheckpoint.Read(JsonSerializer.Serialize(probeRace.Checkpoint(2, 102000)));
+        Require(probeTerminal.Attempt().Quality == AttemptQuality.Incomplete && probeTerminal.Attempt().Elapsed == TimeSpan.FromSeconds(2),
+            "The actual transaction probe fixture passes the production typed start/terminal reader before native fault stages.");
         Require(JsonSerializer.Serialize(fixture) == JsonSerializer.Serialize(LoopCx.GhostSyntheticSourceFixture.Create(fixtureState.Id)),
             "The native fixture freezes exact deterministic checkpoint/raw/event bytes for identical retry.");
         var source = Source(true, true);
