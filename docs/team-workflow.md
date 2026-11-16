@@ -73,6 +73,8 @@ The lead gives the product owner one concise consolidated overview: current mile
 
 Begin lead progress updates and each specialist's progress/final messages with a clickable current issue, PR or artifact prefix and a concrete task description. The current work must be identifiable both in the main chat and when Simon opens an individual agent. Change the prefix when the assignment changes; use the actual issue until a PR exists rather than inventing a future PR link. A role name alone does not identify the current work.
 
+During an already-authorised interactive Android test, make the actual emulator visible where available and briefly identify what is being tested. Simon values these genuine glimpses of the work. Preserve the real test flow and evidence limits; do not add tests, staged demos, gallery captures or mandatory every-frame sharing for presentation. This does not authorise an emulator launch or product work during a hold.
+
 The lead owns complete readable sentences, clear paragraph structure and accurate scope in issues, PRs and comments. Explain the problem/result and current next action without requiring the reader to reconstruct internal chatter. Preserve paragraph breaks and read back externally edited text. Use neutral related-work references for partial deliveries; closing references require full issue acceptance.
 
 Before readiness, reconcile current decisions, review scope and Waiting/next-actor state with their canonical owners and the live Project. A resolved decision must not remain described as pending. Keep historical cutoffs attributed to their dates, and preserve independent review, required checks and outstanding physical acceptance. Presentation decisions follow the [study handoff](../design/mockups/README.md#present-a-study-for-a-decision).
@@ -95,9 +97,11 @@ Keep the previous selected-state and resource-diagnosis actions. Early UX notifi
 
 The lead is applying the existing delivered/current-focus/owner-decision reporting pattern and keeps routine CI and copy coordination internal. Clear sentences, normal spacing and readable handoffs remain the team's responsibility, not additional work for the product owner. The explicit decision on positive Incomplete HC eligibility remains a separate product input; this process record does not implement it or broaden any acceptance.
 
+Simon also gave positive direct feedback: seeing actual Android Emulator testing provides satisfying small glimpses of the team's work. The [consolidated reporting guidance](#consolidated-reporting-and-readiness) now applies that feedback proportionately during already-authorised interactive tests. This is a presentation preference, not broader user research, new acceptance or a measured benefit; the current product pause is unchanged.
+
 Simon explicitly selected the 30-active-minute Waiting option in an interactive reply. The [approved policy and monitor status](#project-retrospective-cadence) above replace the earlier pending proposal: `loop-waiting-beslut` is configured and read back paused, with one-prompt deduplication and no observed alert run or delivery test. This is actual owner input, not inferred team consensus. The explicit product-development pause is respected: existing app work stays preserved, and process/automation maintenance does not resume notification/HC implementation, builds or device actions.
 
-Changes in this entry follow normal independent review and merge. Reusable plugins remain unchanged: the correction concerns this repository's runner registration and handoff application. No new PO feedback, metrics, full-team consensus or acceptance is inferred.
+Changes in this entry follow normal independent review and merge. Reusable plugins remain unchanged: the correction concerns this repository's runner registration and handoff application. No unreceived owner feedback, product/code/design endorsement, metrics or full-team consensus is inferred.
 
 ### 2026-11-16 · Selected-state sharing and packaged resources
 
