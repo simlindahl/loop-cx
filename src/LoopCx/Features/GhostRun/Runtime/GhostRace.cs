@@ -60,6 +60,7 @@ public sealed record GhostRaceCheckpoint(string ActivityKind, int GhostCheckpoin
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public DistanceState? MeasuredTrainingDistance { get; init; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public GhostTerminalContext? TerminalContext { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public GhostRecordingOrigin? Origin { get; init; }
     private static readonly JsonSerializerOptions Options = new() { RespectRequiredConstructorParameters = true, UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
 
     public static bool IsGhost(JsonElement checkpoint) => checkpoint.TryGetProperty(nameof(ActivityKind), out var kind)
@@ -92,6 +93,8 @@ public sealed record GhostRaceCheckpoint(string ActivityKind, int GhostCheckpoin
                 || !double.IsFinite(point.Metres) || point.Metres < 0 || point.Metres > value.Route.LengthMetres)
             || value.Progress.Zip(value.Progress.Skip(1)).Any(pair => pair.First.Elapsed >= pair.Second.Elapsed))
             throw new InvalidDataException("Malformed or unsupported Ghost checkpoint; no repair was attempted.");
+        value.Origin?.Validate();
+
         var state = value.Snapshot.Clock.State;
         var expectedDisposition = state == GhostClockState.Running ? "not-terminal"
             : state == GhostClockState.Incomplete && value.Snapshot.Clock.RaceElapsed == TimeSpan.Zero ? "zero-elapsed-incomplete" : "attempt";
@@ -156,6 +159,7 @@ public sealed class GhostRace
     private readonly GhostMode mode;
     private readonly GhostAttempt? reference;
     private readonly GhostComparisonProfile profile;
+    private readonly GhostRecordingOrigin? origin;
     private PauseReason pauseReason;
     private string? reason;
     private long observedBoot, lastSupportedBoot;
@@ -163,7 +167,7 @@ public sealed class GhostRace
     private bool interruptionPending;
 
     public GhostRace(Guid id, GhostRoute route, GhostMode mode, GhostAttempt? reference, GhostComparisonProfile profile,
-        GhostStartPosition position, long receivedBoot, DateTimeOffset utc, string zoneId, TimeSpan offset, Guid? consentRevision)
+        GhostStartPosition position, long receivedBoot, DateTimeOffset utc, string zoneId, TimeSpan offset, Guid? consentRevision, GhostRecordingOrigin? origin = null)
     {
         if (id == Guid.Empty || position.MeasuredBootMilliseconds < position.RequestedBootMilliseconds
             || position.MeasuredBootMilliseconds > receivedBoot
@@ -183,6 +187,8 @@ public sealed class GhostRace
         lastSupportedBoot = startedBoot = position.MeasuredBootMilliseconds;
         startedUtc = utc.AddMilliseconds(startedBoot - receivedBoot);
         startedLocal = startedUtc.ToOffset(offset);
+        origin?.Validate();
+        this.origin = origin;
         this.zoneId = zoneId; this.consentRevision = consentRevision;
         clock = new(TimeSpan.FromMilliseconds(startedBoot));
         motion = new(profile.Motion, TimeSpan.FromMilliseconds(startedBoot));
@@ -313,5 +319,5 @@ public sealed class GhostRace
         startedLocal, zoneId, consentRevision, startedBoot, now, route, mode, reference, profile, Snapshot, clock.Pauses, progress.ToArray(), raw.ToArray(),
         !Ended ? "not-terminal" : clock.Current.State == GhostClockState.Incomplete && clock.Current.RaceElapsed == TimeSpan.Zero ? "zero-elapsed-incomplete" : "attempt",
         !Ended ? null : clock.Current.State == GhostClockState.Finished ? "matched-finish" : clock.Current.State == GhostClockState.Incomplete ? "explicit-end" : "interrupted")
-    { MeasuredTrainingDistance = trainingDistance.Snapshot };
+    { MeasuredTrainingDistance = trainingDistance.Snapshot, Origin = origin };
 }

@@ -20,3 +20,7 @@ Build a modular monolith behind Blazor: one installable app with clear feature b
 Example: a change to target-RPE validation for a favourite belongs in the slice for editing favourite workouts. Rules that also apply when starting a workout belong to the workout model and are reused from there. The active session owns phase transitions and pause rules; Blazor and lock-screen controls invoke the same behavior. Android dependencies for GPS and Bluetooth stay at the platform boundary so the workout engine can be verified with simulated measurements.
 
 Choose the shortest clear path from UI to behavior and data. Add an interface, layer or separate project only when it solves a concrete need, such as replacing real sensor data with a deterministic test source. Clean Architecture layers are not required. A review should identify where each rule belongs and why every intermediate step is needed.
+
+### Frozen Ghost creation origin
+
+The service/model owns the versioned creation-path origin described by the [integration owner](integrations-data.md#ghost-health-connect-pure-projection). It is prepared only from the trusted compile-time service or dedicated synthetic fixture context, never a start request field. Only accepted ownership commits it; cancellation before acceptance creates no origin-bearing row. Frozen batch/retry/reopen keeps the same origin, and readers never manufacture a production origin for old data. This adds no table, worker or dispatch layer.

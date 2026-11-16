@@ -29,12 +29,25 @@ for path in paths:
         assert reconstructed["locations"] == run["locations"] and reconstructed["heartRate"] == run["heartRate"]
         assert reconstructed["heartRateAggregates"] is None
         mutations = [lambda d:d.update(schemaVersion=True), lambda d:d.update(activityKind="core"),
+                     lambda d:d["run"]["checkpoint"].update(Origin={"Version":True,"Kind":1}),
+                     lambda d:d["run"]["checkpoint"].update(Origin={"Version":1,"Kind":True}),
+                     lambda d:d["run"]["checkpoint"].update(Origin={"Version":2,"Kind":1}),
+                     lambda d:d["run"]["checkpoint"].update(Origin={"Version":1,"Kind":99}),
                      lambda d:d["run"]["checkpoint"]["Snapshot"]["Clock"].update(TrainingActive="00:00:11"),
                      lambda d:d["run"]["checkpoint"].update(ObservedBootMilliseconds=99999),
                      lambda d:d["run"].update(id="99999999-9999-4999-8999-999999999999"),
                      lambda d:d["run"].update(status="interrupted",localSavedPartUtc=None)]
         if run["checkpoint"]["Reference"] is not None:
             mutations.append(lambda d:d["run"]["checkpoint"]["Reference"]["Route"].update(Id="99999999-9999-4999-8999-999999999999"))
+        if run["events"]:
+            mutations.append(lambda d:d["run"]["events"][0]["checkpoint"].update(Origin={"Version":1,"Kind":2}))
+        supported=copy.deepcopy(document)
+        supported["run"]["checkpoint"]["Origin"]={"Version":1,"Kind":3}
+        for event in supported["run"]["events"]: event["checkpoint"]["Origin"]={"Version":1,"Kind":3}
+        validator.validate(supported)
+        with tempfile.TemporaryDirectory() as temporary:
+            target=Path(temporary)/"origin-ghost.json";target.write_text(json.dumps(supported),encoding="utf-8",newline="\n")
+            assert consumer.read_export(target)["checkpoint"]["Origin"]=={"Version":1,"Kind":3}
         for mutate in mutations:
             bad=copy.deepcopy(document); mutate(bad)
             with tempfile.TemporaryDirectory() as temporary:

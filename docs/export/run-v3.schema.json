@@ -1535,6 +1535,35 @@
               "type": "null"
             }
           ]
+        },
+        "Origin": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "Version": {
+                  "const": 1,
+                  "type": "integer"
+                },
+                "Kind": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "Version",
+                "Kind"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [

@@ -205,7 +205,7 @@ internal static class GhostSyntheticSourceFixture
         var first = route.Geometry[0];
         return new(raceId, route, GhostMode.YearBest, null, profile,
             new(100000, 100000, Utc.ToUnixTimeMilliseconds(), first.Latitude, first.Longitude, 1),
-            100000, Utc, "UTC", TimeSpan.Zero, null);
+            100000, Utc, "UTC", TimeSpan.Zero, null, new(1, GhostOriginKind.SyntheticFixture));
     }
     internal static RunSaveBatch Create(Guid id)
     {

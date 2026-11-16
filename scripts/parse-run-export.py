@@ -222,6 +222,10 @@ def ghost_checkpoint(cp):
         return parsed
     require(cp["ActivityKind"] == "ghost" and type(cp["GhostCheckpointVersion"]) is int and cp["GhostCheckpointVersion"] == 1,
             "Unsupported Ghost checkpoint")
+    origin = cp.get("Origin")
+    require(origin is None or (type(origin) is dict and set(origin) == {"Version", "Kind"}
+            and type(origin.get("Version")) is int and origin["Version"] == 1
+            and type(origin.get("Kind")) is int and origin["Kind"] in (1, 2, 3)), "Unsupported Ghost creation origin")
     route, view, profile = cp["Route"], cp["Snapshot"], cp["Profile"]
     key = lambda k: (identity(k["Id"]), identity(k["Version"]))
     require(identity(cp["Id"]) == identity(view["Id"]) and key(route["Key"]) == key(view["Route"]), "Ghost snapshot identity mismatch")
@@ -359,7 +363,7 @@ def read_ghost_export(document):
             raise ValueError("Event terminal receipt mismatch")
         if uuid.UUID(prior["Id"]) != uuid.UUID(cp["Id"]) or prior["StartedBootMilliseconds"] != cp["StartedBootMilliseconds"] or prior["ObservedBootMilliseconds"]-prior["StartedBootMilliseconds"] != event["observedElapsedMilliseconds"] or prior["SaveRevision"] > cp["SaveRevision"]:
             raise ValueError("Historical event identity/clock mismatch")
-        if any(prior[name] != cp[name] for name in ["Route","Reference","Profile","StartedLocal","TimeZoneId","Mode","HealthConnectConsentRevision"]):
+        if any(prior[name] != cp[name] for name in ["Route","Reference","Profile","StartedLocal","TimeZoneId","Mode","HealthConnectConsentRevision"]) or (("Origin" in prior) != ("Origin" in cp)) or prior.get("Origin") != cp.get("Origin"):
             raise ValueError("Historical frozen reference/policy changed")
     return {"schemaVersion":3,"activityKind":"ghost","id":run["id"],"status":run["status"],"raceElapsedTicks":race,
             "trainingActiveTicks":active,"localSavedPartUtc":marker,"checkpoint":cp,"frozenReference":cp["Reference"],

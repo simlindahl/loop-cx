@@ -8,6 +8,7 @@ if (args.Length == 1 && args[0] == "--notification-checks")
 
 if (args.Length == 1 && args[0] == "--ghost-hc-checks")
 {
+    GhostOriginChecks.Run();
     GhostHCChecks.Run();
     HCWritePlanChecks.Run([]);
     return;
@@ -1081,6 +1082,7 @@ StoredHistoryChecks.Run();
 StoredRouteChecks.Run();
 GhostStoredSourceChecks.Run();
 GhostServiceChecks.Run();
+GhostOriginChecks.Run();
 GhostSharingChecks.Run(args);
 
 RunJsonSharingChecks.Run(modernExport, args);
