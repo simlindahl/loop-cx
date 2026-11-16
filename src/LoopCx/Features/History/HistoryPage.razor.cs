@@ -14,6 +14,10 @@ public partial class HistoryPage
     [Parameter] public EventCallback<LoopCx.Features.GhostRun.RouteKey> OnGhostRoute { get; set; }
     [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
+    private bool HasMotionDestination => !ghostOpen && sharingRun is null && detailDestination is null && partial is null && ghostResult?.Status != "interrupted";
+    private string MotionDestination => ghostOpen ? "route" : sharingRun is { } shared ? $"share:{shared}" : detailDestination is { } destination ? $"detail:{destination}"
+        : partial is { } interruptedRun ? $"interrupted:{interruptedRun.Summary.Id}" : (ghostResult?.Id ?? detail?.Summary.Id) is { } selected ? $"run:{selected}" : "list";
+    private string? lastMotionDestination;
     private readonly List<LoopCx.Features.GhostRun.GhostStoredRun> ghostRuns = [];
     private LoopCx.Features.GhostRun.GhostStoredRun? ghostResult;
     private IEnumerable<object> HistoryEntries => runs.Cast<object>().Concat(ghostRuns).OrderByDescending(item => item switch
@@ -129,22 +133,23 @@ public partial class HistoryPage
     {
         if (busy) return;
         busy = true;
-        error = null;
-        detail = null;
-        detailDestination = null;
-        ghostOpen = false;
-        partial = null;
-        sharingRun = null;
-        shareRequest++;
-        preparingShare = false;
-        shareMessage = null;
-        recoveryFailed = recoveryUnavailable = false;
-        runs.Clear();
-        partials.Clear();
-        ghostRuns.Clear();
-        ghostResult = null;
         try
         {
+            if (detail is not null || ghostResult is not null) await LeaveMotionDestination();
+            error = null;
+            detail = null;
+            detailDestination = null;
+            ghostOpen = false;
+            partial = null;
+            sharingRun = null;
+            shareRequest++;
+            preparingShare = false;
+            shareMessage = null;
+            recoveryFailed = recoveryUnavailable = false;
+            runs.Clear();
+            partials.Clear();
+            ghostRuns.Clear();
+            ghostResult = null;
             var archive = await Task.Run(() => RunJournal.Shared.ReadFinishedRuns());
             if (disposed) return;
             ghostRuns.AddRange(archive.Ghost);
@@ -224,6 +229,7 @@ public partial class HistoryPage
         error = null;
         try
         {
+            if ((ghostResult?.Id ?? detail?.Summary.Id) != id) await LeaveMotionDestination();
             var ghost = await Task.Run(() => RunJournal.Shared.ReadGhostRun(id));
             if (disposed) return;
             if (ghost is not null)
@@ -363,7 +369,12 @@ public partial class HistoryPage
             await ShowList();
             focusPending = runs.Any(run => run.Id == id) || partials.Any(run => run.Summary.Id == id) ? "history-" + id : "history-heading";
         }
-        else await OnTraining.InvokeAsync();
+        else
+        {
+            var exit = LeaveMotionDestination();
+            await OnTraining.InvokeAsync();
+            await exit; // The parent already owns the new destination before cosmetic completion.
+        }
     }
     private static bool ReadError(Exception error) => error is IOException or InvalidDataException or JsonException
         or global::Android.Database.Sqlite.SQLiteException or KeyNotFoundException or InvalidOperationException or OverflowException or ArgumentException;
@@ -384,6 +395,8 @@ public partial class HistoryPage
         : "Frozen zones: " + string.Join(" · ", zones.Select(zone => $"Zone {zone.Number}: {zone.MinimumBpm}–{zone.MaximumBpm} bpm"));
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        var renderedDestination = MotionDestination;
+        var motionChanged = !busy && lastMotionDestination != renderedDestination;
         layoutModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/history-layout.js");
         if (disposed)
         {
@@ -391,10 +404,32 @@ public partial class HistoryPage
             return;
         }
         await layoutModule.InvokeVoidAsync("observe", historyContent, layoutOwner);
-        if (focusPending is not { } focus) return;
-        focusPending = null;
+        if (focusPending is null && !motionChanged) return;
         module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
-        await module.InvokeVoidAsync("focus", focus);
+        if (disposed)
+        {
+            await module.DisposeAsync();
+            return;
+        }
+        if (focusPending is { } focus)
+        {
+            focusPending = null;
+            await module.InvokeVoidAsync("focus", focus);
+        }
+        if (motionChanged && !disposed && !busy && MotionDestination == renderedDestination)
+        {
+            lastMotionDestination = renderedDestination;
+            await module.InvokeVoidAsync("syncMotion", false);
+        }
+    }
+    private async Task LeaveMotionDestination()
+    {
+        if (module is null || lastMotionDestination is null) return;
+        try
+        {
+            await module.InvokeVoidAsync("leaveSurface", historyContent);
+        }
+        catch (JSException) { } // Cosmetic feedback must not block the actual destination change.
     }
     public async ValueTask DisposeAsync()
     {
@@ -406,7 +441,11 @@ public partial class HistoryPage
             await layoutModule.InvokeVoidAsync("dispose", layoutOwner);
             await layoutModule.DisposeAsync();
         }
-        if (module is not null) await module.DisposeAsync();
+        if (module is not null)
+        {
+            await module.InvokeVoidAsync("disposeSurface", layoutOwner);
+            await module.DisposeAsync();
+        }
         GC.SuppressFinalize(this);
     }
 }

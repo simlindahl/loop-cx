@@ -235,12 +235,23 @@ public partial class StartRunPage
             if (historyPage is not null) await historyPage.ShowList();
             return;
         }
+        var exit = !showHistory ? LeaveHistoryEntrySurface() : Task.CompletedTask;
         showGhostCatalogue = false;
         showSettings = false;
         settingsPage = null;
         historyInitialRun = runId;
         showHistory = true;
         CoreDialogNavigation.Close = () => _ = InvokeAsync(() => historyPage?.GoBack() ?? Task.CompletedTask);
+        await exit; // Destination ownership is already committed; a later click cannot be overwritten here.
+    }
+
+    private async Task LeaveHistoryEntrySurface()
+    {
+        try
+        {
+            if (module is not null) await module.InvokeVoidAsync("leaveSurface");
+        }
+        catch (JSException) { } // Navigation does not depend on cosmetic feedback.
     }
 
     private void OpenGhostCatalogue(LoopCx.Features.GhostRun.RouteKey? route)

@@ -110,6 +110,12 @@ Result feedback is a short outline on the existing updated region only after suc
 
 All studies 01–07 remain required on their real surfaces. This slice provides only local Training/Manage navigation, not the future full Training/History/Settings destination system. Determinate progress (05) still requires a real approved progress surface with an honest numerator/denominator; no progress bar is added to demonstrate it. Other history/export/reader/Ghost applications retain their feature dependencies and holds. Native reduced-motion, focus, 200% text and touch verification is required; source code and browser checks do not establish TalkBack, frame pacing, outdoor or battery acceptance.
 
+### History navigation and entrance boundary
+
+Apply approved navigation (03) and coordinated entrance (07) to the existing Training → History list → stored Core/Ghost overview and Back paths. Use the existing heading and one neutral content group: 220 ms entrance, 24 ms between groups and 4 px movement. Do not animate individual rows, metrics, timers or export-status changes. The existing 120 ms exit is an inert, aria-hidden visual heading copy; navigation, data loading and focus do not wait for it. Keep layout, reading order, normal scrolling, 48 dp controls and 200% text unchanged.
+
+The History destination identity is its list or selected recording, never a render counter, polling result or export status. Do not consume an entrance while the existing asynchronous load is busy: a Back render showing Loading must still animate the actual list once ready. Refreshing that same list or selected recording remains static when loading finishes. Rapid navigation cancels obsolete effects and exit copies; hidden state, reduced motion and shared navigation-owner disposal clean up their effects without deferring commands or changing data. Child disposal cancels its detached entrance effects without cancelling the new destination; the shared owner's inert exit copy expires within 120 ms. Share, Core/Ghost recovery, route and deeper detail surfaces remain static in this bounded slice; their existing behavior and separate motion dependencies are preserved. Native WebView/focus/accessibility acceptance remains required and distinct from the [focused browser lifecycle check](../tests/BrowserChecks/history-motion.cjs).
+
 
 ### Work values delivery boundary
 
