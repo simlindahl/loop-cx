@@ -82,7 +82,7 @@ public partial class HistoryPage
     private readonly List<InterruptedRun> partials = [];
     private InterruptedRun? partial;
     private bool recoveryFailed, recoveryUnavailable;
-    private bool busy, disposed;
+    private bool busy, disposed, savingRecordedPart;
     private int interrupted, unreadable;
     private string? error;
     private string? focusPending = "history-heading";
@@ -163,7 +163,7 @@ public partial class HistoryPage
     private async Task SaveRecordedPart()
     {
         if (busy || partial is not { SavedLocally: null } selected || recoveryUnavailable) return;
-        busy = true;
+        busy = savingRecordedPart = true;
         error = null;
         try
         {
@@ -181,12 +181,12 @@ public partial class HistoryPage
                 : "Could not save the recorded part. Save is not confirmed. Try again.";
             focusPending = recoveryUnavailable ? "history-heading" : "recovery-save";
         }
-        finally { busy = false; }
+        finally { busy = savingRecordedPart = false; }
     }
     private async Task SaveGhostRecordedPart()
     {
         if (busy || ghostResult is not { Status: "interrupted", SavedLocally: null } selected || recoveryUnavailable) return;
-        busy = true;
+        busy = savingRecordedPart = true;
         error = null;
         try
         {
@@ -204,7 +204,7 @@ public partial class HistoryPage
                 : "Could not save the recorded part. Save is not confirmed. Try again.";
             focusPending = recoveryUnavailable ? "history-heading" : "recovery-save";
         }
-        finally { busy = false; }
+        finally { busy = savingRecordedPart = false; }
     }
     private async Task Open(Guid id)
     {

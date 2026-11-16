@@ -10,7 +10,7 @@
     <button type="button" @onclick="GoBack">← @(sharingRun is not null ? "Back" : detailDestination is not null ? "Run details" : detail is null && partial is null && ghostResult is null ? "Training" : "History")</button>
     <h2 id="history-heading" tabindex="-1">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : ghostResult is not null ? "Ghost Run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
-    @if (busy) { <p role="status">@(partial is null ? "Loading stored recording…" : "Saving recorded part…")</p> }
+    @if (busy) { <p role="status">@(savingRecordedPart ? "Saving recorded part…" : "Loading stored recording…")</p> }
     @if (sharingRun is not null)
     {
         <p>A UTF-8 JSON file.</p>
