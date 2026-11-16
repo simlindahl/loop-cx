@@ -31,7 +31,129 @@ internal static class HealthConnectRecordMapper
         }
     }
 
+    internal static HCNativeRecords CreateGhost(LoopCx.Features.ExportRun.ExportJournalSnapshot source, bool debugBuild)
+    {
+        var projected = GhostHCWritePlanner.Create(source, debugBuild);
+
+        if (projected.Plan is not { } plan)
+            return new(projected.State, projected.Reason, []);
+
+        if (plan.Records.Any(static record => record.StartOffsetSeconds is null || record.EndOffsetSeconds is null))
+            return new("action_required", "Frozen start and end offsets are required by this SDK adapter.", []);
+
+        try
+        {
+            return new("constructed", null, BuildRecords(plan));
+        }
+        catch (Exception problem) when (problem is Java.Lang.RuntimeException or ArgumentException or InvalidOperationException)
+        {
+            return new("action_required", problem.Message, []);
+        }
+    }
+
 #if DEBUG
+    private static System.Collections.ObjectModel.ReadOnlyCollection<Android.Health.Connect.DataTypes.Record> BuildGhostFixture(HCWritePlanV1 plan)
+    {
+        GhostHCConstructionFixture.Validate(plan);
+
+        return BuildRecords(plan);
+    }
+
+    internal static void RunGhostConstructionProbe(Android.Content.Context context)
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(35)
+            || Android.OS.Build.Hardware != "ranchu" || Android.OS.Build.Product != "sdk_gphone64_x86_64"
+            || Android.OS.Build.Model != "sdk_gphone64_x86_64"
+            || Android.OS.Build.SupportedAbis?.FirstOrDefault() != "x86_64"
+            || Android.OS.Build.Fingerprint?.StartsWith("google/sdk_gphone64_x86_64/", StringComparison.Ordinal) != true)
+            return;
+
+        var path = Path.Combine(context.FilesDir!.AbsolutePath, "ghost-hc-sdk-construction.json");
+
+        try
+        {
+            var source = GhostHCConstructionFixture.Source();
+            var plan = GhostHCConstructionFixture.Plan();
+            var blocked = CreateGhost(source, true).State == "disabled_synthetic";
+            var alteredRecords = plan.Records.Select((record, index) => index == 0 ? record with { ClientRecordVersion = 3 } : record).ToArray();
+            var altered = plan with
+            {
+                Records = alteredRecords,
+                PayloadHash = HCWritePlanV1.Hash(2, plan.RunId, plan.Source, alteredRecords, plan.Warnings)
+            };
+            var rejected = false;
+
+            try { _ = BuildGhostFixture(altered); }
+            catch (InvalidDataException) { rejected = true; }
+
+            var built = BuildGhostFixture(plan);
+            var session = (ExerciseSessionRecord)built[0];
+            var distance = (DistanceRecord)built[1];
+            var hr = (HeartRateRecord)built[2];
+            var expectedNotes = string.Join(" ", plan.Records.Select(static record => record.Provenance));
+            var pause = session.Segments!.Single();
+            var expectedPause = plan.Records[0].Pauses.Single();
+
+            if (!blocked || !rejected || built.Count != 3
+                || session.ExerciseType != ExerciseSessionTypeEnum.Running
+                || session.StartTime!.ToEpochMilli() != plan.Records[0].StartUtc.ToUnixTimeMilliseconds()
+                || session.EndTime!.ToEpochMilli() != plan.Records[0].EndUtc.ToUnixTimeMilliseconds()
+                || session.Notes != expectedNotes || pause.SegmentType != ExerciseSegmentTypeEnum.Pause
+                || pause.StartTime!.ToEpochMilli() != expectedPause.StartUtc.ToUnixTimeMilliseconds()
+                || pause.EndTime!.ToEpochMilli() != expectedPause.EndUtc.ToUnixTimeMilliseconds()
+                || distance.Distance!.InMeters != 0 || hr.Samples!.Count != 2)
+                throw new InvalidOperationException("Ghost SDK object readback disagrees with the fixed synthetic payload.");
+
+            for (var index = 0; index < built.Count; index++)
+            {
+                if (built[index].Metadata!.ClientRecordId != plan.Records[index].ClientRecordId
+                    || built[index].Metadata!.ClientRecordVersion != 2)
+                    throw new InvalidOperationException("Ghost SDK metadata identity/version changed.");
+            }
+
+            if (new[] { session.StartZoneOffset, session.EndZoneOffset, distance.StartZoneOffset, distance.EndZoneOffset,
+                    hr.StartZoneOffset, hr.EndZoneOffset }.Any(static offset => offset?.TotalSeconds != 0)
+                || distance.StartTime!.ToEpochMilli() != plan.Records[1].StartUtc.ToUnixTimeMilliseconds()
+                || distance.EndTime!.ToEpochMilli() != plan.Records[1].EndUtc.ToUnixTimeMilliseconds()
+                || hr.StartTime!.ToEpochMilli() != plan.Records[2].StartUtc.ToUnixTimeMilliseconds()
+                || hr.EndTime!.ToEpochMilli() != plan.Records[2].EndUtc.ToUnixTimeMilliseconds()
+                || hr.Samples.Where((sample, index) => sample.BeatsPerMinute != plan.Records[2].HeartRateSamples[index].Bpm
+                    || sample.Time!.ToEpochMilli() != plan.Records[2].HeartRateSamples[index].ReceiptUtc.ToUnixTimeMilliseconds()).Any())
+                throw new InvalidOperationException("Ghost SDK offsets, sample order or millisecond projection changed.");
+
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(new
+            {
+                State = "isolated_ghost_sdk_objects_pass",
+                Synthetic = true,
+                ProviderCalls = 0,
+                NormalDebugBlocked = blocked,
+                RehashedMutationRejected = rejected,
+                FixtureHash = plan.PayloadHash,
+                SourceCheckpoint = source.Checkpoint,
+                Scope = "Fixed manually specified synthetic SDK payload; not normal Release planner output or provider acceptance.",
+                Records = built.Select((record, index) => new
+                {
+                    Type = record.GetType().Name,
+                    record.Metadata!.ClientRecordId,
+                    record.Metadata.ClientRecordVersion,
+                    Expected = plan.Records[index]
+                }).ToArray(),
+                Notes = session.Notes,
+                ActualStartMilliseconds = session.StartTime.ToEpochMilli(),
+                ActualEndMilliseconds = session.EndTime.ToEpochMilli(),
+                ActualPauseStartMilliseconds = pause.StartTime.ToEpochMilli(),
+                ActualPauseEndMilliseconds = pause.EndTime.ToEpochMilli(),
+                ActualDistanceMetres = distance.Distance.InMeters,
+                ActualHeartRate = hr.Samples.Select(static sample => new { sample.BeatsPerMinute, EpochMilliseconds = sample.Time!.ToEpochMilli() }).ToArray()
+            }), new System.Text.UTF8Encoding(false));
+        }
+        catch (Exception problem) when (problem is Java.Lang.RuntimeException or ArgumentException or InvalidOperationException or IOException or InvalidDataException or System.Text.Json.JsonException)
+        {
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(new { State = "failed", Synthetic = true, ProviderCalls = 0, Error = problem.Message }),
+                new System.Text.UTF8Encoding(false));
+        }
+    }
+
     internal static HCNativeRecords BuildIsolatedProviderFixture(HCWritePlanV1 plan)
     {
         var expected = HCProviderVerification.Fixture();
