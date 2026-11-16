@@ -30,7 +30,7 @@
     color: var(--cx-muted);
 }
 
-input[type="text"] {
+.route-name-field ::deep input[type="text"] {
     width: 100%;
     min-height: 48px;
     font: inherit;

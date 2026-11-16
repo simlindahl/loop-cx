@@ -63,7 +63,9 @@
         <EditForm Model="form" OnValidSubmit="SaveRoute">
             <DataAnnotationsValidator />
             <label for="ghost-route-name">Route name</label>
-            <InputText type="text" id="ghost-route-name" @bind-Value="form.Name" disabled="@(saving || frozenSave is not null)" />
+            <div class="route-name-field">
+                <InputText type="text" id="ghost-route-name" @bind-Value="form.Name" disabled="@(saving || frozenSave is not null)" />
+            </div>
             <ValidationMessage For="() => form.Name" />
             <dl><div><dt>Route</dt><dd>Completed continuous main set only</dd></div><div><dt>Start / finish</dt><dd>Fixed · Recorded direction</dd></div></dl>
             <aside><strong>First benchmark</strong><p>@(prepared.Attempt.Quality == AttemptQuality.Verified ? "This policy-verified source becomes your first result. Stops and pauses count towards race time." : "Stops and pauses count towards race time. This source is not a verified benchmark: " + prepared.QualityReason)</p></aside>
