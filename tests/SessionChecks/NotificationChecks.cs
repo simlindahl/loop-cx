@@ -7,6 +7,7 @@ internal static class NotificationChecks
         RunningNotificationShowsPhaseCountdownAndMeasuredValues();
         PausedNotificationRetainsFreshHeartRateAndPauseGuidance();
         MissingOrStaleMeasurementsStayUnavailable();
+        GhostNotificationChecks.Run();
     }
 
     private static void RunningNotificationShowsPhaseCountdownAndMeasuredValues()

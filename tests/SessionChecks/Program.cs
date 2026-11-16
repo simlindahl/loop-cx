@@ -1,5 +1,11 @@
 using LoopCx.Features.ActiveRun;
 
+if (args.Length == 1 && args[0] == "--notification-checks")
+{
+    NotificationChecks.Run();
+    return;
+}
+
 if (args.Length == 1 && args[0] == "--ghost-hc-checks")
 {
     GhostHCChecks.Run();

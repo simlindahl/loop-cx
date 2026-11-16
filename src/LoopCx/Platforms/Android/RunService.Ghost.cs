@@ -279,16 +279,16 @@ public sealed partial class RunService
     }
     private Notification BuildGhostNotification(RunSnapshot state, GhostRaceSnapshot race, PendingIntent? open)
     {
-        var title = ghost!.Ended ? "Ghost Run · final save" : state.Paused ? "Ghost Run · training paused" : "Ghost Run";
-        var text = state.Storage?.Error is not null ? "Recording not saved · open LOOP Cx" : $"{race.RouteName} · race {FormatRaceTime(race.Clock.RaceElapsed)}";
+        var text = GhostNotificationText.Create(race, state.Storage);
         var builder = new Notification.Builder(this, ChannelId).SetSmallIcon(global::Android.Resource.Drawable.IcMediaPlay)
-            .SetContentTitle(title).SetContentText(text).SetContentIntent(open).SetOngoing(state.Storage?.State != "saved")
+            .SetContentTitle(text.Title).SetContentText(text.Text)
+            .SetStyle(new Notification.BigTextStyle().BigText(text.ExpandedText))
+            .SetContentIntent(open).SetOngoing(state.Storage?.State != "saved")
             .SetVisibility(NotificationVisibility.Public);
-        if (!ghost.Ended)
+        if (!ghost!.Ended)
             builder.AddAction(new Notification.Action.Builder(null, state.Paused ? "Resume training" : "Pause training",
                 PendingIntent.GetService(this, 1, new Intent(this, typeof(RunService)).SetAction(state.Paused ? "resume" : "pause").PutExtra(GhostOwnerExtra, state.Id.ToString()),
                     PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)).Build());
         return builder.Build();
     }
-    private static string FormatRaceTime(TimeSpan time) => $"{(long)time.TotalMinutes}:{time.Seconds:00}";
 }
