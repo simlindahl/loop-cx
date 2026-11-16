@@ -269,7 +269,10 @@ public partial class HistoryPage
             focusPending = "history-heading";
         }
         catch (Exception problem) when (ReadError(problem) || problem is Java.Lang.RuntimeException)
-        { if (!disposed) error = "Export is not confirmed. Your run is stored locally. Try again."; }
+        {
+            if (!disposed && (ghostRetry ? ghostResult?.Id : detail?.Summary.Id) == id)
+                error = "Export is not confirmed. Your run is stored locally. Try again.";
+        }
         finally { busy = false; }
     }
 
