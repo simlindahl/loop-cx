@@ -715,6 +715,33 @@
           "type": "integer",
           "minimum": 0
         },
+        "Distance": {
+          "type": ["object", "null"],
+          "properties": {
+            "SplitPolicy": {
+              "type": "object",
+              "required": ["Version", "Basis", "Interval"],
+              "properties": {
+                "Version": {"const": 1},
+                "Interval": {"type": "integer"}
+              },
+              "oneOf": [
+                {
+                  "properties": {
+                    "Basis": {"const": "Distance"},
+                    "Interval": {"minimum": 500, "maximum": 5000, "multipleOf": 500}
+                  }
+                },
+                {
+                  "properties": {
+                    "Basis": {"const": "Time"},
+                    "Interval": {"minimum": 1, "maximum": 30}
+                  }
+                }
+              ]
+            }
+          }
+        },
         "Statistics": {
           "anyOf": [
             {

@@ -24,7 +24,32 @@ public partial class SettingsPage
     private bool disposed;
     private IJSObjectReference? module;
     private AudioConfiguration audioConfiguration = new();
-    private string Title => page switch { "audio" => "Audio coaching", "connection" => "Heart-rate connection", "zones" => "Your heart-rate zones", "health" => "Health Connect", _ => "Settings" };
+    private SplitPolicy? savedSplits;
+    private SplitBasis splitBasis;
+    private string splitInterval = "";
+    private string? splitError;
+
+    private string Title => page switch { "audio" => "Audio coaching", "splits" => "Splits", "connection" => "Heart-rate connection", "zones" => "Your heart-rate zones", "health" => "Health Connect", _ => "Settings" };
+    private bool TimeSplits => splitBasis == SplitBasis.Time;
+    private SplitPolicy? DraftSplits
+    {
+        get
+        {
+            if (!decimal.TryParse(splitInterval.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var interval))
+            {
+                return null;
+            }
+
+            if (TimeSplits)
+            {
+                return interval is >= 1 and <= 30 && interval % 1 == 0
+                    ? new(1, SplitBasis.Time, (int)interval) : null;
+            }
+
+            return interval is >= 0.5m and <= 5 && interval % 0.5m == 0
+                ? new(1, SplitBasis.Distance, (int)(interval * 1000)) : null;
+        }
+    }
 
     private void OpenAudio()
     {
@@ -37,6 +62,61 @@ public partial class SettingsPage
         try { CorePreferences.Save(CorePreferences.Load() with { Audio = configuration }); Open("settings"); message = "Audio settings saved for new Core runs."; focusPending = "audio-settings"; }
         catch (Exception problem) when (problem is InvalidDataException or ArgumentException or IOException) { error = problem.Message; }
     }
+
+    private void OpenSplits()
+    {
+        try
+        {
+            savedSplits = CorePreferences.Load().EffectiveSplits;
+            SetSplitDraft(savedSplits);
+            Open("splits");
+        }
+        catch (InvalidDataException problem)
+        {
+            error = problem.Message;
+        }
+    }
+
+    private void ChangeSplitBasis(ChangeEventArgs change)
+    {
+        if (Enum.TryParse<SplitBasis>(change.Value as string, out var basis) && basis != splitBasis)
+        {
+            SetSplitDraft(basis == SplitBasis.Time ? SplitPolicy.DefaultTime : SplitPolicy.DefaultDistance);
+        }
+    }
+
+    private void SetSplitDraft(SplitPolicy policy)
+    {
+        splitBasis = policy.Basis;
+        splitInterval = (TimeSplits ? policy.Interval : policy.Interval / 1000m).ToString("0.#", CultureInfo.InvariantCulture);
+        splitError = null;
+    }
+
+    private void SaveSplits()
+    {
+        if (DraftSplits is not { } policy)
+        {
+            return;
+        }
+
+        try
+        {
+            savedSplits = CorePreferences.Update(current => current with { Splits = policy }).EffectiveSplits;
+            CancelSplits();
+            message = "Split settings saved for new Core runs.";
+        }
+        catch (Exception problem) when (problem is InvalidDataException or ArgumentException or IOException or Java.Lang.RuntimeException)
+        {
+            splitError = problem.Message;
+        }
+    }
+
+    private void CancelSplits()
+    {
+        Open("settings");
+        focusPending = "splits-settings";
+    }
+
     private HeartRateState? LiveSource => RunService.Snapshot is { Phase: not "Finished", HeartRate: { } hr }
         && configuration.DeviceAddress is not null && string.Equals(configuration.DeviceAddress, hr.Configuration.DeviceAddress, StringComparison.OrdinalIgnoreCase) ? hr : null;
     private bool DifferentActiveSource => RunService.Snapshot is { Phase: not "Finished", HeartRate: { } hr }
@@ -65,6 +145,14 @@ public partial class SettingsPage
         RunService.Changed += Refresh;
         HealthConnectSettings.Changed += Refresh;
         health = HealthConnectSettings.Access();
+        try
+        {
+            savedSplits = CorePreferences.Load().EffectiveSplits;
+        }
+        catch (InvalidDataException problem)
+        {
+            error ??= problem.Message;
+        }
     }
 
     private void Refresh() => _ = InvokeAsync(() => { health = HealthConnectSettings.Access(); StateHasChanged(); });
@@ -95,6 +183,7 @@ public partial class SettingsPage
     {
         if (page == "settings") await OnTraining.InvokeAsync();
         else if (page == "audio") CancelAudio();
+        else if (page == "splits") CancelSplits();
         else CancelZones();
     }
     private void CancelZones()
