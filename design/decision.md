@@ -205,3 +205,9 @@ Simon explicitly requested ordinary dose summaries such as `4 × 6:3 min` instea
 ## Ghost HC eligibility for an explicitly ended Incomplete race
 
 This entry records the owner's previously received approval in [issue 18](https://github.com/simlindahl/loop-cx/issues/18); it does not assign a new approval date. A positive-duration Ghost race explicitly ended with a known actual end is eligible for HC mapping while remaining Incomplete and creating no race record. Use actual accepted training distance and raw HR, frozen start consent and current required grants. Unknown-end Interrupted remains local/JSON, including after local saved-part confirmation; zero elapsed does not create a positive HC session. The [integration owner](../knowledge/integrations-data.md#ghost-health-connect-pure-projection) owns typed finality and frozen clock/measurement rules. This decision adds no provider execution authority or new UI/layout, and does not establish SDK/provider/physical acceptance.
+
+## Ghost English audio approval
+
+Simon approved [#18](https://github.com/simlindahl/loop-cx/issues/18) short spoken route-deviation warnings and fresh optional comparison speech with an off default. Deviation warnings have priority and share the ordinary audio queue. The [Ghost audio cue contract](../knowledge/ghost-run.md#ghost-audio-cue-contract) governs source behavior and observable acceptance. The previously approved Ghost screens supply the existing race and pause presentation. A visible comparison control requires its own scoped design approval.
+
+The preliminary Settings → Ghost audio study uses the existing Audio coaching pattern, with Spoken comparison off by default and Save applying to new races. Study HTML SHA-256: `243aedf88558790ade7fb66ec4dfc9ebf3633b6f910fb3b6c9ae3c4c91dc05ca`. Browser checks cover focus, keyboard operation and 200% text. The layout decision and Android acceptance remain pending.
