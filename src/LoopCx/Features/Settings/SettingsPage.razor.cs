@@ -181,10 +181,17 @@ public partial class SettingsPage
     }
     public async Task GoBack()
     {
-        if (page == "settings") await OnTraining.InvokeAsync();
-        else if (page == "audio") CancelAudio();
+        if (page == "settings")
+        {
+            await OnTraining.InvokeAsync();
+            return;
+        }
+
+        if (page == "audio") CancelAudio();
         else if (page == "splits") CancelSplits();
         else CancelZones();
+
+        await InvokeAsync(StateHasChanged);
     }
     private void CancelZones()
     {
