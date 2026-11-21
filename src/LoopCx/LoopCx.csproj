@@ -21,5 +21,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Maps" Version="119.2.0.3" />
   </ItemGroup>
 </Project>

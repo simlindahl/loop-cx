@@ -205,3 +205,9 @@ Simon explicitly requested ordinary dose summaries such as `4 × 6:3 min` instea
 ## Ghost HC eligibility for an explicitly ended Incomplete race
 
 This entry records the owner's previously received approval in [issue 18](https://github.com/simlindahl/loop-cx/issues/18); it does not assign a new approval date. A positive-duration Ghost race explicitly ended with a known actual end is eligible for HC mapping while remaining Incomplete and creating no race record. Use actual accepted training distance and raw HR, frozen start consent and current required grants. Unknown-end Interrupted remains local/JSON, including after local saved-part confirmation; zero elapsed does not create a positive HC session. The [integration owner](../knowledge/integrations-data.md#ghost-health-connect-pure-projection) owns typed finality and frozen clock/measurement rules. This decision adds no provider execution authority or new UI/layout, and does not establish SDK/provider/physical acceptance.
+
+## History and Ghost Maps SDK approval
+
+Simon approved Google Maps SDK for Android for History Route and the separately scoped Ghost live map. The History slice applies the [existing exact r4 design](#history-details-r4-approval) and [stored Route contract](../knowledge/integrations-data.md#history-route-and-google-maps). Google supplies map content and LOOP renders the saved GPS overlay locally. The app retains offline recording, stored History and export.
+
+Simon reserved Google Cloud activation, billing, API-key provisioning/use and applicable provider terms for separate clearance. The keyless implementation can proceed. Visible Google tiles and physical acceptance remain separate verification steps.

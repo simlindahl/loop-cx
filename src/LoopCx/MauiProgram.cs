@@ -26,6 +26,11 @@ internal sealed class App : Application
             {
                 var fontScale = webView.Context?.Resources?.Configuration?.FontScale ?? 1;
                 webView.Settings.TextZoom = (int)Math.Round(fontScale * 100);
+
+                if (Platform.CurrentActivity is MainActivity activity)
+                {
+                    activity.HistoryMapWebView = webView;
+                }
             }
         };
         view.RootComponents.Add(new RootComponent

@@ -237,9 +237,17 @@ Whole includes recorded warm-up/cool-down; Main contains Work/Recovery only, wit
 
 Effective phase boundaries must not exceed the checkpoint's processed elapsed horizon. Their callback observations must be ordered and no earlier than their effective instants, but can occur after that horizon because the service samples them during the clock update. For example, a boundary effective at 40,000 ms and observed at 40,009 ms remains supported in a checkpoint processed through 40,001 ms. History Main selection and the Ghost source bridge use the effective instant, preserve the original observation and reject an effective boundary beyond the processed horizon or an observation before its effective boundary. No clock tolerance or source repair is introduced.
 
-This internal query/projection prerequisite adds no Route action, map placeholder or UI. SDK inclusion/execution, terms/data-flow acceptance and project/key/billing configuration remain separately pending; the approved r4 layout is not permission to activate those services.
+Merged PR #110 delivered the internal query/projection prerequisite. The following slice adds the existing r4 Route destination against that query.
 
-**Map boundary.** Google Maps SDK for Android remains the selected provider. An internal run-ID-bound native `MapActivity`/`MapView` is a possible small adapter, not a decided product layout. Key configuration, network/SDK failure or no usable points must leave stored detail, recording and export usable with honest map status. No key/account inspection, Cloud activation, new permission flow or map implementation is authorised by this documentation. [Observable acceptance](delivery-acceptance.md#stored-history-detail-and-route-contract) distinguishes data compatibility from later native rendering.
+### History Route and Google Maps
+
+Implement the approved [r4 Route destination](../design/decision.md#history-details-r4-approval) for the selected stored run. Bind the detached route query, scope selection and map to that run ID. Back returns to the same run detail and restores focus to Route. Main and Whole use the scoped stored projection above. Draw supported links as separate segments at real breaks and retain isolated points for legacy unknown quality. The available summary and selected scope stay usable without a map; coordinate geometry does not replace stored measurements.
+
+Google Maps SDK for Android provides the map underlay. LOOP draws the selected overlay locally and does not send the raw route, run ID, health data or checkpoint to Google through an application request. The SDK necessarily uses the selected map viewport to request map content when enabled; that viewport can reveal an approximate area, and SDK network or telemetry behavior is governed by its applicable configuration and terms. Keep coordinates and viewport data out of LOOP diagnostics and analytics. Request no extra location permission and leave the SDK location layer off. Delay provider initialization until an eligible Route view with usable points and configuration; keyless use performs no SDK map request.
+
+Missing configuration, unavailable network, an SDK error and missing route data retain explicit, actionable status in the Route view. Use the existing r4 Back and scope actions and offer a retry for a recoverable loading failure. A missing provider key or unavailable Main scope cannot block independently supported Whole facts, run detail, offline recording or normal export. Only actual map content evidence supports a visible-map success state. Keep SDK work local and keyless pending separate clearance for Cloud activation, billing, API-key provisioning/use and terms. Preserve the [separate Ghost live-map contract](ghost-run.md#live-map-audio-and-locked-screen) for its own delivery.
+
+See [native acceptance](delivery-acceptance.md#history-route-native-acceptance).
 
 ### Interrupted-prefix local save disposition
 

@@ -115,7 +115,27 @@ internal static class StoredRouteChecks
             "Rejected capture does not become a bridged route.");
         Require(checkpoint.GetRawText() == before && JsonSerializer.Serialize(points.Select(point => point.Provenance)) == rawBefore,
             "Projection preserves frozen checkpoint and provenance bytes.");
+        CheckRouteDrawing(StoredRouteProjection.Read(id, checkpoint, 50000, rejected).Whole, legacy.Whole);
         Console.WriteLine("PASS: detached route scopes, explicit links/ignored delivery, frozen boot/phase boundaries, partial cutoff and legacy unknowns without writes.");
+    }
+
+    private static void CheckRouteDrawing(StoredRouteScope known, StoredRouteScope legacy)
+    {
+        // Arrange
+        var knownGeometry = HistoryRouteGeometry.From(known);
+        var legacyGeometry = HistoryRouteGeometry.From(legacy);
+
+        // Act
+        var knownDrawing = HistoryRouteDrawing.Create(knownGeometry, known.UnknownQuality);
+        var legacyDrawing = HistoryRouteDrawing.Create(legacyGeometry, legacy.UnknownQuality);
+
+        // Assert
+        Require(knownGeometry.Segments is [{ Count: 2 }, { Count: 3 }] && knownGeometry.Segments[0][^1].SnapshotOrder == 2
+            && knownGeometry.Segments[1][0].SnapshotOrder == 4 && knownDrawing?.Line.Count(symbol => symbol == 'M') == 2,
+            "A known recording break must produce separate coordinate segments and separate drawing subpaths.");
+        Require(legacyGeometry.Segments.Count == legacy.Points.Count && legacyGeometry.Segments.All(static segment => segment.Count == 1)
+            && legacyDrawing is { Line.Length: 0, StartX: null, EndX: null } && legacyDrawing.Isolated.Length > 0,
+            "Legacy geometry remains isolated and has no implied route or known start/end markers.");
     }
 
     private static void Require(bool condition, string message)

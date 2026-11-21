@@ -44,10 +44,23 @@ public partial class HistoryPage
     private readonly List<StoredRunSummary> runs = [];
     private StoredRunDetail? detail;
     private string? detailDestination;
-    private string DetailTitle => detailDestination == "splits" ? "Splits & phases" : "Time in zones";
+    private HistoryRouteView? routeView;
+    private string DetailTitle => detailDestination switch
+    {
+        "splits" => "Splits & phases",
+        "route" => "Recorded route",
+        _ => "Time in zones"
+    };
+
     private void ShowDetailDestination(string destination)
     {
-        if (busy || detail is null || destination is not ("splits" or "zones")) return;
+        if (busy || (destination == "route"
+            ? detail is null && partial?.SavedLocally is null
+            : detail is null || destination is not ("splits" or "zones")))
+        {
+            return;
+        }
+
         detailDestination = destination;
         focusPending = "history-heading";
     }
@@ -345,6 +358,14 @@ public partial class HistoryPage
 
         if (detailDestination is { } destination)
         {
+            if (destination == "route" && routeView is { } route)
+            {
+                await route.Leave();
+                if (disposed || detailDestination != destination) return;
+
+                routeView = null;
+            }
+
             detailDestination = null;
             focusPending = "history-" + destination;
             await InvokeAsync(StateHasChanged);
