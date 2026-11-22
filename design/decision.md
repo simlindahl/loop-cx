@@ -223,3 +223,10 @@ Simon reserved Google Cloud activation, billing, API-key provisioning/use and ap
 Simon approved [#18](https://github.com/simlindahl/loop-cx/issues/18) short spoken route-deviation warnings and fresh optional comparison speech with an off default. Deviation warnings have priority and share the ordinary audio queue. The [Ghost audio cue contract](../knowledge/ghost-run.md#ghost-audio-cue-contract) governs source behavior and observable acceptance. The previously approved Ghost screens supply the existing race and pause presentation. A visible comparison control requires its own scoped design approval.
 
 The preliminary Settings → Ghost audio study uses the existing Audio coaching pattern, with Spoken comparison off by default and Save applying to new races. Study HTML SHA-256: `243aedf88558790ade7fb66ec4dfc9ebf3633b6f910fb3b6c9ae3c4c91dc05ca`. Browser checks cover focus, keyboard operation and 200% text. The layout decision and Android acceptance remain pending.
+
+
+## Core layout r2 approval
+
+On 22 November 2026 Simon approved the three presentation directions in `splits-layout-study-r2` for [#112](https://github.com/simlindahl/loop-cx/issues/112): shorter Core cards, Pause/Resume immediately after phase and target, and consolidated measurement quality with numerical coverage in a disclosure. The historical `binding-r2.json` records the reviewed HTML SHA-256 `6688e6cc5ef973a32ea3e88f25d95ac55e786e53b39508581bc95742a6d216c4`, CSS `91c3e111375576d2c6e299999f4c124195c47cf1e7941b461d96c57465a72e3e` and JavaScript `c7e445c85598ad88142f6a5b4d8038235f753a1b8c80bad9f1bc7e9a51dda131`. The retained r2 notes and matching captures document these directions independently of the later r3 Settings study.
+
+The [owning UX specification](../knowledge/ux-design.md#core-layout-r2) defines implementation and acceptance. The approval covers Core presentation. Workout rules, commands, recording and save behavior, and the separate r3 Settings design retain their existing contracts.
