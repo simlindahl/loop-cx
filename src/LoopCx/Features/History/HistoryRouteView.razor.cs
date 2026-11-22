@@ -10,12 +10,14 @@ public partial class HistoryRouteView
 {
     [Parameter, EditorRequired] public Guid RunId { get; set; }
     [Parameter] public MeasuredStatistics? Total { get; set; }
+    [Parameter] public EventCallback<Guid> OnReady { get; set; }
     [Inject] private IJSRuntime Js { get; set; } = default!;
 
     private StoredRoute? stored;
     private HistoryRouteGeometry? geometry;
     private HistoryRouteDrawing? drawing;
     private bool loadingRoute;
+    private bool readyReported;
     private bool showMain;
     private bool disposed;
     private RouteMapStatus mapStatus;
@@ -140,6 +142,11 @@ public partial class HistoryRouteView
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!disposed && !loadingRoute && !readyReported)
+        {
+            readyReported = true;
+            await OnReady.InvokeAsync(RunId);
+        }
         if (disposed || mapStatus != RouteMapStatus.WaitingForViewport || observerOwner == mapOwner) return;
 
         var owner = observerOwner = mapOwner;

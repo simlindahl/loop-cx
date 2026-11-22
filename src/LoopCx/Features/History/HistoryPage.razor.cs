@@ -16,10 +16,12 @@ public partial class HistoryPage
     [Parameter] public Guid? InitialRun { get; set; }
     private static bool IsMotionDetail(string? destination) => destination is "splits" or "zones";
     private bool HasMotionDestination => !ghostOpen
-        && (sharingRun is not null || detailDestination is null || detail is not null && IsMotionDetail(detailDestination));
+        && (sharingRun is not null || detailDestination is null or "route" || detail is not null && IsMotionDetail(detailDestination));
+    private bool HasMotionContent => HasMotionDestination && detailDestination != "route" && !routeReturnHeadingOnly;
+    private bool MotionReady => !busy && (detailDestination != "route" || routeMotionReady);
     private Guid? InterruptedId => partial?.Summary.Id ?? (ghostResult is { Status: "interrupted" } ghost ? ghost.Id : null);
     private string MotionDestination => ghostOpen ? "route" : sharingRun is { } shared ? $"share:{shared}"
-        : detailDestination is { } destination ? IsMotionDetail(destination) ? $"detail:{detail?.Summary.Id}:{destination}" : $"detail:{destination}"
+        : detailDestination is { } destination ? $"detail:{detail?.Summary.Id ?? partial?.Summary.Id}:{destination}"
         : (InterruptedId ?? openingInterruptedGhost) is { } interrupted ? $"interrupted:{interrupted}" : (ghostResult?.Id ?? detail?.Summary.Id) is { } selected ? $"run:{selected}" : "list";
     private string? lastMotionDestination;
     private long motionVisit;
@@ -37,6 +39,7 @@ public partial class HistoryPage
     private void OpenGhostRoutes()
     {
         if (busy || detail?.IsContinuousGhostSource != true) return;
+        routeReturnHeadingOnly = false;
         ghostOpen = true;
         focusPending = null;
     }
@@ -51,6 +54,14 @@ public partial class HistoryPage
     private StoredRunDetail? detail;
     private string? detailDestination;
     private HistoryRouteView? routeView;
+    private bool routeMotionReady;
+    private bool routeReturnHeadingOnly;
+
+    private void RouteReady(Guid run, long visit)
+    {
+        if (!disposed && motionVisit == visit && detailDestination == "route" && (detail?.Summary.Id ?? partial?.Summary.Id) == run)
+            routeMotionReady = true;
+    }
     private string DetailTitle => detailDestination switch
     {
         "splits" => "Splits & phases",
@@ -67,10 +78,12 @@ public partial class HistoryPage
             return;
         }
 
-        if (IsMotionDetail(destination) && detailDestination != destination)
+        if (detailDestination != destination)
         {
             motionVisit++;
             _ = LeaveMotionDestination();
+            routeMotionReady = false;
+            routeReturnHeadingOnly = false;
         }
         detailDestination = destination;
         focusPending = "history-heading";
@@ -149,7 +162,7 @@ public partial class HistoryPage
             catch (Exception problem) when (ReadError(problem))
             { if (!disposed && ghostResult?.Id == race.Id) error = "Health Connect status could not be refreshed. Your recording remains local."; }
         }
-        else if (detail is { } selected) await Open(selected.Summary.Id, focus: !IsMotionDetail(detailDestination));
+        else if (detail is { } selected) await Open(selected.Summary.Id, focus: detailDestination != "route" && !IsMotionDetail(detailDestination));
         else await ShowList();
         StateHasChanged();
     });
@@ -169,6 +182,7 @@ public partial class HistoryPage
             error = null;
             detail = null;
             detailDestination = null;
+            routeReturnHeadingOnly = false;
             ghostOpen = false;
             partial = null;
             sharingRun = null;
@@ -263,6 +277,7 @@ public partial class HistoryPage
         busy = true;
         error = null;
         var changed = (ghostResult?.Id ?? detail?.Summary.Id) != id;
+        if (changed) routeReturnHeadingOnly = false;
         long? interruptedVisit = null;
         if (changed && ghostRuns.Any(run => run.Id == id && run.Status == "interrupted"))
         {
@@ -347,6 +362,7 @@ public partial class HistoryPage
 
         motionVisit++;
         _ = LeaveMotionDestination();
+        routeReturnHeadingOnly = false;
         sharingGhost = ghostResult is not null;
         sharingRun = selected;
         shareMessage = null;
@@ -413,15 +429,18 @@ public partial class HistoryPage
 
         if (detailDestination is { } destination)
         {
-            if (destination == "route" && routeView is { } route)
+            if (destination == "route")
             {
-                await route.Leave();
-                if (disposed || detailDestination != destination) return;
+                var visit = ++motionVisit;
+                routeMotionReady = false;
+                _ = LeaveMotionDestination();
+                if (routeView is { } route) await route.Leave();
+                if (disposed || motionVisit != visit || detailDestination != destination) return;
 
                 routeView = null;
+                routeReturnHeadingOnly = true;
             }
-
-            if (IsMotionDetail(destination))
+            else if (IsMotionDetail(destination))
             {
                 motionVisit++;
                 _ = LeaveMotionDestination();
@@ -487,7 +506,7 @@ public partial class HistoryPage
         var renderedMotionVisit = motionVisit;
         var confirmedPart = savedPartFeedback;
         savedPartFeedback = null;
-        var motionChanged = !busy && lastMotionDestination != renderedDestination;
+        var motionChanged = MotionReady && lastMotionDestination != renderedDestination;
         if (disposed) return;
         if (layoutModule is null)
         {
@@ -513,7 +532,7 @@ public partial class HistoryPage
             focusPending = null;
             await motion.InvokeVoidAsync("focus", focus);
         }
-        if (motionChanged && !disposed && !busy && renderedMotionVisit == motionVisit && MotionDestination == renderedDestination)
+        if (motionChanged && !disposed && MotionReady && renderedMotionVisit == motionVisit && MotionDestination == renderedDestination)
         {
             lastMotionDestination = renderedDestination;
             await motion.InvokeVoidAsync("syncMotion", false);

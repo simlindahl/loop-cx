@@ -1,6 +1,6 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
-<section @ref="historyContent" class="history-content" aria-labelledby="@(ghostOpen ? "ghost-heading" : "history-heading")" data-motion-owner="@layoutOwner" data-motion-destination="@MotionDestination" data-motion-ready="@(busy ? "false" : "true")">
+<section @ref="historyContent" class="history-content" aria-labelledby="@(ghostOpen ? "ghost-heading" : "history-heading")" data-motion-owner="@layoutOwner" data-motion-destination="@MotionDestination" data-motion-ready="@(MotionReady ? "true" : "false")">
     @if (ghostOpen && detail is { } ghostSource)
     {
         <LoopCx.Features.GhostRun.Ui.GhostRoutesPage @ref="ghostPage" SourceRunId="ghostSource.Summary.Id" OnBack="CloseGhostRoutes" OnStarted="OnTraining" />
@@ -11,7 +11,7 @@
     <h2 id="history-heading" tabindex="-1" data-motion-group="@(HasMotionDestination ? "" : null)">@(sharingRun is not null ? "Your run, as data." : detailDestination is not null ? DetailTitle : partial is not null ? "Interrupted run" : ghostResult is not null ? "Ghost Run" : detail is null ? "History" : detail.Summary.Name)</h2>
     @if (error is not null) { <p role="alert">@error</p> }
     @if (busy) { <p role="status">@(savingRecordedPart ? "Saving recorded part…" : "Loading stored recording…")</p> }
-    <div data-motion-group="@(HasMotionDestination ? "" : null)">
+    <div data-motion-group="@(HasMotionContent ? "" : null)">
     @if (sharingRun is not null)
     {
         <p>A UTF-8 JSON file.</p>
@@ -51,7 +51,8 @@
     else if (detailDestination == "route" && (detail?.Summary ?? partial?.Summary) is { } routeRun)
     {
         @if (routeRun.Synthetic) { <p>Synthetic test recording · not a physical workout.</p> }
-        <HistoryRouteView @key="routeRun.Id" @ref="routeView" RunId="routeRun.Id" Total="routeRun.Total" />
+        var routeVisit = motionVisit;
+        <HistoryRouteView @key="routeRun.Id" @ref="routeView" RunId="routeRun.Id" Total="routeRun.Total" OnReady="id => RouteReady(id, routeVisit)" />
     }
     else if (partial is { } recorded)
     {
