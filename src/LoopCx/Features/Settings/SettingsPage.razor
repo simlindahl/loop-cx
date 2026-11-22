@@ -1,9 +1,9 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
 @using LoopCx.Features.ActiveRun
-<section aria-labelledby="settings-heading">
+<section @ref="settingsSurface" aria-labelledby="settings-heading" data-motion-owner="@motionOwner" data-splits-visit="@settingsVisit" data-splits-entrance="@(splitsEntrance ? settingsVisit : null)">
     <button type="button" @onclick="GoBack">@(page == "settings" ? "← Training" : "← Settings")</button>
-    <h2 id="settings-heading" data-motion-group tabindex="-1">@Title</h2>
+    <h2 id="settings-heading" data-motion-group data-splits-group tabindex="-1">@Title</h2>
     @if (message is not null) { <p role="status">@message</p> }
     @if (error is not null) { <p id="heart-rate-settings-error" role="alert">@error</p> }
     @if (page == "settings")
@@ -13,7 +13,7 @@
         <button class="setting-row" type="button" @onclick="OpenZones">Heart-rate zones <small>@ProfileStatus</small></button>
         <button id="health-settings" class="setting-row" type="button" @onclick='() => Open("health")'>Health Connect <small>@health.Label</small></button>
         <button id="warmup-cooldown-settings" class="setting-row" type="button" @onclick="OnWarmupCooldown">Warm-up and cool-down <small>Global C1 defaults</small></button>
-        <button id="splits-settings" class="setting-row" type="button" @onclick="OpenSplits">Splits <small>@(savedSplits?.Label ?? "Unavailable")</small></button>
+        <button id="splits-settings" data-splits-group class="setting-row" type="button" @onclick="OpenSplits">Splits <small>@(savedSplits?.Label ?? "Unavailable")</small></button>
         <button id="audio-settings" class="setting-row" type="button" @onclick="OpenAudio">Audio coaching <small>Default for new Core runs</small></button>
     }
     else if (page == "audio")
@@ -22,7 +22,7 @@
     }
     else if (page == "splits")
     {
-        <form @onsubmit="SaveSplits" @onsubmit:preventDefault novalidate>
+        <form data-splits-group @onsubmit="SaveSplits" @onsubmit:preventDefault novalidate>
             <div class="field">
                 <label for="split-basis">Split basis</label>
                 <select id="split-basis" value="@splitBasis" @onchange="ChangeSplitBasis">

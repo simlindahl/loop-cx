@@ -4,6 +4,7 @@ const nodeEffects = new WeakMap();
 const effectOwners = new WeakMap();
 const liveEffects = new Map();
 const exitCopies = new Set();
+const splitExits = new WeakMap();
 const motionEase = 'cubic-bezier(.2,0,0,1)';
 let listening = false;
 let visibilityOwner;
@@ -145,6 +146,7 @@ function leaveVisual(node) {
     const animation = effect(copy, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-4px)' }], 120);
     const remove = () => { copy.remove(); exitCopies.delete(copy); };
     if (animation) animation.finished.then(remove, remove); else remove();
+    return animation;
 }
 export function leaveSurface(root = document.querySelector('main')) {
     clearMotion();
@@ -156,6 +158,30 @@ export function disposeSurface(owner) {
     motionEffects.forEach(animation => {
         if (owner && effectOwners.get(animation) === owner) animation.cancel();
     });
+}
+export function leaveSplitsSurface(surface, visit, animate) {
+    if (!surface?.isConnected || surface.dataset.splitsVisit !== visit) return;
+    disposeSplitsSurface(surface, surface.dataset.motionOwner);
+    if (!animate || document.hidden) return;
+    const exit = leaveVisual(surface.querySelector('h2'));
+    if (exit) splitExits.set(surface, exit);
+}
+export function enterSplitsSurface(surface, visit) {
+    if (!surface?.isConnected || surface.dataset.splitsVisit !== visit) return;
+    if (surface.dataset.splitsEntrance !== visit) return;
+    surface.removeAttribute('data-splits-entrance');
+    enterGroups(surface, '[data-splits-group]');
+}
+export function disposeSplitsSurface(surface, owner) {
+    if (surface) {
+        splitExits.get(surface)?.cancel();
+        splitExits.delete(surface);
+    }
+    disposeSurface(owner);
+}
+function enterGroups(surface, selector) {
+    // One effect per real group, at most three. No per-row or per-tick replay.
+    [...(surface?.querySelectorAll(selector) ?? [])].slice(0, 3).forEach((node, index) => enter(node, 220, index * 24));
 }
 export function leaveDisclosure() {
     leaveVisual(document.getElementById('target-fields'));
@@ -171,8 +197,7 @@ export function syncMotion(saved) {
         motionEffects.forEach(animation => {
             if (!exitCopies.has(animation.effect?.target)) animation.cancel();
         });
-        // One effect per real group, at most three. No per-row or per-tick replay.
-        [...(scope?.querySelectorAll('[data-motion-group]') ?? [])].slice(0, 3).forEach((node, index) => enter(node, 220, index * 24));
+        enterGroups(scope, '[data-motion-group]');
         lastSurface = surface;
     }
     const phase = document.getElementById('phase-heading');

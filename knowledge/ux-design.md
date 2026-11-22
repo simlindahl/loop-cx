@@ -106,6 +106,12 @@ The approved family covers 01 press feedback, 02 phase/state changes, 03 navigat
 
 Respect system reduced motion with immediate equivalent content and function: no movement/animation, no loss of state, actions, focus or reading order. Commands and accessible values update immediately and never wait for an effect. Do not animate timer/sensor numbers, invent progress or saved results, run continuous decorative loops, or queue obsolete transitions. Preserve at least 48 dp targets, 200% text/scrolling, neutral Basalt, local Space Grotesk and icon geometry. Use small CSS transform/opacity effects first, without a new animation framework; actual Android WebView, TalkBack, touch, frame pacing and battery evidence remain implementation acceptance, not established by the browser studies.
 
+### Settings and Splits navigation motion
+
+Apply approved studies 03 and 07 from [#62](https://github.com/simlindahl/loop-cx/issues/62) to the existing [r3 Settings → Splits flow](#core-splits-settings). An actual transition between Settings and Splits uses the shared 120 ms heading exit and 220 ms entrance. On opening Splits, stagger the existing heading and form by 24 ms. On return, stagger the Settings heading and the original Splits opener by 24 ms.
+
+Verify that Back, Android system Back and Cancel return to the same opener and discard the draft, and that a valid Save shows the new committed policy there. Changing the draft, validation, Settings refresh and returning from another Settings destination do not replay this transition. Rapid departure and re-entry leave only the current destination's effects. Reduced motion renders the same content and focus immediately. At 200% text the existing form and controls remain readable and reachable.
+
 ### Interrupted History result feedback
 
 Apply study 06 from [#62](https://github.com/simlindahl/loop-cx/issues/62) to the existing local save confirmation in interrupted Core and Ghost History. Use the existing 160 ms result outline once on the same selected confirmation after [Save recorded part commits a new acknowledgement](integrations-data.md#interrupted-prefix-local-save-disposition). The existing status and focus update immediately, with the same result under reduced motion.
