@@ -15,13 +15,14 @@ public partial class HistoryPage
     [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
     private static bool IsMotionDetail(string? destination) => destination is "splits" or "zones";
-    private bool HasMotionDestination => !ghostOpen && sharingRun is null && partial is null && ghostResult?.Status != "interrupted"
-        && (detailDestination is null || detail is not null && IsMotionDetail(detailDestination));
+    private bool HasMotionDestination => !ghostOpen && (sharingRun is not null
+        || partial is null && ghostResult?.Status != "interrupted"
+        && (detailDestination is null || detail is not null && IsMotionDetail(detailDestination)));
     private string MotionDestination => ghostOpen ? "route" : sharingRun is { } shared ? $"share:{shared}"
         : detailDestination is { } destination ? IsMotionDetail(destination) ? $"detail:{detail?.Summary.Id}:{destination}" : $"detail:{destination}"
         : partial is { } interruptedRun ? $"interrupted:{interruptedRun.Summary.Id}" : (ghostResult?.Id ?? detail?.Summary.Id) is { } selected ? $"run:{selected}" : "list";
     private string? lastMotionDestination;
-    private long detailMotionVisit;
+    private long motionVisit;
     private readonly List<LoopCx.Features.GhostRun.GhostStoredRun> ghostRuns = [];
     private LoopCx.Features.GhostRun.GhostStoredRun? ghostResult;
     private IEnumerable<object> HistoryEntries => runs.Cast<object>().Concat(ghostRuns).OrderByDescending(item => item switch
@@ -67,7 +68,7 @@ public partial class HistoryPage
 
         if (IsMotionDetail(destination) && detailDestination != destination)
         {
-            detailMotionVisit++;
+            motionVisit++;
             _ = LeaveMotionDestination();
         }
         detailDestination = destination;
@@ -309,10 +310,12 @@ public partial class HistoryPage
 
     private void ShowShare()
     {
-        if (busy || preparingShare) return;
+        if (busy || preparingShare || sharingRun is not null) return;
         var selected = GhostShareEligible ? ghostResult!.Id : partial is { SavedLocally: not null } recovered ? recovered.Summary.Id : detail?.Summary.Id;
         if (selected is null) return;
 
+        motionVisit++;
+        _ = LeaveMotionDestination();
         sharingGhost = ghostResult is not null;
         sharingRun = selected;
         shareMessage = null;
@@ -380,7 +383,7 @@ public partial class HistoryPage
 
             if (IsMotionDetail(destination))
             {
-                detailMotionVisit++;
+                motionVisit++;
                 _ = LeaveMotionDestination();
             }
             detailDestination = null;
@@ -390,6 +393,8 @@ public partial class HistoryPage
         }
         if (sharingRun is not null)
         {
+            motionVisit++;
+            _ = LeaveMotionDestination();
             sharingRun = null;
             shareRequest++; // A late file read/preparation must never open Android after Back.
             preparingShare = false;
@@ -434,7 +439,7 @@ public partial class HistoryPage
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var renderedDestination = MotionDestination;
-        var renderedDetailVisit = detailMotionVisit;
+        var renderedMotionVisit = motionVisit;
         var confirmedPart = savedPartFeedback;
         savedPartFeedback = null;
         var motionChanged = !busy && lastMotionDestination != renderedDestination;
@@ -448,7 +453,7 @@ public partial class HistoryPage
         if (disposed) return;
 
         await layoutModule!.InvokeVoidAsync("observe", historyContent, layoutOwner);
-        if (disposed || renderedDetailVisit != detailMotionVisit || focusPending is null && !motionChanged && confirmedPart is null) return;
+        if (disposed || renderedMotionVisit != motionVisit || focusPending is null && !motionChanged && confirmedPart is null) return;
 
         if (module is null)
         {
@@ -456,14 +461,14 @@ public partial class HistoryPage
             if (disposed || module is not null) await imported.DisposeAsync();
             else module = imported;
         }
-        if (disposed || renderedDetailVisit != detailMotionVisit) return;
+        if (disposed || renderedMotionVisit != motionVisit) return;
         var motion = module!;
         if (focusPending is { } focus)
         {
             focusPending = null;
             await motion.InvokeVoidAsync("focus", focus);
         }
-        if (motionChanged && !disposed && !busy && renderedDetailVisit == detailMotionVisit && MotionDestination == renderedDestination)
+        if (motionChanged && !disposed && !busy && renderedMotionVisit == motionVisit && MotionDestination == renderedDestination)
         {
             lastMotionDestination = renderedDestination;
             await motion.InvokeVoidAsync("syncMotion", false);

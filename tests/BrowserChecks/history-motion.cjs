@@ -129,6 +129,41 @@ const path = require('path');
             api.syncMotion(false);
             check('Background reload of the same destination stays static', active().length === 0);
 
+            history.dataset.motionDestination = 'run:one';
+            api.syncMotion(false);
+            api.leaveSurface(history);
+            history.dataset.motionDestination = 'share:one';
+            heading.textContent = 'Your run, as data.';
+            body.innerHTML = '<p>Contains your route, timestamps and heart rate.</p><button id="share-open">Open Android share sheet</button><p role="status"></p>';
+            api.focus('history-heading');
+            api.syncMotion(false);
+            const disclosure = body.getAnimations()[0];
+            check('Share disclosure enters with the existing groups and heading focus', !!disclosure
+                && disclosure.effect.getTiming().delay === 24 && document.activeElement === heading);
+            const shareOpen = body.querySelector('#share-open');
+            shareOpen.focus();
+            const shareStatus = body.querySelector('[role="status"]');
+            for (const status of ['Preparing JSON file…', 'Share failed. Try again.', '']) {
+                shareStatus.textContent = status;
+                api.syncMotion(false);
+                check(`Share status update stays on the same disclosure: ${status || 'cleared'}`, body.getAnimations()[0] === disclosure
+                    && document.activeElement === shareOpen);
+            }
+            Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+            document.dispatchEvent(new Event('visibilitychange'));
+            Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+            document.dispatchEvent(new Event('visibilitychange'));
+            api.setSystemMotion(false);
+            api.syncMotion(false);
+            check('Returning to the same disclosure after background or chooser does not replay it', active().length === 0);
+            api.leaveSurface(history);
+            history.dataset.motionDestination = 'run:one';
+            heading.textContent = 'C1 · Intervals';
+            body.innerHTML = '<button id="history-share">Share workout data</button>';
+            api.focus('history-share');
+            api.syncMotion(false);
+            check('Share Back restores the same selected run and original opener', document.activeElement.id === 'history-share');
+
             history.dataset.motionDestination = 'run:two';
             api.syncMotion(false);
             api.leaveSurface(history);
