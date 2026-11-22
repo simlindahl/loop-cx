@@ -129,6 +129,65 @@ const path = require('path');
             api.syncMotion(false);
             check('Background reload of the same destination stays static', active().length === 0);
 
+            body.innerHTML = '<button id="history-pending">Interrupted Ghost Run</button>';
+            api.leaveSurface(history);
+            history.dataset.motionDestination = 'interrupted:pending';
+            history.dataset.motionReady = 'false';
+            api.syncMotion(false);
+            history.dataset.motionDestination = 'list';
+            history.dataset.motionReady = 'true';
+            api.focus('history-pending');
+            api.syncMotion(false);
+            check('Back from pending interrupted Ghost retains list and opener without a detail entrance',
+                body.getAnimations().length === 0 && document.activeElement.id === 'history-pending');
+
+            for (const kind of ['core', 'ghost']) {
+                api.leaveSurface(history);
+                const destination = `interrupted:${kind}`;
+                history.dataset.motionDestination = destination;
+                history.dataset.motionReady = 'false';
+                api.syncMotion(false);
+                check(`Interrupted ${kind} loading stays static`, body.getAnimations().length === 0);
+
+                heading.textContent = kind === 'core' ? 'Interrupted run' : 'Ghost Run';
+                body.innerHTML = '<button id="recovery-save">Save recorded part</button>';
+                history.dataset.motionReady = 'true';
+                api.focus('history-heading');
+                api.syncMotion(false);
+                const entrance = body.getAnimations()[0];
+                check(`Interrupted ${kind} ready view starts grouped entrance`, !!entrance
+                    && entrance.effect.getTiming().delay === 24 && document.activeElement === heading);
+                history.dataset.motionReady = 'false';
+                api.syncMotion(false);
+                history.dataset.motionReady = 'true';
+                body.firstElementChild.textContent = 'Retry save';
+                api.syncMotion(false);
+                check(`Interrupted ${kind} failed save leaves the existing entrance`, body.getAnimations()[0] === entrance);
+
+                const confirmation = `saved-${kind}`;
+                body.innerHTML = `<p role="status" data-motion-recorded-part="${confirmation}">Partial recording saved locally.</p>`;
+                api.syncMotion(false);
+                api.confirmRecordedPart(history, 'history-test', destination, confirmation);
+                const saved = body.querySelector('[role="status"]');
+                check(`Interrupted ${kind} acknowledgement uses study 06 independently of entrance`,
+                    body.getAnimations()[0] === entrance && saved.getAnimations()[0].effect.getTiming().duration === 160);
+
+                api.leaveSurface(history);
+                history.dataset.motionDestination = 'list';
+                body.innerHTML = `<button id="history-${kind}">Stored partial</button>`;
+                api.focus(`history-${kind}`);
+                api.syncMotion(false);
+                check(`Interrupted ${kind} Back restores the same opener and cuts off the old effects`,
+                    document.activeElement.id === `history-${kind}` && entrance.playState === 'idle');
+                api.leaveSurface(history);
+                history.dataset.motionDestination = destination;
+                body.innerHTML = '<p role="status">Partial recording saved locally.</p>';
+                api.syncMotion(false);
+                api.confirmRecordedPart(history, 'history-test', destination, confirmation);
+                check(`Interrupted ${kind} same-run reopen enters without a stale acknowledgement`,
+                    body.getAnimations().length === 1 && body.querySelector('[role="status"]').getAnimations().length === 0);
+            }
+
             history.dataset.motionDestination = 'run:one';
             api.syncMotion(false);
             api.leaveSurface(history);
