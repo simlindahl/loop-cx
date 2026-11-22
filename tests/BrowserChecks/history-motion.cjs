@@ -68,6 +68,47 @@ const path = require('path');
             const detailEntrance = body.getAnimations()[0];
             check('Loaded selected run enters without per-metric animation or delayed focus', !!detailEntrance && body.querySelector('dd').getAnimations().length === 0 && document.activeElement === heading);
 
+            for (const [depth, title] of [['splits', 'Splits & phases'], ['zones', 'Time in zones']]) {
+                api.leaveSurface(history);
+                check(`Opening ${depth} cancels previous entrance and keeps one exit`, active().length === 1 && copies().length === 1);
+                history.dataset.motionDestination = `detail:one:${depth}`;
+                history.dataset.motionReady = 'false';
+                body.replaceChildren();
+                api.syncMotion(false);
+                check(`Busy ${depth} does not consume entrance`, body.getAnimations().length === 0);
+                heading.textContent = title;
+                body.innerHTML = '<dl><dt>Active</dt><dd>5:00</dd></dl><button>Frozen facts</button>';
+                history.dataset.motionReady = 'true';
+                api.focus('history-heading');
+                api.syncMotion(false);
+                const effect = body.getAnimations()[0];
+                check(`Ready ${depth} uses group entrance and heading focus`, !!effect
+                    && effect.effect.getTiming().duration === 220 && effect.effect.getTiming().delay === 24
+                    && document.activeElement === heading && body.querySelector('dd').getAnimations().length === 0);
+                const frozen = body.querySelector('button');
+                frozen.focus();
+                body.querySelector('dd').textContent = 'Unavailable';
+                api.syncMotion(false);
+                check(`Refresh at ${depth} keeps effect and focus`, body.getAnimations()[0] === effect && document.activeElement === frozen);
+
+                api.leaveSurface(history);
+                history.dataset.motionDestination = 'run:one';
+                heading.textContent = 'C1 · Intervals';
+                body.innerHTML = `<button id="history-${depth}">${title}</button>`;
+                api.focus(`history-${depth}`);
+                api.syncMotion(false);
+                check(`Back from ${depth} cancels detail effect and restores opener`, effect.playState === 'idle'
+                    && document.activeElement.id === `history-${depth}`);
+            }
+
+            history.dataset.motionDestination = 'detail:two:splits';
+            api.syncMotion(false);
+            const anotherRun = body.getAnimations()[0];
+            history.dataset.motionDestination = 'detail:one:splits';
+            api.syncMotion(false);
+            check('The same detail depth on another recording has independent entrance identity', anotherRun.playState === 'idle'
+                && body.getAnimations().length === 1);
+
             api.leaveSurface(history);
             check('Rapid Back cancels obsolete entrance and removes the previous exit', detailEntrance.playState === 'idle' && !firstCopy.isConnected && copies().length === 1);
             history.dataset.motionDestination = 'list';

@@ -14,10 +14,14 @@ public partial class HistoryPage
     [Parameter] public EventCallback<LoopCx.Features.GhostRun.RouteKey> OnGhostRoute { get; set; }
     [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
-    private bool HasMotionDestination => !ghostOpen && sharingRun is null && detailDestination is null && partial is null && ghostResult?.Status != "interrupted";
-    private string MotionDestination => ghostOpen ? "route" : sharingRun is { } shared ? $"share:{shared}" : detailDestination is { } destination ? $"detail:{destination}"
+    private static bool IsMotionDetail(string? destination) => destination is "splits" or "zones";
+    private bool HasMotionDestination => !ghostOpen && sharingRun is null && partial is null && ghostResult?.Status != "interrupted"
+        && (detailDestination is null || detail is not null && IsMotionDetail(detailDestination));
+    private string MotionDestination => ghostOpen ? "route" : sharingRun is { } shared ? $"share:{shared}"
+        : detailDestination is { } destination ? IsMotionDetail(destination) ? $"detail:{detail?.Summary.Id}:{destination}" : $"detail:{destination}"
         : partial is { } interruptedRun ? $"interrupted:{interruptedRun.Summary.Id}" : (ghostResult?.Id ?? detail?.Summary.Id) is { } selected ? $"run:{selected}" : "list";
     private string? lastMotionDestination;
+    private long detailMotionVisit;
     private readonly List<LoopCx.Features.GhostRun.GhostStoredRun> ghostRuns = [];
     private LoopCx.Features.GhostRun.GhostStoredRun? ghostResult;
     private IEnumerable<object> HistoryEntries => runs.Cast<object>().Concat(ghostRuns).OrderByDescending(item => item switch
@@ -61,6 +65,11 @@ public partial class HistoryPage
             return;
         }
 
+        if (IsMotionDetail(destination) && detailDestination != destination)
+        {
+            detailMotionVisit++;
+            _ = LeaveMotionDestination();
+        }
         detailDestination = destination;
         focusPending = "history-heading";
     }
@@ -138,7 +147,7 @@ public partial class HistoryPage
             catch (Exception problem) when (ReadError(problem))
             { if (!disposed && ghostResult?.Id == race.Id) error = "Health Connect status could not be refreshed. Your recording remains local."; }
         }
-        else if (detail is { } selected) await Open(selected.Summary.Id);
+        else if (detail is { } selected) await Open(selected.Summary.Id, focus: !IsMotionDetail(detailDestination));
         else await ShowList();
         StateHasChanged();
     });
@@ -238,7 +247,7 @@ public partial class HistoryPage
         }
         finally { busy = savingRecordedPart = false; }
     }
-    private async Task Open(Guid id)
+    private async Task Open(Guid id, bool focus = true)
     {
         if (busy) return;
         busy = true;
@@ -258,7 +267,7 @@ public partial class HistoryPage
             var loaded = await Task.Run(() => RunJournal.Shared.ReadFinishedRun(id));
             if (disposed) return;
             detail = loaded;
-            focusPending = "history-heading";
+            if (focus) focusPending = "history-heading";
         }
         catch (Exception issue) when (ReadError(issue)) { error = "This stored recording could not be read. No data was changed."; }
         finally { busy = false; }
@@ -369,6 +378,11 @@ public partial class HistoryPage
                 routeView = null;
             }
 
+            if (IsMotionDetail(destination))
+            {
+                detailMotionVisit++;
+                _ = LeaveMotionDestination();
+            }
             detailDestination = null;
             focusPending = "history-" + destination;
             await InvokeAsync(StateHasChanged);
@@ -420,6 +434,7 @@ public partial class HistoryPage
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var renderedDestination = MotionDestination;
+        var renderedDetailVisit = detailMotionVisit;
         var confirmedPart = savedPartFeedback;
         savedPartFeedback = null;
         var motionChanged = !busy && lastMotionDestination != renderedDestination;
@@ -433,7 +448,7 @@ public partial class HistoryPage
         if (disposed) return;
 
         await layoutModule!.InvokeVoidAsync("observe", historyContent, layoutOwner);
-        if (disposed || focusPending is null && !motionChanged && confirmedPart is null) return;
+        if (disposed || renderedDetailVisit != detailMotionVisit || focusPending is null && !motionChanged && confirmedPart is null) return;
 
         if (module is null)
         {
@@ -441,14 +456,14 @@ public partial class HistoryPage
             if (disposed || module is not null) await imported.DisposeAsync();
             else module = imported;
         }
-        if (disposed) return;
+        if (disposed || renderedDetailVisit != detailMotionVisit) return;
         var motion = module!;
         if (focusPending is { } focus)
         {
             focusPending = null;
             await motion.InvokeVoidAsync("focus", focus);
         }
-        if (motionChanged && !disposed && !busy && MotionDestination == renderedDestination)
+        if (motionChanged && !disposed && !busy && renderedDetailVisit == detailMotionVisit && MotionDestination == renderedDestination)
         {
             lastMotionDestination = renderedDestination;
             await motion.InvokeVoidAsync("syncMotion", false);
