@@ -208,13 +208,19 @@ public sealed class GhostRace
         get
         {
             var current = clock.Current;
-            var supported = current.State == GhostClockState.Finished || available && observedBoot - lastSupportedBoot <= profile.MaximumStartAge.TotalMilliseconds;
+            var supported = current.State == GhostClockState.Finished || HasFreshRouteEvidence(observedBoot);
             var match = supported ? matcher.Current : matcher.Current with { State = RouteMatchState.Uncertain, Metres = null, Problem = RouteMatchProblem.Gap };
             return new(id, route.Name, route.Key, mode, current, pauseReason, match,
                 playback?.PositionAt(current.RaceElapsed), playback?.Compare(current.RaceElapsed, match.Metres) ?? new(null, null),
                 reference?.Id, reference?.Elapsed, startedLocal.Year, reason);
         }
     }
+
+    internal bool HasFreshRouteEvidence(long receiptBoot)
+    {
+        return available && receiptBoot - lastSupportedBoot <= profile.MaximumStartAge.TotalMilliseconds;
+    }
+
     public void Observe(long now)
     {
         clock.Observe(TimeSpan.FromMilliseconds(now));
