@@ -16,25 +16,60 @@ public sealed record StoredZoneScope(TimeSpan? Active, TimeSpan? Known, TimeSpan
 public sealed record StoredMeasurementDetails(IReadOnlyList<StoredSplit>? Splits, IReadOnlyList<StoredPhase>? Phases,
     StoredZoneScope Main, StoredZoneScope Whole)
 {
+    public SplitPolicy? SplitPolicy { get; init; }
+
     public static StoredMeasurementDetails Unknown { get; } = new(null, null, new(null, null, null, null, []), new(null, null, null, null, []));
 }
 
 // Presence is checked before interpreting a DTO default as a recorded zero. Never replay raw observations.
 public static class StoredMeasurementProjection
 {
-    public static StoredMeasurementDetails Read(JsonElement checkpoint, HeartRateConfiguration? configuration)
+    public static StoredMeasurementDetails Read(JsonElement checkpoint, HeartRateConfiguration? configuration, bool interrupted = false)
     {
         var statistics = Field(checkpoint, "Snapshot", "Statistics");
+        var distance = Field(checkpoint, "Snapshot", "Distance");
+        var savedPolicy = Field(distance, "SplitPolicy");
         var supported = Integer(Field(statistics, "Version")) == 1;
-        return new(supported ? Splits(checkpoint, statistics) : null, Phases(checkpoint),
+        var policy = savedPolicy.ValueKind == JsonValueKind.Undefined
+            ? !interrupted && Field(distance, "Splits").ValueKind == JsonValueKind.Array ? SplitPolicy.DefaultDistance : null
+            : ReadPolicy(savedPolicy);
+
+        return new(supported && policy is not null ? Splits(distance, statistics, policy, interrupted) : null, Phases(checkpoint),
             Zones(supported ? Field(statistics, "Main") : default, configuration),
-            Zones(supported ? Field(statistics, "Total") : default, configuration));
+            Zones(supported ? Field(statistics, "Total") : default, configuration))
+        {
+            SplitPolicy = policy
+        };
     }
 
-    private static StoredSplit[]? Splits(JsonElement checkpoint, JsonElement statistics)
+    private static SplitPolicy? ReadPolicy(JsonElement value)
     {
-        var distances = Field(checkpoint, "Snapshot", "Distance", "Splits");
+        var basis = Field(value, "Basis");
+
+        if (Integer(Field(value, "Version")) != 1 || Integer(Field(value, "Interval")) is not { } interval
+            || basis.ValueKind != JsonValueKind.String || basis.GetString() is not ("Distance" or "Time"))
+        {
+            return null;
+        }
+
+        var policy = new SplitPolicy(1, basis.GetString() == "Time" ? SplitBasis.Time : SplitBasis.Distance, interval);
+
+        try
+        {
+            policy.Validate();
+            return policy;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    private static StoredSplit[]? Splits(JsonElement distance, JsonElement statistics, SplitPolicy policy, bool interrupted)
+    {
+        var distances = Field(distance, "Splits");
         var scopes = Field(statistics, "CompletedSplits");
+
         if (distances.ValueKind != JsonValueKind.Array || scopes.ValueKind != JsonValueKind.Array
             || distances.GetArrayLength() != scopes.GetArrayLength())
         {
@@ -42,42 +77,82 @@ public static class StoredMeasurementProjection
         }
 
         var result = new List<StoredSplit>();
+        var current = Field(statistics, "CurrentSplit");
+        var currentActive = interrupted ? Duration(Field(current, "ActiveTime")) : null;
+        var includeCurrent = currentActive > TimeSpan.Zero;
+
         for (var index = 0; index < distances.GetArrayLength(); index++)
         {
-            var distance = distances[index];
+            var row = distances[index];
             var scope = scopes[index];
-            var active = Duration(Field(distance, "ActiveTime"));
-            var metres = Number(Field(distance, "MeasuredMetres"));
-            if (Integer(Field(distance, "Number")) != index + 1 || active is null || metres is null
-                || active != Duration(Field(scope, "ActiveTime")) || metres != Number(Field(scope, "MeasuredMetres"))
-                || metres > 1000 || (index < distances.GetArrayLength() - 1 && metres != 1000))
+            var active = Duration(Field(row, "ActiveTime"));
+            var metres = Number(Field(row, "MeasuredMetres"));
+
+            if (Integer(Field(row, "Number")) != index + 1 || active is null || metres is null
+                || active != Duration(Field(scope, "ActiveTime")) || metres != Number(Field(scope, "MeasuredMetres")))
             {
                 return null;
             }
 
-            var gpsKnown = Duration(Field(scope, "KnownGpsActiveTime"));
-            var gpsUnknown = Duration(Field(scope, "UnknownGpsActiveTime"));
-            if (gpsKnown is null || gpsUnknown is null || (decimal)gpsKnown.Value.Ticks + gpsUnknown.Value.Ticks != active.Value.Ticks) gpsKnown = gpsUnknown = null;
-            var hrKnown = Duration(Field(scope, "KnownHeartRateActiveTime"));
-            if (hrKnown > active) hrKnown = null;
-            var hrUnknown = Duration(Field(scope, "UnknownHeartRateActiveTime"));
-            if (hrKnown is null || hrUnknown is null || (decimal)hrKnown.Value.Ticks + hrUnknown.Value.Ticks != active.Value.Ticks) hrUnknown = null;
-            // These are the frozen strict pace and weighted HR values, not a new distance/time calculation.
-            var pace = gpsKnown is not null && gpsUnknown == TimeSpan.Zero ? Number(Field(scope, "AveragePaceSecondsPerKilometre")) : null;
-            var hr = hrKnown > TimeSpan.Zero ? Number(Field(scope, "AverageHeartRate")) : null;
-            result.Add(new(index + 1, metres < 1000, active.Value, metres.Value, pace is > 0 && pace <= TimeSpan.MaxValue.TotalSeconds ? pace : null,
-                hr is > 0 ? hr : null, gpsKnown, gpsUnknown, hrKnown, hrUnknown));
+            var allowPartial = !includeCurrent && index == distances.GetArrayLength() - 1;
+
+            if (ReadSplit(scope, index + 1, active.Value, metres.Value, policy, allowPartial) is not { } split)
+            {
+                return null;
+            }
+
+            result.Add(split);
+        }
+
+        // Finished allocation already includes the final partial. Only a recorded prefix can use CurrentSplit.
+        if (currentActive is { Ticks: > 0 } prefixActive)
+        {
+            if (Number(Field(current, "MeasuredMetres")) is not { } metres
+                || ReadSplit(current, result.Count + 1, prefixActive, metres, policy, allowPartial: true) is not { FinalPartial: true } prefix)
+            {
+                return null;
+            }
+
+            result.Add(prefix);
         }
 
         var main = Field(statistics, "Main");
+
         if ((Duration(Field(main, "ActiveTime")) is { } mainTime && result.Sum(static split => (decimal)split.Active.Ticks) != mainTime.Ticks)
             || (Number(Field(main, "MeasuredMetres")) is { } mainMetres && Math.Abs(result.Sum(static split => split.Metres) - mainMetres) > 0.000001))
         {
             return null;
         }
 
-        // Finished distance allocation already includes the final partial; CurrentSplit is not a second row.
         return [.. result];
+    }
+
+    private static StoredSplit? ReadSplit(JsonElement scope, int number, TimeSpan active, double metres,
+        SplitPolicy policy, bool allowPartial)
+    {
+        var timeBased = policy.Basis == SplitBasis.Time;
+        var progress = timeBased ? active.Ticks : metres;
+        var target = timeBased ? TimeSpan.FromMinutes(policy.Interval).Ticks : policy.Interval;
+
+        if (progress > target || (!allowPartial && progress != target) || (timeBased && progress == 0))
+        {
+            return null;
+        }
+
+        var gpsKnown = Duration(Field(scope, "KnownGpsActiveTime"));
+        var gpsUnknown = Duration(Field(scope, "UnknownGpsActiveTime"));
+        if (gpsKnown is null || gpsUnknown is null || (decimal)gpsKnown.Value.Ticks + gpsUnknown.Value.Ticks != active.Ticks) gpsKnown = gpsUnknown = null;
+        var hrKnown = Duration(Field(scope, "KnownHeartRateActiveTime"));
+        if (hrKnown > active) hrKnown = null;
+        var hrUnknown = Duration(Field(scope, "UnknownHeartRateActiveTime"));
+        if (hrKnown is null || hrUnknown is null || (decimal)hrKnown.Value.Ticks + hrUnknown.Value.Ticks != active.Ticks) hrKnown = hrUnknown = null;
+
+        // These are the frozen strict pace and weighted HR values.
+        var pace = gpsKnown is not null && gpsUnknown == TimeSpan.Zero ? Number(Field(scope, "AveragePaceSecondsPerKilometre")) : null;
+        var hr = hrKnown > TimeSpan.Zero ? Number(Field(scope, "AverageHeartRate")) : null;
+
+        return new(number, progress < target, active, metres, pace is > 0 && pace <= TimeSpan.MaxValue.TotalSeconds ? pace : null,
+            hr is > 0 ? hr : null, gpsKnown, gpsUnknown, hrKnown, hrUnknown);
     }
 
     private static StoredPhase[]? Phases(JsonElement checkpoint)

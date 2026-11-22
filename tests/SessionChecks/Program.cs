@@ -1,5 +1,4 @@
 using LoopCx.Features.ActiveRun;
-
 if (args.Length == 1 && args[0] == "--notification-checks")
 {
     NotificationChecks.Run();
@@ -13,6 +12,8 @@ if (args.Length == 1 && args[0] == "--ghost-hc-checks")
     HCWritePlanChecks.Run([]);
     return;
 }
+
+SplitPolicyChecks.Run(args);
 
 static void Require(bool condition, string message)
 {
@@ -1061,8 +1062,9 @@ Require(projectedCheckpoint.GetProperty("StartContext").GetProperty("UtcOffsetSe
     && projectedCheckpoint.GetProperty("PhaseBoundaries")[0].GetProperty("EffectiveElapsedMilliseconds").GetInt64() == 10000
     && modernDocument.RootElement.GetProperty("run").GetProperty("locations")[0].GetProperty("utcMilliseconds").GetInt64() == 1794650411000,
     "Start-zone and observed/effective boundary provenance survive independently of a raw row leading the checkpoint.");
-if (args.Length == 2 && args[0] == "--export-json-sample")
-    File.WriteAllText(args[1], modernJson, new System.Text.UTF8Encoding(false));
+var coreSampleOption = Array.IndexOf(args, "--export-json-sample");
+if (coreSampleOption >= 0 && coreSampleOption + 1 < args.Length)
+    File.WriteAllText(args[coreSampleOption + 1], modernJson, new System.Text.UTF8Encoding(false));
 Console.WriteLine("PASS: export retains frozen main, later raw observations and distinct start-zone/boundary provenance.");
 NotificationChecks.Run();
 Console.WriteLine("PASS: notification phase/countdown, actual measurements, pause guidance and unknown values.");

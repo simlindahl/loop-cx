@@ -45,7 +45,7 @@ small, .small {
     margin-block: 20px;
 }
 
-input {
+input, select {
     width: 100%;
     min-width: 0;
     min-height: 48px;
@@ -57,7 +57,7 @@ input {
     font: inherit;
 }
 
-input:focus-visible {
+input:focus-visible, select:focus-visible {
     outline: 3px solid var(--cx-accent);
     outline-offset: 3px;
 }

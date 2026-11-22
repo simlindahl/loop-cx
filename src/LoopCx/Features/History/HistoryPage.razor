@@ -63,6 +63,29 @@
             <div><dt>Last saved distance</dt><dd>@(recordedDistance == "Unavailable" ? recordedDistance : recordedDistance + " km")</dd></div>
             <div><dt>Actual stop time</dt><dd>Unknown</dd></div>
         </dl>
+        @if (recorded.Measurements.SplitPolicy is { } policy)
+        {
+            <p>Recorded split interval · @policy.Label</p>
+            @if (recorded.Measurements.Splits is { Count: > 0 } recordedSplits)
+            {
+                <details>
+                    <summary>Recorded splits</summary>
+                    @foreach (var split in recordedSplits)
+                    {
+                        <section>
+                            <h4>Split @split.Number @(split.FinalPartial ? "· recorded partial" : "")</h4>
+                            <dl class="split-metrics">
+                                <div><dt>Active · min:sec</dt><dd>@Time(split.Active)</dd></div>
+                                <div><dt>Distance · km</dt><dd>@(split.HasMeasuredDistance ? Metres(split.Metres) : "Unavailable")</dd></div>
+                                <div><dt>Avg pace · min/km</dt><dd>@PaceValue(split.Pace)</dd></div>
+                                <div><dt>Avg heart rate · bpm</dt><dd>@Number(split.HeartRate)</dd></div>
+                            </dl>
+                            <p>@SplitCoverage(split)</p>
+                        </section>
+                    }
+                </details>
+            }
+        }
         @if (recorded.SavedLocally is null && !recoveryUnavailable)
         {
             <button id="recovery-save" type="button" class="primary" disabled="@busy" aria-busy="@busy" @onclick="SaveRecordedPart">@(recoveryFailed ? "Retry save" : "Save recorded part")</button>
@@ -81,6 +104,10 @@
         @if (detailDestination == "splits")
         {
             <h3>Main-set splits</h3>
+            @if (stored.Measurements.SplitPolicy is { } policy)
+            {
+                <p>Recorded split interval · @policy.Label</p>
+            }
             <p>Frozen recorded results. Final partial split included once; missing measurements are not zero.</p>
             @if (stored.Measurements.Splits is not { } splits) { <p>Split measurements unavailable.</p> }
             else if (splits.Count == 0) { <p>No recorded main-set splits.</p> }
