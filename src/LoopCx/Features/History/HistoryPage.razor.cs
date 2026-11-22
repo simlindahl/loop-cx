@@ -15,14 +15,15 @@ public partial class HistoryPage
     [Parameter] public EventCallback<Guid> OnHealthSettings { get; set; }
     [Parameter] public Guid? InitialRun { get; set; }
     private static bool IsMotionDetail(string? destination) => destination is "splits" or "zones";
-    private bool HasMotionDestination => !ghostOpen && (sharingRun is not null
-        || partial is null && ghostResult?.Status != "interrupted"
-        && (detailDestination is null || detail is not null && IsMotionDetail(detailDestination)));
+    private bool HasMotionDestination => !ghostOpen
+        && (sharingRun is not null || detailDestination is null || detail is not null && IsMotionDetail(detailDestination));
+    private Guid? InterruptedId => partial?.Summary.Id ?? (ghostResult is { Status: "interrupted" } ghost ? ghost.Id : null);
     private string MotionDestination => ghostOpen ? "route" : sharingRun is { } shared ? $"share:{shared}"
         : detailDestination is { } destination ? IsMotionDetail(destination) ? $"detail:{detail?.Summary.Id}:{destination}" : $"detail:{destination}"
-        : partial is { } interruptedRun ? $"interrupted:{interruptedRun.Summary.Id}" : (ghostResult?.Id ?? detail?.Summary.Id) is { } selected ? $"run:{selected}" : "list";
+        : (InterruptedId ?? openingInterruptedGhost) is { } interrupted ? $"interrupted:{interrupted}" : (ghostResult?.Id ?? detail?.Summary.Id) is { } selected ? $"run:{selected}" : "list";
     private string? lastMotionDestination;
     private long motionVisit;
+    private Guid? openingInterruptedGhost;
     private readonly List<LoopCx.Features.GhostRun.GhostStoredRun> ghostRuns = [];
     private LoopCx.Features.GhostRun.GhostStoredRun? ghostResult;
     private IEnumerable<object> HistoryEntries => runs.Cast<object>().Concat(ghostRuns).OrderByDescending(item => item switch
@@ -153,13 +154,18 @@ public partial class HistoryPage
         StateHasChanged();
     });
 
-    public async Task ShowList()
+    public async Task ShowList(Guid? interruptedOpener = null)
     {
         if (busy) return;
         busy = true;
         try
         {
-            if (detail is not null || ghostResult is not null) await LeaveMotionDestination();
+            if (InterruptedId is not null)
+            {
+                motionVisit++;
+                _ = LeaveMotionDestination();
+            }
+            else if (detail is not null || ghostResult is not null) await LeaveMotionDestination();
             error = null;
             detail = null;
             detailDestination = null;
@@ -188,12 +194,15 @@ public partial class HistoryPage
         }
         catch (Exception issue) when (ReadError(issue)) { error = "Stored recordings could not be read. No data was changed."; }
         finally { busy = false; }
-        focusPending = "history-heading";
+        focusPending = interruptedOpener is { } id && (partials.Any(run => run.Summary.Id == id) || ghostRuns.Any(run => run.Id == id))
+            ? $"history-{id}" : "history-heading";
         await InvokeAsync(StateHasChanged);
     }
     private void OpenInterrupted(InterruptedRun selected)
     {
-        if (busy) return;
+        if (busy || InterruptedId == selected.Summary.Id) return;
+        motionVisit++;
+        _ = LeaveMotionDestination();
         partial = selected;
         error = null;
         recoveryFailed = recoveryUnavailable = false;
@@ -253,11 +262,20 @@ public partial class HistoryPage
         if (busy) return;
         busy = true;
         error = null;
+        var changed = (ghostResult?.Id ?? detail?.Summary.Id) != id;
+        long? interruptedVisit = null;
+        if (changed && ghostRuns.Any(run => run.Id == id && run.Status == "interrupted"))
+        {
+            openingInterruptedGhost = id;
+            interruptedVisit = ++motionVisit;
+        }
+
         try
         {
-            if ((ghostResult?.Id ?? detail?.Summary.Id) != id) await LeaveMotionDestination();
+            if (changed) await LeaveMotionDestination();
+            if (InterruptedOpenSuperseded(interruptedVisit)) return;
             var ghost = await Task.Run(() => RunJournal.Shared.ReadGhostRun(id));
-            if (disposed) return;
+            if (disposed || InterruptedOpenSuperseded(interruptedVisit)) return;
             if (ghost is not null)
             {
                 ghostResult = ghost;
@@ -266,13 +284,26 @@ public partial class HistoryPage
                 return;
             }
             var loaded = await Task.Run(() => RunJournal.Shared.ReadFinishedRun(id));
-            if (disposed) return;
+            if (disposed || InterruptedOpenSuperseded(interruptedVisit)) return;
             detail = loaded;
             if (focus) focusPending = "history-heading";
         }
-        catch (Exception issue) when (ReadError(issue)) { error = "This stored recording could not be read. No data was changed."; }
-        finally { busy = false; }
+        catch (Exception issue) when (ReadError(issue))
+        {
+            if (!disposed && !InterruptedOpenSuperseded(interruptedVisit))
+                error = "This stored recording could not be read. No data was changed.";
+        }
+        finally
+        {
+            if (!InterruptedOpenSuperseded(interruptedVisit))
+            {
+                openingInterruptedGhost = null;
+                busy = false;
+            }
+        }
     }
+
+    private bool InterruptedOpenSuperseded(long? visit) => visit is { } expected && expected != motionVisit;
     private async Task RetryHealthConnect()
     {
         if (busy || (detail is null && ghostResult is null)) return;
@@ -364,6 +395,15 @@ public partial class HistoryPage
 
     public async Task GoBack()
     {
+        if (openingInterruptedGhost is { } pending)
+        {
+            openingInterruptedGhost = null;
+            motionVisit++;
+            busy = false;
+            focusPending = $"history-{pending}";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
         if (ghostOpen)
         {
             if (ghostPage is not null) await ghostPage.GoBack();
@@ -405,12 +445,17 @@ public partial class HistoryPage
 
             return;
         }
+        if (InterruptedId is { } interrupted)
+        {
+            await ShowList(interrupted);
+            return;
+        }
         if (ghostResult is not null) { var ghostId = ghostResult.Id; await ShowList(); focusPending = $"history-{ghostId}"; return; }
-        var selectedId = partial?.Summary.Id ?? detail?.Summary.Id;
+        var selectedId = detail?.Summary.Id;
         if (selectedId is { } id)
         {
             await ShowList();
-            focusPending = runs.Any(run => run.Id == id) || partials.Any(run => run.Summary.Id == id) ? "history-" + id : "history-heading";
+            focusPending = runs.Any(run => run.Id == id) ? "history-" + id : "history-heading";
         }
         else
         {
