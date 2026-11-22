@@ -28,6 +28,8 @@ The [live-measurements study](live-metrics/index.html) is the approved visual di
 
 The [compact zone-first reference](compact-zone-first/index.html) and [scope/provenance notes](compact-zone-first/decision-notes.md) prepare the owner-approved 15 November #96 direction. Compact hierarchy and RPE presentation removal supersede matching older Core-first presentation; required Main/Split groups and shortcut starts remain visible. Numerical official C1 zone choices remain undecided. Raw historical RPE, frozen data, doses and the approved pace alternative are retained. This is a static reference preparation, with runtime delivery/native acceptance tracked separately from this reference.
 
+The maintained reference includes the [approved #112 r2 hierarchy](../../knowledge/ux-design.md#core-layout-r2) for the Training cards, early workout controls and the Measurements disclosure.
+
 ## Earlier approved Core-first reference
 
 Its RPE rows/help and matching detailed presentation below are historical where superseded by the compact zone-first direction above. Its dose/count/duration/preparation rules, pace alternative and frozen-history behavior remain applicable.

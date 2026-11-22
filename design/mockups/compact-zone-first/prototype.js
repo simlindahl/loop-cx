@@ -20,18 +20,45 @@ const zoneLabel = () => target ? `Work Zone ${target}${recoveryTarget ? ` · rec
 const nav = () => `<nav aria-label="Main"><button class="quiet" data-view="training" ${view === 'training' ? 'aria-current="page"' : ''}>Training</button><button class="quiet" data-view="history" ${['history', 'detail'].includes(view) ? 'aria-current="page"' : ''}>History</button><button class="quiet" data-view="settings" ${view === 'settings' ? 'aria-current="page"' : ''}>Settings</button></nav>`;
 
 function aggregateTable() {
-  return '<table><caption>Main set / this split</caption><thead><tr><th scope="col">Metric</th><th scope="col">Main</th><th scope="col">Split</th></tr></thead><tbody><tr><th scope="row">Active time</th><td>8:46</td><td>0:46</td></tr><tr><th scope="row">Distance · km</th><td>1.62</td><td>0.14</td></tr><tr><th scope="row">Avg pace · min/km</th><td>5:25</td><td>5:29</td></tr><tr><th scope="row">Avg heart rate · bpm</th><td>146</td><td>148</td></tr></tbody></table><p class="muted">Synthetic recorded values · GPS/heart-rate coverage incomplete.</p>';
+  return '<table><caption>Main set / this split</caption><thead><tr><th scope="col">Metric</th><th scope="col">Main</th><th scope="col">Split</th></tr></thead><tbody><tr><th scope="row">Active time</th><td>8:46</td><td>0:46</td></tr><tr><th scope="row">Distance · km</th><td>1.62</td><td>0.14</td></tr><tr><th scope="row">Avg pace · min/km</th><td>5:25</td><td>5:29</td></tr><tr><th scope="row">Avg heart rate · bpm</th><td>146</td><td>148</td></tr></tbody></table>';
 }
 
 function render() {
   const p = protocols[selected];
   let html = nav();
   if (view === 'training') {
-    html += `<h2 tabindex="-1" id="heading">Start a run</h2><section class="card"><div class="row-head"><h3>C1 · Intervals</h3><button class="quiet" data-action="change" aria-label="Change C1 protocol">Change</button></div><p class="dose"><strong>${selected} · ${p[0]}</strong><br>${p[1]}</p><p>${p[2]}<small>4 min warm-up · 3 min cool-down</small></p><p>${p[3]}</p><p class="muted">${zoneLabel()}</p><div class="actions"><button class="primary" data-action="start">Start C1</button><button data-action="personalise">Personalise</button></div></section><section class="card"><div class="row-head"><h3>C2 · Continuous</h3><button class="quiet" data-action="c2">Change</button></div><p class="dose">45 min · steady, conversational running<small>No warm-up or cool-down · intended Zone 2</small></p><p class="muted">${c2Target ? `Selected target · Zone ${c2Target}` : 'Personal zone target not set'}</p><div class="actions"><button class="primary" data-action="start-c2">Start C2</button><button data-action="c2-target">Personalise</button></div></section><section class="card"><h3>Saved shortcuts</h3><p>Lunch intervals<small>C1.2 · 5 efforts · no zone target set · synthetic shortcut</small></p><button class="primary" data-action="shortcut">Start Lunch intervals</button><details><summary>Manage shortcuts</summary><p>Existing Edit/Delete/reorder remains unchanged; not duplicated in this hierarchy study.</p></details></section>`;
+    html += `<h2 tabindex="-1" id="heading">Start a run</h2>
+      <section class="card"><div class="row-head"><h3>C1 · Intervals</h3><button class="quiet" data-action="change" aria-label="Change C1 protocol">Change</button></div>
+        <p class="dose"><strong>${selected} · ${p[0]}</strong><br>${p[1]}</p><p>${p[2]}<small>4 min warm-up · 3 min cool-down</small></p><p class="muted">${zoneLabel()}</p>
+        <div class="actions"><button class="primary" data-action="start">Start C1</button><button data-action="personalise">Personalise</button></div>
+        <details><summary>About this workout</summary><p>${p[3]}</p></details>
+      </section>
+      <section class="card"><div class="row-head"><h3>C2 · Continuous</h3><button class="quiet" data-action="c2">Change</button></div>
+        <p class="dose"><strong>45 min main / total</strong><small>No warm-up or cool-down</small></p><p class="muted">Intended Zone 2 · steady, conversational running<small>${c2Target ? `Selected target · Zone ${c2Target}` : 'Personal zone target not set'}</small></p>
+        <div class="actions"><button class="primary" data-action="start-c2">Start C2</button><button data-action="c2-target">Personalise</button></div>
+      </section>
+      <section class="card"><h3>Saved shortcuts</h3><p>Lunch intervals<small>C1.2 · 5 efforts · no zone target set · synthetic shortcut</small></p><button class="primary" data-action="shortcut">Start Lunch intervals</button>
+        <details><summary>Manage shortcuts</summary><p>Existing Edit/Delete/reorder remains unchanged; not duplicated in this hierarchy study.</p></details>
+      </section>`;
   } else if (view === 'work') {
     const liveTarget = continuous ? c2Target : target;
     const sensor = document.querySelector('#sensor').value;
-    html = `<p class="eyebrow">${continuous ? 'C2' : selected} · SYNTHETIC RUN</p><div class="row-head"><h2 id="heading" tabindex="-1">${paused ? 'Paused' : continuous ? 'Continuous' : 'Work · 2 of 5'}</h2><span>${paused ? 'Manual pause' : 'Main set'}</span></div><p class="clock">2:14<small>remaining · 12:46 active</small></p><p class="target">${liveTarget ? `Target · Zone ${liveTarget}` : 'Target zone not set'}<small>Intended effort · not a measured zone</small></p>${aggregateTable()}<div class="live"><div><span class="muted">Live pace</span><strong>${paused ? 'Unavailable' : '5:20'}</strong><small>${paused ? 'Paused' : 'min/km'}</small></div><div><span class="muted">Heart rate</span><strong>${sensor === 'missing' ? 'Unavailable' : sensor === 'outside' ? '100' : '148'}${sensor === 'missing' ? '' : ' ♡'}</strong><small>${sensor === 'missing' ? 'No current reading' : sensor === 'outside' ? 'bpm · below Zone 1' : 'bpm · measured Zone 3'}</small></div></div><div class="actions"><button class="primary" id="pause" data-action="pause">${paused ? 'Resume' : 'Pause'}</button></div><p class="muted">${sensor === 'missing' ? 'No current heart-rate measurement. Your timer and controls still work.' : 'Valid heart rate remains visible while paused. It does not count active time.'}</p><button class="quiet" data-view="training">Back to study start</button>`;
+    html = `<p class="eyebrow">${continuous ? 'C2' : selected} · SYNTHETIC RUN</p>
+      <div class="row-head"><h2 id="heading" tabindex="-1">${paused ? 'Paused' : continuous ? 'Continuous' : 'Work · 2 of 5'}</h2><span>${paused ? 'Manual pause' : 'Main set'}</span></div>
+      <p class="clock">2:14<small>remaining · 12:46 active</small></p>
+      <p class="target">${liveTarget ? `Target · Zone ${liveTarget}` : 'Target zone not set'}<small>Intended effort · not a measured zone</small></p>
+      <div class="actions"><button class="primary" id="pause" data-action="pause">${paused ? 'Resume' : 'Pause'}</button></div>
+      <p class="muted">GPS intermittent · Pace ${paused ? 'paused' : 'valid'} · Heart rate ${sensor === 'missing' ? 'unavailable' : 'valid'}</p>
+      ${aggregateTable()}
+      <div class="live">
+        <div><span class="muted">Live pace</span><strong>${paused ? 'Unavailable' : '5:20'}</strong><small>${paused ? 'Paused' : 'min/km'}</small></div>
+        <div><span class="muted">Heart rate</span><strong>${sensor === 'missing' ? 'Unavailable' : sensor === 'outside' ? '100' : '148'}${sensor === 'missing' ? '' : ' ♡'}</strong><small>${sensor === 'missing' ? 'No current reading' : sensor === 'outside' ? 'bpm · below Zone 1' : 'bpm · measured Zone 3'}</small></div>
+      </div>
+      <details><summary>Measurements</summary>
+        <p><strong>Main coverage:</strong> GPS 7:40 known, 1:06 unknown. Heart rate ${sensor === 'missing' ? '0:00 known, 8:46 unknown' : '8:00 known, 0:46 unknown'}.</p>
+        <p><strong>Split coverage:</strong> GPS 0:34 known, 0:12 unknown. Heart rate ${sensor === 'missing' ? '0:00 known, 0:46 unknown' : '0:46 known, 0:00 unknown'}.</p>
+      </details>
+      <button class="quiet" data-view="training">Back to study start</button>`;
   } else if (view === 'history') {
     html += `<h2 id="heading" tabindex="-1">History</h2><p class="muted">Saved locally · synthetic example</p><button class="list-row" data-view="detail"><span>C1.2 · Aerobic intervals<small>14 Nov 2026 · partial recording</small></span><span class="value">Last saved 12:46 active · distance unavailable</span><span class="chevron" aria-hidden="true">›</span></button>`;
   } else if (view === 'detail') {

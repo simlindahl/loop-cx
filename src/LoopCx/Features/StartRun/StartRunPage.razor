@@ -43,6 +43,8 @@
             <button type="button" class="primary" @onclick="() => OpenHistory(state.Id)">View run</button>
             <button type="button" @onclick="BackToTraining">Back to training</button>
         }
+        var finalMain = state.Phase is "Cooldown" or "Finished";
+        var split = finalMain ? state.Statistics?.CompletedSplits.LastOrDefault() : state.Statistics?.CurrentSplit;
         <section aria-labelledby="phase-heading">
             <p class="eyebrow">@(state.FrozenTemplate?.ProtocolId ?? state.TemplateId) · @(state.FrozenTemplate?.ShortcutName ?? (state.TemplateId == "C2" ? "Zone 2" : "Intervals"))</p>
             <h2 id="phase-heading" tabindex="-1" data-motion-state="@MotionKey">@(state.Paused ? (IsAutomatic(state) ? "Autopaused" : "Manually paused") : PhaseLabel(state.Phase))@if (!state.Paused && state.TemplateId == "C1" && (state.Phase is "Work" or "Recovery")) { <span> · @state.WorkRepetition of @state.WorkRepetitions</span> }</h2>
@@ -55,51 +57,7 @@
 <strong>@Clock(state.RemainingSeconds!.Value)</strong>
 <span>remaining · @Clock(state.ActiveSeconds) active</span>
 </p>
-            <p class="status">@state.GpsStatus</p>
             @if (state.Phase is "Work" or "Recovery") { <p class="target-intent">@PhaseTargetLabel(state)</p> }
-            @if (state.Statistics is { } statistics)
-            {
-                <p>Elapsed time · @Clock((long)statistics.ObservedElapsed.TotalSeconds) min:sec</p>
-                @if (state.Phase == "Warmup")
-                {
-                    <section aria-labelledby="warmup-values">
-                        <h3 id="warmup-values">Warm-up · total so far</h3>
-                        <p>Main set has not started.</p>
-                        <p>Time @StatisticTime(statistics.Total) min:sec · Distance @StatisticDistance(statistics.Total) km</p>
-                        <p>Avg pace @Pace(statistics.Total.AveragePaceSecondsPerKilometre) min/km · Avg HR @HeartRate(statistics.Total.AverageHeartRate) bpm</p>
-                        <p>@CoverageLabel(statistics.Total)</p>
-                    </section>
-                }
-                else
-                {
-                    var finalMain = state.Phase is "Cooldown" or "Finished";
-                    var split = finalMain ? statistics.CompletedSplits.LastOrDefault() : statistics.CurrentSplit;
-                    <section aria-labelledby="main-values">
-                        <table>
-                                <caption id="main-values">@(finalMain ? "Final main set and last recorded split" : "Current main set and split") · @((state.Distance?.SplitPolicy ?? SplitPolicy.DefaultDistance).Label)</caption>
-                                <thead><tr><th scope="col">Metric</th><th scope="col">Main set</th><th scope="col">@(finalMain ? "Final split" : "This split")</th></tr></thead>
-                                <tbody>
-                                    <tr><th scope="row">Time <small>min:sec</small></th><td>@StatisticTime(statistics.Main)</td><td>@StatisticTime(split)</td></tr>
-                                    <tr><th scope="row">Distance <small>km</small></th><td>@StatisticDistance(statistics.Main)</td><td>@StatisticDistance(split)</td></tr>
-                                    <tr><th scope="row">Avg pace <small>min/km</small></th><td>@Pace(statistics.Main.AveragePaceSecondsPerKilometre)</td><td>@Pace(split?.AveragePaceSecondsPerKilometre)</td></tr>
-                                    <tr><th scope="row">Avg HR <small>bpm</small></th><td>@HeartRate(statistics.Main.AverageHeartRate)</td><td>@HeartRate(split?.AverageHeartRate)</td></tr>
-                                </tbody>
-                        </table>
-                        <p><strong>Main coverage:</strong> @CoverageLabel(statistics.Main)</p>
-                        <p><strong>Split coverage:</strong> @CoverageLabel(split)</p>
-                    </section>
-                }
-            }
-            <section class="live-values" aria-label="Live measurements">
-                <dl>
-                    <div><dt>Pace <small>min/km</small></dt><dd>@if (state.LivePace?.SecondsPerKilometre is { } livePace) { @Pace(livePace) } else { <span role="img" aria-label="Unavailable">—</span> }</dd>
-                        <p class="pace-trend"><span id="live-trend-arrow" aria-hidden="true" data-direction="@state.LivePace?.Trend?.Direction" data-pace="@(state.LivePace?.SecondsPerKilometre?.ToString(System.Globalization.CultureInfo.InvariantCulture))">@(state.LivePace?.Trend?.Direction == "Faster" ? "↗" : state.LivePace?.Trend?.Direction == "Slower" ? "↘" : "—")</span><span>@(state.LivePace?.Trend?.Direction ?? state.LivePace?.Trend?.Quality ?? "unavailable")</span></p>
-                    </div>
-                    <div><dt>Heart rate <small>bpm</small></dt><dd class="heart-value">@if (state.HeartRate?.CurrentBpm is { } liveBpm) { @HeartRate(liveBpm) } else { <span role="img" aria-label="Unavailable">—</span> }<span class="heart-slot" aria-hidden="true"><svg id="live-heart" viewBox="0 0 24 24" focusable="false" data-bpm="@(state.HeartRate?.Quality == "valid" ? state.HeartRate.CurrentBpm : null)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg></span></dd><small>@CorePresentation.MeasuredZone(state.HeartRate)</small></div>
-                </dl>
-                <p>Pace: @(state.Paused ? "paused" : state.LivePace?.Quality ?? "unavailable"). Heart rate: @(state.HeartRate?.Quality ?? "unavailable").</p>
-                @if (state.HeartRate?.ConfigurationError is { } configurationError) { <p>Heart rate unavailable: @configurationError</p> }
-            </section>
             @if (state.Phase != "Finished")
             {
                 <div class="actions" aria-label="Workout controls">
@@ -114,6 +72,59 @@
                         <button type="button" @onclick='() => RunService.Command("skip")'>@(state.Phase == "Warmup" ? "Start main run" : "Finish")</button>
                     }
                 </div>
+            }
+            <p class="status">@state.GpsStatus · Pace @(state.Paused ? "paused" : state.LivePace?.Quality ?? "unavailable") · Heart rate @(state.HeartRate?.Quality ?? "unavailable")</p>
+            @if (state.Statistics is { } statistics)
+            {
+                <p>Elapsed time · @Clock((long)statistics.ObservedElapsed.TotalSeconds) min:sec</p>
+                @if (state.Phase == "Warmup")
+                {
+                    <section aria-labelledby="warmup-values">
+                        <h3 id="warmup-values">Warm-up · total so far</h3>
+                        <p>Main set has not started.</p>
+                        <p>Time @StatisticTime(statistics.Total) min:sec · Distance @StatisticDistance(statistics.Total) km</p>
+                        <p>Avg pace @Pace(statistics.Total.AveragePaceSecondsPerKilometre) min/km · Avg HR @HeartRate(statistics.Total.AverageHeartRate) bpm</p>
+                    </section>
+                }
+                else
+                {
+                    <section aria-labelledby="main-values">
+                        <table>
+                                <caption id="main-values">@(finalMain ? "Final main set and last recorded split" : "Current main set and split") · @((state.Distance?.SplitPolicy ?? SplitPolicy.DefaultDistance).Label)</caption>
+                                <thead><tr><th scope="col">Metric</th><th scope="col">Main set</th><th scope="col">@(finalMain ? "Final split" : "This split")</th></tr></thead>
+                                <tbody>
+                                    <tr><th scope="row">Time <small>min:sec</small></th><td>@StatisticTime(statistics.Main)</td><td>@StatisticTime(split)</td></tr>
+                                    <tr><th scope="row">Distance <small>km</small></th><td>@StatisticDistance(statistics.Main)</td><td>@StatisticDistance(split)</td></tr>
+                                    <tr><th scope="row">Avg pace <small>min/km</small></th><td>@Pace(statistics.Main.AveragePaceSecondsPerKilometre)</td><td>@Pace(split?.AveragePaceSecondsPerKilometre)</td></tr>
+                                    <tr><th scope="row">Avg HR <small>bpm</small></th><td>@HeartRate(statistics.Main.AverageHeartRate)</td><td>@HeartRate(split?.AverageHeartRate)</td></tr>
+                                </tbody>
+                        </table>
+                    </section>
+                }
+            }
+            <section class="live-values" aria-label="Live measurements">
+                <dl>
+                    <div><dt>Pace <small>min/km</small></dt><dd>@if (state.LivePace?.SecondsPerKilometre is { } livePace) { @Pace(livePace) } else { <span role="img" aria-label="Unavailable">—</span> }</dd>
+                        <p class="pace-trend"><span id="live-trend-arrow" aria-hidden="true" data-direction="@state.LivePace?.Trend?.Direction" data-pace="@(state.LivePace?.SecondsPerKilometre?.ToString(System.Globalization.CultureInfo.InvariantCulture))">@(state.LivePace?.Trend?.Direction == "Faster" ? "↗" : state.LivePace?.Trend?.Direction == "Slower" ? "↘" : "—")</span><span>@(state.LivePace?.Trend?.Direction ?? state.LivePace?.Trend?.Quality ?? "unavailable")</span></p>
+                    </div>
+                    <div><dt>Heart rate <small>bpm</small></dt><dd class="heart-value">@if (state.HeartRate?.CurrentBpm is { } liveBpm) { @HeartRate(liveBpm) } else { <span role="img" aria-label="Unavailable">—</span> }<span class="heart-slot" aria-hidden="true"><svg id="live-heart" viewBox="0 0 24 24" focusable="false" data-bpm="@(state.HeartRate?.Quality == "valid" ? state.HeartRate.CurrentBpm : null)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z" /></svg></span></dd><small>@CorePresentation.MeasuredZone(state.HeartRate)</small></div>
+                </dl>
+                @if (state.HeartRate?.ConfigurationError is { } configurationError) { <p>Heart rate unavailable: @configurationError</p> }
+            </section>
+            @if (state.Statistics is { } measurementStatistics)
+            {
+                <details @key="state.Id" class="core-disclosure">
+                    <summary>Measurements</summary>
+                    @if (state.Phase == "Warmup")
+                    {
+                        <p><strong>Warm-up coverage:</strong> @CoverageLabel(measurementStatistics.Total)</p>
+                    }
+                    else
+                    {
+                        <p><strong>Main coverage:</strong> @CoverageLabel(measurementStatistics.Main)</p>
+                        <p><strong>Split coverage:</strong> @CoverageLabel(split)</p>
+                    }
+                </details>
             }
         </section>
     }
@@ -165,30 +176,30 @@
 </div>
                 <p>
 <strong>@SelectedC1.ProtocolId · @SelectedProtocol.Title</strong><br /><span aria-hidden="true">@Dose(SelectedC1)</span><span class="dose-description">@CorePresentation.DoseExplanation(SelectedC1)</span></p>
-                <p>@SelectedProtocol.Purpose</p>
                 <p>@Times(SelectedC1)<small>@WarmupCooldown(SelectedC1)</small>
 </p>
-                <p>@TargetLabel(SelectedC1.Targets)</p>
+                <p id="c1-target">@TargetLabel(SelectedC1.Targets)</p>
                 <p id="c1-splits">Splits · @statePreferences.EffectiveSplits.Label</p>
                 <div class="actions">
-<button type="button" class="primary" aria-describedby="c1-splits" @onclick="() => Start(SelectedC1)">Start @SelectedC1.ProtocolId</button>
+<button type="button" class="primary" aria-describedby="c1-target c1-splits" @onclick="() => Start(SelectedC1)">Start @SelectedC1.ProtocolId</button>
 <button id="personalise-c1" type="button" @onclick='() => OpenTarget(SelectedC1, "personalise-c1")'>Personalise</button>
 </div>
                 <button id="shortcut-c1" type="button" class="text" @onclick='() => OpenShortcut(SelectedC1, "shortcut-c1")'>Save shortcut</button>
+                <details class="core-disclosure">
+                    <summary>About this workout</summary>
+                    <p>@SelectedProtocol.Purpose</p>
+                </details>
             </section>
             <section class="workout" data-core-card data-motion-group aria-labelledby="c2-heading">
                 <div class="card-heading">
 <h3 id="c2-heading">C2 · Zone 2</h3>
 <button id="change-c2" type="button" @onclick="OpenDuration">Change</button>
 </div>
-                <p>Steady, conversational running.<br />
-<strong>@(statePreferences.C2Selection.ContinuousMinutes ?? 45) min main / total</strong>
-</p>
-                <p>Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p>
-                <p>@TargetLabel(statePreferences.C2Selection.Targets, true)</p>
+                <p><strong>@(statePreferences.C2Selection.ContinuousMinutes ?? 45) min main / total</strong><small>No warm-up or cool-down</small></p>
+                <p id="c2-target">Intended Zone 2 · steady, conversational running<small>@TargetLabel(statePreferences.C2Selection.Targets, true)</small></p>
                 <p id="c2-splits">Splits · @statePreferences.EffectiveSplits.Label</p>
                 <div class="actions">
-<button type="button" class="primary" aria-describedby="c2-splits" @onclick="() => Start(statePreferences.C2Selection)">Start C2</button>
+<button type="button" class="primary" aria-describedby="c2-target c2-splits" @onclick="() => Start(statePreferences.C2Selection)">Start C2</button>
 <button id="target-c2" type="button" @onclick='() => OpenTarget(statePreferences.C2Selection, "target-c2")'>Adapt target</button>
 </div>
                 <button id="shortcut-c2" type="button" class="text" @onclick='() => OpenShortcut(statePreferences.C2Selection, "shortcut-c2")'>Save shortcut</button>
