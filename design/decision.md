@@ -217,3 +217,9 @@ The decision covers [Settings and before-start display](../knowledge/ux-design.m
 Simon approved Google Maps SDK for Android for History Route and the separately scoped Ghost live map. The History slice applies the [existing exact r4 design](#history-details-r4-approval) and [stored Route contract](../knowledge/integrations-data.md#history-route-and-google-maps). Google supplies map content and LOOP renders the saved GPS overlay locally. The app retains offline recording, stored History and export.
 
 Simon reserved Google Cloud activation, billing, API-key provisioning/use and applicable provider terms for separate clearance. The keyless implementation can proceed. Visible Google tiles and physical acceptance remain separate verification steps.
+
+## Ghost English audio approval
+
+Simon approved [#18](https://github.com/simlindahl/loop-cx/issues/18) short spoken route-deviation warnings and fresh optional comparison speech with an off default. Deviation warnings have priority and share the ordinary audio queue. The [Ghost audio cue contract](../knowledge/ghost-run.md#ghost-audio-cue-contract) governs source behavior and observable acceptance. The previously approved Ghost screens supply the existing race and pause presentation. A visible comparison control requires its own scoped design approval.
+
+The preliminary Settings → Ghost audio study uses the existing Audio coaching pattern, with Spoken comparison off by default and Save applying to new races. Study HTML SHA-256: `243aedf88558790ade7fb66ec4dfc9ebf3633b6f910fb3b6c9ae3c4c91dc05ca`. Browser checks cover focus, keyboard operation and 200% text. The layout decision and Android acceptance remain pending.

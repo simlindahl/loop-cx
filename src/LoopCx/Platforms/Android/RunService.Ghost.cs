@@ -10,6 +10,7 @@ namespace LoopCx;
 public sealed partial class RunService
 {
     private GhostRace? ghost;
+    private GhostAudioPolicy? ghostAudioPolicy;
     private GhostTerminalContext? ghostTerminalContext;
     private bool ghostTerminalZoneCaptured;
     public sealed record GhostStartRequest(RouteKey Route, GhostMode Mode, GhostStartPosition Position);
@@ -165,6 +166,8 @@ public sealed partial class RunService
             id = initial.Id; started = initial.StartedUtc; startedMonotonic = initial.StartedBootMilliseconds;
             lastTick = initial.ObservedBootMilliseconds;
             handler = preparedHandler;
+            audio = new(preparedHandler, id);
+            ghostAudioPolicy = new(id);
             heartRate = preparedHeartRate;
             heartRateMetadata = preparedHeartRateMetadata;
             StartError = null;
@@ -247,12 +250,15 @@ public sealed partial class RunService
     }
     private void PublishGhost(string? command = null, HeartRateObservation? observation = null, bool explicitRetry = false)
     {
+        var measuredMetres = 0d;
+
         if (ghost!.Ended) StopHeartRateSource();
         if (!terminalSaveCaptured)
         {
             var now = SystemClock.ElapsedRealtime();
             var observedUtc = DateTimeOffset.UtcNow;
             var checkpoint = ghost!.Checkpoint(++saveRevision, now);
+            measuredMetres = checkpoint.MeasuredTrainingDistance?.MainMeasuredMetres ?? 0;
             if (ghost.Ended && !ghostTerminalZoneCaptured)
             {
                 ghostTerminalZoneCaptured = true;
@@ -267,6 +273,7 @@ public sealed partial class RunService
         }
         saveBuffer.Save(journal.Commit, explicitRetry);
         Snapshot = GhostSnapshot();
+        PublishGhostAudio(ghost, Snapshot.Ghost!, measuredMetres);
         try { ((NotificationManager)GetSystemService(NotificationService)!).Notify(NotificationId, BuildNotification()); }
         catch (Java.Lang.RuntimeException)
         { StartError = "Notification update unavailable. The recording and pending save remain owned by the running service."; }
@@ -281,6 +288,32 @@ public sealed partial class RunService
             }
         }
     }
+
+    private void PublishGhostAudio(GhostRace owner, GhostRaceSnapshot race, double measuredMetres)
+    {
+        if (ghostAudioPolicy is not { } policy || audio is not { } output)
+        {
+            return;
+        }
+
+        var cue = policy.Observe(race, owner.HasFreshRouteEvidence(SystemClock.ElapsedRealtime()), measuredMetres);
+
+        if (race.Clock.TrainingPaused || race.Clock.State != GhostClockState.Running)
+        {
+            output.Cancel();
+            return;
+        }
+
+        output.ValidateCurrent();
+
+        if (cue is not null)
+        {
+            _ = output.Speak(cue.Text, cue.Kind, () => ReferenceEquals(ghost, owner)
+                && Snapshot?.Ghost is { } latest && policy.IsCurrent(cue, latest,
+                    owner.HasFreshRouteEvidence(SystemClock.ElapsedRealtime())));
+        }
+    }
+
     private Notification BuildGhostNotification(RunSnapshot state, GhostRaceSnapshot race, PendingIntent? open)
     {
         var text = GhostNotificationText.Create(race, state.Storage);
