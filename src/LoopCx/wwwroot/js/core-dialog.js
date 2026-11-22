@@ -184,10 +184,18 @@ export function syncMotion(saved) {
     if (disclosure && disclosure !== lastDisclosure && fields.children.length) enter(fields);
     lastDisclosure = disclosure;
     if (saved) {
-        const result = document.getElementById('shortcut-list') ?? main;
-        // A confirmed save changes only a visual outline, never animates doses or measurements.
-        effect(result, [{ boxShadow: '0 0 0 2px var(--cx-accent)' }, { boxShadow: '0 0 0 0 transparent' }], 160);
+        resultOutline(document.getElementById('shortcut-list') ?? main);
     }
+}
+function resultOutline(node) {
+    effect(node, [{ boxShadow: '0 0 0 2px var(--cx-accent)' }, { boxShadow: '0 0 0 0 transparent' }], 160);
+}
+export function confirmRecordedPart(surface, owner, destination, confirmation) {
+    if (!surface?.isConnected || surface.dataset.motionOwner !== owner || surface.dataset.motionDestination !== destination) return;
+    const result = surface.querySelector('[data-motion-recorded-part]');
+    if (result?.dataset.motionRecordedPart !== confirmation) return;
+    result.removeAttribute('data-motion-recorded-part');
+    resultOutline(result);
 }
 export function dispose() {
     visibilityOwner = undefined;

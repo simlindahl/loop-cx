@@ -423,7 +423,7 @@ public sealed class RunJournal : SQLiteOpenHelper
             cursor.GetString(5)!, cursor.IsNull(6) ? null : cursor.GetString(6));
     }
 
-    public InterruptedRun SaveInterruptedPart(Guid id)
+    public (InterruptedRun Recording, bool AcknowledgedNow) SaveInterruptedPart(Guid id)
     {
         InterruptedRunProjection.EnsureNoActiveOwner(id, RunService.Snapshot?.Id);
         try
@@ -444,7 +444,8 @@ public sealed class RunJournal : SQLiteOpenHelper
                 catch (Exception error) when (error is System.Text.Json.JsonException or InvalidDataException or InvalidOperationException or ArgumentException)
                 { throw new RunSaveReadException("The recorded prefix is unreadable. No data was changed.", error); }
 
-                if (prefix.SavedLocally is null)
+                var acknowledgedNow = prefix.SavedLocally is null;
+                if (acknowledgedNow)
                 {
                     var acknowledged = DateTimeOffset.UtcNow;
                     using var marker = db.CompileStatement("UPDATE runs SET recovery_saved_utc = ? WHERE id = ? AND status = 'interrupted' AND recovery_saved_utc IS NULL")!;
@@ -454,14 +455,14 @@ public sealed class RunJournal : SQLiteOpenHelper
                     prefix = prefix with { SavedLocally = acknowledged };
                 }
                 db.SetTransactionSuccessful();
-                return prefix; // Returned only after EndTransaction succeeds, including idempotent retry.
+                return (prefix, acknowledgedNow); // Returned only after EndTransaction succeeds.
             }
             finally { db.EndTransaction(); }
         }
         catch (SQLiteException error) { throw ClassifyNativeFailure(error); }
     }
 
-    public GhostStoredRun SaveGhostRecordedPart(Guid id)
+    public (GhostStoredRun Recording, bool AcknowledgedNow) SaveGhostRecordedPart(Guid id)
     {
         InterruptedRunProjection.EnsureNoActiveOwner(id, RunService.Snapshot?.Id);
         try
@@ -481,7 +482,8 @@ public sealed class RunJournal : SQLiteOpenHelper
                 { throw new RunSaveReadException("The recorded Ghost prefix could not be read. No repair was attempted.", error); }
                 catch (Exception error) when (error is JsonException or InvalidDataException or ArgumentException)
                 { throw new RunSaveReadException("The recorded Ghost prefix is unreadable. No data was changed.", error); }
-                if (prefix.SavedLocally is null)
+                var acknowledgedNow = prefix.SavedLocally is null;
+                if (acknowledgedNow)
                 {
                     var acknowledged = DateTimeOffset.UtcNow;
                     using var marker = db.CompileStatement("UPDATE runs SET recovery_saved_utc = ? WHERE id = ? AND status = 'interrupted' AND recovery_saved_utc IS NULL")!;
@@ -491,7 +493,7 @@ public sealed class RunJournal : SQLiteOpenHelper
                     prefix = prefix with { SavedLocally = acknowledged };
                 }
                 db.SetTransactionSuccessful();
-                return prefix;
+                return (prefix, acknowledgedNow);
             }
             finally { db.EndTransaction(); }
         }
