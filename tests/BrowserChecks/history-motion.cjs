@@ -283,6 +283,45 @@ const path = require('path');
             document.dispatchEvent(new Event('visibilitychange'));
             api.setSystemMotion(false);
 
+            body.innerHTML = [
+                ['plan', 'Workout plan'], ['coverage', 'Recorded measurements and coverage'], ['other', 'Other details']
+            ].map(([id, caption]) => `<details id="${id}" ${id === 'other' ? '' : 'data-history-disclosure'}>
+                <summary style="min-height:48px">${caption}</summary>
+                <div data-history-disclosure-content><p>Stored facts stay in reading order.</p><button>Disclosure action</button></div>
+            </details>`).join('');
+            const toggle = async (details) => {
+                const promise = new Promise(resolve => details.addEventListener('toggle', resolve, { once: true }));
+                details.firstElementChild.click();
+                await promise;
+            };
+            for (const id of ['plan', 'coverage']) {
+                const details = body.querySelector(`#${id}`);
+                const summary = details.querySelector('summary');
+                const panel = details.lastElementChild;
+                summary.focus();
+                await toggle(details);
+                const reveal = panel.getAnimations()[0];
+                check(`Native ${id} opens and only its content animates for 220 ms`, details.open
+                    && reveal.effect.getTiming().duration === 220 && summary.getAnimations().length === 0
+                    && document.activeElement === summary && summary.getBoundingClientRect().height >= 48);
+                panel.querySelector('p').textContent = 'Refreshed stored facts';
+                api.syncMotion(false);
+                check(`Same-open ${id} refresh keeps the existing disclosure effect`, panel.getAnimations()[0] === reveal);
+                await toggle(details);
+                panel.querySelector('button').focus();
+                check(`Native ${id} collapse cancels reveal and preserves the summary as focus owner`, !details.open
+                    && reveal.playState === 'idle' && document.activeElement === summary);
+                api.setSystemMotion(true);
+                await toggle(details);
+                check(`Reduced motion gives immediate expanded ${id} content`, details.open
+                    && panel.getAnimations().length === 0 && panel.getBoundingClientRect().height > 0);
+                await toggle(details);
+                api.setSystemMotion(false);
+            }
+            const other = body.querySelector('#other');
+            await toggle(other);
+            check('Unrelated disclosure uses only native behavior', other.open && other.lastElementChild.getAnimations().length === 0);
+
             // Child teardown must not cancel the new parent's destination effects.
             history.dataset.motionDestination = 'run:four';
             api.syncMotion(false);
@@ -299,6 +338,22 @@ const path = require('path');
             check('Shared owner disposal cancels all effects and copies', active().length === 0 && copies().length === 0);
             return passed;
         });
+        await page.evaluate(() => {
+            document.querySelector('main').innerHTML = '<details data-history-disclosure><summary>Workout plan</summary><div data-history-disclosure-content><p>Plan facts</p><button>Inside</button></div></details>';
+            document.body.style.fontSize = '200%';
+            window.motion.setSystemMotion(true);
+            window.motion.syncMotion(false);
+            document.querySelector('summary').focus();
+        });
+        await page.keyboard.press('Enter');
+        if (!(await page.locator('details').evaluate(node => node.open && node.firstElementChild === document.activeElement))) {
+            throw new Error('Keyboard opens native disclosure at 200% and retains summary focus');
+        }
+        await page.keyboard.press('Space');
+        if (!(await page.locator('details').evaluate(node => !node.open && node.firstElementChild === document.activeElement))) {
+            throw new Error('Keyboard closes native disclosure at 200% and retains summary focus');
+        }
+        checks.push('Keyboard opens and closes native disclosure at 200% with summary focus');
         const output = path.join(__dirname, '../../design/mockups/qa');
         fs.mkdirSync(output, { recursive: true });
         const report = { scope: 'Actual shared runtime module in representative History DOM; not Razor routing, Android, TalkBack, frame pacing or battery acceptance', passed: checks.length, checks };
