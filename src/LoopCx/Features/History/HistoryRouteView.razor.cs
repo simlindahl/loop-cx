@@ -18,15 +18,12 @@ public partial class HistoryRouteView
     private bool loadingRoute;
     private bool showMain;
     private bool disposed;
-    private HistoryMapStatus mapStatus;
+    private RouteMapStatus mapStatus;
     private ElementReference mapSlot;
     private Guid mapOwner;
     private Guid observerOwner;
-    private MapObservation? observation;
+    private RouteMapSlot<HistoryRouteView>? observation;
     private bool nativeVisible;
-
-    private sealed record MapObservation(IJSObjectReference Module, IJSObjectReference Observer,
-        DotNetObjectReference<HistoryRouteView> Callback);
 
     private StoredRouteScope Scope => showMain ? stored!.Main : stored!.Whole;
 
@@ -44,23 +41,23 @@ public partial class HistoryRouteView
         : geometry?.HasSeparateSegments == true ? "Stored route with separate segments and no line across gaps"
         : "Stored route geometry";
 
-    private bool MapVisible => mapStatus == HistoryMapStatus.Ready && nativeVisible;
+    private bool MapVisible => mapStatus == RouteMapStatus.Ready && nativeVisible;
 
     private string MapStatusTitle => mapStatus switch
     {
-        HistoryMapStatus.NotConfigured => "Map is not configured",
-        HistoryMapStatus.Offline => "Map unavailable offline",
-        HistoryMapStatus.Loading => "Loading map…",
-        HistoryMapStatus.Failed => "Map could not load",
+        RouteMapStatus.NotConfigured => "Map is not configured",
+        RouteMapStatus.Offline => "Map unavailable offline",
+        RouteMapStatus.Loading => "Loading map…",
+        RouteMapStatus.Failed => "Map could not load",
         _ => "Recorded track"
     };
 
     private string MapStatusText => mapStatus switch
     {
-        HistoryMapStatus.NotConfigured => "Map configuration is missing. Your recording and saved coordinates are unchanged.",
-        HistoryMapStatus.Offline => "The map background cannot load. The saved route stays available.",
-        HistoryMapStatus.Loading => "Your recording stays available while the map loads.",
-        HistoryMapStatus.Failed => "The map background could not be confirmed. You can use the stored route shape or retry.",
+        RouteMapStatus.NotConfigured => "Map configuration is missing. Your recording and saved coordinates are unchanged.",
+        RouteMapStatus.Offline => "The map background cannot load. The saved route stays available.",
+        RouteMapStatus.Loading => "Your recording stays available while the map loads.",
+        RouteMapStatus.Failed => "The map background could not be confirmed. You can use the stored route shape or retry.",
         _ => MapVisible ? "The selected stored route is shown on a Google map background."
             : "The map background is shown when the track fits on screen."
     };
@@ -124,14 +121,14 @@ public partial class HistoryRouteView
     {
         var previous = mapOwner;
         var owner = mapOwner = Guid.NewGuid();
-        mapStatus = HistoryMapStatus.NotConfigured;
+        mapStatus = RouteMapStatus.NotConfigured;
         nativeVisible = false;
         await CloseMap(previous);
 
         if (!Current(owner) || drawing is null) return;
 
         var status = await MainThread.InvokeOnMainThreadAsync(() =>
-            HistoryAndroidMap.Availability(global::Android.App.Application.Context));
+            AndroidRouteMap.Availability(global::Android.App.Application.Context));
 
         if (Current(owner))
         {
@@ -143,40 +140,29 @@ public partial class HistoryRouteView
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (disposed || mapStatus != HistoryMapStatus.WaitingForViewport || observerOwner == mapOwner) return;
+        if (disposed || mapStatus != RouteMapStatus.WaitingForViewport || observerOwner == mapOwner) return;
 
         var owner = observerOwner = mapOwner;
-        var callback = DotNetObjectReference.Create(this);
-        IJSObjectReference? module = null;
-        IJSObjectReference? observer = null;
 
         try
         {
-            module = await Js.InvokeAsync<IJSObjectReference>("import", "./js/history-map-slot.js");
-
-            if (!Current(owner)) return;
-
-            observer = await module.InvokeAsync<IJSObjectReference>("observe", mapSlot, callback, owner);
+            var slot = await RouteMapSlot<HistoryRouteView>.Observe(Js, mapSlot, this, owner);
 
             if (Current(owner))
             {
-                observation = new(module, observer, callback);
-                return;
+                observation = slot;
+            }
+            else
+            {
+                await slot.DisposeAsync();
             }
         }
-        catch (JSException)
+        catch (Exception error) when (error is JSException or OperationCanceledException)
         {
             if (Current(owner))
             {
-                mapStatus = HistoryMapStatus.Failed;
+                mapStatus = RouteMapStatus.Failed;
                 StateHasChanged();
-            }
-        }
-        finally
-        {
-            if (observation?.Callback != callback)
-            {
-                await DisposeObservation(module, observer, callback);
             }
         }
     }
@@ -185,7 +171,7 @@ public partial class HistoryRouteView
     public async Task PositionMap(Guid owner, double left, double top, double width, double height, double viewportWidth)
     {
         if (!Current(owner) || geometry is not { } selected
-            || mapStatus is not (HistoryMapStatus.WaitingForViewport or HistoryMapStatus.Loading or HistoryMapStatus.Ready))
+            || mapStatus is not (RouteMapStatus.WaitingForViewport or RouteMapStatus.Loading or RouteMapStatus.Ready))
         {
             return;
         }
@@ -202,12 +188,12 @@ public partial class HistoryRouteView
         }
     }
 
-    private Task ReportMapStatus(Guid owner, HistoryMapStatus status) => InvokeAsync(() =>
+    private Task ReportMapStatus(Guid owner, RouteMapStatus status) => InvokeAsync(() =>
     {
         if (!Current(owner)) return;
 
         mapStatus = status;
-        if (status is HistoryMapStatus.Failed or HistoryMapStatus.Offline) nativeVisible = false;
+        if (status is RouteMapStatus.Failed or RouteMapStatus.Offline) nativeVisible = false;
         StateHasChanged();
     });
 
@@ -219,35 +205,12 @@ public partial class HistoryRouteView
         if (owner != Guid.Empty)
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
-                (Platform.CurrentActivity as MainActivity)?.CloseHistoryMap(owner));
+                (Platform.CurrentActivity as MainActivity)?.CloseRouteMap(owner));
         }
 
         if (previous is not null)
         {
-            await DisposeObservation(previous.Module, previous.Observer, previous.Callback);
-        }
-    }
-
-    private static async ValueTask DisposeObservation(IJSObjectReference? module, IJSObjectReference? observer,
-        DotNetObjectReference<HistoryRouteView> callback)
-    {
-        try
-        {
-            if (observer is not null)
-            {
-                await observer.InvokeVoidAsync("dispose");
-                await observer.DisposeAsync();
-            }
-
-            if (module is not null) await module.DisposeAsync();
-        }
-        catch (JSException)
-        {
-            // The owning WebView may already be gone.
-        }
-        finally
-        {
-            callback.Dispose();
+            await previous.DisposeAsync();
         }
     }
 

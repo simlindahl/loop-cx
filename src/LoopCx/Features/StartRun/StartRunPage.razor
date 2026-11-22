@@ -20,7 +20,7 @@
     }
     else if (RunService.Snapshot is { Ghost: not null } ghostState)
     {
-        <LoopCx.Features.GhostRun.Ui.GhostLivePage @key="ghostState.Id" State="ghostState" Visible="pageVisible" OnCatalogue="() => OpenGhostCatalogue(null)" OnRoute="route => OpenGhostCatalogue(route)" OnViewRun="id => OpenHistory(id)" OnTraining="BackToTraining" OnEndRequest="OpenGhostEnd" OnPauseManually="PauseGhostManually" />
+        <LoopCx.Features.GhostRun.Ui.GhostLivePage @key="ghostState.Id" State="ghostState" Visible="@(pageVisible && dialogMode is null)" OnCatalogue="() => OpenGhostCatalogue(null)" OnRoute="route => OpenGhostCatalogue(route)" OnViewRun="id => OpenHistory(id)" OnTraining="BackToTraining" OnEndRequest="OpenGhostEnd" OnPauseManually="PauseGhostManually" />
     }
     else if (RunService.Snapshot is { } state)
     {

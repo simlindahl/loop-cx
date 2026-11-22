@@ -9,6 +9,29 @@ public sealed record RouteDrawingPoint(double X, double Y)
     public string Position => $"{XText} {YText}";
 }
 
+internal readonly record struct GhostRouteCoordinate(double Latitude, double Longitude);
+internal readonly record struct GhostRouteMarkers(double? Runner, double? Opponent)
+{
+    public static GhostRouteMarkers From(GhostRoute route, GhostRaceSnapshot? race)
+    {
+        if (race is null || race.Route != route.Key || race.Match.Route != route.Key || race.Match.RuleVersion != route.RuleVersion)
+        {
+            return default;
+        }
+
+        var runner = race.Match.State is RouteMatchState.Tracking or RouteMatchState.Finished && race.Match.Problem is null
+            ? Supported(route, race.Match.Metres) : null;
+        var opponent = race.ReferenceId is not null ? Supported(route, race.GhostMetres) : null;
+
+        return new(runner, opponent);
+    }
+
+    private static double? Supported(GhostRoute route, double? metres)
+    {
+        return metres is { } value && double.IsFinite(value) && value >= 0 && value <= route.LengthMetres ? value : null;
+    }
+}
+
 // Presentation-only projection of the frozen ordered geometry; never distance or route matching.
 public sealed class GhostRouteDrawing
 {
@@ -36,17 +59,47 @@ public sealed class GhostRouteDrawing
     public RouteDrawingPoint Finish => points[^1];
     public RouteDrawingPoint? PointAt(double? metres)
     {
-        if (metres is not { } at || !double.IsFinite(at) || at < 0 || at > route.LengthMetres) return null;
-        if (at == 0) return Start;
-        for (var index = 1; index < points.Length; index++)
+        if (SegmentAt(metres) is not { } segment)
         {
-            var from = route.Geometry[index - 1].Metres;
+            return null;
+        }
+
+        var from = points[segment.End - 1];
+        var to = points[segment.End];
+        return new(from.X + ((to.X - from.X) * segment.Fraction), from.Y + ((to.Y - from.Y) * segment.Fraction));
+    }
+
+    internal GhostRouteCoordinate? CoordinateAt(double? metres)
+    {
+        if (SegmentAt(metres) is not { } segment)
+        {
+            return null;
+        }
+
+        var from = route.Geometry[segment.End - 1];
+        var to = route.Geometry[segment.End];
+        var longitudeDelta = Math.IEEERemainder(to.Longitude - from.Longitude, 360);
+
+        return new(from.Latitude + ((to.Latitude - from.Latitude) * segment.Fraction),
+            Math.IEEERemainder(from.Longitude + (longitudeDelta * segment.Fraction), 360));
+    }
+
+    private (int End, double Fraction)? SegmentAt(double? metres)
+    {
+        if (metres is not { } at || !double.IsFinite(at) || at < 0 || at > route.LengthMetres)
+        {
+            return null;
+        }
+
+        for (var index = 1; index < route.Geometry.Count; index++)
+        {
             var to = route.Geometry[index].Metres;
             if (at > to) continue;
-            var fraction = (at - from) / (to - from);
-            return new(points[index - 1].X + (points[index].X - points[index - 1].X) * fraction,
-                points[index - 1].Y + (points[index].Y - points[index - 1].Y) * fraction);
+
+            var from = route.Geometry[index - 1].Metres;
+            return (index, (at - from) / (to - from));
         }
+
         return null;
     }
     public double HeadingAt(double metres)

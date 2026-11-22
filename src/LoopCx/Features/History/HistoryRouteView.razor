@@ -42,7 +42,7 @@ else
         <section class="route-card" aria-labelledby="route-map-status">
             <h3 id="route-map-status">@MapStatusTitle</h3>
             <p role="status">@MapStatusText</p>
-            @if (mapStatus is HistoryMapStatus.Offline or HistoryMapStatus.Failed)
+            @if (mapStatus is RouteMapStatus.Offline or RouteMapStatus.Failed)
             {
                 <button type="button" @onclick="ConfigureMap">Retry map</button>
             }
