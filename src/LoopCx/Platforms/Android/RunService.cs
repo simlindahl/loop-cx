@@ -199,9 +199,12 @@ public sealed partial class RunService : Service, ILocationListener
         }
         if (session is null)
         {
+            SplitPolicy splitPolicy;
+
             try
             {
                 var preferences = CorePreferences.Load();
+                splitPolicy = preferences.EffectiveSplits;
                 var request = command == "start-core"
                     ? System.Text.Json.JsonSerializer.Deserialize<CoreStartRequest>(intent?.GetStringExtra("core-start") ?? "")
                         ?? throw new ArgumentException("Choose an official Core workout.")
@@ -243,7 +246,7 @@ public sealed partial class RunService : Service, ILocationListener
             startedMonotonic = SystemClock.ElapsedRealtime();
             var startZone = TimeZoneInfo.Local;
             startContext = new(startZone.Id, (int)startZone.GetUtcOffset(started).TotalSeconds, startedMonotonic);
-            distance = new RunDistance(DistancePolicy.Pilot, TimeSpan.FromMilliseconds(startedMonotonic), session.Current?.Kind);
+            distance = new RunDistance(DistancePolicy.Pilot, TimeSpan.FromMilliseconds(startedMonotonic), session.Current?.Kind, splitPolicy);
             motion = new RunMotion(MovementPolicy.Pilot with
             {
                 MaximumSpeedMetresPerSecond = DistancePolicy.Pilot.MaximumSpeedMetresPerSecond
@@ -407,7 +410,7 @@ public sealed partial class RunService : Service, ILocationListener
 
         if (previous is RunPhase.Work or RunPhase.Recovery && next is not (RunPhase.Work or RunPhase.Recovery))
         {
-            statistics.FinalizeMain(distance.Snapshot);
+            statistics.FinalizeMain(distance.SnapshotAt(session.MainActiveTime));
         }
 
         // The complete prefix survives failed checkpoints; serializing it again never appends a duplicate.
@@ -488,7 +491,7 @@ public sealed partial class RunService : Service, ILocationListener
     private DeviationObservation DeviationInput()
     {
         var now = TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100);
-        return new(session!.PhaseIndex, distance!.Snapshot.Splits.Count + 1, session.Current?.Kind,
+        return new(session!.PhaseIndex, distance!.SplitNumberAt(session.MainActiveTime), session.Current?.Kind,
             session.IsPaused, session.TotalActiveTime, now, template.Targets,
             livePace.Snapshot(now, session.IsPaused, session.IsFinished), heartRate?.Snapshot(now));
     }
@@ -519,14 +522,30 @@ public sealed partial class RunService : Service, ILocationListener
         }
     }
 
-    private RunSnapshot CreateSnapshot() => new(id, session!.Current?.Kind.ToString() ?? "Finished",
-        session.IsPaused, (long)session.TotalActiveTime.TotalSeconds,
-        (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus, template.TemplateId, distance?.Snapshot,
-        motion?.Snapshot(session.PauseReason), statistics.Snapshot(TimeSpan.FromMilliseconds(lastTick - startedMonotonic),
-            distance!.Snapshot, session.Current?.Kind is RunPhase.Work or RunPhase.Recovery), template,
-        session.Current?.TargetRpe, session.Completed.Count(static phase => phase.Plan.Kind == RunPhase.Work)
-            + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work), heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)),
-        LivePaceSnapshot());
+    private RunSnapshot CreateSnapshot()
+    {
+        var measuredDistance = distance!.SnapshotAt(session!.MainActiveTime);
+        var measuredStatistics = statistics.Snapshot(TimeSpan.FromMilliseconds(lastTick - startedMonotonic),
+            measuredDistance, session.Current?.Kind is RunPhase.Work or RunPhase.Recovery);
+
+        if (measuredDistance.SplitPolicy?.Basis == SplitBasis.Time)
+        {
+            measuredDistance = measuredDistance with
+            {
+                MainHasGaps = measuredStatistics.Main.UnknownGpsActiveTime > TimeSpan.Zero,
+                Splits = [.. measuredDistance.Splits.Select((split, index) =>
+                    split with { HasGaps = measuredStatistics.CompletedSplits[index].UnknownGpsActiveTime > TimeSpan.Zero })]
+            };
+        }
+
+        return new(id, session.Current?.Kind.ToString() ?? "Finished",
+            session.IsPaused, (long)session.TotalActiveTime.TotalSeconds,
+            (long)Math.Ceiling(session.Remaining.TotalSeconds), locations, gpsStatus, template.TemplateId, measuredDistance,
+            motion?.Snapshot(session.PauseReason), measuredStatistics, template,
+            session.Current?.TargetRpe, session.Completed.Count(static phase => phase.Plan.Kind == RunPhase.Work)
+                + (session.Current?.Kind == RunPhase.Work ? 1 : 0), session.Plan.Count(static phase => phase.Kind == RunPhase.Work),
+            heartRate?.Snapshot(TimeSpan.FromTicks(SystemClock.ElapsedRealtimeNanos() / 100)), LivePaceSnapshot());
+    }
 
     private LivePaceState LivePaceSnapshot()
     {

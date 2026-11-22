@@ -76,7 +76,7 @@
                     var split = finalMain ? statistics.CompletedSplits.LastOrDefault() : statistics.CurrentSplit;
                     <section aria-labelledby="main-values">
                         <table>
-                                <caption id="main-values">@(finalMain ? "Final main set and last recorded split" : "Current main set and kilometre split")</caption>
+                                <caption id="main-values">@(finalMain ? "Final main set and last recorded split" : "Current main set and split") · @((state.Distance?.SplitPolicy ?? SplitPolicy.DefaultDistance).Label)</caption>
                                 <thead><tr><th scope="col">Metric</th><th scope="col">Main set</th><th scope="col">@(finalMain ? "Final split" : "This split")</th></tr></thead>
                                 <tbody>
                                     <tr><th scope="row">Time <small>min:sec</small></th><td>@StatisticTime(statistics.Main)</td><td>@StatisticTime(split)</td></tr>
@@ -169,8 +169,9 @@
                 <p>@Times(SelectedC1)<small>@WarmupCooldown(SelectedC1)</small>
 </p>
                 <p>@TargetLabel(SelectedC1.Targets)</p>
+                <p id="c1-splits">Splits · @statePreferences.EffectiveSplits.Label</p>
                 <div class="actions">
-<button type="button" class="primary" @onclick="() => Start(SelectedC1)">Start @SelectedC1.ProtocolId</button>
+<button type="button" class="primary" aria-describedby="c1-splits" @onclick="() => Start(SelectedC1)">Start @SelectedC1.ProtocolId</button>
 <button id="personalise-c1" type="button" @onclick='() => OpenTarget(SelectedC1, "personalise-c1")'>Personalise</button>
 </div>
                 <button id="shortcut-c1" type="button" class="text" @onclick='() => OpenShortcut(SelectedC1, "shortcut-c1")'>Save shortcut</button>
@@ -185,8 +186,9 @@
 </p>
                 <p>Zone 2 is the intended effort, not a measured value. No warm-up or cool-down.</p>
                 <p>@TargetLabel(statePreferences.C2Selection.Targets, true)</p>
+                <p id="c2-splits">Splits · @statePreferences.EffectiveSplits.Label</p>
                 <div class="actions">
-<button type="button" class="primary" @onclick="() => Start(statePreferences.C2Selection)">Start C2</button>
+<button type="button" class="primary" aria-describedby="c2-splits" @onclick="() => Start(statePreferences.C2Selection)">Start C2</button>
 <button id="target-c2" type="button" @onclick='() => OpenTarget(statePreferences.C2Selection, "target-c2")'>Adapt target</button>
 </div>
                 <button id="shortcut-c2" type="button" class="text" @onclick='() => OpenShortcut(statePreferences.C2Selection, "shortcut-c2")'>Save shortcut</button>
@@ -203,7 +205,8 @@
 <p>@Times(shortcut.Request)<small>@WarmupCooldown(shortcut.Request)</small>
 </p>
 <p>@TargetLabel(shortcut.Request.Targets, shortcut.Request.ProtocolId == "C2")</p>
-<button type="button" class="primary" @onclick="() => Start(shortcut.Request with { ShortcutId = shortcut.Id, ShortcutName = shortcut.Name })">Start @shortcut.Name</button>
+<p id="@($"shortcut-splits-{shortcut.Id}")">Splits · @statePreferences.EffectiveSplits.Label</p>
+<button type="button" class="primary" aria-describedby="@($"shortcut-splits-{shortcut.Id}")" @onclick="() => Start(shortcut.Request with { ShortcutId = shortcut.Id, ShortcutName = shortcut.Name })">Start @shortcut.Name</button>
 </section>
             }
         </section>
