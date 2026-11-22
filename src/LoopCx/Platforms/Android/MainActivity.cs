@@ -30,6 +30,7 @@ public sealed partial class MainActivity : MauiAppCompatActivity
     protected override void OnResume()
     {
         base.OnResume();
+        ResumeHistoryMap();
         AndroidMotionPreference.Refresh();
         HealthConnectSettings.Refresh();
         HealthConnectScheduling.Resume();
@@ -38,6 +39,8 @@ public sealed partial class MainActivity : MauiAppCompatActivity
 
     protected override void OnDestroy()
     {
+        CloseHistoryMap();
+        HistoryMapWebView = null;
         CancelHeartRateSelection();
         CompleteHealthWrite();
         motionPreference?.Dispose();

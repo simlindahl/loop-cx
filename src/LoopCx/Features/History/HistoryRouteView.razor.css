@@ -1,0 +1,51 @@
+.route-scopes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-block: 16px;
+}
+
+.route-scopes button[aria-pressed="true"] {
+    --cx-button-border: var(--cx-accent);
+    color: var(--cx-accent);
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+
+.route-card {
+    background: var(--cx-surface);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+figure {
+    margin: 0;
+}
+
+svg {
+    display: block;
+    width: 100%;
+}
+
+.route-line {
+    fill: none;
+    stroke: var(--cx-accent);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 4;
+}
+
+.route-points {
+    fill: none;
+    stroke: var(--cx-muted);
+    stroke-linecap: round;
+    stroke-width: 7;
+}
+
+.route-ends {
+    fill: var(--cx-text);
+}
+
+figcaption {
+    color: var(--cx-muted);
+}

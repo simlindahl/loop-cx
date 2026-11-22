@@ -1,0 +1,77 @@
+@implements IAsyncDisposable
+<p>@(showMain ? "Recorded main set, including work and planned recovery." : "Entire stored recording, including warm-up and cool-down where recorded.")</p>
+@if (loadingRoute)
+{
+    <p role="status">Loading recorded route…</p>
+}
+else if (stored is null)
+{
+    <section class="route-card">
+        <h3>Recorded route unavailable</h3>
+        <p>Your saved run and its measurements are still available.</p>
+        <button type="button" @onclick="ReadRoute">Retry</button>
+    </section>
+}
+else
+{
+    <div class="route-scopes" role="group" aria-label="Route scope">
+        <button type="button" aria-pressed="@(!showMain ? "true" : "false")" @onclick="ShowWhole">Whole run</button>
+        <button type="button" aria-pressed="@(showMain ? "true" : "false")" @onclick="ShowMain">Main set</button>
+    </div>
+    @if (!Scope.Supported)
+    {
+        <section class="route-card">
+            <h3>Main-set route unavailable</h3>
+            <p>The saved data does not identify which points belong to the main set. Select Whole run for the stored coordinates.</p>
+        </section>
+    }
+    else if (drawing is null)
+    {
+        <section class="route-card">
+            <h3>No recorded route</h3>
+            <p>This scope has no usable stored coordinates. Distance and the workout plan cannot supply a route.</p>
+        </section>
+    }
+    else
+    {
+        @if (Scope.UnknownQuality)
+        {
+            <p>Older track · quality unknown. GPS points with unknown quality are shown separately.</p>
+        }
+
+        <section class="route-card" aria-labelledby="route-map-status">
+            <h3 id="route-map-status">@MapStatusTitle</h3>
+            <p role="status">@MapStatusText</p>
+            @if (mapStatus is HistoryMapStatus.Offline or HistoryMapStatus.Failed)
+            {
+                <button type="button" @onclick="ConfigureMap">Retry map</button>
+            }
+            <figure>
+                <svg @ref="mapSlot" viewBox="0 0 340 240" role="img" aria-label="@RouteDescription">
+                    <path class="route-line" d="@drawing.Line" />
+                    <path class="route-points" d="@drawing.Isolated" />
+                    @if (drawing.StartX is not null)
+                    {
+                        <circle class="route-ends" cx="@drawing.StartX" cy="@drawing.StartY" r="5" />
+                        <rect class="route-ends" x="@drawing.EndX" y="@drawing.EndY" width="8" height="8" />
+                    }
+                </svg>
+                <figcaption>@(MapVisible ? "Google map background with the stored route." : "Stored route shape.") @(Scope.UnknownQuality ? "Unlinked points stay separate." : MapVisible ? "" : "Circle: first point. Square: last point.")</figcaption>
+            </figure>
+        </section>
+    }
+
+}
+<dl>
+    <div><dt>Recorded total distance</dt><dd>@RecordedDistance</dd></div>
+    <div><dt>Route completeness</dt><dd>@Completeness</dd></div>
+</dl>
+@if (stored is not null)
+{
+    <details>
+        <summary>Track and privacy</summary>
+        <p>Stored GPS points and their recorded accuracy belong to this run. Missing parts are left blank.</p>
+        <p>When map backgrounds are enabled, Google receives the map area needed for the tiles. LOOP draws the route on the device.</p>
+        <p>To share precise coordinates, return to the run and choose Share workout data.</p>
+    </details>
+}

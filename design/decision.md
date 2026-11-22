@@ -212,6 +212,12 @@ Simon approved the exact r3 study for [#111](https://github.com/simlindahl/loop-
 
 The decision covers [Settings and before-start display](../knowledge/ux-design.md#core-splits-settings) and the [Core split policy frozen at each start](../knowledge/running-workouts.md#core-split-policy). The layout proposals in [#112](https://github.com/simlindahl/loop-cx/issues/112) remain separate decisions.
 
+## History and Ghost Maps SDK approval
+
+Simon approved Google Maps SDK for Android for History Route and the separately scoped Ghost live map. The History slice applies the [existing exact r4 design](#history-details-r4-approval) and [stored Route contract](../knowledge/integrations-data.md#history-route-and-google-maps). Google supplies map content and LOOP renders the saved GPS overlay locally. The app retains offline recording, stored History and export.
+
+Simon reserved Google Cloud activation, billing, API-key provisioning/use and applicable provider terms for separate clearance. The keyless implementation can proceed. Visible Google tiles and physical acceptance remain separate verification steps.
+
 ## Ghost English audio approval
 
 Simon approved [#18](https://github.com/simlindahl/loop-cx/issues/18) short spoken route-deviation warnings and fresh optional comparison speech with an off default. Deviation warnings have priority and share the ordinary audio queue. The [Ghost audio cue contract](../knowledge/ghost-run.md#ghost-audio-cue-contract) governs source behavior and observable acceptance. The previously approved Ghost screens supply the existing race and pause presentation. A visible comparison control requires its own scoped design approval.

@@ -48,6 +48,11 @@
         @if (GhostShareEligible)
         { <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button> }
     }
+    else if (detailDestination == "route" && (detail?.Summary ?? partial?.Summary) is { } routeRun)
+    {
+        @if (routeRun.Synthetic) { <p>Synthetic test recording · not a physical workout.</p> }
+        <HistoryRouteView @key="routeRun.Id" @ref="routeView" RunId="routeRun.Id" Total="routeRun.Total" />
+    }
     else if (partial is { } recorded)
     {
         var recordedDistance = Distance(recorded.Summary.Total);
@@ -89,6 +94,7 @@
         {
             <p role="status">Partial recording saved locally.</p>
             <p>Not exported to Health Connect. A supported recorded end time is required for export.</p>
+        <button id="history-route" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("route")'><span>Route<small>Stored recording prefix · actual stop time unknown</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
         <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>
         }
     }
@@ -190,6 +196,7 @@
         </dl>
         <button id="history-splits" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("splits")'><span>Splits &amp; phases<small>Frozen main-set splits and recorded phase times</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
         <button id="history-zones" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("zones")'><span>Time in zones<small>Main set and whole run · frozen start boundaries</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
+        <button id="history-route" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("route")'><span>Route<small>Whole recording · warm-up through cool-down</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
         <details>
             <summary>Workout plan</summary>
             <dl>
