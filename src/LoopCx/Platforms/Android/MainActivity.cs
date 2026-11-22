@@ -30,8 +30,7 @@ public sealed partial class MainActivity : MauiAppCompatActivity
     protected override void OnResume()
     {
         base.OnResume();
-        historyMapForeground = true;
-        historyMap?.Resume();
+        ResumeHistoryMap();
         AndroidMotionPreference.Refresh();
         HealthConnectSettings.Refresh();
         HealthConnectScheduling.Resume();

@@ -6,8 +6,10 @@
 }
 
 .route-scopes button[aria-pressed="true"] {
-    border-color: var(--cx-accent);
+    --cx-button-border: var(--cx-accent);
     color: var(--cx-accent);
+    text-decoration: underline;
+    text-underline-offset: .2em;
 }
 
 .route-card {

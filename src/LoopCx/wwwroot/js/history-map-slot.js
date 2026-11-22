@@ -38,6 +38,7 @@ export function observe(slot, receiver, owner) {
     document.addEventListener('scroll', schedule, true);
     document.addEventListener('visibilitychange', visibilityChanged);
     window.addEventListener('resize', schedule);
+    window.addEventListener('loop-history-map-resume', visibilityChanged);
     window.visualViewport?.addEventListener('resize', schedule);
     schedule();
 
@@ -49,6 +50,7 @@ export function observe(slot, receiver, owner) {
             document.removeEventListener('scroll', schedule, true);
             document.removeEventListener('visibilitychange', visibilityChanged);
             window.removeEventListener('resize', schedule);
+            window.removeEventListener('loop-history-map-resume', visibilityChanged);
             window.visualViewport?.removeEventListener('resize', schedule);
         }
     };

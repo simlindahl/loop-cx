@@ -86,6 +86,27 @@ public sealed partial class MainActivity
         historyMapOwner = null;
     }
 
+    private void ResumeHistoryMap()
+    {
+        historyMapForeground = true;
+
+        if (historyMap is null)
+        {
+            return;
+        }
+
+        historyMap.Resume();
+
+        try
+        {
+            HistoryMapWebView?.EvaluateJavascript("window.dispatchEvent(new Event('loop-history-map-resume'));", null);
+        }
+        catch (Java.Lang.RuntimeException)
+        {
+            // Keep the local route visible when the WebView cannot revalidate placement.
+        }
+    }
+
     protected override void OnStart()
     {
         base.OnStart();

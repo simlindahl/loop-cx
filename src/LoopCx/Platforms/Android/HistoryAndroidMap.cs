@@ -242,6 +242,7 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
     {
         if (!resumed) return;
 
+        positioned = false;
         frame.Visibility = ViewStates.Invisible;
         mapView.OnPause();
         resumed = false;
