@@ -198,9 +198,9 @@
         <button id="history-splits" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("splits")'><span>Splits &amp; phases<small>Frozen main-set splits and recorded phase times</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
         <button id="history-zones" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("zones")'><span>Time in zones<small>Main set and whole run · frozen start boundaries</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
         <button id="history-route" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("route")'><span>Route<small>Whole recording · warm-up through cool-down</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
-        <details>
+        <details data-history-disclosure>
             <summary>Workout plan</summary>
-            <dl>
+            <dl data-history-disclosure-content>
             <div><dt>Warm-up / cool-down</dt><dd>@Time(run.Warmup) / @Time(run.Cooldown)</dd></div>
             <div><dt>Workout source</dt><dd>@run.Summary.Source</dd></div>
             <div><dt>Planned main set</dt><dd>@Dose(run.Plan)</dd></div>
@@ -215,10 +215,12 @@
         }
         @if (run.Summary.ExportLabel == "Exported")
         { <p>Written to Health Connect. This does not confirm WHOOP import.</p> }
-        <details>
+        <details data-history-disclosure>
             <summary>Recorded measurements and coverage</summary>
-            <p>@Coverage(run.Main)</p>
-            <p>@ZoneSummary(run.Zones)</p>
+            <div data-history-disclosure-content>
+                <p>@Coverage(run.Main)</p>
+                <p>@ZoneSummary(run.Zones)</p>
+            </div>
         </details>
         @if (run.IsContinuousGhostSource) { <button id="history-ghost" type="button" @onclick="OpenGhostRoutes">Save route to Ghost Run</button> }
         <button id="history-share" type="button" class="primary" @onclick="ShowShare">Share workout data</button>

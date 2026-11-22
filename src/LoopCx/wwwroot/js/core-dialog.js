@@ -42,6 +42,7 @@ function listenForMotion() {
     if (listening) return;
     motionPreference.addEventListener('change', mediaMotionChanged);
     document.addEventListener('visibilitychange', liveVisibilityChanged);
+    document.addEventListener('toggle', toggleHistoryDisclosure, true);
     window.addEventListener('pagehide', livePageHidden);
     listening = true;
 }
@@ -116,6 +117,25 @@ function effect(node, frames, duration, delay = 0) {
     animation.finished.then(release, release);
     return animation;
 }
+function toggleHistoryDisclosure(event) {
+    const details = event.target;
+    if (!details.matches?.('details[data-history-disclosure]')) return;
+
+    const panel = details.querySelector(':scope > [data-history-disclosure-content]');
+    if (!panel) return;
+
+    nodeEffects.get(panel)?.cancel();
+    if (!details.open || document.hidden || reducedMotion()) return;
+
+    const height = panel.getBoundingClientRect().height;
+    if (height <= 0) return;
+
+    effect(panel, [
+        { blockSize: '0px', opacity: 0, overflow: 'hidden' },
+        { blockSize: `${height}px`, opacity: 1, overflow: 'hidden' }
+    ], 220);
+}
+
 function enter(node, duration = 220, delay = 0) {
     return effect(node, [{ opacity: .5, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], duration, delay);
 }
@@ -227,6 +247,7 @@ export function dispose() {
     clearMotion();
     motionPreference.removeEventListener('change', mediaMotionChanged);
     document.removeEventListener('visibilitychange', liveVisibilityChanged);
+    document.removeEventListener('toggle', toggleHistoryDisclosure, true);
     window.removeEventListener('pagehide', livePageHidden);
     listening = false;
     systemMotion = undefined;
