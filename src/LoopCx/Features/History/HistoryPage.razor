@@ -42,7 +42,7 @@
             <button id="recovery-save" type="button" class="primary" disabled="@busy" aria-busy="@busy" @onclick="SaveGhostRecordedPart">@(recoveryFailed ? "Retry save" : "Save recorded part")</button>
         }
         @if (ghostStored.Status == "interrupted" && ghostStored.SavedLocally is not null)
-        { <p role="status">Partial recording saved locally. The actual stop time is unknown.</p> }
+        { <p role="status" data-motion-recorded-part="@savedPartFeedback">Partial recording saved locally. The actual stop time is unknown.</p> }
         @if (ghostStored.ExportStatus is "pending" or "action_required")
         { <button type="button" disabled="@busy" @onclick="RetryHealthConnect">Retry Health Connect export</button> }
         @if (GhostShareEligible)
@@ -92,7 +92,7 @@
         }
         else if (recorded.SavedLocally is not null)
         {
-            <p role="status">Partial recording saved locally.</p>
+            <p role="status" data-motion-recorded-part="@savedPartFeedback">Partial recording saved locally.</p>
             <p>Not exported to Health Connect. A supported recorded end time is required for export.</p>
         <button id="history-route" class="history-row detail-row" type="button" @onclick='() => ShowDetailDestination("route")'><span>Route<small>Stored recording prefix · actual stop time unknown</small></span><span class="history-chevron" aria-hidden="true">›</span></button>
         <button id="history-share" type="button" @onclick="ShowShare">Share workout data</button>

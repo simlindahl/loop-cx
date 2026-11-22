@@ -106,6 +106,12 @@ The approved family covers 01 press feedback, 02 phase/state changes, 03 navigat
 
 Respect system reduced motion with immediate equivalent content and function: no movement/animation, no loss of state, actions, focus or reading order. Commands and accessible values update immediately and never wait for an effect. Do not animate timer/sensor numbers, invent progress or saved results, run continuous decorative loops, or queue obsolete transitions. Preserve at least 48 dp targets, 200% text/scrolling, neutral Basalt, local Space Grotesk and icon geometry. Use small CSS transform/opacity effects first, without a new animation framework; actual Android WebView, TalkBack, touch, frame pacing and battery evidence remain implementation acceptance, not established by the browser studies.
 
+### Interrupted History result feedback
+
+Apply study 06 from [#62](https://github.com/simlindahl/loop-cx/issues/62) to the existing local save confirmation in interrupted Core and Ghost History. Use the existing 160 ms result outline once on the same selected confirmation after [Save recorded part commits a new acknowledgement](integrations-data.md#interrupted-prefix-local-save-disposition). The existing status and focus update immediately, with the same result under reduced motion.
+
+For acceptance, compare a newly committed save with reopening or refreshing a saved result and with a transaction failure. Only a new acknowledgement for the still-selected recording may trigger the outline, including after a successful retry. Repeated acknowledgement, failed or unavailable saves, and leaving the result before feedback do not trigger it.
+
 ### Core/Manage motion delivery boundary
 
 The bounded Core slice applies press feedback to existing buttons through a visual backplate only; the button box, text, focus outline and at-least-48-dp hit area do not scale. Real service phase/pause labels receive state feedback only when their state key changes, not on timer/sensor refresh. Actual Training/Manage navigation and modal/target-field disclosure use the approved standard/exit timings without awaiting animation completion. Focus and saved values update through their existing paths. Reduced motion cancels active visual effects and leaves equivalent immediate content and operation.

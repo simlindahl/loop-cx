@@ -103,6 +103,7 @@ public partial class HistoryPage
     private int interrupted, unreadable;
     private string? error;
     private string? focusPending = "history-heading";
+    private Guid? savedPartFeedback;
     private IJSObjectReference? module;
     private IJSObjectReference? layoutModule;
     private ElementReference historyContent;
@@ -196,9 +197,10 @@ public partial class HistoryPage
         error = null;
         try
         {
-            var saved = await Task.Run(() => RunJournal.Shared.SaveInterruptedPart(selected.Summary.Id));
+            var (saved, acknowledgedNow) = await Task.Run(() => RunJournal.Shared.SaveInterruptedPart(selected.Summary.Id));
             if (disposed || partial?.Summary.Id != selected.Summary.Id) return;
             partial = saved;
+            if (acknowledgedNow) savedPartFeedback = Guid.NewGuid();
             recoveryFailed = false;
             focusPending = "history-heading";
         }
@@ -219,9 +221,10 @@ public partial class HistoryPage
         error = null;
         try
         {
-            var saved = await Task.Run(() => RunJournal.Shared.SaveGhostRecordedPart(selected.Id));
+            var (saved, acknowledgedNow) = await Task.Run(() => RunJournal.Shared.SaveGhostRecordedPart(selected.Id));
             if (disposed || ghostResult?.Id != selected.Id) return;
             ghostResult = saved with { Records = selected.Records };
+            if (acknowledgedNow) savedPartFeedback = Guid.NewGuid();
             recoveryFailed = false;
             focusPending = "history-heading";
         }
@@ -417,6 +420,8 @@ public partial class HistoryPage
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var renderedDestination = MotionDestination;
+        var confirmedPart = savedPartFeedback;
+        savedPartFeedback = null;
         var motionChanged = !busy && lastMotionDestination != renderedDestination;
         layoutModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/history-layout.js");
         if (disposed)
@@ -425,7 +430,7 @@ public partial class HistoryPage
             return;
         }
         await layoutModule.InvokeVoidAsync("observe", historyContent, layoutOwner);
-        if (focusPending is null && !motionChanged) return;
+        if (focusPending is null && !motionChanged && confirmedPart is null) return;
         module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
         if (disposed)
         {
@@ -441,6 +446,14 @@ public partial class HistoryPage
         {
             lastMotionDestination = renderedDestination;
             await module.InvokeVoidAsync("syncMotion", false);
+        }
+        if (confirmedPart is { } confirmation && !disposed && !busy && MotionDestination == renderedDestination)
+        {
+            try
+            {
+                await module.InvokeVoidAsync("confirmRecordedPart", historyContent, layoutOwner, renderedDestination, confirmation.ToString());
+            }
+            catch (JSException) { } // The committed result and its focus are already visible.
         }
     }
     private async Task LeaveMotionDestination()
