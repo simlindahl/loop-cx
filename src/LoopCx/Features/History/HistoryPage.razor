@@ -186,7 +186,17 @@
         var mainDistance = Distance(run.Main);
         var averageHeartRate = Number(run.Main?.AverageHeartRate);
         <p>@Started(run.Summary)</p>
-        <p class="big-result">@totalDistance<small>@(totalDistance == "Unavailable" ? "Total distance" : "km total · accepted measurement")</small></p>
+        <p class="big-result">
+            @if (totalDistance == "Unavailable")
+            {
+                <span class="big-result-status" role="img" aria-label="@totalDistance">Un&shy;avail&shy;able</span>
+                <small>Total distance</small>
+            }
+            else
+            {
+                @totalDistance<small>km total · accepted measurement</small>
+            }
+        </p>
         @if (run.Summary.Synthetic) { <p>Synthetic test recording · not a physical workout.</p> }
         <dl>
             <div><dt>Total active / elapsed</dt><dd>@Time(run.Summary.TotalActive) / @Time(run.TotalElapsed)</dd></div>
