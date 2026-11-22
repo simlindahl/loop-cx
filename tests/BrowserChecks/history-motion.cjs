@@ -223,6 +223,49 @@ const path = require('path');
             api.syncMotion(false);
             check('Share Back restores the same selected run and original opener', document.activeElement.id === 'history-share');
 
+            api.leaveSurface(history);
+            history.dataset.motionDestination = 'detail:one:route';
+            history.dataset.motionReady = 'false';
+            body.removeAttribute('data-motion-group');
+            heading.textContent = 'Recorded route';
+            body.innerHTML = '<p role="status">Loading recorded route…</p>';
+            api.syncMotion(false);
+            check('Route loading does not consume the heading entrance', heading.getAnimations().length === 0);
+            body.innerHTML = '<button id="route-scope">Whole run</button><figure><svg id="map-slot" width="220" height="140"><path d="M10 10 L80 90 M120 90 L155 25"/></svg></figure>';
+            const slot = body.querySelector('#map-slot');
+            const slotRect = () => {
+                const { x, y, width, height } = slot.getBoundingClientRect();
+                return [x, y, width, height];
+            };
+            const settledRect = slotRect();
+            history.dataset.motionReady = 'true';
+            api.focus('history-heading');
+            api.syncMotion(false);
+            const routeEntrance = heading.getAnimations()[0];
+            check('Ready Route animates only the independent heading with 220 ms and no stagger', !!routeEntrance
+                && routeEntrance.effect.getTiming().duration === 220 && routeEntrance.effect.getTiming().delay === 0
+                && document.activeElement === heading && history.firstElementChild.getAnimations().length === 0);
+            const samples = [];
+            do {
+                await new Promise(requestAnimationFrame);
+                samples.push(slotRect());
+            } while (routeEntrance.playState === 'running' && samples.length < 60);
+            check('Route slot and ancestors stay static throughout heading entrance', samples.length > 1
+                && samples.every(rect => rect.every((value, i) => value === settledRect[i]))
+                && [slot, slot.parentElement, body, history, main].every(node => node.getAnimations().length === 0));
+            body.querySelector('#route-scope').textContent = 'Main set';
+            api.syncMotion(false);
+            check('Changing Route scope and rendering the same selected run do not replay entrance', heading.getAnimations().length === 0);
+            api.leaveSurface(history);
+            history.dataset.motionDestination = 'run:one';
+            heading.textContent = 'C1 · Intervals';
+            body.innerHTML = '<button id="history-route">Route</button>';
+            api.focus('history-route');
+            api.syncMotion(false);
+            check('Route Back keeps the original opener and content still', document.activeElement.id === 'history-route'
+                && body.getAnimations().length === 0);
+            body.setAttribute('data-motion-group', '');
+
             history.dataset.motionDestination = 'run:two';
             api.syncMotion(false);
             api.leaveSurface(history);
