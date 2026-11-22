@@ -211,3 +211,9 @@ This entry records the owner's previously received approval in [issue 18](https:
 Simon approved the exact r3 study for [#111](https://github.com/simlindahl/loop-cx/issues/111) and explicitly authorized implementation. Study anchor: `artifacts/design/splits-layout-study/index.html#split-decision-r3`. Reviewed HTML SHA-256 `21fd90e83ab4db60ab807a01ac2653c71cbd269805a928fb0f4002ef2f0169e3` and JavaScript SHA-256 `35f66af88040f423aa7438d53d61bb58c84c42aee1428cc277093bd0f5d16521`.
 
 The decision covers [Settings and before-start display](../knowledge/ux-design.md#core-splits-settings) and the [Core split policy frozen at each start](../knowledge/running-workouts.md#core-split-policy). The layout proposals in [#112](https://github.com/simlindahl/loop-cx/issues/112) remain separate decisions.
+
+## Ghost English audio approval
+
+Simon approved [#18](https://github.com/simlindahl/loop-cx/issues/18) short spoken route-deviation warnings and fresh optional comparison speech with an off default. Deviation warnings have priority and share the ordinary audio queue. The [Ghost audio cue contract](../knowledge/ghost-run.md#ghost-audio-cue-contract) governs source behavior and observable acceptance. The previously approved Ghost screens supply the existing race and pause presentation. A visible comparison control requires its own scoped design approval.
+
+The preliminary Settings → Ghost audio study uses the existing Audio coaching pattern, with Spoken comparison off by default and Save applying to new races. Study HTML SHA-256: `243aedf88558790ade7fb66ec4dfc9ebf3633b6f910fb3b6c9ae3c4c91dc05ca`. Browser checks cover focus, keyboard operation and 200% text. The layout decision and Android acceptance remain pending.
