@@ -205,3 +205,9 @@ Simon explicitly requested ordinary dose summaries such as `4 × 6:3 min` instea
 ## Ghost HC eligibility for an explicitly ended Incomplete race
 
 This entry records the owner's previously received approval in [issue 18](https://github.com/simlindahl/loop-cx/issues/18); it does not assign a new approval date. A positive-duration Ghost race explicitly ended with a known actual end is eligible for HC mapping while remaining Incomplete and creating no race record. Use actual accepted training distance and raw HR, frozen start consent and current required grants. Unknown-end Interrupted remains local/JSON, including after local saved-part confirmation; zero elapsed does not create a positive HC session. The [integration owner](../knowledge/integrations-data.md#ghost-health-connect-pure-projection) owns typed finality and frozen clock/measurement rules. This decision adds no provider execution authority or new UI/layout, and does not establish SDK/provider/physical acceptance.
+
+## Core Splits r3 approval
+
+Simon approved the exact r3 study for [#111](https://github.com/simlindahl/loop-cx/issues/111) and explicitly authorized implementation. Study anchor: `artifacts/design/splits-layout-study/index.html#split-decision-r3`. Reviewed HTML SHA-256 `21fd90e83ab4db60ab807a01ac2653c71cbd269805a928fb0f4002ef2f0169e3` and JavaScript SHA-256 `35f66af88040f423aa7438d53d61bb58c84c42aee1428cc277093bd0f5d16521`.
+
+The decision covers [Settings and before-start display](../knowledge/ux-design.md#core-splits-settings) and the [Core split policy frozen at each start](../knowledge/running-workouts.md#core-split-policy). The layout proposals in [#112](https://github.com/simlindahl/loop-cx/issues/112) remain separate decisions.

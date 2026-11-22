@@ -5,7 +5,8 @@ namespace LoopCx.Features.ActiveRun;
 public sealed record CoreShortcut(Guid Id, string Name, CoreStartRequest Request);
 public sealed record CorePreferencesState(int Version, C1WarmupCooldownSettings WarmupCooldown, string SelectedProtocol,
     IReadOnlyList<CoreStartRequest> C1Selections, CoreStartRequest C2Selection, IReadOnlyList<CoreShortcut> Shortcuts,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] AudioConfiguration? Audio = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] AudioConfiguration? Audio = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SplitPolicy? Splits = null)
 {
     public static CorePreferencesState Default => new(1, new(), "C1.2",
         CoreProtocols.All.Select(static protocol => new CoreStartRequest(protocol.Id, protocol.DefaultCount)).ToArray(),
@@ -16,6 +17,9 @@ public sealed record CorePreferencesState(int Version, C1WarmupCooldownSettings 
 
     [JsonIgnore]
     public AudioConfiguration EffectiveAudio => Audio ?? new();
+
+    [JsonIgnore]
+    public SplitPolicy EffectiveSplits => Splits ?? SplitPolicy.DefaultDistance;
 
     public AudioConfiguration AudioFor(CoreStartRequest request)
     {
@@ -28,6 +32,7 @@ public sealed record CorePreferencesState(int Version, C1WarmupCooldownSettings 
     {
         WarmupCooldown.Validate();
         Audio?.Validate();
+        Splits?.Validate();
 
         if (Version != 1 || C1Selections.Count != 3 || C1Selections.Select(static request => request.ProtocolId).Distinct().Count() != 3 ||
             C1Selections.Any(static request => request.ProtocolId == "C2") || C2Selection.ProtocolId != "C2" ||

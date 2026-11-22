@@ -1,10 +1,14 @@
 using System.Globalization;
+using System.Text.Json;
 using LoopCx.Features.ActiveRun;
 
 namespace LoopCx.Features.History;
 
 public sealed record InterruptedRun(StoredRunSummary Summary, DateTimeOffset? LastCommittedObservation,
-    DateTimeOffset? SavedLocally);
+    DateTimeOffset? SavedLocally)
+{
+    public StoredMeasurementDetails Measurements { get; init; } = StoredMeasurementDetails.Unknown;
+}
 
 public static class InterruptedRunProjection
 {
@@ -30,7 +34,12 @@ public static class InterruptedRunProjection
             saved = parsed;
         }
 
+        using var checkpoint = JsonDocument.Parse(row.Checkpoint);
+
         return new(StoredRunProjection.Summary(row, true),
-            DateTimeOffset.TryParse(observedUtc, CultureInfo.InvariantCulture, DateTimeStyles.None, out var observed) ? observed : null, saved);
+            DateTimeOffset.TryParse(observedUtc, CultureInfo.InvariantCulture, DateTimeStyles.None, out var observed) ? observed : null, saved)
+        {
+            Measurements = StoredMeasurementProjection.Read(checkpoint.RootElement, configuration: null, interrupted: true)
+        };
     }
 }

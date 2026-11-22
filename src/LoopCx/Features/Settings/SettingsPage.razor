@@ -1,5 +1,6 @@
 @implements IAsyncDisposable
 @inject Microsoft.JSInterop.IJSRuntime JS
+@using LoopCx.Features.ActiveRun
 <section aria-labelledby="settings-heading">
     <button type="button" @onclick="GoBack">@(page == "settings" ? "← Training" : "← Settings")</button>
     <h2 id="settings-heading" data-motion-group tabindex="-1">@Title</h2>
@@ -12,11 +13,46 @@
         <button class="setting-row" type="button" @onclick="OpenZones">Heart-rate zones <small>@ProfileStatus</small></button>
         <button id="health-settings" class="setting-row" type="button" @onclick='() => Open("health")'>Health Connect <small>@health.Label</small></button>
         <button id="warmup-cooldown-settings" class="setting-row" type="button" @onclick="OnWarmupCooldown">Warm-up and cool-down <small>Global C1 defaults</small></button>
+        <button id="splits-settings" class="setting-row" type="button" @onclick="OpenSplits">Splits <small>@(savedSplits?.Label ?? "Unavailable")</small></button>
         <button id="audio-settings" class="setting-row" type="button" @onclick="OpenAudio">Audio coaching <small>Default for new Core runs</small></button>
     }
     else if (page == "audio")
     {
         <AudioEditor Initial="audioConfiguration" OnSave="SaveAudio" OnCancel="CancelAudio" />
+    }
+    else if (page == "splits")
+    {
+        <form @onsubmit="SaveSplits" @onsubmit:preventDefault novalidate>
+            <div class="field">
+                <label for="split-basis">Split basis</label>
+                <select id="split-basis" value="@splitBasis" @onchange="ChangeSplitBasis">
+                    <option value="@SplitBasis.Distance">Distance</option>
+                    <option value="@SplitBasis.Time">Time</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="split-interval">Interval (@(TimeSplits ? "min" : "km"))</label>
+                <input id="split-interval" inputmode="@(TimeSplits ? "numeric" : "decimal")"
+                       aria-describedby="split-interval-guidance" aria-invalid="@(DraftSplits is null ? "true" : null)"
+                       @bind="splitInterval" @bind:event="oninput" @bind:after="() => splitError = null" required />
+                <p id="split-interval-guidance" class="small">
+                    @(TimeSplits ? "Use 1–30 whole minutes." : "Use 0.5–5 km in steps of 0.5 km.")
+                </p>
+            </div>
+            @if (splitError is not null)
+            {
+                <p role="alert">@splitError</p>
+            }
+            <p>Applies to new C1 and C2 runs, including shortcuts.</p>
+            @if (TimeSplits)
+            {
+                <p>Time splits count active main-set time, including planned recovery. Warm-up, cool-down and pauses are excluded.</p>
+            }
+            <div class="actions">
+                <button class="primary" type="submit" disabled="@(DraftSplits is null)">Save split setting</button>
+                <button type="button" @onclick="CancelSplits">Cancel</button>
+            </div>
+        </form>
     }
     else if (page == "connection")
     {
