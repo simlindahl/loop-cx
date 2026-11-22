@@ -1,4 +1,40 @@
+using System.Globalization;
+using System.Text.Json.Serialization;
+
 namespace LoopCx.Features.ActiveRun;
+
+[JsonConverter(typeof(JsonStringEnumConverter<SplitBasis>))]
+public enum SplitBasis
+{
+    Distance,
+    Time
+}
+
+public sealed record SplitPolicy(int Version, SplitBasis Basis, int Interval)
+{
+    public static SplitPolicy DefaultDistance { get; } = new(1, SplitBasis.Distance, 1000);
+    public static SplitPolicy DefaultTime { get; } = new(1, SplitBasis.Time, 5);
+
+    [JsonIgnore]
+    public string Label => Basis == SplitBasis.Time
+        ? FormattableString.Invariant($"{Interval} min")
+        : (Interval / 1000d).ToString("0.#", CultureInfo.InvariantCulture) + " km";
+
+    public void Validate()
+    {
+        var validInterval = Basis switch
+        {
+            SplitBasis.Distance => Interval is >= 500 and <= 5000 && Interval % 500 == 0,
+            SplitBasis.Time => Interval is >= 1 and <= 30,
+            _ => false
+        };
+
+        if (Version != 1 || !validInterval)
+        {
+            throw new ArgumentException("Choose a distance from 0.5 to 5 km in half-kilometre steps or a time from 1 to 30 whole minutes.");
+        }
+    }
+}
 
 public sealed record DistancePolicy(string Version, double MaximumAccuracyMetres,
     TimeSpan MaximumGap, TimeSpan MaximumAge, double MaximumSpeedMetresPerSecond, double MinimumMovementMetres)
@@ -21,13 +57,20 @@ public sealed record DistanceSplit(int Number, double MeasuredMetres, TimeSpan A
         ? ActiveTime.TotalSeconds * 1000 / MeasuredMetres : null;
 }
 public sealed record DistanceState(DistancePolicy Policy, double TotalMeasuredMetres, double MainMeasuredMetres,
-    bool MainHasGaps, string Status, IReadOnlyList<DistanceSplit> Splits);
+    bool MainHasGaps, string Status, IReadOnlyList<DistanceSplit> Splits)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public SplitPolicy? SplitPolicy { get; init; }
+}
 
 /// <summary>Conservative ordinary-run distance; never invents an edge across lost evidence.</summary>
 public sealed class RunDistance
 {
     private readonly DistancePolicy policy;
+    private readonly SplitPolicy? splitPolicy;
     private readonly List<DistanceSplit> splits = [];
+    private readonly List<double> timeSplitMetres = [];
+    private readonly TimeSpan timeInterval;
     private DistanceFix? anchor;
     private DistanceFix? previousValid;
     private TimeSpan anchorMainTime;
@@ -43,7 +86,7 @@ public sealed class RunDistance
     private string status = "Waiting for GPS";
     private bool mainFinished;
 
-    public RunDistance(DistancePolicy policy, TimeSpan started, RunPhase? phase)
+    public RunDistance(DistancePolicy policy, TimeSpan started, RunPhase? phase, SplitPolicy? splitPolicy = null)
     {
         ArgumentNullException.ThrowIfNull(policy);
         if (string.IsNullOrWhiteSpace(policy.Version) || policy.MaximumGap <= TimeSpan.Zero || policy.MaximumAge <= TimeSpan.Zero ||
@@ -54,7 +97,10 @@ public sealed class RunDistance
             throw new ArgumentException("Distance policy requires finite positive limits.", nameof(policy));
         }
 
+        splitPolicy?.Validate();
         this.policy = policy;
+        this.splitPolicy = splitPolicy;
+        timeInterval = splitPolicy is { Basis: SplitBasis.Time } ? TimeSpan.FromMinutes(splitPolicy.Interval) : TimeSpan.Zero;
         boundary = started;
         this.phase = phase;
     }
@@ -63,7 +109,39 @@ public sealed class RunDistance
 
     public DistanceObservation Observation { get; private set; } = new(false, null, TimeSpan.Zero);
 
-    public DistanceState Snapshot => new(policy, totalMetres, mainMetres, mainHasGaps, status, [.. splits]);
+    public DistanceState Snapshot => new(policy, totalMetres, mainMetres, mainHasGaps, status, [.. splits])
+    {
+        SplitPolicy = splitPolicy
+    };
+
+    public DistanceState SnapshotAt(TimeSpan mainActiveTime)
+    {
+        if (timeInterval == TimeSpan.Zero)
+        {
+            return Snapshot;
+        }
+
+        var completed = new List<DistanceSplit>();
+        var remaining = mainActiveTime;
+
+        while (remaining >= timeInterval || (mainFinished && remaining > TimeSpan.Zero))
+        {
+            var index = completed.Count;
+            var duration = remaining >= timeInterval ? timeInterval : remaining;
+            var metres = index < timeSplitMetres.Count ? timeSplitMetres[index] : 0;
+            completed.Add(new(index + 1, metres, duration, splitHasGaps));
+            remaining -= duration;
+        }
+
+        return Snapshot with { Splits = completed };
+    }
+
+    public int SplitNumberAt(TimeSpan mainActiveTime)
+    {
+        return timeInterval == TimeSpan.Zero
+            ? splits.Count + 1
+            : (int)(mainActiveTime.Ticks / timeInterval.Ticks) + 1;
+    }
 
     public void Boundary(RunPhase? nextPhase, TimeSpan at, TimeSpan mainActiveTime)
     {
@@ -75,8 +153,11 @@ public sealed class RunDistance
         }
         if (IsMain(phase) && !IsMain(nextPhase) && !mainFinished)
         {
-            if (splitMetres > 0 || mainActiveTime > splitStarted)
+            if (timeInterval == TimeSpan.Zero && (splitMetres > 0 || mainActiveTime > splitStarted))
+            {
                 splits.Add(new(splits.Count + 1, splitMetres, mainActiveTime - splitStarted, splitHasGaps));
+            }
+
             mainFinished = true;
         }
         boundary = at;
@@ -188,10 +269,18 @@ public sealed class RunDistance
 
     // Only derived counters are captured. Plans, commands and raw observations never roll back.
     public sealed record CandidateDistance(int SplitCount, TimeSpan SplitStarted, double SplitMetres,
-        bool SplitHasGaps, bool MainHasGaps, double TotalMetres, double MainMetres);
+        bool SplitHasGaps, bool MainHasGaps, double TotalMetres, double MainMetres)
+    {
+        internal double[]? TimeSplitMetres { get; init; }
+    }
 
-    public CandidateDistance CaptureCandidate() => new(splits.Count, splitStarted, splitMetres,
-        splitHasGaps, mainHasGaps, totalMetres, mainMetres);
+    public CandidateDistance CaptureCandidate()
+    {
+        return new(splits.Count, splitStarted, splitMetres, splitHasGaps, mainHasGaps, totalMetres, mainMetres)
+        {
+            TimeSplitMetres = timeInterval > TimeSpan.Zero ? [.. timeSplitMetres] : null
+        };
+    }
 
     public void ConfirmStandstill(CandidateDistance candidate, TimeSpan at, bool unknownTail)
     {
@@ -202,6 +291,13 @@ public sealed class RunDistance
         mainHasGaps = candidate.MainHasGaps;
         totalMetres = candidate.TotalMetres;
         mainMetres = candidate.MainMetres;
+
+        if (candidate.TimeSplitMetres is { } measured)
+        {
+            timeSplitMetres.Clear();
+            timeSplitMetres.AddRange(measured);
+        }
+
         Reanchor(at, "Automatic pause");
 
         if (unknownTail && IsMain(phase)) mainHasGaps = splitHasGaps = true;
@@ -218,19 +314,54 @@ public sealed class RunDistance
 
     private void AddMain(double metres, TimeSpan from, TimeSpan to)
     {
-        var consumed = 0d;
-        while (splitMetres + metres - consumed >= 1000)
+        if (timeInterval > TimeSpan.Zero)
         {
-            var part = 1000 - splitMetres;
+            AddTimedSplitDistance(metres, from, to);
+            mainMetres += metres;
+
+            return;
+        }
+
+        var interval = splitPolicy?.Interval ?? SplitPolicy.DefaultDistance.Interval;
+        var consumed = 0d;
+
+        while (splitMetres + metres - consumed >= interval)
+        {
+            var part = interval - splitMetres;
             consumed += part;
             var crossing = from + TimeSpan.FromTicks((long)((to - from).Ticks * (consumed / metres)));
-            splits.Add(new(splits.Count + 1, 1000, crossing - splitStarted, splitHasGaps));
+            splits.Add(new(splits.Count + 1, interval, crossing - splitStarted, splitHasGaps));
             splitStarted = crossing;
             splitMetres = 0;
             splitHasGaps = false;
         }
         splitMetres += metres - consumed;
         mainMetres += metres;
+    }
+
+    private void AddTimedSplitDistance(double metres, TimeSpan from, TimeSpan to)
+    {
+        var cursor = from.Ticks;
+        var end = to.Ticks;
+        var interval = timeInterval.Ticks;
+        var consumed = 0d;
+
+        while (cursor < end)
+        {
+            var index = (int)(cursor / interval);
+            var untilBoundary = interval - (cursor % interval);
+            var next = Math.Min(end, cursor + untilBoundary);
+            var part = next == end ? metres - consumed : metres * (next - cursor) / (end - from.Ticks);
+
+            while (timeSplitMetres.Count <= index)
+            {
+                timeSplitMetres.Add(0);
+            }
+
+            timeSplitMetres[index] += part;
+            consumed += part;
+            cursor = next;
+        }
     }
 
     private void Reject(string reason)

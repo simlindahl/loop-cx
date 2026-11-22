@@ -61,6 +61,22 @@ def statistics_scope(value):
             "unknownHrTicks": hr_unknown, "zones": zones, "unclassifiedHrTicks": duration_ticks(value["UnclassifiedHeartRateActiveTime"]) if "UnclassifiedHeartRateActiveTime" in value else None}
 
 
+def split_policy(snapshot):
+    distance = snapshot.get("Distance")
+    if distance is None or "SplitPolicy" not in distance:
+        return None
+    policy = distance["SplitPolicy"]
+    if not isinstance(policy, dict) or type(policy.get("Version")) is not int or policy["Version"] != 1:
+        raise ValueError("Unsupported split policy version")
+    basis, interval = policy.get("Basis"), policy.get("Interval")
+    if type(interval) is not int or not (
+        (basis == "Distance" and 500 <= interval <= 5000 and interval % 500 == 0)
+        or (basis == "Time" and 1 <= interval <= 30)
+    ):
+        raise ValueError("Invalid frozen split basis or interval")
+    return policy
+
+
 def reconstruct_checkpoint(checkpoint):
     if "SchemaVersion" not in checkpoint:
         return {"format": "legacy-unknown", "resolvedPlan": None, "completedPhases": None, "statistics": None,
@@ -83,6 +99,7 @@ def reconstruct_checkpoint(checkpoint):
         derived_main += current
     if derived_main != main:
         raise ValueError("Actual phase accounting disagrees with stored main time")
+    policy = split_policy(snapshot)
     statistics = snapshot.get("Statistics")
     decoded = None
     if statistics is not None:
@@ -102,6 +119,16 @@ def reconstruct_checkpoint(checkpoint):
                 raise ValueError("Split HR coverage does not conserve main")
         if abs(sum(piece["measuredMetres"] for piece in pieces) - main_scope["measuredMetres"]) > 0.001:
             raise ValueError("Split distance does not conserve main")
+        if policy is not None:
+            by_time = policy["Basis"] == "Time"
+            key = "activeTicks" if by_time else "measuredMetres"
+            limit = policy["Interval"] * 60 * TICKS if by_time else policy["Interval"]
+            tolerance = 0 if by_time else 0.001
+            for index, piece in enumerate(pieces):
+                value = piece[key]
+                is_complete = index < len(pieces) - 1 or (pending is None and current_kind in ("Work", "Recovery"))
+                if value > limit + tolerance or (is_complete and abs(value - limit) > tolerance):
+                    raise ValueError("Stored split disagrees with frozen interval")
         decoded = {"total": total_scope, "main": main_scope, "completedSplits": splits, "currentSplit": pending}
     previous = -1
     for boundary in checkpoint.get("PhaseBoundaries") or []:
@@ -403,6 +430,8 @@ def read_export(path):
     interpreted_events = []
     for event in run["events"]:
         event_state = reconstruct_checkpoint(event["checkpoint"])
+        if split_policy(event_state["snapshot"] or {}) != split_policy(decoded["snapshot"] or {}):
+            raise ValueError("Historical frozen split policy changed")
         interpreted_events.append({"sequence": event["sequence"], "command": event["command"],
             "observedElapsedMilliseconds": event["observedElapsedMilliseconds"], "observedUtc": event["observedUtc"],
             "paused": event_state["snapshot"].get("Paused") if event_state["snapshot"] else None,

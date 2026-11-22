@@ -151,3 +151,25 @@ for mutation in ("boolean-version", "future", "different-run", "rejected-link"):
         except (ValueError, KeyError, TypeError): pass
         else: raise AssertionError("Consumer accepted malformed route " + mutation)
 print("PASS: v2 independent provenance rejects boolean versions, forward/cross-run and invalid links")
+
+with tempfile.TemporaryDirectory() as temporary:
+    fixture = copy.deepcopy(route)
+    snapshot = fixture["run"]["checkpoint"]["Snapshot"]
+    snapshot["Distance"] = {"SplitPolicy": {"Version": 1, "Basis": "Distance", "Interval": 1000}}
+    target = Path(temporary) / "split-policy.json"
+    validators[2].validate(fixture)
+    target.write_text(json.dumps(fixture), encoding="utf-8", newline="\n")
+    assert consumer.read_export(target)["snapshot"]["Distance"] == snapshot["Distance"]
+
+    for basis, interval, valid_shape in (("Distance", 750, False), ("Time", True, False),
+                                        ("Time", 31, False), ("Distance", 1500, True)):
+        snapshot["Distance"]["SplitPolicy"].update(Basis=basis, Interval=interval)
+        assert validators[2].is_valid(fixture) == valid_shape
+        target.write_text(json.dumps(fixture), encoding="utf-8", newline="\n")
+        try:
+            consumer.read_export(target)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Consumer accepted incompatible policy " + str(snapshot["Distance"]))
+print("PASS: v2 frozen split policy rejects unsupported bounds and incompatible stored intervals")

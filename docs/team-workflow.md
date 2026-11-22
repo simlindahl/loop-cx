@@ -85,6 +85,13 @@ The 14 November export/CI micro-retrospective follow-up in [#68](https://github.
 
 Record this project's completed retrospectives in this section through the normal documentation workflow. Each concise dated entry states participating roles, evidence, keep/change decisions, one to three concrete actions with owners, the owning file or workflow, state, expected observable benefit and the next relevant follow-up point. Link actions with remaining work to the existing Project rather than creating another board. At follow-up, record the observed effect and whether the team kept, adjusted or reverted the improvement; label unmeasured effects explicitly.
 
+### 2026-11-22 · Splits delivery micro-retrospective
+
+The team lead, fullstack developer, requirements analyst and QA engineer contributed direct observations from [PR #124](https://github.com/simlindahl/loop-cx/pull/124). Android system Back exposed a stale Settings render despite correct cancellation in source. QA's comparison of the two packaged managed assemblies found only the Back method body changed, which let the team reuse the unchanged natural session evidence and rerun affected navigation on the fixed APK. Genuine TalkBack could not be checked because the desktop capture helper expired. No full-team consensus or productivity measurement is claimed.
+
+- For the first native smoke of a new or changed nested Settings destination, QA exercises the in-app and Android system Back paths in the same existing scenario and checks discard and return focus. Apply at the next applicable Settings candidate.
+- QA preflights working window capture and input before a dedicated TalkBack scenario using the [existing Android verification checkpoint](android.md#interactive-native-acceptance). When a local install replaces captured cache files, include the exact needed parent-directory metadata in the baseline so file restoration can be verified after reinstall. Apply at the next relevant native test. The #124 manual recovery verified exact file and package parity. Effects of the updated preparation remain to be observed.
+
 ### 2026-11-16 · Micro-retrospective after #119, #120 and #121
 
 All five separate specialists and the lead supplied direct input, consolidated in [#68](https://github.com/simlindahl/loop-cx/issues/68#issuecomment-6915158752). Simon was invited; no new response or full-team consensus is inferred. Keep independent source review, actual source/package correspondence and the distinction between observed findings and hypotheses. Notification captures corrected filename assumptions; tracing the busy guard corrected a proposed Back-navigation defect. The accepted #119 Debug phone update preserved data hashes and visible History.
