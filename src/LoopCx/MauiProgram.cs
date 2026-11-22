@@ -29,7 +29,7 @@ internal sealed class App : Application
 
                 if (Platform.CurrentActivity is MainActivity activity)
                 {
-                    activity.HistoryMapWebView = webView;
+                    activity.RouteMapWebView = webView;
                 }
             }
         };

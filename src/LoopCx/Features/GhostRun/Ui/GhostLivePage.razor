@@ -33,7 +33,7 @@
             }
             else { <p>No ghost this time. Follow the complete recorded route to set a verified result.</p> }
             @if (State.GhostRoute is { } route && route.Key == race.Route)
-            { <GhostRouteView Route="route" RunnerMetres="race.Match.Metres" GhostMetres="race.GhostMetres" Live="true" Active="Visible" /> }
+            { <GhostRouteView @key="(race.Id, route.Key)" Route="route" Race="race" Active="Visible" /> }
             <dl>
                 <div><dt>Race time / route progress</dt><dd>@Time(race.Clock.RaceElapsed) / @(race.Match.Metres is { } progress ? (progress / 1000).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " km" : "Unavailable")</dd></div>
                 <div><dt>Training active</dt><dd>@Time(race.Clock.TrainingActive)</dd></div>

@@ -423,35 +423,41 @@ public partial class HistoryPage
         var confirmedPart = savedPartFeedback;
         savedPartFeedback = null;
         var motionChanged = !busy && lastMotionDestination != renderedDestination;
-        layoutModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/history-layout.js");
-        if (disposed)
+        if (disposed) return;
+        if (layoutModule is null)
         {
-            await layoutModule.DisposeAsync();
-            return;
+            var imported = await JS.InvokeAsync<IJSObjectReference>("import", "./js/history-layout.js");
+            if (disposed || layoutModule is not null) await imported.DisposeAsync();
+            else layoutModule = imported;
         }
-        await layoutModule.InvokeVoidAsync("observe", historyContent, layoutOwner);
-        if (focusPending is null && !motionChanged && confirmedPart is null) return;
-        module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
-        if (disposed)
+        if (disposed) return;
+
+        await layoutModule!.InvokeVoidAsync("observe", historyContent, layoutOwner);
+        if (disposed || focusPending is null && !motionChanged && confirmedPart is null) return;
+
+        if (module is null)
         {
-            await module.DisposeAsync();
-            return;
+            var imported = await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
+            if (disposed || module is not null) await imported.DisposeAsync();
+            else module = imported;
         }
+        if (disposed) return;
+        var motion = module!;
         if (focusPending is { } focus)
         {
             focusPending = null;
-            await module.InvokeVoidAsync("focus", focus);
+            await motion.InvokeVoidAsync("focus", focus);
         }
         if (motionChanged && !disposed && !busy && MotionDestination == renderedDestination)
         {
             lastMotionDestination = renderedDestination;
-            await module.InvokeVoidAsync("syncMotion", false);
+            await motion.InvokeVoidAsync("syncMotion", false);
         }
         if (confirmedPart is { } confirmation && !disposed && !busy && MotionDestination == renderedDestination)
         {
             try
             {
-                await module.InvokeVoidAsync("confirmRecordedPart", historyContent, layoutOwner, renderedDestination, confirmation.ToString());
+                await motion.InvokeVoidAsync("confirmRecordedPart", historyContent, layoutOwner, renderedDestination, confirmation.ToString());
             }
             catch (JSException) { } // The committed result and its focus are already visible.
         }
@@ -467,18 +473,24 @@ public partial class HistoryPage
     }
     public async ValueTask DisposeAsync()
     {
+        if (disposed) return;
         disposed = true;
         HealthConnectSettings.Changed -= RefreshHealthConnect;
         shareRequest++;
-        if (layoutModule is not null)
+        var layout = layoutModule;
+        var motion = module;
+        layoutModule = null;
+        module = null;
+
+        if (layout is not null)
         {
-            await layoutModule.InvokeVoidAsync("dispose", layoutOwner);
-            await layoutModule.DisposeAsync();
+            await layout.InvokeVoidAsync("dispose", layoutOwner);
+            await layout.DisposeAsync();
         }
-        if (module is not null)
+        if (motion is not null)
         {
-            await module.InvokeVoidAsync("disposeSurface", layoutOwner);
-            await module.DisposeAsync();
+            await motion.InvokeVoidAsync("disposeSurface", layoutOwner);
+            await motion.DisposeAsync();
         }
         GC.SuppressFinalize(this);
     }
