@@ -2,42 +2,46 @@ using Android.Content;
 using Android.Content.PM;
 using Android.Gms.Common;
 using Android.Gms.Maps;
-using Android.Gms.Maps.Model;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using LoopCx.Features.History;
 
 namespace LoopCx;
 
-internal enum HistoryMapStatus { NotConfigured, Offline, WaitingForViewport, Loading, Failed, Ready }
+internal enum RouteMapStatus { NotConfigured, Offline, WaitingForViewport, Loading, Failed, Ready }
 
-internal readonly record struct HistoryMapViewport(double Left, double Top, double Width, double Height, double ViewportWidth)
+internal readonly record struct RouteMapViewport(double Left, double Top, double Width, double Height, double ViewportWidth)
 {
     public bool IsVisible => Width > 0 && Height > 0 && ViewportWidth > 0;
 }
 
-internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback, GoogleMap.IOnMapLoadedCallback
+internal sealed class AndroidRouteMap : Java.Lang.Object, IOnMapReadyCallback, GoogleMap.IOnMapLoadedCallback
 {
     private const string GoogleKeyMetadata = "com.google.android.geo.API_KEY";
     private readonly AndroidMapFrame frame;
     private readonly MapView mapView;
     private readonly Handler handler = new(Looper.MainLooper!);
-    private readonly HistoryRouteGeometry geometry;
-    private readonly Action<HistoryMapStatus> report;
+    private readonly Action<GoogleMap, FrameLayout.LayoutParams> prepare;
+    private readonly Func<GoogleMap, FrameLayout.LayoutParams, bool>? update;
+    private readonly Action<RouteMapStatus> report;
     private GoogleMap? map;
     private bool started;
     private bool resumed;
     private bool closed;
     private bool positioned = true;
+    private bool loaded;
+    private bool readyReported;
 
-    public HistoryAndroidMap(MainActivity activity, FrameLayout parent, FrameLayout.LayoutParams bounds,
-        HistoryRouteGeometry geometry, Action<HistoryMapStatus> report)
+    public AndroidRouteMap(MainActivity activity, FrameLayout parent, FrameLayout.LayoutParams bounds, bool lite,
+        Action<GoogleMap, FrameLayout.LayoutParams> prepare, Func<GoogleMap, FrameLayout.LayoutParams, bool>? update,
+        Action<RouteMapStatus> report)
     {
-        this.geometry = geometry;
+        this.prepare = prepare;
+        this.update = update;
         this.report = report;
         frame = new(activity) { Alpha = 0 };
-        var options = new GoogleMapOptions().InvokeLiteMode(true).InvokeMapToolbarEnabled(false);
+        var options = new GoogleMapOptions().InvokeLiteMode(lite).InvokeMapToolbarEnabled(false)
+            .InvokeZoomControlsEnabled(false).InvokeCompassEnabled(false);
         mapView = new(activity, options);
         frame.AddView(mapView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
         parent.AddView(frame, bounds);
@@ -57,18 +61,18 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
         }
     }
 
-    public static HistoryMapStatus Availability(Context context)
+    public static RouteMapStatus Availability(Context context)
     {
         if (!HasConfiguredKey(context))
         {
-            return HistoryMapStatus.NotConfigured;
+            return RouteMapStatus.NotConfigured;
         }
 
         try
         {
             if (Connectivity.Current.NetworkAccess is NetworkAccess.None or NetworkAccess.Local)
             {
-                return HistoryMapStatus.Offline;
+                return RouteMapStatus.Offline;
             }
         }
         catch (Exception error) when (error is PermissionException or Java.Lang.SecurityException)
@@ -79,11 +83,11 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
         try
         {
             return GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable(context) == 0
-                ? HistoryMapStatus.WaitingForViewport : HistoryMapStatus.Failed;
+                ? RouteMapStatus.WaitingForViewport : RouteMapStatus.Failed;
         }
         catch (Java.Lang.RuntimeException)
         {
-            return HistoryMapStatus.Failed;
+            return RouteMapStatus.Failed;
         }
     }
 
@@ -112,9 +116,9 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
         }
     }
 
-    public static FrameLayout.LayoutParams? Position(MainActivity activity, FrameLayout parent, HistoryMapViewport viewport)
+    public static FrameLayout.LayoutParams? Position(MainActivity activity, FrameLayout parent, RouteMapViewport viewport)
     {
-        if (!viewport.IsVisible || activity.HistoryMapWebView is not { Width: > 0 } webView)
+        if (!viewport.IsVisible || activity.RouteMapWebView is not { Width: > 0 } webView)
         {
             return null;
         }
@@ -149,9 +153,9 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
         };
     }
 
-    public void Reposition(FrameLayout.LayoutParams? position)
+    public bool Reposition(FrameLayout.LayoutParams? position)
     {
-        if (closed) return;
+        if (closed) return false;
 
         if (position is not null)
         {
@@ -159,7 +163,7 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
         }
 
         positioned = position is not null;
-        frame.Visibility = positioned && resumed ? ViewStates.Visible : ViewStates.Invisible;
+        return Refresh();
     }
 
     public void OnMapReady(GoogleMap googleMap)
@@ -170,40 +174,14 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
 
         try
         {
-            var camera = new LatLngBounds.Builder();
-            LatLng? first = null;
-            var unique = false;
-
-            foreach (var segment in geometry.Segments)
-            {
-                var coordinates = segment.Select(static point => new LatLng(point.LatitudeDegrees, point.LongitudeDegrees)).ToArray();
-
-                foreach (var point in coordinates)
-                {
-                    first ??= point;
-                    unique |= !first.Equals(point);
-                    _ = camera.Include(point);
-                }
-
-                if (coordinates.Length == 1)
-                {
-                    _ = googleMap.AddMarker(new MarkerOptions().SetPosition(coordinates[0]));
-                }
-                else
-                {
-                    _ = googleMap.AddPolyline(new PolylineOptions().InvokeColor(unchecked((int)0xffc4da73)).InvokeWidth(5).Add(coordinates));
-                }
-            }
-
-            if (first is null || frame.LayoutParameters is not { Width: > 0, Height: > 0 } bounds)
+            if (frame.LayoutParameters is not FrameLayout.LayoutParams { Width: > 0, Height: > 0 } bounds)
             {
                 Fail();
                 return;
             }
 
-            googleMap.MoveCamera(unique
-                ? CameraUpdateFactory.NewLatLngBounds(camera.Build(), bounds.Width, bounds.Height, 32)
-                : CameraUpdateFactory.NewLatLngZoom(first, 16));
+            googleMap.UiSettings?.SetAllGesturesEnabled(false);
+            prepare(googleMap, bounds);
             googleMap.SetOnMapLoadedCallback(this);
         }
         catch (Java.Lang.RuntimeException)
@@ -217,9 +195,40 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
         if (closed) return;
 
         handler.RemoveCallbacks(LoadTimedOut);
-        frame.Alpha = 1;
-        frame.Visibility = positioned && resumed ? ViewStates.Visible : ViewStates.Invisible;
-        report(HistoryMapStatus.Ready);
+        loaded = true;
+        Refresh();
+    }
+
+    public bool Refresh()
+    {
+        if (closed) return false;
+
+        var show = positioned && resumed;
+
+        try
+        {
+            if (show && loaded && map is { } rendered && update is not null
+                && frame.LayoutParameters is FrameLayout.LayoutParams bounds)
+            {
+                show = update(rendered, bounds);
+            }
+
+            frame.Visibility = show ? ViewStates.Visible : ViewStates.Invisible;
+            frame.Alpha = loaded ? 1 : 0;
+
+            if (show && loaded && !readyReported)
+            {
+                readyReported = true;
+                report(RouteMapStatus.Ready);
+            }
+
+            return show;
+        }
+        catch (Java.Lang.RuntimeException)
+        {
+            Fail();
+            return false;
+        }
     }
 
     public void Start()
@@ -298,7 +307,7 @@ internal sealed class HistoryAndroidMap : Java.Lang.Object, IOnMapReadyCallback,
     private void Fail()
     {
         Close();
-        report(HistoryMapStatus.Failed);
+        report(RouteMapStatus.Failed);
     }
 
     private sealed class AndroidMapFrame : FrameLayout

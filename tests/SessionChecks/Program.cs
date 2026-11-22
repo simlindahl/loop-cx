@@ -1082,6 +1082,7 @@ StoredHistoryChecks.Run();
 StoredRouteChecks.Run();
 GhostStoredSourceChecks.Run();
 GhostServiceChecks.Run();
+GhostLiveMapChecks.Run();
 GhostOriginChecks.Run();
 GhostSharingChecks.Run(args);
 
