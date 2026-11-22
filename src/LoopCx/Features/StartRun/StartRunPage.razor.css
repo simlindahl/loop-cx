@@ -224,6 +224,8 @@ dialog input[type="range"] {
 
 .destination-nav button {
     flex: 1;
+    min-width: max-content;
+    overflow-wrap: normal;
 }
 
 .destination-nav button[aria-current="page"] {
