@@ -23,6 +23,10 @@ public partial class SettingsPage
     private HealthConnectAccess health = new(false, false, []);
     private bool disposed;
     private IJSObjectReference? module;
+    private ElementReference settingsSurface;
+    private readonly string motionOwner = Guid.NewGuid().ToString("N");
+    private string settingsVisit = Guid.NewGuid().ToString("N");
+    private bool splitsEntrance;
     private AudioConfiguration audioConfiguration = new();
     private SplitPolicy? savedSplits;
     private SplitBasis splitBasis;
@@ -167,6 +171,12 @@ public partial class SettingsPage
     };
     private void Open(string destination)
     {
+        if (page != destination)
+        {
+            splitsEntrance = (page, destination) is ("settings", "splits") or ("splits", "settings");
+            if (module is { } current) _ = LeaveSplitsSurface(current, settingsVisit, splitsEntrance);
+            settingsVisit = Guid.NewGuid().ToString("N");
+        }
         page = destination;
         if (destination == "health") health = HealthConnectSettings.Access();
         message = null;
@@ -299,19 +309,55 @@ public partial class SettingsPage
                 Platform.CurrentActivity is null ? global::Android.Content.ActivityFlags.NewTask : 0)));
 
     private static Task ReviewAccess() => MainThread.InvokeOnMainThreadAsync(() => AppInfo.Current.ShowSettingsUI());
+    private async Task LeaveSplitsSurface(IJSObjectReference motion, string visit, bool animate)
+    {
+        try
+        {
+            await motion.InvokeVoidAsync("leaveSplitsSurface", settingsSurface, visit, animate);
+        }
+        catch (JSException) { } // Navigation does not depend on the outgoing effect.
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (focusPending is not { } target) return;
+        if (disposed || focusPending is null && !splitsEntrance) return;
+
+        var visit = settingsVisit;
+        var target = focusPending;
+        var enter = splitsEntrance;
         focusPending = null;
-        module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
-        await module.InvokeVoidAsync("focus", target);
+        splitsEntrance = false;
+
+        if (module is null)
+        {
+            var imported = await JS.InvokeAsync<IJSObjectReference>("import", "./js/core-dialog.js");
+            if (disposed || module is not null) await imported.DisposeAsync();
+            else module = imported;
+        }
+        if (disposed || settingsVisit != visit) return;
+
+        var motion = module!;
+        if (target is not null) await motion.InvokeVoidAsync("focus", target);
+        if (!enter || disposed || settingsVisit != visit) return;
+        try
+        {
+            await motion.InvokeVoidAsync("enterSplitsSurface", settingsSurface, visit);
+        }
+        catch (JSException) { } // Focus and navigation have already completed.
     }
+
     public async ValueTask DisposeAsync()
     {
+        if (disposed) return;
         disposed = true;
         RunService.Changed -= Refresh;
         HealthConnectSettings.Changed -= Refresh;
-        if (module is not null) await module.DisposeAsync();
+        if (module is { } motion)
+        {
+            module = null;
+            await motion.InvokeVoidAsync("disposeSplitsSurface", settingsSurface, motionOwner);
+            await motion.DisposeAsync();
+        }
         GC.SuppressFinalize(this);
     }
 }
